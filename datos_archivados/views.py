@@ -1912,6 +1912,10 @@ def combinar_datos_archivados(request):
         # Mapeo de usuarios archivados a usuarios actuales
         mapeo_usuarios = {}
         
+        # IMPORTANTE: Usar transaction.atomic() con savepoints individuales
+        # Cada operación tendrá su propio savepoint para evitar que un error
+        # rompa toda la transacción
+        
         with transaction.atomic():
             # 0. DETECTAR Y AGREGAR CAMPOS FALTANTES
             logger.info("=== Detectando campos faltantes en modelos ===")
@@ -1968,12 +1972,15 @@ def combinar_datos_archivados(request):
             
             for dato in datos_auth_user:
                 try:
+                    # Usar savepoint para cada usuario
+                    sid = transaction.savepoint()
                     datos = dato.datos_originales
                     username = datos.get('username', '')
                     email = datos.get('email', '')
                     id_original = dato.id_original
                     
                     if not username:
+                        transaction.savepoint_rollback(sid)
                         continue
                     
                     # Buscar si el usuario ya existe
@@ -2007,6 +2014,7 @@ def combinar_datos_archivados(request):
                         mapeo_usuarios[id_original] = usuario_existente
                         estadisticas['usuarios_combinados'] += 1
                         logger.info(f"✅ Usuario actualizado: {username} ({campos_copiados} campos copiados)")
+                        transaction.savepoint_commit(sid)
                     else:
                         # Crear nuevo usuario CON TODOS LOS CAMPOS
                         # Crear usuario base
@@ -2060,8 +2068,10 @@ def combinar_datos_archivados(request):
                             mapeo_usuarios[id_original] = nuevo_usuario
                             estadisticas['usuarios_combinados'] += 1
                             logger.info(f"✅ Usuario creado: {username} ({campos_copiados} campos copiados)")
+                            transaction.savepoint_commit(sid)
                         except IntegrityError as e:
                             # Si hay error de duplicado, intentar buscar el usuario existente
+                            transaction.savepoint_rollback(sid)
                             logger.warning(f"⚠️ Usuario {username} ya existe, buscando para actualizar...")
                             usuario_duplicado = User.objects.filter(username=username).first()
                             if usuario_duplicado:
@@ -2069,13 +2079,12 @@ def combinar_datos_archivados(request):
                                 logger.info(f"✅ Usuario duplicado encontrado y mapeado: {username}")
                             else:
                                 logger.error(f"❌ No se pudo crear ni encontrar usuario: {username}")
-                                continue
                             
                 except Exception as e:
+                    transaction.savepoint_rollback(sid)
                     error_msg = f"Error procesando usuario {dato.id_original}: {str(e)}"
                     logger.error(error_msg)
                     errores.append(error_msg)
-                    continue
             
             # 1.5. ASIGNAR GRUPOS A USUARIOS (auth_user_groups)
             logger.info("=== Asignando grupos a usuarios ===")
@@ -2086,12 +2095,14 @@ def combinar_datos_archivados(request):
             )
             
             for dato in datos_user_groups:
+                sid = transaction.savepoint()
                 try:
                     datos = dato.datos_originales
                     user_id_original = datos.get('user_id')
                     group_id_original = datos.get('group_id')
                     
                     if not user_id_original or not group_id_original:
+                        transaction.savepoint_rollback(sid)
                         continue
                     
                     # Buscar el usuario en el mapeo
@@ -2099,6 +2110,7 @@ def combinar_datos_archivados(request):
                     
                     if not usuario:
                         logger.warning(f"No se encontró usuario para asignar grupo: user_id={user_id_original}")
+                        transaction.savepoint_rollback(sid)
                         continue
                     
                     # Buscar el grupo en los datos archivados
@@ -2120,10 +2132,19 @@ def combinar_datos_archivados(request):
                                 logger.info(f"Usuario {usuario.username} agregado al grupo {nombre_grupo}")
                     
                 except Exception as e:
+                    try:
+                        transaction.savepoint_rollback(sid)
+                    except:
+                        pass
                     error_msg = f"Error asignando grupo: {str(e)}"
                     logger.error(error_msg)
                     errores.append(error_msg)
                     continue
+                else:
+                    try:
+                        transaction.savepoint_commit(sid)
+                    except:
+                        pass
             
             # 2. IDENTIFICAR PROFESORES PRIMERO (para no agregarlos a Estudiantes)
             logger.info("=== Identificando profesores ===")
@@ -2147,6 +2168,7 @@ def combinar_datos_archivados(request):
             
             for dato in datos_student_info:
                 try:
+                    sid = transaction.savepoint()
                     datos = dato.datos_originales
                     user_id_original = datos.get('user_id')
                     
@@ -2225,12 +2247,21 @@ def combinar_datos_archivados(request):
                         raise
                         
                 except Exception as e:
+                    try:
+                        transaction.savepoint_rollback(sid)
+                    except:
+                        pass
                     error_msg = f"Error procesando registro {dato.id_original}: {str(e)}"
                     logger.error(error_msg)
                     import traceback
                     logger.error(f"Traceback: {traceback.format_exc()}")
                     errores.append(error_msg)
                     continue
+                else:
+                    try:
+                        transaction.savepoint_commit(sid)
+                    except:
+                        pass
             
             # 2.5. COMBINAR Docencia_teacherpersonalinformation con accounts_registro - TODOS LOS CAMPOS
             logger.info("=== Iniciando combinación de Docencia_teacherpersonalinformation (TODOS LOS CAMPOS) ===")
@@ -2243,6 +2274,7 @@ def combinar_datos_archivados(request):
             
             for dato in datos_teacher_info:
                 try:
+                    sid = transaction.savepoint()
                     datos = dato.datos_originales
                     user_id_original = datos.get('user_id')
                     
@@ -2320,10 +2352,19 @@ def combinar_datos_archivados(request):
                     logger.info(f"✅ Registro de PROFESOR {'creado' if created else 'actualizado'} para usuario {usuario.username} ({campos_copiados} campos copiados)")
                         
                 except Exception as e:
+                    try:
+                        transaction.savepoint_rollback(sid)
+                    except:
+                        pass
                     error_msg = f"Error procesando registro de profesor {dato.id_original}: {str(e)}"
                     logger.error(error_msg)
                     errores.append(error_msg)
                     continue
+                else:
+                    try:
+                        transaction.savepoint_commit(sid)
+                    except:
+                        pass
             
             # 3. COMBINAR principal_cursoacademico
             logger.info("=== Iniciando combinación de principal_cursoacademico ===")
@@ -2334,6 +2375,7 @@ def combinar_datos_archivados(request):
             
             for dato in datos_cursos_academicos:
                 try:
+                    sid = transaction.savepoint()
                     datos = dato.datos_originales
                     nombre = datos.get('nombre', '')
                     
@@ -2360,10 +2402,19 @@ def combinar_datos_archivados(request):
                     logger.info(f"Curso académico {'creado' if created else 'actualizado'}: {nombre}")
                     
                 except Exception as e:
+                    try:
+                        transaction.savepoint_rollback(sid)
+                    except:
+                        pass
                     error_msg = f"Error procesando curso académico {dato.id_original}: {str(e)}"
                     logger.error(error_msg)
                     errores.append(error_msg)
                     continue
+                else:
+                    try:
+                        transaction.savepoint_commit(sid)
+                    except:
+                        pass
             
             # 4. COMBINAR principal_curso
             logger.info("=== Iniciando combinación de principal_curso ===")
@@ -2374,6 +2425,7 @@ def combinar_datos_archivados(request):
             
             for dato in datos_cursos:
                 try:
+                    sid = transaction.savepoint()
                     datos = dato.datos_originales
                     name = datos.get('name', '')
                     teacher_id = datos.get('teacher_id')
@@ -2438,10 +2490,19 @@ def combinar_datos_archivados(request):
                     logger.info(f"Curso {'creado' if created else 'actualizado'}: {name}")
                     
                 except Exception as e:
+                    try:
+                        transaction.savepoint_rollback(sid)
+                    except:
+                        pass
                     error_msg = f"Error procesando curso {dato.id_original}: {str(e)}"
                     logger.error(error_msg)
                     errores.append(error_msg)
                     continue
+                else:
+                    try:
+                        transaction.savepoint_commit(sid)
+                    except:
+                        pass
             
             # 5. COMBINAR principal_matriculas
             logger.info("=== Iniciando combinación de principal_matriculas ===")
@@ -2452,6 +2513,7 @@ def combinar_datos_archivados(request):
             
             for dato in datos_matriculas:
                 try:
+                    sid = transaction.savepoint()
                     datos = dato.datos_originales
                     course_id = datos.get('course_id')
                     student_id = datos.get('student_id')
@@ -2485,10 +2547,19 @@ def combinar_datos_archivados(request):
                     estadisticas['matriculas_combinadas'] += 1
                     
                 except Exception as e:
+                    try:
+                        transaction.savepoint_rollback(sid)
+                    except:
+                        pass
                     error_msg = f"Error procesando matrícula {dato.id_original}: {str(e)}"
                     logger.error(error_msg)
                     errores.append(error_msg)
                     continue
+                else:
+                    try:
+                        transaction.savepoint_commit(sid)
+                    except:
+                        pass
             
             # 6. COMBINAR principal_asistencia
             logger.info("=== Iniciando combinación de principal_asistencia ===")
@@ -2498,6 +2569,7 @@ def combinar_datos_archivados(request):
             
             for dato in datos_asistencias:
                 try:
+                    sid = transaction.savepoint()
                     datos = dato.datos_originales
                     course_id = datos.get('course_id')
                     student_id = datos.get('student_id')
@@ -2533,10 +2605,19 @@ def combinar_datos_archivados(request):
                     estadisticas['asistencias_combinadas'] += 1
                     
                 except Exception as e:
+                    try:
+                        transaction.savepoint_rollback(sid)
+                    except:
+                        pass
                     error_msg = f"Error procesando asistencia {dato.id_original}: {str(e)}"
                     logger.error(error_msg)
                     errores.append(error_msg)
                     continue
+                else:
+                    try:
+                        transaction.savepoint_commit(sid)
+                    except:
+                        pass
             
             # 7. COMBINAR principal_calificaciones
             logger.info("=== Iniciando combinación de principal_calificaciones ===")
@@ -2547,6 +2628,7 @@ def combinar_datos_archivados(request):
             
             for dato in datos_calificaciones:
                 try:
+                    sid = transaction.savepoint()
                     datos = dato.datos_originales
                     matricula_id = datos.get('matricula_id')
                     course_id = datos.get('course_id')
@@ -2577,10 +2659,19 @@ def combinar_datos_archivados(request):
                     estadisticas['calificaciones_combinadas'] += 1
                     
                 except Exception as e:
+                    try:
+                        transaction.savepoint_rollback(sid)
+                    except:
+                        pass
                     error_msg = f"Error procesando calificación {dato.id_original}: {str(e)}"
                     logger.error(error_msg)
                     errores.append(error_msg)
                     continue
+                else:
+                    try:
+                        transaction.savepoint_commit(sid)
+                    except:
+                        pass
             
             # 8. COMBINAR principal_notaindividual
             logger.info("=== Iniciando combinación de principal_notaindividual ===")
@@ -2590,6 +2681,7 @@ def combinar_datos_archivados(request):
             
             for dato in datos_notas:
                 try:
+                    sid = transaction.savepoint()
                     datos = dato.datos_originales
                     calificacion_id = datos.get('calificacion_id')
                     valor = datos.get('valor')
@@ -2617,10 +2709,19 @@ def combinar_datos_archivados(request):
                     estadisticas['notas_combinadas'] += 1
                     
                 except Exception as e:
+                    try:
+                        transaction.savepoint_rollback(sid)
+                    except:
+                        pass
                     error_msg = f"Error procesando nota {dato.id_original}: {str(e)}"
                     logger.error(error_msg)
                     errores.append(error_msg)
                     continue
+                else:
+                    try:
+                        transaction.savepoint_commit(sid)
+                    except:
+                        pass
             
             # 9. PROCESAR OTRAS TABLAS
             logger.info("=== Procesando otras tablas ===")
@@ -2665,5 +2766,13 @@ def combinar_datos_archivados(request):
         return JsonResponse({
             'success': False,
             'error': f'Error al combinar datos: {str(e)}',
-            **{k: 0 for k in estadisticas.keys()}
+            'usuarios_combinados': estadisticas.get('usuarios_combinados', 0),
+            'registros_combinados': estadisticas.get('registros_combinados', 0),
+            'cursos_academicos_combinados': estadisticas.get('cursos_academicos_combinados', 0),
+            'cursos_combinados': estadisticas.get('cursos_combinados', 0),
+            'matriculas_combinadas': estadisticas.get('matriculas_combinadas', 0),
+            'asistencias_combinadas': estadisticas.get('asistencias_combinadas', 0),
+            'calificaciones_combinadas': estadisticas.get('calificaciones_combinadas', 0),
+            'notas_combinadas': estadisticas.get('notas_combinadas', 0),
+            'otras_tablas': estadisticas.get('otras_tablas', 0)
         })
