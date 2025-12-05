@@ -50,6 +50,7 @@
                     <th>Móvil</th>
                     <th>Grado Académico</th>
                     <th>Ocupación</th>
+                    <th>Religioso</th>
                     <th>Título</th>
                     <th>Descargar Título</th>
                     <th>Grupo</th>
@@ -83,6 +84,7 @@
                     <td>{{ registro.movil }}</td>
                     <td>{{ registro.get_grado_display }}</td>
                     <td>{{ registro.get_ocupacion_display }}</td>
+                    <td>{{ registro.es_religioso|yesno:"Sí,No" }}</td>
                     <td>{{ registro.titulo }}</td>
                     <td>
                         {% if registro.foto_titulo %}
@@ -98,7 +100,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="18" class="text-center">No hay usuarios registrados que coincidan con los filtros.</td>
+                    <td colspan="19" class="text-center">No hay usuarios registrados que coincidan con los filtros.</td>
                 </tr>
                 {% endfor %}
             </tbody>

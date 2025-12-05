@@ -1801,6 +1801,7 @@ def mapear_campos_ingles_espanol(datos_origen, logger=None):
         'email': 'email',  # Mantener email
         'photo': 'image',  # Mapear photo a image
         'resume': 'titulo',  # Resume puede ser título
+        'isReligious': 'es_religioso', # Mapear isReligious a es_religioso
     }
     
     # Crear copia con todos los datos originales

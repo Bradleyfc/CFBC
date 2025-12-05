@@ -295,7 +295,7 @@ def generate_excel(context_dict={}):
         headers = [
             "Nombre", "Apellidos", "Email", "Nacionalidad", "Carnet ID", "Carnet Disponible", "Sexo",
             "Dirección", "Municipio", "Provincia", "Movil", "Grado Académico",
-            "Ocupación", "Título", "Título Disponible", "Grupo", "Fecha de Registro"
+            "Ocupación", "Religioso", "Título", "Título Disponible", "Grupo", "Fecha de Registro"
         ]
         for col_num, header in enumerate(headers, 1):
             cell = ws_usuarios.cell(row=1, column=col_num, value=header)
@@ -319,10 +319,11 @@ def generate_excel(context_dict={}):
             ws_usuarios.cell(row=row_num, column=11, value=registro.movil)
             ws_usuarios.cell(row=row_num, column=12, value=registro.get_grado_display())
             ws_usuarios.cell(row=row_num, column=13, value=registro.get_ocupacion_display())
-            ws_usuarios.cell(row=row_num, column=14, value=registro.titulo)
-            ws_usuarios.cell(row=row_num, column=15, value="Sí" if registro.foto_titulo else "No")
-            ws_usuarios.cell(row=row_num, column=16, value=registro.user.groups.first().name if registro.user.groups.first() else '')
-            ws_usuarios.cell(row=row_num, column=17, value=registro.user.date_joined.strftime("%d/%m/%Y"))
+            ws_usuarios.cell(row=row_num, column=14, value="Sí" if registro.es_religioso else "No")
+            ws_usuarios.cell(row=row_num, column=15, value=registro.titulo)
+            ws_usuarios.cell(row=row_num, column=16, value="Sí" if registro.foto_titulo else "No")
+            ws_usuarios.cell(row=row_num, column=17, value=registro.user.groups.first().name if registro.user.groups.first() else '')
+            ws_usuarios.cell(row=row_num, column=18, value=registro.user.date_joined.strftime("%d/%m/%Y"))
             
             for col_num in range(1, len(headers) + 1):
                 ws_usuarios.cell(row=row_num, column=col_num).border = border

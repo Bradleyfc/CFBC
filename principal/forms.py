@@ -58,6 +58,7 @@ class CustomUserCreationForm(UserCreationForm):
     ocupacion = forms.ChoiceField(label='Ocupación', choices=OCUPACION, required=True)
     titulo = forms.CharField(label='Título', max_length=50, required=True)
     foto_titulo = forms.ImageField(label='Foto del Título', required=False, help_text='Suba una foto o documento del título')
+    es_religioso = forms.BooleanField(label='¿Es Religioso?', required=False)
     
 
 
@@ -129,6 +130,7 @@ class CustomUserCreationForm(UserCreationForm):
                 registro.grado = self.cleaned_data.get('grado', '')
                 registro.ocupacion = self.cleaned_data.get('ocupacion', '')
                 registro.titulo = self.cleaned_data.get('titulo', '')
+                registro.es_religioso = self.cleaned_data.get('es_religioso', False)
                 
                 # Guardamos la foto del título si se proporciona
                 if 'foto_titulo' in self.cleaned_data and self.cleaned_data['foto_titulo']:
