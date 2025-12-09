@@ -1,0 +1,815 @@
+{% extends 'base.html' %}
+
+{% block title %}Tablas Archivadas{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="bi bi-table"></i>
+                        Tablas Archivadas
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <!-- Barra de búsqueda -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card bg-light">
+                                <div class="card-body py-3">
+                                    <form method="GET" id="searchForm" class="row g-3 align-items-end">
+                                        <div class="col-md-5">
+                                            <label for="searchInput" class="form-label">
+                                                <i class="bi bi-search"></i> Buscar en datos archivados
+                                            </label>
+                                            <div class="input-group">
+                                                <input type="text" 
+                                                       class="form-control" 
+                                                       id="searchInput" 
+                                                       name="search" 
+                                                       value="{{ search_query }}"
+                                                       placeholder="Ingrese término de búsqueda..."
+                                                       autocomplete="off">
+                                                <button class="btn btn-outline-secondary" type="button" id="clearSearch" title="Limpiar búsqueda">
+                                                    <i class="bi bi-x-circle"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="searchType" class="form-label">Tipo de búsqueda</label>
+                                            <select class="form-select" id="searchType" name="search_type">
+                                                <option value="tabla" {% if search_type == 'tabla' %}selected{% endif %}>
+                                                    Solo nombres de tablas
+                                                </option>
+                                                <option value="contenido" {% if search_type == 'contenido' %}selected{% endif %}>
+                                                    Solo contenido de registros
+                                                </option>
+                                                <option value="global" {% if search_type == 'global' %}selected{% endif %}>
+                                                    Búsqueda global (todo)
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <button type="submit" class="btn btn-primary w-100">
+                                                <i class="bi bi-search"></i> Buscar
+                                            </button>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <button type="button" class="btn btn-success w-100" id="btnBusquedaRapida">
+                                                <i class="bi bi-lightning"></i> Búsqueda Rápida
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resultados de búsqueda rápida -->
+                    <div id="quickSearchResults" class="mb-4" style="display: none;">
+                        <div class="card border-success">
+                            <div class="card-header bg-success text-white">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-lightning-fill"></i> Resultados de Búsqueda Rápida
+                                    <button type="button" class="btn btn-sm btn-outline-light float-end" id="closeQuickSearch">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </h6>
+                            </div>
+                            <div class="card-body" id="quickSearchContent">
+                                <!-- Contenido dinámico -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Barra de acciones y estadísticas -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <a href="{% url 'datos_archivados:dashboard' %}" class="btn btn-primary">
+                                <i class="bi bi-arrow-left"></i> Volver al Dashboard
+                            </a>
+                            <button type="button" class="btn btn-success" id="btnCombinar">
+                                <i class="bi bi-arrow-down-up"></i> Combinar Datos
+                            </button>
+                            <button type="button" class="btn btn-info" id="btnModoSeleccion">
+                                <i class="bi bi-check-square"></i> Seleccionar Tablas
+                            </button>
+                            <button type="button" class="btn btn-danger" id="btnEliminar" style="display: none;" disabled>
+                                <i class="bi bi-trash"></i> Eliminar Seleccionadas (<span id="contadorSeleccionadas">0</span>)
+                            </button>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            {% if is_filtered %}
+                                <span class="badge bg-warning fs-6 me-2">
+                                    <i class="bi bi-funnel"></i> Filtrado: {{ total_tablas }} tablas | {{ total_registros_filtrados }} registros
+                                </span>
+                                <a href="{% url 'datos_archivados:tablas_list' %}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-x-circle"></i> Limpiar filtros
+                                </a>
+                            {% else %}
+                                <span class="badge bg-info fs-6">
+                                    <i class="bi bi-table"></i> {{ total_tablas }} tablas | 
+                                    <i class="bi bi-database"></i> {{ total_registros }} registros totales
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Mensaje de filtros activos -->
+                    {% if is_filtered %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Filtros activos:</strong> 
+                        Búsqueda "{{ search_query }}" en 
+                        {% if search_type == 'tabla' %}nombres de tablas
+                        {% elif search_type == 'contenido' %}contenido de registros
+                        {% else %}todos los campos{% endif %}
+                        - Mostrando {{ total_tablas }} de {{ total_registros }} tablas totales
+                    </div>
+                    {% endif %}
+                    
+                    {% if tablas_stats %}
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle"></i> Se encontraron <strong>{{ total_tablas }}</strong> tablas con datos archivados
+                    </div>
+                    
+                    <div class="row">
+                        {% for tabla in tablas_stats %}
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card h-100 shadow-sm hover-shadow tabla-card" data-tabla="{{ tabla.tabla_origen }}">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h5 class="card-title mb-0 flex-grow-1">
+                                            <i class="bi bi-table text-primary"></i>
+                                            {{ tabla.tabla_origen }}
+                                        </h5>
+                                        <div class="form-check checkbox-seleccion" style="display: none;">
+                                            <input class="form-check-input tabla-checkbox fs-4" type="checkbox" 
+                                                   value="{{ tabla.tabla_origen }}" 
+                                                   id="check_{{ forloop.counter }}"
+                                                   style="cursor: pointer; width: 1.5em; height: 1.5em;">
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="mb-3">
+                                        <p class="mb-2">
+                                            <i class="bi bi-database text-info"></i>
+                                            <strong>Registros:</strong> 
+                                            <span class="badge bg-info">{{ tabla.total_registros }}</span>
+                                        </p>
+                                        <p class="mb-2">
+                                            <i class="bi bi-clock text-secondary"></i>
+                                            <strong>Última migración:</strong><br>
+                                            <small>{{ tabla.ultima_migracion|date:"d/m/Y H:i" }}</small>
+                                        </p>
+                                    </div>
+                                    <a href="{% url 'datos_archivados:datos_list' tabla.tabla_origen %}" 
+                                       class="btn btn-success w-100 btn-ver-registros">
+                                        <i class="bi bi-eye"></i> Ver Registros
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <h5><i class="bi bi-info-circle"></i> No hay datos archivados</h5>
+                        <p>Aún no se han migrado datos desde la base de datos MariaDB.</p>
+                        <p>Para migrar datos:</p>
+                        <ol>
+                            <li>Vaya al <a href="{% url 'datos_archivados:dashboard' %}">Dashboard</a></li>
+                            <li>Haga clic en "Configurar Migración"</li>
+                            <li>Ingrese los datos de conexión de su base de datos MariaDB</li>
+                            <li>El sistema migrará automáticamente todos los datos</li>
+                        </ol>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación de Combinación -->
+<div class="modal fade" id="modalConfirmacionCombinacion" tabindex="-1" aria-labelledby="modalCombinacionLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="modalCombinacionLabel">
+                    <i class="bi bi-arrow-down-up"></i> Combinar Datos Archivados
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <strong>¿Qué hace esta función?</strong>
+                    <p class="mb-0 mt-2">Esta función combinará <strong>TODA</strong> la información de las tablas archivadas con las tablas activas de su base de datos:</p>
+                    <ul class="mt-2 mb-0">
+                        <li><strong>Copia TODOS los campos</strong> de cada registro</li>
+                        <li><strong>Crea campos automáticamente</strong> si no existen en las tablas actuales</li>
+                        <li><strong>Preserva contraseñas hasheadas</strong> para que los usuarios puedan iniciar sesión</li>
+                    </ul>
+                </div>
+                
+                <div class="mb-3">
+                    <h6><i class="bi bi-diagram-3"></i> Proceso de Combinación:</h6>
+                    <ul class="list-group">
+                        <li class="list-group-item">
+                            <strong>auth_user</strong> → Se combinarán con la tabla <code>auth_user</code> actual
+                            <br><small class="text-muted">✓ Usuarios archivados se fusionarán con usuarios existentes</small>
+                            <br><small class="text-success"><strong>✓ Contraseñas se procesarán automáticamente:</strong></small>
+                            <br><small class="text-muted">&nbsp;&nbsp;&nbsp;• Hasheadas → Se copian directamente</small>
+                            <br><small class="text-muted">&nbsp;&nbsp;&nbsp;• Texto plano → Se hashean automáticamente</small>
+                            <br><small class="text-success">✓ Los usuarios podrán iniciar sesión con sus contraseñas originales</small>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>auth_user_groups</strong> → Se asignarán grupos a usuarios
+                            <br><small class="text-muted">✓ Los grupos se crearán automáticamente si no existen</small>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Docencia_studentpersonalinformation</strong> → Se combinarán con <code>accounts_registro</code>
+                            <br><small class="text-muted">✓ Los campos coincidentes se mantendrán</small>
+                            <br><small class="text-muted">✓ Los nuevos campos se agregarán automáticamente</small>
+                            <br><small class="text-info">✓ Los usuarios se asignarán al grupo <strong>Estudiantes</strong></small>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Docencia_teacherpersonalinformation</strong> → Se combinarán con <code>accounts_registro</code>
+                            <br><small class="text-muted">✓ Los campos coincidentes se mantendrán</small>
+                            <br><small class="text-muted">✓ Los nuevos campos se agregarán automáticamente</small>
+                            <br><small class="text-success"><strong>✓ Los usuarios se asignarán al grupo PROFESORES</strong></small>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Todas las demás tablas</strong> → Cursos, matrículas, asistencias, calificaciones, etc.
+                            <br><small class="text-muted">✓ Se combinarán automáticamente manteniendo las relaciones</small>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <strong>Importante:</strong>
+                    <ul class="mb-0">
+                        <li>Los datos existentes no se eliminarán</li>
+                        <li>Los registros duplicados se actualizarán</li>
+                        <li>Los campos nuevos se agregarán a la tabla destino</li>
+                        <li><strong>TODOS los campos se copiarán automáticamente</strong></li>
+                        <li><strong>Los campos faltantes se crearán automáticamente</strong> en las tablas actuales</li>
+                        <li><strong>Las contraseñas se procesarán automáticamente:</strong>
+                            <ul>
+                                <li>Contraseñas hasheadas → Se copian directamente</li>
+                                <li>Contraseñas en texto plano → Se hashean automáticamente</li>
+                            </ul>
+                        </li>
+                        <li>Los usuarios podrán iniciar sesión con sus contraseñas originales</li>
+                        <li>Los grupos de usuarios se asignarán automáticamente</li>
+                        <li>Si un usuario ya existe, se actualizará en lugar de crear uno duplicado</li>
+                        <li>Este proceso puede tardar varios minutos dependiendo de la cantidad de datos</li>
+                    </ul>
+                </div>
+                
+                <div id="progressContainer" style="display: none;">
+                    <h6>Progreso de Combinación:</h6>
+                    <div class="progress mb-2" style="height: 25px;">
+                        <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" 
+                             role="progressbar" style="width: 0%">0%</div>
+                    </div>
+                    <div id="progressMessage" class="text-center">
+                        <small class="text-muted">Iniciando proceso...</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="btnCancelarCombinacion">
+                    <i class="bi bi-x-circle"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-success" id="btnConfirmarCombinacion">
+                    <i class="bi bi-arrow-down-up"></i> Sí, Combinar Datos
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación de Eliminación -->
+<div class="modal fade" id="modalConfirmacionEliminacion" tabindex="-1" aria-labelledby="modalConfirmacionLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="modalConfirmacionLabel">
+                    <i class="bi bi-exclamation-triangle"></i> Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <strong>¡ADVERTENCIA!</strong> Esta acción no se puede deshacer.
+                </div>
+                <p class="mb-3">Está a punto de eliminar <strong id="cantidadTablas">0</strong> tabla(s) y todos sus registros.</p>
+                <div class="mb-3">
+                    <strong>Tablas a eliminar:</strong>
+                    <ul id="listaTablas" class="mt-2"></ul>
+                </div>
+                <p class="text-danger mb-0">
+                    <i class="bi bi-info-circle"></i>
+                    Se eliminarán permanentemente todos los datos de estas tablas.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-danger" id="btnConfirmarEliminacion">
+                    <i class="bi bi-trash"></i> Sí, Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.hover-shadow {
+    transition: all 0.3s ease;
+}
+.hover-shadow:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+.tabla-card.seleccionada {
+    border: 3px solid #0d6efd !important;
+    background-color: #e7f3ff !important;
+    box-shadow: 0 0 15px rgba(13, 110, 253, 0.3) !important;
+}
+.checkbox-seleccion {
+    margin-left: 10px;
+}
+.tabla-checkbox {
+    cursor: pointer !important;
+    width: 1.5em !important;
+    height: 1.5em !important;
+    border: 2px solid #0d6efd !important;
+}
+.tabla-checkbox:checked {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+}
+.tabla-checkbox:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 5px rgba(13, 110, 253, 0.5);
+}
+
+/* Estilos para búsqueda */
+#searchInput {
+    border-radius: 0.375rem 0 0 0.375rem;
+}
+
+#clearSearch {
+    border-radius: 0 0.375rem 0.375rem 0;
+}
+
+#quickSearchResults {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.search-highlight {
+    background-color: #fff3cd;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+
+.quick-search-item {
+    transition: all 0.2s ease;
+}
+
+.quick-search-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Variables para búsqueda
+    const searchInput = document.getElementById('searchInput');
+    const searchType = document.getElementById('searchType');
+    const clearSearchBtn = document.getElementById('clearSearch');
+    const quickSearchBtn = document.getElementById('btnBusquedaRapida');
+    const quickSearchResults = document.getElementById('quickSearchResults');
+    const quickSearchContent = document.getElementById('quickSearchContent');
+    const closeQuickSearch = document.getElementById('closeQuickSearch');
+    
+    let searchTimeout;
+    
+    // Búsqueda rápida AJAX
+    function realizarBusquedaRapida() {
+        const query = searchInput.value.trim();
+        const type = searchType.value;
+        
+        if (!query) {
+            quickSearchResults.style.display = 'none';
+            return;
+        }
+        
+        // Mostrar loading
+        quickSearchContent.innerHTML = `
+            <div class="text-center py-3">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Buscando...</span>
+                </div>
+                <p class="mt-2 mb-0">Buscando "${query}"...</p>
+            </div>
+        `;
+        quickSearchResults.style.display = 'block';
+        
+        // Realizar búsqueda AJAX
+        const searchUrl = '{% url "datos_archivados:buscar_datos_ajax" %}';
+        fetch(`${searchUrl}?q=${encodeURIComponent(query)}&type=${type}&limit=5`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    quickSearchContent.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle"></i> ${data.error}
+                        </div>
+                    `;
+                    return;
+                }
+                
+                if (data.results.length === 0) {
+                    quickSearchContent.innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="bi bi-search"></i> No se encontraron resultados para "${query}"
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Mostrar resultados
+                let html = `
+                    <div class="mb-3">
+                        <strong><i class="bi bi-search"></i> Encontrados ${data.total} registros en ${data.results.length} tabla(s)</strong>
+                    </div>
+                `;
+                
+                data.results.forEach(tabla => {
+                    html += `
+                        <div class="card mb-3 border-success">
+                            <div class="card-header bg-light">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-table text-success"></i> ${tabla.tabla}
+                                    </h6>
+                                    <span class="badge bg-success">${tabla.total_registros} registros</span>
+                                </div>
+                            </div>
+                            <div class="card-body py-2">
+                    `;
+                    
+                    if (tabla.ejemplos.length > 0) {
+                        html += '<div class="row">';
+                        tabla.ejemplos.forEach(ejemplo => {
+                            html += `
+                                <div class="col-md-4 mb-2">
+                                    <div class="border rounded p-2 bg-light">
+                                        <small class="text-muted">ID: ${ejemplo.id}</small><br>
+                                        <strong>${ejemplo.nombre}</strong>
+                            `;
+                            
+                            if (ejemplo.campos_coincidentes.length > 0) {
+                                html += '<br><small class="text-success">';
+                                ejemplo.campos_coincidentes.forEach(campo => {
+                                    html += `<strong>${campo.campo}:</strong> ${campo.valor}<br>`;
+                                });
+                                html += '</small>';
+                            }
+                            
+                            html += `
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        html += '</div>';
+                    }
+                    
+                    html += `
+                                <div class="text-end mt-2">
+                                    <a href="/datos-archivados/tablas/${tabla.tabla}/" 
+                                       class="btn btn-sm btn-success">
+                                        <i class="bi bi-eye"></i> Ver todos los registros
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                quickSearchContent.innerHTML = html;
+            })
+            .catch(error => {
+                quickSearchContent.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i> Error en la búsqueda: ${error.message}
+                    </div>
+                `;
+            });
+    }
+    
+    // Event listeners para búsqueda
+    quickSearchBtn.addEventListener('click', realizarBusquedaRapida);
+    
+    // Búsqueda en tiempo real (con debounce)
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            if (searchInput.value.trim().length >= 2) {
+                realizarBusquedaRapida();
+            } else {
+                quickSearchResults.style.display = 'none';
+            }
+        }, 500);
+    });
+    
+    // Limpiar búsqueda
+    clearSearchBtn.addEventListener('click', function() {
+        searchInput.value = '';
+        quickSearchResults.style.display = 'none';
+        // Opcional: recargar página para mostrar todas las tablas
+        if (window.location.search) {
+            window.location.href = window.location.pathname;
+        }
+    });
+    
+    // Cerrar búsqueda rápida
+    closeQuickSearch.addEventListener('click', function() {
+        quickSearchResults.style.display = 'none';
+    });
+    
+    // Cambio en tipo de búsqueda
+    searchType.addEventListener('change', function() {
+        if (searchInput.value.trim()) {
+            realizarBusquedaRapida();
+        }
+    });
+    
+    // Variables para modo selección (código existente)
+    let modoSeleccion = false;
+    const btnModoSeleccion = document.getElementById('btnModoSeleccion');
+    const btnEliminar = document.getElementById('btnEliminar');
+    const contadorSeleccionadas = document.getElementById('contadorSeleccionadas');
+    const checkboxes = document.querySelectorAll('.tabla-checkbox');
+    const checkboxContainers = document.querySelectorAll('.checkbox-seleccion');
+    const botonesVerRegistros = document.querySelectorAll('.btn-ver-registros');
+    
+    // Activar/desactivar modo selección
+    btnModoSeleccion.addEventListener('click', function() {
+        modoSeleccion = !modoSeleccion;
+        
+        if (modoSeleccion) {
+            // Activar modo selección
+            btnModoSeleccion.innerHTML = '<i class="bi bi-x-circle"></i> Cancelar Selección';
+            btnModoSeleccion.classList.remove('btn-info');
+            btnModoSeleccion.classList.add('btn-secondary');
+            btnEliminar.style.display = 'inline-block';
+            
+            // Mostrar checkboxes con animación
+            checkboxContainers.forEach(container => {
+                container.style.display = 'flex';
+                container.style.alignItems = 'center';
+            });
+            
+            // Deshabilitar botones de ver registros
+            botonesVerRegistros.forEach(btn => {
+                btn.style.pointerEvents = 'none';
+                btn.style.opacity = '0.5';
+            });
+            
+            // Agregar clase a las tarjetas para indicar modo selección
+            document.querySelectorAll('.tabla-card').forEach(card => {
+                card.style.cursor = 'pointer';
+            });
+        } else {
+            // Desactivar modo selección
+            btnModoSeleccion.innerHTML = '<i class="bi bi-check-square"></i> Seleccionar Tablas';
+            btnModoSeleccion.classList.remove('btn-secondary');
+            btnModoSeleccion.classList.add('btn-info');
+            btnEliminar.style.display = 'none';
+            
+            // Ocultar checkboxes y desmarcar
+            checkboxContainers.forEach(container => {
+                container.style.display = 'none';
+            });
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            // Remover clase seleccionada
+            document.querySelectorAll('.tabla-card').forEach(card => {
+                card.classList.remove('seleccionada');
+            });
+            
+            // Habilitar botones de ver registros
+            botonesVerRegistros.forEach(btn => {
+                btn.style.pointerEvents = 'auto';
+                btn.style.opacity = '1';
+            });
+            
+            actualizarContador();
+        }
+    });
+    
+    // Manejar cambios en checkboxes
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const card = this.closest('.tabla-card');
+            if (this.checked) {
+                card.classList.add('seleccionada');
+            } else {
+                card.classList.remove('seleccionada');
+            }
+            actualizarContador();
+        });
+    });
+    
+    // Permitir seleccionar haciendo clic en la tarjeta (solo en modo selección)
+    document.querySelectorAll('.tabla-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            // Solo si está en modo selección y no se hizo clic en el botón o checkbox
+            if (modoSeleccion && !e.target.closest('.btn-ver-registros') && !e.target.closest('.tabla-checkbox')) {
+                const checkbox = this.querySelector('.tabla-checkbox');
+                if (checkbox) {
+                    checkbox.checked = !checkbox.checked;
+                    checkbox.dispatchEvent(new Event('change'));
+                }
+            }
+        });
+    });
+    
+    // Actualizar contador y estado del botón eliminar
+    function actualizarContador() {
+        const seleccionadas = document.querySelectorAll('.tabla-checkbox:checked').length;
+        contadorSeleccionadas.textContent = seleccionadas;
+        btnEliminar.disabled = seleccionadas === 0;
+    }
+    
+    // Manejar eliminación - Mostrar modal
+    btnEliminar.addEventListener('click', function() {
+        const seleccionadas = Array.from(document.querySelectorAll('.tabla-checkbox:checked'))
+            .map(cb => cb.value);
+        
+        if (seleccionadas.length === 0) return;
+        
+        // Actualizar contenido del modal
+        document.getElementById('cantidadTablas').textContent = seleccionadas.length;
+        
+        const listaTablas = document.getElementById('listaTablas');
+        listaTablas.innerHTML = '';
+        seleccionadas.forEach(tabla => {
+            const li = document.createElement('li');
+            li.innerHTML = `<i class="bi bi-table text-danger"></i> <strong>${tabla}</strong>`;
+            listaTablas.appendChild(li);
+        });
+        
+        // Mostrar modal
+        const modal = new bootstrap.Modal(document.getElementById('modalConfirmacionEliminacion'));
+        modal.show();
+    });
+    
+    // Confirmar eliminación desde el modal
+    document.getElementById('btnConfirmarEliminacion').addEventListener('click', function() {
+        const seleccionadas = Array.from(document.querySelectorAll('.tabla-checkbox:checked'))
+            .map(cb => cb.value);
+        
+        if (seleccionadas.length === 0) return;
+        
+        // Crear formulario y enviar
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{% url "datos_archivados:eliminar_tablas" %}';
+        
+        // CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (csrfToken) {
+            form.appendChild(csrfToken.cloneNode());
+        } else {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = '{{ csrf_token }}';
+            form.appendChild(csrfInput);
+        }
+        
+        // Agregar tablas seleccionadas
+        seleccionadas.forEach(tabla => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'tablas';
+            input.value = tabla;
+            form.appendChild(input);
+        });
+        
+        document.body.appendChild(form);
+        form.submit();
+    });
+    
+    // Manejar botón de combinar datos
+    const btnCombinar = document.getElementById('btnCombinar');
+    const btnConfirmarCombinacion = document.getElementById('btnConfirmarCombinacion');
+    const btnCancelarCombinacion = document.getElementById('btnCancelarCombinacion');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+    const progressMessage = document.getElementById('progressMessage');
+    
+    btnCombinar.addEventListener('click', function() {
+        const modal = new bootstrap.Modal(document.getElementById('modalConfirmacionCombinacion'));
+        modal.show();
+    });
+    
+    btnConfirmarCombinacion.addEventListener('click', function() {
+        // Deshabilitar botones
+        btnConfirmarCombinacion.disabled = true;
+        btnCancelarCombinacion.disabled = true;
+        btnConfirmarCombinacion.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Procesando...';
+        
+        // Mostrar barra de progreso
+        progressContainer.style.display = 'block';
+        
+        // Realizar petición AJAX
+        fetch('{% url "datos_archivados:combinar_datos" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Actualizar progreso al 100%
+                progressBar.style.width = '100%';
+                progressBar.textContent = '100%';
+                progressBar.classList.remove('progress-bar-animated');
+                progressMessage.innerHTML = `
+                    <div class="alert alert-success mt-3">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <strong>¡Combinación completada exitosamente!</strong>
+                        <ul class="mb-0 mt-2">
+                            <li><strong>Usuarios:</strong> ${data.usuarios_combinados || 0} combinados</li>
+                            <li><strong>Registros de estudiantes:</strong> ${data.registros_combinados || 0} combinados</li>
+                            <li><strong>Cursos académicos:</strong> ${data.cursos_academicos_combinados || 0} combinados</li>
+                            <li><strong>Cursos:</strong> ${data.cursos_combinados || 0} combinados</li>
+                            <li><strong>Matrículas:</strong> ${data.matriculas_combinadas || 0} combinadas</li>
+                            <li><strong>Asistencias:</strong> ${data.asistencias_combinadas || 0} combinadas</li>
+                            <li><strong>Calificaciones:</strong> ${data.calificaciones_combinadas || 0} combinadas</li>
+                            <li><strong>Notas individuales:</strong> ${data.notas_combinadas || 0} combinadas</li>
+                            <li><strong>Campos nuevos detectados:</strong> ${data.campos_agregados || 0}</li>
+                        </ul>
+                    </div>
+                `;
+                
+                // Recargar página después de 3 segundos
+                setTimeout(() => {
+                    window.location.reload();
+                }, 3000);
+            } else {
+                progressMessage.innerHTML = `
+                    <div class="alert alert-danger mt-3">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <strong>Error:</strong> ${data.error || 'Error desconocido'}
+                    </div>
+                `;
+                btnConfirmarCombinacion.disabled = false;
+                btnCancelarCombinacion.disabled = false;
+                btnConfirmarCombinacion.innerHTML = '<i class="bi bi-arrow-down-up"></i> Reintentar';
+            }
+        })
+        .catch(error => {
+            progressMessage.innerHTML = `
+                <div class="alert alert-danger mt-3">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <strong>Error de conexión:</strong> ${error.message}
+                </div>
+            `;
+            btnConfirmarCombinacion.disabled = false;
+            btnCancelarCombinacion.disabled = false;
+            btnConfirmarCombinacion.innerHTML = '<i class="bi bi-arrow-down-up"></i> Reintentar';
+        });
+    });
+});
+</script>
+{% endblock %}

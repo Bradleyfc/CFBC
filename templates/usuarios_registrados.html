@@ -50,6 +50,7 @@
                     <th>Móvil</th>
                     <th>Grado Académico</th>
                     <th>Ocupación</th>
+                    <th>Religioso</th>
                     <th>Título</th>
                     <th>Descargar Título</th>
                     <th>Grupo</th>
@@ -60,7 +61,16 @@
                 {% for registro in registros %}
                 <tr>
                     <td>
-                        <img src="{{ registro.image.url }}" alt="Imagen de perfil" width="50" height="50" class="rounded-circle">
+                        {% if registro.image and registro.image.name %}
+                            <img src="{{ registro.image.url }}" alt="Imagen de perfil" width="50" height="50" class="rounded-circle" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="rounded-circle bg-secondary align-items-center justify-content-center" style="width: 50px; height: 50px; display: none;">
+                                <i class="bi bi-person-fill text-white" style="font-size: 24px;"></i>
+                            </div>
+                        {% else %}
+                            <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                <i class="bi bi-person-fill text-white" style="font-size: 24px;"></i>
+                            </div>
+                        {% endif %}
                     </td>
                     <td>{{ registro.user.first_name }}</td>
                     <td>{{ registro.user.last_name }}</td>
@@ -83,6 +93,7 @@
                     <td>{{ registro.movil }}</td>
                     <td>{{ registro.get_grado_display }}</td>
                     <td>{{ registro.get_ocupacion_display }}</td>
+                    <td>{{ registro.es_religioso|yesno:"Sí,No" }}</td>
                     <td>{{ registro.titulo }}</td>
                     <td>
                         {% if registro.foto_titulo %}
@@ -98,7 +109,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="18" class="text-center">No hay usuarios registrados que coincidan con los filtros.</td>
+                    <td colspan="19" class="text-center">No hay usuarios registrados que coincidan con los filtros.</td>
                 </tr>
                 {% endfor %}
             </tbody>

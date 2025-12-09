@@ -1,0 +1,494 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Datos Archivados{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">
+                        <i class="bi bi-hdd-stack"></i>
+                        Dashboard de Datos Archivados
+                    </h3>
+                    <!-- Indicador de migración en progreso -->
+                    <div id="indicadorMigracion" class="d-none">
+                        <div class="d-flex align-items-center">
+                            <div class="spinner-border spinner-border-sm text-light me-2" role="status">
+                                <span class="visually-hidden">Migrando...</span>
+                            </div>
+                            <span class="badge bg-warning text-dark fs-6">
+                                <i class="bi bi-gear-fill"></i> Migración en Progreso
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if sin_permisos %}
+                    <div class="alert alert-danger">
+                        <h4><i class="bi bi-exclamation-triangle"></i> Sin Permisos</h4>
+                        <p>No tiene permisos para acceder a esta sección. Solo usuarios del grupo "Secretaria" pueden
+                            acceder.</p>
+                        <p><strong>Usuario actual:</strong> {{ user.username }}</p>
+                        <p><strong>Grupos:</strong>
+                            {% for grupo in user.groups.all %}
+                            {{ grupo.name }}{% if not forloop.last %}, {% endif %}
+                            {% empty %}
+                            Ninguno
+                            {% endfor %}
+                        </p>
+                        <div class="mt-3">
+                            <a href="{% url 'principal:profile' %}" class="btn btn-primary">Volver al Perfil</a>
+                            <a href="{% url 'datos_archivados:debug_permisos' %}" class="btn btn-info">Ver Debug</a>
+                        </div>
+                    </div>
+                    {% else %}
+
+                    <!-- Alerta de migración en progreso -->
+                    <div id="alertaMigracionProgreso" class="alert alert-info d-none">
+                        <div class="row align-items-center">
+                            <div class="col-md-2 text-center">
+                                <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                                    <span class="visually-hidden">Migrando...</span>
+                                </div>
+                            </div>
+                            <div class="col-md-10">
+                                <h4><i class="bi bi-gear-fill"></i> Migración Automática en Progreso</h4>
+                                <p class="mb-2" id="estadoMigracionDashboard">Procesando datos desde la base de datos remota...</p>
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                         role="progressbar" style="width: 0%" id="barraProgresoDashboard">
+                                        <span id="textoProgresoDashboard">Iniciando...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mensaje de bienvenida -->
+                    <div class="alert alert-success alert-dismissible" id="alertaBienvenida">
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                        <h4><i class="bi bi-check-circle"></i> ¡Sistema de Migración Automática Funcionando!</h4>
+                        <p><strong>Usuario:</strong> {{ user.username }}</p>
+                        <p>Bienvenido al sistema de migración automática de datos desde MariaDB.</p>
+                        {% if ultima_migracion and ultima_migracion.tablas_inspeccionadas > 0 %}
+                        <hr>
+                        <p class="mb-0">
+                            <i class="bi bi-info-circle"></i> 
+                            <strong>Última migración:</strong> 
+                            Se inspeccionaron {{ ultima_migracion.tablas_inspeccionadas }} tablas, 
+                            {{ ultima_migracion.tablas_con_datos }} con datos y 
+                            {{ ultima_migracion.tablas_vacias }} vacías.
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Estadísticas principales -->
+                    <div class="row mb-4">
+                        <!-- Primera fila -->
+                        <div class="col-md-4 col-lg-2 mb-3">
+                            <div class="card bg-primary text-white h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-database fs-3 mb-2"></i>
+                                    <h3 class="mb-1">{{ total_datos_archivados|default:0 }}</h3>
+                                    <p class="mb-0 small">Registros Archivados</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-lg-2 mb-3">
+                            <div class="card bg-success text-white h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-table fs-3 mb-2"></i>
+                                    <h3 class="mb-1">{{ total_tablas_migradas|default:0 }}</h3>
+                                    <p class="mb-0 small">Tablas con Datos</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-lg-2 mb-3">
+                            <div class="card text-white h-100" style="background-color: #c2185b;">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-search fs-3 mb-2"></i>
+                                    <h3 class="mb-1">{{ tablas_inspeccionadas_actuales|default:0 }}</h3>
+                                    <p class="mb-0 small">Tablas Inspeccionadas</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-lg-2 mb-3">
+                            <div class="card bg-secondary text-white h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-inbox fs-3 mb-2"></i>
+                                    <h3 class="mb-1">{{ tablas_vacias_actuales|default:0 }}</h3>
+                                    <p class="mb-0 small">Tablas Vacías</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-lg-2 mb-3">
+                            <div class="card bg-dark text-white h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-calendar-event fs-3 mb-2"></i>
+                                    <h3 class="mb-1" style="font-size: 1.2rem;">{% if ultima_migracion %}{{ ultima_migracion.fecha_inicio|date:"d/m/Y" }}{% else %}N/A{% endif %}</h3>
+                                    <p class="mb-0 small">Última Migración</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-lg-2 mb-3">
+                            <div class="card bg-warning text-dark h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-check-circle fs-3 mb-2"></i>
+                                    <h3 class="mb-1">{% if ultima_migracion %}{{ ultima_migracion.estado|title }}{% else %}Inactivo{% endif %}</h3>
+                                    <p class="mb-0 small">Estado</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Acciones principales -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card bg-primary text-white h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-download display-4 mb-3"></i>
+                                    <h4>Migración Automática</h4>
+                                    <p>Configure y ejecute la migración desde su base de datos MariaDB remota</p>
+                                    <a href="{% url 'datos_archivados:configurar_migracion' %}"
+                                        class="btn btn-light btn-lg">
+                                        <i class="bi bi-gear"></i> Configurar Migración
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-success text-white h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-table display-4 mb-3"></i>
+                                    <h4>Consultar Datos</h4>
+                                    <p>Explore y busque en todos los datos archivados migrados</p>
+                                    <a href="{% url 'datos_archivados:tablas_list' %}" class="btn btn-light btn-lg">
+                                        <i class="bi bi-search"></i> Ver Datos Archivados
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información del sistema -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="bi bi-info-circle"></i> Características del Sistema</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <ul class="list-unstyled">
+                                                <li><i class="bi bi-check-circle text-success"></i> <strong>Inspección
+                                                        automática</strong> de todas las tablas</li>
+                                                <li><i class="bi bi-check-circle text-success"></i> <strong>Modelos
+                                                        dinámicos</strong> creados automáticamente</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <ul class="list-unstyled">
+                                                <li><i class="bi bi-check-circle text-success"></i> <strong>Migración
+                                                        inteligente</strong> de tipos de datos</li>
+                                                <li><i class="bi bi-check-circle text-success"></i>
+                                                    <strong>Almacenamiento flexible</strong> en formato JSON
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast de Notificación -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="toastMigracion" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-success text-white">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <strong class="me-auto">Migración Completada</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            ¡La migración de datos se ha completado exitosamente! La página se actualizará automáticamente.
+        </div>
+    </div>
+</div>
+
+<script>
+// Verificar estado de migración cada 3 segundos
+let verificandoMigracion = false;
+let migracionEnProgreso = false;
+let notificacionMostrada = false;
+
+function verificarEstadoMigracion() {
+    fetch('{% url "datos_archivados:estado_migracion" %}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.en_progreso && !migracionEnProgreso) {
+                // Migración iniciada
+                migracionEnProgreso = true;
+                notificacionMostrada = false; // Reset para nueva migración
+                mostrarIndicadoresMigracion(data);
+                
+                // Guardar ID de migración en progreso
+                if (data.fecha_inicio) {
+                    localStorage.setItem('migracion_en_progreso', data.fecha_inicio);
+                }
+            } else if (data.en_progreso && migracionEnProgreso) {
+                // Migración en progreso - actualizar
+                actualizarIndicadoresMigracion(data);
+            } else if (!data.en_progreso && migracionEnProgreso) {
+                // Migración que estaba en progreso ahora completada
+                migracionEnProgreso = false;
+                ocultarIndicadoresMigracion();
+                
+                if (!notificacionMostrada) {
+                    notificacionMostrada = true;
+                    mostrarNotificacionCompletada();
+                    
+                    // Marcar esta migración como notificada
+                    const migracionId = localStorage.getItem('migracion_en_progreso');
+                    if (migracionId) {
+                        localStorage.setItem('ultima_notificacion', migracionId);
+                        localStorage.removeItem('migracion_en_progreso');
+                    }
+                    
+                    // Recargar página después de 3 segundos
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 3000);
+                }
+            } else if (data.completada_recientemente && !notificacionMostrada) {
+                // Verificar si ya notificamos esta migración
+                const ultimaNotificacion = localStorage.getItem('ultima_notificacion');
+                const migracionActual = data.fecha_inicio;
+                
+                if (ultimaNotificacion !== migracionActual) {
+                    notificacionMostrada = true;
+                    mostrarNotificacionCompletada();
+                    
+                    // Marcar como notificada
+                    localStorage.setItem('ultima_notificacion', migracionActual);
+                    
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 3000);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error verificando migración:', error);
+        });
+}
+
+function mostrarIndicadoresMigracion(data) {
+    // Mostrar indicador en header
+    const indicadorHeader = document.getElementById('indicadorMigracion');
+    if (indicadorHeader) {
+        indicadorHeader.classList.remove('d-none');
+    }
+    
+    // Mostrar alerta de progreso
+    const alertaProgreso = document.getElementById('alertaMigracionProgreso');
+    if (alertaProgreso) {
+        alertaProgreso.classList.remove('d-none');
+    }
+    
+    // Actualizar estado inicial
+    actualizarIndicadoresMigracion(data);
+}
+
+function actualizarIndicadoresMigracion(data) {
+    // Actualizar texto de estado
+    const estadoElement = document.getElementById('estadoMigracionDashboard');
+    if (estadoElement) {
+        estadoElement.textContent = `Estado: ${data.estado} - Host: ${data.host_origen}`;
+    }
+    
+    // Simular progreso basado en tiempo
+    const fechaInicio = new Date(data.fecha_inicio);
+    const tiempoTranscurrido = new Date() - fechaInicio;
+    const minutos = Math.floor(tiempoTranscurrido / 60000);
+    let progreso = Math.min(minutos * 15, 90); // 15% por minuto, máximo 90%
+    
+    const barraProgreso = document.getElementById('barraProgresoDashboard');
+    const textoProgreso = document.getElementById('textoProgresoDashboard');
+    
+    if (barraProgreso && textoProgreso) {
+        barraProgreso.style.width = progreso + '%';
+        textoProgreso.textContent = `${progreso}% - ${data.total_migrados || 0} registros`;
+    }
+}
+
+function ocultarIndicadoresMigracion() {
+    // Ocultar indicador en header
+    const indicadorHeader = document.getElementById('indicadorMigracion');
+    if (indicadorHeader) {
+        indicadorHeader.classList.add('d-none');
+    }
+    
+    // Ocultar alerta de progreso
+    const alertaProgreso = document.getElementById('alertaMigracionProgreso');
+    if (alertaProgreso) {
+        alertaProgreso.classList.add('d-none');
+    }
+}
+
+function mostrarNotificacionCompletada() {
+    // Verificar que no se haya mostrado ya
+    if (notificacionMostrada) {
+        return;
+    }
+    
+    const toast = new bootstrap.Toast(document.getElementById('toastMigracion'));
+    toast.show();
+    
+    // Notificación del navegador
+    if (Notification.permission === 'granted') {
+        new Notification('Migración Completada', {
+            body: '¡La migración de datos se ha completado! El dashboard se actualizará.',
+            icon: '/static/favicon.ico'
+        });
+    }
+    
+    console.log('Notificación de migración completada mostrada');
+}
+
+// Limpiar notificaciones antiguas (más de 1 hora)
+function limpiarNotificacionesAntiguas() {
+    const ultimaNotificacion = localStorage.getItem('ultima_notificacion');
+    if (ultimaNotificacion) {
+        try {
+            const fechaNotificacion = new Date(ultimaNotificacion);
+            const ahora = new Date();
+            const unaHora = 60 * 60 * 1000; // 1 hora en milisegundos
+            
+            if (ahora - fechaNotificacion > unaHora) {
+                localStorage.removeItem('ultima_notificacion');
+                localStorage.removeItem('migracion_en_progreso');
+                console.log('Notificaciones antiguas limpiadas');
+            }
+        } catch (e) {
+            // Si hay error parseando la fecha, limpiar
+            localStorage.removeItem('ultima_notificacion');
+            localStorage.removeItem('migracion_en_progreso');
+        }
+    }
+}
+
+// Manejar alerta de bienvenida
+function manejarAlertaBienvenida() {
+    const alerta = document.getElementById('alertaBienvenida');
+    if (!alerta) return;
+    
+    // Verificar si el usuario ya cerró la alerta
+    const alertaCerrada = localStorage.getItem('alerta_bienvenida_cerrada');
+    
+    if (alertaCerrada === 'true') {
+        alerta.style.display = 'none';
+    } else {
+        // Escuchar cuando se cierre la alerta
+        alerta.addEventListener('closed.bs.alert', function() {
+            localStorage.setItem('alerta_bienvenida_cerrada', 'true');
+            console.log('Alerta de bienvenida cerrada y guardada en localStorage');
+        });
+    }
+}
+
+// Función para mostrar la alerta de nuevo (útil para testing)
+function mostrarAlertaBienvenida() {
+    localStorage.removeItem('alerta_bienvenida_cerrada');
+    const alerta = document.getElementById('alertaBienvenida');
+    if (alerta) {
+        alerta.style.display = 'block';
+    }
+}
+
+// Inicializar alerta de bienvenida
+manejarAlertaBienvenida();
+
+// Limpiar notificaciones antiguas al cargar
+limpiarNotificacionesAntiguas();
+
+// Iniciar verificación cada 3 segundos
+setInterval(verificarEstadoMigracion, 3000);
+
+// Verificar inmediatamente al cargar la página
+verificarEstadoMigracion();
+
+// Solicitar permiso para notificaciones
+if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+}
+</script>
+
+<style>
+/* Animaciones para indicadores de migración */
+#indicadorMigracion .badge {
+    animation: pulse 2s infinite;
+}
+
+#alertaMigracionProgreso {
+    border-left: 5px solid #0d6efd;
+    animation: slideInDown 0.5s ease-out;
+}
+
+/* Estilos para alerta de bienvenida */
+#alertaBienvenida {
+    position: relative;
+    animation: fadeIn 0.5s ease-out;
+}
+
+#alertaBienvenida .btn-close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@keyframes slideInDown {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.spinner-border {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}

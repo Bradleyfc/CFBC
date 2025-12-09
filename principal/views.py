@@ -295,7 +295,7 @@ def generate_excel(context_dict={}):
         headers = [
             "Nombre", "Apellidos", "Email", "Nacionalidad", "Carnet ID", "Carnet Disponible", "Sexo",
             "Dirección", "Municipio", "Provincia", "Movil", "Grado Académico",
-            "Ocupación", "Título", "Título Disponible", "Grupo", "Fecha de Registro"
+            "Ocupación", "Religioso", "Título", "Título Disponible", "Grupo", "Fecha de Registro"
         ]
         for col_num, header in enumerate(headers, 1):
             cell = ws_usuarios.cell(row=1, column=col_num, value=header)
@@ -319,10 +319,11 @@ def generate_excel(context_dict={}):
             ws_usuarios.cell(row=row_num, column=11, value=registro.movil)
             ws_usuarios.cell(row=row_num, column=12, value=registro.get_grado_display())
             ws_usuarios.cell(row=row_num, column=13, value=registro.get_ocupacion_display())
-            ws_usuarios.cell(row=row_num, column=14, value=registro.titulo)
-            ws_usuarios.cell(row=row_num, column=15, value="Sí" if registro.foto_titulo else "No")
-            ws_usuarios.cell(row=row_num, column=16, value=registro.user.groups.first().name if registro.user.groups.first() else '')
-            ws_usuarios.cell(row=row_num, column=17, value=registro.user.date_joined.strftime("%d/%m/%Y"))
+            ws_usuarios.cell(row=row_num, column=14, value="Sí" if registro.es_religioso else "No")
+            ws_usuarios.cell(row=row_num, column=15, value=registro.titulo)
+            ws_usuarios.cell(row=row_num, column=16, value="Sí" if registro.foto_titulo else "No")
+            ws_usuarios.cell(row=row_num, column=17, value=registro.user.groups.first().name if registro.user.groups.first() else '')
+            ws_usuarios.cell(row=row_num, column=18, value=registro.user.date_joined.strftime("%d/%m/%Y"))
             
             for col_num in range(1, len(headers) + 1):
                 ws_usuarios.cell(row=row_num, column=col_num).border = border
@@ -761,6 +762,10 @@ def registro(request):
     return render(request, 'registration/registro.html', data)
 
 def verify_email(request):
+    if 'verification_code' not in request.session or 'user_form_data' not in request.session:
+        messages.error(request, 'La sesión ha expirado. Por favor, inicie el proceso de registro nuevamente.')
+        return redirect('principal:registro')
+    
     if request.method == 'POST':
         code = request.POST.get('code')
         if code == request.session.get('verification_code'):
@@ -826,12 +831,75 @@ def verify_email(request):
 
     return render(request, 'registration/verify_email.html')
 
+def registro_resend_code(request):
+    """
+    Vista para reenviar el código de verificación de registro.
+    """
+    if 'user_form_data' not in request.session or 'verification_code' not in request.session:
+        messages.error(request, 'La sesión ha expirado. Por favor, inicie el proceso de registro nuevamente.')
+        return redirect('principal:registro')
+    
+    user_form_data = request.session.get('user_form_data')
+    email = user_form_data.get('email')
+    
+    if not email:
+        messages.error(request, 'No se encontró el correo electrónico. Por favor, inicie el proceso nuevamente.')
+        return redirect('principal:registro')
+    
+    # Generar nuevo código aleatorio de 4 dígitos
+    verification_code = str(random.randint(1000, 9999))
+    request.session['verification_code'] = verification_code
+    
+    # Enviar email con el nuevo código
+    email_text = 'Bienvenido al Centro Fray Bartolome de las Casas, para completar su registro ingrese el siguiente codigo : ' + verification_code
+    try:
+        send_mail(
+            'Código de Verificación - Centro Fray Bartolome de las Casas',
+            email_text,
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
+            fail_silently=False,
+        )
+        messages.success(request, 'Se ha reenviado un nuevo código de verificación a su correo electrónico.')
+    except Exception as e:
+        print(f"Error al enviar email: {str(e)}")
+        messages.error(request, 'Error al reenviar el código de verificación. Por favor, intente nuevamente más tarde.')
+    
+    return redirect('principal:verify_email')
+
 # Vista para manejar la redirección después del login
 
 class LoginRedirectView(LoginRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         user = request.user
         if user.is_authenticated:
+            # Verificar si el usuario fue creado automáticamente desde datos archivados
+            if request.session.get('usuario_creado_automaticamente'):
+                fuente = request.session.get('usuario_creado_desde', 'datos_archivados')
+                
+                if fuente == 'datos_dinamicos':
+                    messages.success(
+                        request, 
+                        f'¡Bienvenido de vuelta, {user.get_full_name() or user.username}! '
+                        'Su cuenta ha sido creada automáticamente desde los datos archivados. '
+                        'Ahora puede acceder a todos los servicios del sistema. '
+                        'Se le ha enviado un email con los detalles de su cuenta.'
+                    )
+                else:
+                    messages.success(
+                        request, 
+                        f'¡Bienvenido de vuelta, {user.get_full_name() or user.username}! '
+                        'Su cuenta ha sido reactivada automáticamente desde los datos archivados. '
+                        'Ahora puede acceder a todos los servicios del sistema. '
+                        'Se le ha enviado un email con los detalles de su cuenta.'
+                    )
+                
+                # Limpiar las variables de sesión
+                del request.session['usuario_creado_automaticamente']
+                if 'usuario_creado_desde' in request.session:
+                    del request.session['usuario_creado_desde']
+            
+            # Redirección normal según el grupo del usuario
             if user.groups.filter(name='Profesores').exists() or user.groups.filter(name='Administracion').exists() or user.groups.filter(name='Secretaria').exists():
                 return redirect('principal:profile')  # Redirige a la página de perfil del profesor o el admin
             else:
@@ -2481,6 +2549,41 @@ def password_reset_verify(request):
             messages.error(request, 'El código ingresado no es válido. Por favor, intente nuevamente.')
     
     return render(request, 'registration/password_reset_verify.html')
+
+def password_reset_resend_code(request):
+    """
+    Vista para reenviar el código de verificación de recuperación de contraseña.
+    """
+    if 'reset_user_id' not in request.session:
+        messages.error(request, 'La sesión ha expirado. Por favor, inicie el proceso nuevamente.')
+        return redirect('principal:password_reset_request')
+    
+    try:
+        user = User.objects.get(id=request.session.get('reset_user_id'))
+        
+        # Generar nuevo código aleatorio de 4 dígitos
+        verification_code = str(random.randint(1000, 9999))
+        request.session['reset_verification_code'] = verification_code
+        
+        # Enviar email con el nuevo código
+        email_text = f'Para restablecer su contraseña en el Centro Fray Bartolome de las Casas, ingrese el siguiente código: {verification_code}'
+        try:
+            send_mail(
+                'Código para Restablecer Contraseña - Centro Fray Bartolome de las Casas',
+                email_text,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,
+            )
+            messages.success(request, 'Se ha reenviado un nuevo código de verificación a su correo electrónico.')
+        except Exception as e:
+            print(f"Error al enviar email: {str(e)}")
+            messages.error(request, 'Error al reenviar el código de verificación. Por favor, intente nuevamente más tarde.')
+    except User.DoesNotExist:
+        messages.error(request, 'Ha ocurrido un error. Por favor, inicie el proceso nuevamente.')
+        return redirect('principal:password_reset_request')
+    
+    return redirect('principal:password_reset_verify')
 
 def password_reset_confirm(request):
     """
