@@ -215,15 +215,15 @@
 
 
 
-          <!-- Agregando la informacion del curso  -->
-          {% if course.status == 'F' %}
-          <h5><span class="badge bg-danger w-100">{{course.get_status_display|upper}}</span></h5>
-          {% elif course.status == 'P' %}
-          <h5><span class="badge bg-warning text-dark w-100">{{course.get_status_display|upper}}</span></h5>
-          {% elif course.status == 'I' %}
-          <h5><span class="badge bg-success w-100">{{course.get_status_display|upper}}</span></h5>
-          {% elif course.status == 'IT' %}
-          <h5><span class="badge bg-info w-100">{{course.get_status_display|upper}}</span></h5>
+          <!-- Agregando la informacion del curso con estado dinámico -->
+          {% if course.get_dynamic_status == 'F' %}
+          <h5><span class="badge bg-danger w-100">{{course.get_dynamic_status_display|upper}}</span></h5>
+          {% elif course.get_dynamic_status == 'P' %}
+          <h5><span class="badge bg-warning text-dark w-100">{{course.get_dynamic_status_display|upper}}</span></h5>
+          {% elif course.get_dynamic_status == 'I' %}
+          <h5><span class="badge bg-success w-100">{{course.get_dynamic_status_display|upper}}</span></h5>
+          {% elif course.get_dynamic_status == 'IT' %}
+          <h5><span class="badge bg-info w-100">{{course.get_dynamic_status_display|upper}}</span></h5>
           {% endif %}
 
 
@@ -238,13 +238,13 @@
           <h5><span class="badge bg-danger w-100">Aplicación Denegada</span></h5>
           {% elif course.is_enrolled %}
           <p class="fw-bold bg-light text-center">Ya estás inscrito</p>
-          {% elif course.status == 'I' and course.formulario_aplicacion %}
+          {% elif course.get_dynamic_status == 'I' and course.formulario_aplicacion %}
           <div class="text-center">
             <a class="btn btn-sm btn-success" href="{% url 'principal:aplicar_curso' course.id %}">
               <i class="bi bi-file-earmark-text"></i> Aplicar al Curso
             </a>
           </div>
-          {% elif course.status == 'I' %}
+          {% elif course.get_dynamic_status == 'I' %}
           <!-- No mostrar nada si no hay formulario -->
           <!-- <p class="text-muted small">
                 Estado: {{ course.status }} | 
