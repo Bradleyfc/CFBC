@@ -1929,9 +1929,27 @@ class FormularioPreguntasView(LoginRequiredMixin, SecretariaRequiredMixin, Updat
                 self.request.POST, instance=formulario
             )
         else:
-            context['pregunta_formset'] = PreguntaFormularioFormSet(instance=formulario)
+            formset = PreguntaFormularioFormSet(instance=formulario)
+            
+            # Si viene el parámetro add_new, agregar una nueva pregunta con el orden correcto
+            if self.request.GET.get('add_new') == '1':
+                # Calcular el siguiente orden disponible
+                max_orden = formulario.preguntas.aggregate(Max('orden'))['orden__max']
+                siguiente_orden = (max_orden + 1) if max_orden is not None else 0
+                
+                # Crear una nueva instancia de pregunta con el orden correcto
+                nueva_pregunta = PreguntaFormulario(formulario=formulario, orden=siguiente_orden)
+                
+                # Agregar la nueva pregunta a las instancias del formset
+                formset.extra = 1
+                # Crear un nuevo formset que incluya la nueva pregunta con valores por defecto
+                initial_data = [{'orden': siguiente_orden, 'requerida': True}]
+                formset = PreguntaFormularioFormSet(instance=formulario, initial=initial_data)
+            
+            context['pregunta_formset'] = formset
         
         context['formulario'] = formulario
+        context['add_new'] = self.request.GET.get('add_new') == '1'
         return context
     
     def form_valid(self, form):
@@ -2115,7 +2133,7 @@ class PreguntaOpcionesView(LoginRequiredMixin, SecretariaRequiredMixin, UpdateVi
         return self.render_to_response(context)
     
     def get_success_url(self):
-        return reverse('principal:formulario_preguntas', kwargs={'pk': self.object.formulario.pk})
+        return reverse('principal:formulario_preguntas', kwargs={'pk': self.object.formulario.pk}) + '?add_new=1'
 
 # Vistas para los estudiantes
 
@@ -2416,19 +2434,23 @@ def guardar_pregunta_y_redirigir(request, formulario_id):
         requerida_value = request.POST.get('requerida', 'True')
         requerida = requerida_value.lower() == 'true' if isinstance(requerida_value, str) else bool(requerida_value)
         
+        # Calcular el siguiente orden disponible
+        max_orden = formulario.preguntas.aggregate(models.Max('orden'))['orden__max']
+        siguiente_orden = (max_orden + 1) if max_orden is not None else 0
+        
         # Imprimir información de depuración
         print(f"Guardando pregunta para formulario {formulario_id}")
         print(f"Texto: {request.POST.get('texto', '')}")
         print(f"Tipo: {request.POST.get('tipo', 'seleccion_multiple')}")
         print(f"Requerida: {requerida}")
-        print(f"Orden: {int(request.POST.get('orden', 0))}")
+        print(f"Orden calculado automáticamente: {siguiente_orden}")
         
         pregunta = PreguntaFormulario(
             formulario=formulario,
             texto=request.POST.get('texto', ''),
             tipo=request.POST.get('tipo', 'seleccion_multiple'),
             requerida=requerida,
-            orden=int(request.POST.get('orden', 0))
+            orden=siguiente_orden
         )
         pregunta.save()
         

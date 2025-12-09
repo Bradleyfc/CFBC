@@ -2,6 +2,7 @@ from cProfile import label
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from django.db import models
 from accounts.models import Registro
 from .models import Curso, Calificaciones, NotaIndividual, FormularioAplicacion, PreguntaFormulario, OpcionRespuesta, SolicitudInscripcion, RespuestaEstudiante
 from crispy_forms.helper import FormHelper
@@ -330,10 +331,29 @@ OpcionRespuestaFormSet = inlineformset_factory(
     fields=['texto', 'orden']
 )
 
+class PreguntaFormularioFormSetClass(forms.BaseInlineFormSet):
+    def save(self, commit=True):
+        instances = super().save(commit=False)
+        
+        for instance in instances:
+            if not instance.pk and instance.orden == 0:
+                # Si es una nueva instancia y el orden es 0, calcular el siguiente orden
+                max_orden = self.instance.preguntas.aggregate(models.Max('orden'))['orden__max']
+                instance.orden = (max_orden + 1) if max_orden is not None else 0
+            
+            if commit:
+                instance.save()
+        
+        if commit:
+            self.save_m2m()
+        
+        return instances
+
 PreguntaFormularioFormSet = inlineformset_factory(
     FormularioAplicacion,
     PreguntaFormulario,
     form=PreguntaFormularioForm,
+    formset=PreguntaFormularioFormSetClass,
     extra=1,  # Mantenemos extra=1 para que el botón "Agregar Pregunta" funcione correctamente
     can_delete=True,
     fields=['texto', 'tipo', 'requerida', 'orden']

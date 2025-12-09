@@ -139,16 +139,22 @@
         console.clear(); // Limpiar la consola para depuración
         console.log('DOM cargado, inicializando script...');
 
-        // Ocultar la primera fila al cargar la página
+        // Ocultar la primera fila al cargar la página, excepto si viene de agregar respuestas
+        const addNew = {{ add_new|yesno:"true,false" }};
         const formsetRows = document.querySelectorAll('.formset-row');
-        if (formsetRows.length > 0) {
-            // Solo ocultar si no hay preguntas guardadas (verificar si tiene ID)
+        if (formsetRows.length > 0 && !addNew) {
+            // Solo ocultar si no hay preguntas guardadas (verificar si tiene ID) y no viene de add_new
             const firstRow = formsetRows[0];
             const idField = firstRow.querySelector('input[name$="-id"]');
             if (!idField || !idField.value) {
                 firstRow.style.display = 'none';
                 console.log('Primera fila oculta al cargar la página');
             }
+        } else if (addNew && formsetRows.length > 0) {
+            // Si viene de add_new, asegurarse de que la última fila (nueva) esté visible
+            const lastRow = formsetRows[formsetRows.length - 1];
+            lastRow.style.display = '';
+            console.log('Mostrando nueva fila porque viene de add_new');
         }
 
         // Ocultar las etiquetas de los campos DELETE
@@ -439,10 +445,27 @@
                         input.value = '';
                     });
                     
-                    // Asegurarse de que el campo orden tenga un valor
+                    // Asegurarse de que el checkbox requerida esté marcado
+                    const requeridaCheckbox = firstRow.querySelector('input[name$="-requerida"]');
+                    if (requeridaCheckbox) {
+                        requeridaCheckbox.checked = true;
+                    }
+                    
+                    // Asegurarse de que el campo orden tenga un valor correcto
                     const ordenInput = firstRow.querySelector('input[name$="-orden"]');
                     if (ordenInput) {
-                        ordenInput.value = '0';
+                        // Calcular el siguiente orden disponible
+                        let maxOrden = -1;
+                        document.querySelectorAll('input[name$="-orden"]').forEach(function(input) {
+                            if (input !== ordenInput) { // Excluir el input actual
+                                const valor = parseInt(input.value) || 0;
+                                if (valor > maxOrden) {
+                                    maxOrden = valor;
+                                }
+                            }
+                        });
+                        const siguienteOrden = maxOrden + 1;
+                        ordenInput.value = siguienteOrden.toString();
                     }
                     
                     // Permitir nuevas adiciones después de un breve retraso
@@ -477,13 +500,28 @@
                     if (input.type !== 'checkbox' && !name.includes('-orden')) {
                         input.value = '';
                     } else if (input.type === 'checkbox') {
-                        input.checked = false;
+                        // Solo desmarcar el checkbox DELETE, mantener marcado el checkbox requerida
+                        if (name.includes('-DELETE')) {
+                            input.checked = false;
+                        } else if (name.includes('-requerida')) {
+                            input.checked = true; // Mantener marcado por defecto
+                        }
                     }
 
-                    // Establecer un valor para el campo orden basado en el índice
+                    // Establecer un valor para el campo orden basado en el máximo orden existente + 1
                     if (name && name.includes('-orden')) {
-                        input.value = currentFormCount;
-                        input.setAttribute('value', currentFormCount);
+                        // Calcular el siguiente orden disponible
+                        let maxOrden = -1;
+                        document.querySelectorAll('input[name$="-orden"]').forEach(function(ordenInput) {
+                            const valor = parseInt(ordenInput.value) || 0;
+                            if (valor > maxOrden) {
+                                maxOrden = valor;
+                            }
+                        });
+                        const siguienteOrden = maxOrden + 1;
+                        
+                        input.value = siguienteOrden;
+                        input.setAttribute('value', siguienteOrden);
                         input.style.width = '80px';
                     }
 
