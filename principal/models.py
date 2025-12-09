@@ -46,6 +46,41 @@ class Curso(models.Model):
     enrollment_deadline = models.DateField(verbose_name='Fecha límite de inscripción', null=True, blank=True)
     start_date = models.DateField(verbose_name='Fecha de inicio del curso', null=True, blank=True)
 
+    def get_dynamic_status(self):
+        """
+        Obtiene el estado dinámico del curso basado en la fecha límite de inscripción
+        y la fecha actual del servidor.
+        """
+        if not self.enrollment_deadline:
+            # Si no hay fecha límite, usar el estado manual
+            return self.status
+        
+        # Obtener la fecha actual del servidor
+        today = date.today()
+        
+        # Si ya pasó la fecha límite de inscripción
+        if today > self.enrollment_deadline:
+            # Si el curso estaba en inscripción, cambiar a "Plazo Terminado"
+            if self.status == 'I':
+                return 'IT'
+            # Para otros estados, mantener el estado actual
+            return self.status
+        else:
+            # Si aún no ha pasado la fecha límite
+            # Si el estado manual es "Plazo Terminado" pero aún no ha pasado la fecha, 
+            # cambiar a "En inscripción"
+            if self.status == 'IT':
+                return 'I'
+            # Para otros estados, mantener el estado actual
+            return self.status
+    
+    def get_dynamic_status_display(self):
+        """
+        Obtiene la descripción del estado dinámico
+        """
+        status_dict = dict(self.STATUS_CHOICES)
+        return status_dict.get(self.get_dynamic_status(), self.get_status_display())
+
     def __str__(self):
         if self.curso_academico:
             return f"{self.name} ({self.curso_academico.nombre})"
