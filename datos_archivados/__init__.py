@@ -1,0 +1,1 @@
+# Aplicación para gestión de datos archivados desde MariaDB

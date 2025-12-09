@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Verificación de Email - Reclamación de Cuenta{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="text-center mb-0">
+                        <i class="fas fa-shield-alt"></i>
+                        Verificación de Email
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-envelope-open-text fa-3x text-primary mb-3"></i>
+                        <p class="lead">Se ha enviado un código de verificación a:</p>
+                        <p class="h5 text-info">{{ email }}</p>
+                        <p class="text-muted">Por favor, revise su bandeja de entrada y spam.</p>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label for="code" class="form-label text-center d-block">
+                                <strong>Ingrese el código de 4 dígitos:</strong>
+                            </label>
+                            <input type="text" 
+                                   class="form-control text-center mx-auto" 
+                                   style="font-size: 2em; width: 200px; letter-spacing: 0.5em;" 
+                                   id="code" 
+                                   name="code" 
+                                   required 
+                                   maxlength="4" 
+                                   pattern="[0-9]{4}"
+                                   placeholder="— — — —"
+                                   autocomplete="off">
+                            <div class="form-text text-center">
+                                El código expira en 15 minutos
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-check-circle"></i>
+                                Verificar Código
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="text-center mt-4">
+                        <hr>
+                        <p class="text-muted">¿No recibió el código?</p>
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            <a href="{% url 'datos_archivados:reenviar_codigo_reclamacion' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-redo"></i>
+                                Reenviar Código
+                            </a>
+                            <a href="{% url 'datos_archivados:buscar_usuario' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i>
+                                Volver a Buscar
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mt-4">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Importante:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>El código es válido por 15 minutos</li>
+                            <li>Solo puede usar el código una vez</li>
+                            <li>Si no recibe el email, verifique su carpeta de spam</li>
+                            <li>El código debe tener exactamente 4 dígitos</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const codeInput = document.getElementById('code');
+    
+    // Auto-focus en el campo de código
+    codeInput.focus();
+    
+    // Solo permitir números
+    codeInput.addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^0-9]/g, '');
+        
+        // Auto-submit cuando se ingresen 4 dígitos
+        if (this.value.length === 4) {
+            // Pequeño delay para mejor UX
+            setTimeout(() => {
+                this.form.submit();
+            }, 500);
+        }
+    });
+    
+    // Prevenir pegar texto no numérico
+    codeInput.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const paste = (e.clipboardData || window.clipboardData).getData('text');
+        const numericPaste = paste.replace(/[^0-9]/g, '').substring(0, 4);
+        this.value = numericPaste;
+        
+        if (numericPaste.length === 4) {
+            setTimeout(() => {
+                this.form.submit();
+            }, 500);
+        }
+    });
+});
+</script>
+{% endblock %}

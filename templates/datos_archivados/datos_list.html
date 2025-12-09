@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block title %}Datos Archivados{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">
+                        <i class="bi bi-table"></i>
+                        Datos de: <span class="badge bg-light text-dark">{{ tabla_actual }}</span>
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <!-- Breadcrumb -->
+                    <nav aria-label="breadcrumb" class="mb-3">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'datos_archivados:dashboard' %}">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'datos_archivados:tablas_list' %}">Tablas</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">{{ tabla_actual }}</li>
+                        </ol>
+                    </nav>
+                    
+                    <!-- Barra de búsqueda -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card bg-light">
+                                <div class="card-body py-3">
+                                    <div class="row g-3 align-items-end">
+                                        <div class="col-md-12">
+                                            <label for="searchInput" class="form-label">
+                                                <i class="bi bi-search"></i> Búsqueda en tiempo real
+                                            </label>
+                                            <div class="input-group">
+                                                <input type="text" 
+                                                       class="form-control" 
+                                                       id="searchInput" 
+                                                       placeholder="Buscar por nombre, email, username..."
+                                                       autocomplete="off">
+                                                <button class="btn btn-outline-secondary" type="button" id="clearSearch" title="Limpiar búsqueda">
+                                                    <i class="bi bi-x-circle"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Barra de acciones -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <a href="{% url 'datos_archivados:tablas_list' %}" class="btn btn-primary">
+                                <i class="bi bi-arrow-left"></i> Volver a Tablas
+                            </a>
+                            {% if tabla_actual %}
+                            <a href="{% url 'datos_archivados:exportar_tabla_excel' tabla_actual %}" class="btn btn-success ms-2">
+                                <i class="bi bi-file-earmark-excel"></i> Exportar a Excel
+                            </a>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <span class="badge bg-info fs-6" id="resultCount">
+                                <i class="bi bi-database"></i> {{ total_registros }} registros
+                            </span>
+                        </div>
+                    </div>
+                    
+                    {% if datos %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="datosTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Tabla</th>
+                                    <th>ID Original</th>
+                                    <th>Nombre/Descripción</th>
+                                    <th>Fecha Migración</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for dato in datos %}
+                                <tr>
+                                    <td>{{ dato.pk }}</td>
+                                    <td><span class="badge bg-secondary">{{ dato.tabla_origen }}</span></td>
+                                    <td>{{ dato.id_original }}</td>
+                                    <td>{{ dato.obtener_nombre_legible }}</td>
+                                    <td>{{ dato.fecha_migracion|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        <a href="{% url 'datos_archivados:dato_detail' dato.pk %}" 
+                                           class="btn btn-sm btn-info" 
+                                           title="Ver detalles completos">
+                                            <i class="bi bi-eye"></i> Ver Detalles
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <h5><i class="bi bi-info-circle"></i> No hay datos archivados</h5>
+                        <p>Aún no se han migrado datos desde la base de datos MariaDB.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Búsqueda rápida del lado del cliente
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const clearButton = document.getElementById('clearSearch');
+    const datosTable = document.getElementById('datosTable');
+    const resultCount = document.getElementById('resultCount');
+    
+    if (!searchInput || !datosTable) return;
+    
+    const tbody = datosTable.querySelector('tbody');
+    if (!tbody) return;
+    
+    // Guardar todas las filas originales
+    const allRows = Array.from(tbody.querySelectorAll('tr'));
+    const totalRows = allRows.length;
+    
+    // Función de búsqueda
+    function filtrarTabla() {
+        const query = searchInput.value.toLowerCase().trim();
+        let visibleCount = 0;
+        
+        allRows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            if (query === '' || text.includes(query)) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        // Actualizar contador
+        if (resultCount) {
+            if (query === '') {
+                resultCount.innerHTML = `<i class="bi bi-database"></i> ${totalRows} registros`;
+            } else {
+                resultCount.innerHTML = `<i class="bi bi-database"></i> ${visibleCount} de ${totalRows} registros`;
+            }
+        }
+    }
+    
+    // Event listener para búsqueda en tiempo real
+    searchInput.addEventListener('input', filtrarTabla);
+    
+    // Botón para limpiar búsqueda
+    if (clearButton) {
+        clearButton.addEventListener('click', function() {
+            searchInput.value = '';
+            filtrarTabla();
+            searchInput.focus();
+        });
+    }
+});
+</script>
+{% endblock %}

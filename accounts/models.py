@@ -42,6 +42,7 @@ class Registro(models.Model):
     )
     titulo = models.CharField(max_length=150, null=True, blank = True, verbose_name='Título')
     foto_titulo = models.ImageField(upload_to='documentos/titulos/', null=True, blank=True, verbose_name='Foto del Título')
+    es_religioso = models.BooleanField(default=False, verbose_name='Es Religioso')
    
 
     class Meta:

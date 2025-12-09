@@ -70,7 +70,11 @@ urlpatterns = [
     # Rutas para recuperación de contraseña
     path('password-reset/', views.password_reset_request, name='password_reset_request'),
     path('password-reset/verify/', views.password_reset_verify, name='password_reset_verify'),
+    path('password-reset/resend-code/', views.password_reset_resend_code, name='password_reset_resend_code'),
     path('password-reset/confirm/', views.password_reset_confirm, name='password_reset_confirm'),
+    
+    # Rutas para registro
+    path('registro/resend-code/', views.registro_resend_code, name='registro_resend_code'),
     
     # Rutas para registro de respuestas de formularios
     path('registro-respuestas/', RegistroRespuestasGeneralView.as_view(), name='registro_respuestas_general'),

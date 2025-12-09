@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Acceso Denegado{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card mt-5">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Acceso Denegado
+                    </h3>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <i class="bi bi-lock display-1 text-danger mb-3"></i>
+                        <h4>No tiene permisos para acceder a esta sección</h4>
+                        <p class="text-muted">
+                            El acceso al sistema de datos archivados está restringido a usuarios con permisos de secretaría o administración.
+                        </p>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h6><i class="bi bi-info-circle"></i> ¿Necesita acceso?</h6>
+                        <p class="mb-0">
+                            Contacte al administrador del sistema para solicitar permisos de secretaría o administración.
+                        </p>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'principal:home' %}" class="btn btn-primary">
+                            <i class="bi bi-house"></i> Volver al Inicio
+                        </a>
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'principal:profile' %}" class="btn btn-secondary ml-2">
+                            <i class="bi bi-person"></i> Mi Perfil
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

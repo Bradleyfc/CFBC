@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Reclamar Cuenta Archivada{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-check"></i>
+                        Reclamar Cuenta Archivada
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Datos encontrados en archivo:</strong><br>
+                        Se encontraron los siguientes datos de su cuenta anterior. Revise la información y establezca una nueva contraseña para reactivar su cuenta.
+                    </div>
+
+                    <!-- Información del usuario encontrado -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6>Información Básica:</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Usuario:</strong> {{ username }}</li>
+                                <li><strong>Nombre:</strong> {{ first_name|default:"No especificado" }}</li>
+                                <li><strong>Apellidos:</strong> {{ last_name|default:"No especificado" }}</li>
+                                <li><strong>Email:</strong> {{ email|default:"No especificado" }}</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Información Adicional:</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Fuente:</strong> {{ dato.tabla_origen }}</li>
+                                <li><strong>ID Original:</strong> {{ dato.id_original }}</li>
+                                <li><strong>Fecha de Archivo:</strong> {{ dato.fecha_migracion|date:"d/m/Y H:i" }}</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Formulario para establecer nueva contraseña -->
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="nueva_password" class="form-label">Nueva Contraseña *</label>
+                                    <input type="password" 
+                                           class="form-control" 
+                                           id="nueva_password" 
+                                           name="nueva_password" 
+                                           required 
+                                           minlength="8"
+                                           placeholder="Mínimo 8 caracteres">
+                                    <div class="form-text">La contraseña debe tener al menos 8 caracteres.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="confirmar_password" class="form-label">Confirmar Contraseña *</label>
+                                    <input type="password" 
+                                           class="form-control" 
+                                           id="confirmar_password" 
+                                           name="confirmar_password" 
+                                           required 
+                                           minlength="8"
+                                           placeholder="Repita la contraseña">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Importante:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Al reclamar esta cuenta, se creará un nuevo usuario con los datos archivados.</li>
+                                <li>Se le asignará automáticamente al grupo "Estudiantes".</li>
+                                <li>Podrá iniciar sesión inmediatamente después de completar el proceso.</li>
+                                <li>Si necesita permisos especiales, contacte al administrador.</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'datos_archivados:buscar_usuario' %}" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-arrow-left"></i>
+                                Volver a Buscar
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-user-check"></i>
+                                Reactivar Cuenta
+                            </button>
+                        </div>
+                    </form>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Validación de contraseñas en tiempo real
+    const password1 = document.getElementById('nueva_password');
+    const password2 = document.getElementById('confirmar_password');
+    
+    function validatePasswords() {
+        if (password1.value && password2.value) {
+            if (password1.value !== password2.value) {
+                password2.setCustomValidity('Las contraseñas no coinciden');
+            } else {
+                password2.setCustomValidity('');
+            }
+        }
+    }
+    
+    password1.addEventListener('input', validatePasswords);
+    password2.addEventListener('input', validatePasswords);
+});
+</script>
+{% endblock %}
