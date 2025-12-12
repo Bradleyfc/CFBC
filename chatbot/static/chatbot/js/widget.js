@@ -169,8 +169,27 @@ class ChatbotWidget {
             // Hide badge
             this.hideBadge();
             
-            // Scroll to bottom
-            this.scrollToBottom();
+            // Scroll to top if no history, otherwise scroll to bottom
+            const messagesContainer = document.getElementById('chatbot-messages');
+            if (messagesContainer) {
+                try {
+                    const history = JSON.parse(sessionStorage.getItem('chatbot_history') || '[]');
+                    if (history.length === 0) {
+                        // No history: scroll to top to show welcome message
+                        setTimeout(() => {
+                            messagesContainer.scrollTop = 0;
+                        }, 100);
+                    } else {
+                        // Has history: scroll to bottom to show latest messages
+                        this.scrollToBottom();
+                    }
+                } catch (e) {
+                    // On error, scroll to top (safe default)
+                    setTimeout(() => {
+                        messagesContainer.scrollTop = 0;
+                    }, 100);
+                }
+            }
         }
     }
     
@@ -383,6 +402,15 @@ class ChatbotWidget {
         }
     }
     
+    scrollToTop() {
+        const messagesContainer = document.getElementById('chatbot-messages');
+        if (messagesContainer) {
+            setTimeout(() => {
+                messagesContainer.scrollTop = 0;
+            }, 100);
+        }
+    }
+    
     showBadge(count = 1) {
         const badge = document.getElementById('chatbot-badge');
         if (badge) {
@@ -429,7 +457,16 @@ class ChatbotWidget {
     }
     
     displayHistory(history) {
-        if (!history || history.length === 0) return;
+        if (!history || history.length === 0) {
+            // No history: ensure scroll is at top to show welcome message
+            const messagesContainer = document.getElementById('chatbot-messages');
+            if (messagesContainer) {
+                setTimeout(() => {
+                    messagesContainer.scrollTop = 0;
+                }, 100);
+            }
+            return;
+        }
         
         // Remove welcome message and suggestions if history exists
         const messagesContainer = document.getElementById('chatbot-messages');
@@ -523,6 +560,9 @@ class ChatbotWidget {
             
             // Show success message briefly
             this.showTemporaryMessage('Conversación limpiada. ¡Empecemos de nuevo!', 'success');
+            
+            // Scroll to top to show welcome message
+            this.scrollToTop();
     }
     
     clearServerHistory() {
