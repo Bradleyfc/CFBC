@@ -1,0 +1,66 @@
+{% load static %}
+
+<!-- Chatbot Widget Styles -->
+<link rel="stylesheet" href="{% static 'chatbot/css/widget.css' %}">
+
+<!-- Chatbot Error Template -->
+<div id="chatbot-widget" class="chatbot-widget">
+    <div id="chatbot-toggle" class="chatbot-toggle">
+        <svg class="chatbot-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+        </svg>
+    </div>
+
+    <div id="chatbot-container" class="chatbot-container" style="display: none;">
+        <div class="chatbot-header">
+            <div class="chatbot-header-content">
+                <div class="chatbot-avatar">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                    </svg>
+                </div>
+                <div class="chatbot-info">
+                    <h3>Asistente CFBC</h3>
+                    <p>Temporalmente no disponible</p>
+                </div>
+            </div>
+            <button id="chatbot-close" class="chatbot-close">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="chatbot-messages">
+            <div class="chatbot-message bot-message">
+                <div class="message-avatar">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                    </svg>
+                </div>
+                <div class="message-content">
+                    <div class="message-text">
+                        Lo siento, el asistente virtual no está disponible en este momento. 
+                        Por favor, contacta directamente al Centro Fray Bartolomé de las Casas 
+                        para obtener información.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chatbot-input-area">
+            <div class="chatbot-input-container">
+                <textarea 
+                    class="chatbot-input" 
+                    placeholder="Asistente no disponible..."
+                    disabled
+                ></textarea>
+                <button class="chatbot-send" disabled>
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

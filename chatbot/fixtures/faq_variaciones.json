@@ -1,0 +1,146 @@
+[
+  {
+    "model": "chatbot.faqvariation",
+    "pk": 1,
+    "fields": {
+      "faq": 1,
+      "texto_variacion": "¿Cuándo inician las inscripciones?",
+      "fecha_creacion": "2024-12-10T12:00:00Z"
+    }
+  },
+  {
+    "model": "chatbot.faqvariation",
+    "pk": 2,
+    "fields": {
+      "faq": 1,
+      "texto_variacion": "¿Cuándo abren inscripciones?",
+      "fecha_creacion": "2024-12-10T12:01:00Z"
+    }
+  },
+  {
+    "model": "chatbot.faqvariation",
+    "pk": 3,
+    "fields": {
+      "faq": 1,
+      "texto_variacion": "¿Cuándo puedo inscribirme?",
+      "fecha_creacion": "2024-12-10T12:02:00Z"
+    }
+  },
+  {
+    "model": "chatbot.faqvariation",
+    "pk": 4,
+    "fields": {
+      "faq": 2,
+      "texto_variacion": "¿Qué cursos ofrecen?",
+      "fecha_creacion": "2024-12-10T12:05:00Z"
+    }
+  },
+  {
+    "model": "chatbot.faqvariation",
+    "pk": 5,
+    "fields": {
+      "faq": 2,
+      "texto_variacion": "¿Cuáles son los cursos disponibles?",
+      "fecha_creacion": "2024-12-10T12:06:00Z"
+    }
+  },
+  {
+    "model": "chatbot.faqvariation",
+    "pk": 6,
+    "fields": {
+      "faq": 2,
+      "texto_variacion": "¿Qué materias tienen?",
+      "fecha_creacion": "2024-12-10T12:07:00Z"
+    }
+  },
+  {
+    "model": "chatbot.faqvariation",
+    "pk": 7,
+    "fields": {
+      "faq": 3,
+      "texto_variacion": "¿Qué necesito para inscribirme?",
+      "fecha_creacion": "2024-12-10T12:10:00Z"
+    }
+  },
+  {
+    "model": "chatbot.faqvariation",
+    "pk": 8,
+    "fields": {
+      "faq": 3,
+      "texto_variacion": "¿Cuáles son los requisitos de inscripción?",
+      "fecha_creacion": "2024-12-10T12:11:00Z"
+    }
+  },
+  {
+    "model": "chatbot.faqvariation",
+    "pk": 9,
+    "fields": {
+      "faq": 4,
+      "texto_variacion": "¿Dónde pago?",
+      "fecha_creacion": "2024-12-10T12:15:00Z"
+    }
+  },
+  {
+    "model": "chatbot.faqvariation",
+    "pk": 10,
+    "fields": {
+      "faq": 4,
+      "texto_variacion": "¿Cómo puedo pagar?",
+      "fecha_creacion": "2024-12-10T12:16:00Z"
+    }
+  },
+  {
+    "model": "chatbot.faqvariation",
+    "pk": 11,
+    "fields": {
+      "faq": 5,
+      "texto_variacion": "¿A qué hora son las clases?",
+      "fecha_creacion": "2024-12-10T12:20:00Z"
+    }
+  },
+  {
+    "model": "chatbot.faqvariation",
+    "pk": 12,
+    "fields": {
+      "faq": 5,
+      "texto_variacion": "¿Cuáles son los horarios?",
+      "fecha_creacion": "2024-12-10T12:21:00Z"
+    }
+  },
+  {
+    "model": "chatbot.faqvariation",
+    "pk": 13,
+    "fields": {
+      "faq": 6,
+      "texto_variacion": "¿Dónde están ubicados?",
+      "fecha_creacion": "2024-12-10T12:25:00Z"
+    }
+  },
+  {
+    "model": "chatbot.faqvariation",
+    "pk": 14,
+    "fields": {
+      "faq": 6,
+      "texto_variacion": "¿Cuál es su dirección?",
+      "fecha_creacion": "2024-12-10T12:26:00Z"
+    }
+  },
+  {
+    "model": "chatbot.faqvariation",
+    "pk": 15,
+    "fields": {
+      "faq": 7,
+      "texto_variacion": "¿Ofrecen becas?",
+      "fecha_creacion": "2024-12-10T12:30:00Z"
+    }
+  },
+  {
+    "model": "chatbot.faqvariation",
+    "pk": 16,
+    "fields": {
+      "faq": 7,
+      "texto_variacion": "¿Hay ayuda económica?",
+      "fecha_creacion": "2024-12-10T12:31:00Z"
+    }
+  }
+]

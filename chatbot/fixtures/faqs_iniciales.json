@@ -1,0 +1,130 @@
+[
+  {
+    "model": "chatbot.faq",
+    "pk": 1,
+    "fields": {
+      "pregunta": "¿Cuándo empiezan las inscripciones?",
+      "respuesta": "Las inscripciones para el próximo período académico inician el primer lunes de cada mes. Te recomendamos estar atento a nuestras redes sociales y página web para conocer las fechas exactas. También puedes contactarnos directamente para más información.",
+      "categoria": 2,
+      "prioridad": 1,
+      "destacada": true,
+      "activa": true,
+      "veces_usada": 0,
+      "tasa_exito": 0.0,
+      "fecha_creacion": "2024-12-10T12:00:00Z",
+      "fecha_actualizacion": "2024-12-10T12:00:00Z"
+    }
+  },
+  {
+    "model": "chatbot.faq",
+    "pk": 2,
+    "fields": {
+      "pregunta": "¿Qué cursos están disponibles?",
+      "respuesta": "Ofrecemos una amplia variedad de cursos bíblicos y teológicos, incluyendo: Introducción a la Biblia, Historia del Cristianismo, Teología Fundamental, Pastoral Social, y cursos especializados según la demanda. Consulta nuestra página de cursos para ver la oferta completa del período actual.",
+      "categoria": 1,
+      "prioridad": 1,
+      "destacada": true,
+      "activa": true,
+      "veces_usada": 0,
+      "tasa_exito": 0.0,
+      "fecha_creacion": "2024-12-10T12:05:00Z",
+      "fecha_actualizacion": "2024-12-10T12:05:00Z"
+    }
+  },
+  {
+    "model": "chatbot.faq",
+    "pk": 3,
+    "fields": {
+      "pregunta": "¿Cuáles son los requisitos para inscribirme?",
+      "respuesta": "Los requisitos básicos son: ser mayor de 18 años, tener educación secundaria completa, presentar cédula de identidad, y tener motivación por el estudio bíblico y teológico. Algunos cursos avanzados pueden tener requisitos adicionales.",
+      "categoria": 2,
+      "prioridad": 2,
+      "destacada": true,
+      "activa": true,
+      "veces_usada": 0,
+      "tasa_exito": 0.0,
+      "fecha_creacion": "2024-12-10T12:10:00Z",
+      "fecha_actualizacion": "2024-12-10T12:10:00Z"
+    }
+  },
+  {
+    "model": "chatbot.faq",
+    "pk": 4,
+    "fields": {
+      "pregunta": "¿Dónde puedo pagar la matrícula?",
+      "respuesta": "Puedes realizar el pago de matrícula en nuestras oficinas durante horario de atención (lunes a viernes de 8:00 AM a 5:00 PM), mediante transferencia bancaria, o en línea a través de nuestra plataforma de pagos. Aceptamos efectivo, tarjetas de débito y crédito.",
+      "categoria": 4,
+      "prioridad": 2,
+      "destacada": false,
+      "activa": true,
+      "veces_usada": 0,
+      "tasa_exito": 0.0,
+      "fecha_creacion": "2024-12-10T12:15:00Z",
+      "fecha_actualizacion": "2024-12-10T12:15:00Z"
+    }
+  },
+  {
+    "model": "chatbot.faq",
+    "pk": 5,
+    "fields": {
+      "pregunta": "¿Cuál es el horario de clases?",
+      "respuesta": "Ofrecemos horarios flexibles para adaptarnos a diferentes necesidades: clases matutinas (8:00-11:00 AM), vespertinas (2:00-5:00 PM) y nocturnas (6:00-9:00 PM). También tenemos modalidades de fin de semana. El horario específico depende del curso elegido.",
+      "categoria": 3,
+      "prioridad": 2,
+      "destacada": false,
+      "activa": true,
+      "veces_usada": 0,
+      "tasa_exito": 0.0,
+      "fecha_creacion": "2024-12-10T12:20:00Z",
+      "fecha_actualizacion": "2024-12-10T12:20:00Z"
+    }
+  },
+  {
+    "model": "chatbot.faq",
+    "pk": 6,
+    "fields": {
+      "pregunta": "¿Dónde está ubicado el centro?",
+      "respuesta": "El Centro de Formación Bíblica Católica está ubicado en Managua, Nicaragua. Nuestra dirección exacta es [dirección específica]. Contamos con fácil acceso en transporte público y estacionamiento disponible para quienes vengan en vehículo propio.",
+      "categoria": 5,
+      "prioridad": 3,
+      "destacada": false,
+      "activa": true,
+      "veces_usada": 0,
+      "tasa_exito": 0.0,
+      "fecha_creacion": "2024-12-10T12:25:00Z",
+      "fecha_actualizacion": "2024-12-10T12:25:00Z"
+    }
+  },
+  {
+    "model": "chatbot.faq",
+    "pk": 7,
+    "fields": {
+      "pregunta": "¿Hay becas disponibles?",
+      "respuesta": "Sí, ofrecemos un programa de becas para estudiantes con necesidades económicas y buen rendimiento académico. Las becas pueden cubrir desde el 25% hasta el 100% del costo del curso. Para aplicar, debes completar el formulario de solicitud de beca y presentar la documentación requerida.",
+      "categoria": 4,
+      "prioridad": 3,
+      "destacada": false,
+      "activa": true,
+      "veces_usada": 0,
+      "tasa_exito": 0.0,
+      "fecha_creacion": "2024-12-10T12:30:00Z",
+      "fecha_actualizacion": "2024-12-10T12:30:00Z"
+    }
+  },
+  {
+    "model": "chatbot.faq",
+    "pk": 8,
+    "fields": {
+      "pregunta": "¿Qué documentos necesito para inscribirme?",
+      "respuesta": "Los documentos requeridos son: cédula de identidad vigente, certificado de educación secundaria, dos fotografías tamaño carnet, y formulario de inscripción completado. Para algunos cursos específicos pueden solicitarse documentos adicionales.",
+      "categoria": 2,
+      "prioridad": 3,
+      "destacada": false,
+      "activa": true,
+      "veces_usada": 0,
+      "tasa_exito": 0.0,
+      "fecha_creacion": "2024-12-10T12:35:00Z",
+      "fecha_actualizacion": "2024-12-10T12:35:00Z"
+    }
+  }
+]

@@ -1,0 +1,149 @@
+{% load static %}
+
+<!-- Chatbot Widget Styles -->
+<link rel="stylesheet" href="{% static 'chatbot/css/widget.css' %}?v=2024121203">
+
+<!-- Chatbot Widget Template -->
+<div id="chatbot-widget" class="chatbot-widget">
+    <!-- Welcome Bubble -->
+    <div id="chatbot-welcome-bubble" class="chatbot-welcome-bubble" style="display: none;">
+        <div class="bubble-content">
+            <span class="bubble-text">¿Buscas algo? ¡Puedo ayudarte!</span>
+            <div class="bubble-arrow"></div>
+        </div>
+    </div>
+
+    <!-- Widget Toggle Button -->
+    <div id="chatbot-toggle" class="chatbot-toggle">
+        <svg class="chatbot-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+        </svg>
+        <span class="chatbot-badge" id="chatbot-badge" style="display: none;">1</span>
+    </div>
+
+    <!-- Chat Container -->
+    <div id="chatbot-container" class="chatbot-container" style="display: none;">
+        <!-- Header -->
+        <div class="chatbot-header">
+            <div class="chatbot-header-content">
+                <div class="chatbot-avatar">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                </div>
+                <div class="chatbot-info">
+                    <h3>Asistente CFBC</h3>
+                    <p>Centro Fray Bartolomé de las Casas</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Messages Container -->
+        <div id="chatbot-messages" class="chatbot-messages">
+            <!-- Welcome Message -->
+            <div class="chatbot-message bot-message">
+                <div class="message-avatar">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                </div>
+                <div class="message-content">
+                    <div class="message-text">
+                        ¡Hola! Soy el asistente virtual del Centro Fray Bartolomé de las Casas. 
+                        Puedo ayudarte con información sobre cursos, inscripciones, horarios y más. 
+                        ¿En qué puedo ayudarte?
+                    </div>
+                    <div class="message-time">{{ "now"|date:"H:i" }}</div>
+                </div>
+            </div>
+
+            <!-- Suggested Questions -->
+            {% if chatbot_suggestions %}
+            <div class="chatbot-suggestions">
+                <div class="suggestions-title">Preguntas frecuentes:</div>
+                {% for suggestion in chatbot_suggestions %}
+                <button class="suggestion-button" data-question="{{ suggestion }}">
+                    {{ suggestion }}
+                </button>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Loading indicator (hidden by default) -->
+            <div id="chatbot-loading" class="chatbot-message bot-message" style="display: none;">
+                <div class="message-avatar">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                </div>
+                <div class="message-content">
+                    <div class="message-text">
+                        <div class="typing-indicator">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="chatbot-input-area">
+            <div class="chatbot-input-container">
+                <textarea 
+                    id="chatbot-input" 
+                    class="chatbot-input" 
+                    placeholder="Escribe tu pregunta aquí..."
+                    rows="1"
+                    maxlength="1000"
+                ></textarea>
+                <button id="chatbot-send" class="chatbot-send" disabled>
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="chatbot-footer">
+                <small>Presiona Enter para enviar • Shift+Enter para nueva línea</small>
+                <div class="chatbot-footer-actions">
+                    <button id="chatbot-theme-toggle" class="chatbot-theme-toggle" title="Cambiar tema">
+                        <svg class="theme-icon-light" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 00-1.061 1.06l1.59 1.591z"/>
+                        </svg>
+                        <svg class="theme-icon-dark" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+                            <path d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 003.463-.69.75.75 0 01.981.98 10.503 10.503 0 01-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 01.818.162z"/>
+                        </svg>
+                        <span>Tema</span>
+                    </button>
+                    <button id="chatbot-clear" class="chatbot-clear" title="Limpiar conversación">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                        </svg>
+                        <span>Limpiar</span>
+                    </button>
+                    <button id="chatbot-close" class="chatbot-close" title="Cerrar chat">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                        <span>Cerrar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden data for JavaScript -->
+<script type="application/json" id="chatbot-data">
+{
+    "session_id": "{{ chatbot_session_id }}",
+    "csrf_token": "{{ chatbot_csrf_token }}",
+    "api_base": "/chatbot/",
+    "history": {{ chatbot_history|safe }}
+}
+</script>
+
+<!-- Chatbot Widget JavaScript -->
+<script src="{% static 'chatbot/js/widget.js' %}?v=2024121204"></script>

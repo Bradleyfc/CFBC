@@ -2,10 +2,20 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
+import warnings
 
 
 def main():
     """Run administrative tasks."""
+    # Silenciar warnings de Hugging Face y PyTorch
+    warnings.filterwarnings("ignore", message=".*resume_download.*deprecated.*")
+    warnings.filterwarnings("ignore", message=".*torch_dtype.*deprecated.*")
+    warnings.filterwarnings("ignore", category=FutureWarning, module="huggingface_hub.*")
+    
+    # Configurar variables de entorno para reducir logs
+    os.environ.setdefault('TRANSFORMERS_VERBOSITY', 'error')
+    os.environ.setdefault('TOKENIZERS_PARALLELISM', 'false')
+    
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'cfbc.settings')
     try:
         from django.core.management import execute_from_command_line

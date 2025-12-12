@@ -1,0 +1,152 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:app_list' app_label='chatbot' %}">Chatbot</a>
+    &rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module">
+    <h1>{{ title }}</h1>
+    
+    {% if total_candidates > 0 %}
+    <div class="results">
+        <table id="result_list">
+            <thead>
+                <tr>
+                    <th scope="col">Pregunta Principal</th>
+                    <th scope="col">Frecuencia</th>
+                    <th scope="col">Confianza Promedio</th>
+                    <th scope="col">Preguntas Similares</th>
+                    <th scope="col">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for group in grouped_candidates %}
+                <tr>
+                    <td>
+                        <strong>{{ group.main_question.pregunta|truncatechars:100 }}</strong>
+                    </td>
+                    <td>{{ group.total_count }}</td>
+                    <td>{{ group.main_question.avg_confidence|floatformat:2 }}</td>
+                    <td>
+                        {% if group.similar_questions %}
+                            <details>
+                                <summary>{{ group.similar_questions|length }} similar{{ group.similar_questions|length|pluralize:"es" }}</summary>
+                                <ul>
+                                    {% for similar in group.similar_questions %}
+                                    <li>{{ similar.question|truncatechars:80 }} ({{ similar.count }}x, sim: {{ similar.similarity|floatformat:2 }})</li>
+                                    {% endfor %}
+                                </ul>
+                            </details>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        <button type="button" class="button" onclick="createFAQModal('{{ group.main_question.question|escapejs }}', {{ group.similar_questions|length }})">
+                            Crear FAQ
+                        </button>
+                        <form method="post" action="{% url 'admin:chatbot_dismiss_suggestion' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="question" value="{{ group.main_question.question }}">
+                            <button type="submit" class="button" onclick="return confirm('¿Descartar esta sugerencia?')">Descartar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="paginator">No hay preguntas candidatas para FAQs en este momento.</p>
+    {% endif %}
+</div>
+
+<!-- Modal for creating FAQ -->
+<div id="faq-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; max-width: 600px; width: 90%;">
+        <h3>Crear Nueva FAQ</h3>
+        <form method="post" action="{% url 'admin:chatbot_create_faq_from_suggestion' %}">
+            {% csrf_token %}
+            <div class="form-row">
+                <label for="id_question">Pregunta:</label>
+                <textarea id="id_question" name="question" rows="3" style="width: 100%;" required></textarea>
+            </div>
+            <div class="form-row">
+                <label for="id_answer">Respuesta:</label>
+                <textarea id="id_answer" name="answer" rows="5" style="width: 100%;" required></textarea>
+            </div>
+            <div class="form-row">
+                <label for="id_category">Categoría:</label>
+                <select id="id_category" name="category" required>
+                    <option value="">Seleccionar categoría...</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}">{{ category.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-row">
+                <label>Variaciones (una por línea):</label>
+                <textarea id="id_variations" name="variations" rows="4" style="width: 100%;" placeholder="Escribe variaciones de la pregunta, una por línea"></textarea>
+            </div>
+            <div class="submit-row">
+                <input type="submit" value="Crear FAQ" class="default" />
+                <button type="button" onclick="closeFAQModal()" class="button">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function createFAQModal(mainQuestion, similarCount) {
+    document.getElementById('id_question').value = mainQuestion;
+    
+    // Clear variations - user will need to add them manually
+    document.getElementById('id_variations').value = '';
+    
+    document.getElementById('faq-modal').style.display = 'block';
+}
+
+function closeFAQModal() {
+    document.getElementById('faq-modal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+document.getElementById('faq-modal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeFAQModal();
+    }
+});
+</script>
+
+<style>
+.form-row {
+    margin-bottom: 15px;
+}
+.form-row label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+.form-row input, .form-row textarea, .form-row select {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+details summary {
+    cursor: pointer;
+    color: #0066cc;
+}
+details ul {
+    margin-top: 10px;
+    padding-left: 20px;
+}
+</style>
+{% endblock %}

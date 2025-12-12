@@ -1,0 +1,277 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:app_list' app_label='chatbot' %}">Chatbot</a>
+    &rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module">
+    <h1>{{ title }}</h1>
+    
+    <!-- Summary Cards -->
+    <div class="metrics-summary" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
+        <div class="metric-card">
+            <h3>Total FAQs</h3>
+            <div class="metric-value">{{ total_faqs }}</div>
+        </div>
+        <div class="metric-card">
+            <h3>FAQs Activas</h3>
+            <div class="metric-value">{{ active_faqs }}</div>
+        </div>
+        <div class="metric-card">
+            <h3>FAQs Destacadas</h3>
+            <div class="metric-value">{{ highlighted_faqs }}</div>
+        </div>
+        <div class="metric-card">
+            <h3>Interacciones (30d)</h3>
+            <div class="metric-value">{{ interaction_stats.total_interactions }}</div>
+        </div>
+    </div>
+    
+    <!-- Most Used FAQs -->
+    <div class="module">
+        <h2>FAQs Más Utilizadas</h2>
+        {% if most_used %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Pregunta</th>
+                    <th>Categoría</th>
+                    <th>Usos</th>
+                    <th>Tasa de Éxito</th>
+                    <th>Último Uso</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for faq in most_used %}
+                <tr>
+                    <td>
+                        <a href="{% url 'admin:chatbot_faq_change' faq.id %}">
+                            {{ faq.pregunta|truncatechars:80 }}
+                        </a>
+                    </td>
+                    <td>{{ faq.categoria.nombre }}</td>
+                    <td><strong>{{ faq.veces_usada }}</strong></td>
+                    <td>
+                        {% if faq.tasa_exito %}
+                            <span style="color: {% if faq.tasa_exito > 0.7 %}green{% elif faq.tasa_exito > 0.4 %}orange{% else %}red{% endif %}">
+                                {{ faq.tasa_exito|floatformat:1 }}%
+                            </span>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if faq.ultima_fecha_uso %}
+                            {{ faq.ultima_fecha_uso|date:"d/m/Y H:i" }}
+                        {% else %}
+                            Nunca
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'admin:chatbot_faq_change' faq.id %}" class="button">Editar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No hay FAQs con uso registrado.</p>
+        {% endif %}
+    </div>
+    
+    <!-- Unused FAQs -->
+    {% if unused_faqs %}
+    <div class="module">
+        <h2>FAQs Sin Uso Reciente (>90 días)</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Pregunta</th>
+                    <th>Categoría</th>
+                    <th>Fecha Creación</th>
+                    <th>Último Uso</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for faq in unused_faqs %}
+                <tr>
+                    <td>
+                        <a href="{% url 'admin:chatbot_faq_change' faq.id %}">
+                            {{ faq.pregunta|truncatechars:80 }}
+                        </a>
+                    </td>
+                    <td>{{ faq.categoria.nombre }}</td>
+                    <td>{{ faq.fecha_creacion|date:"d/m/Y" }}</td>
+                    <td>
+                        {% if faq.ultima_fecha_uso %}
+                            {{ faq.ultima_fecha_uso|date:"d/m/Y" }}
+                        {% else %}
+                            Nunca
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'admin:chatbot_faq_change' faq.id %}" class="button">Revisar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    
+    <!-- Low Success Rate FAQs -->
+    {% if low_success_faqs %}
+    <div class="module">
+        <h2>FAQs con Baja Tasa de Éxito</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Pregunta</th>
+                    <th>Categoría</th>
+                    <th>Usos</th>
+                    <th>Tasa de Éxito</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for faq in low_success_faqs %}
+                <tr>
+                    <td>
+                        <a href="{% url 'admin:chatbot_faq_change' faq.id %}">
+                            {{ faq.pregunta|truncatechars:80 }}
+                        </a>
+                    </td>
+                    <td>{{ faq.categoria.nombre }}</td>
+                    <td>{{ faq.veces_usada }}</td>
+                    <td>
+                        <span style="color: red">
+                            {{ faq.tasa_exito|floatformat:1 }}%
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'admin:chatbot_faq_change' faq.id %}" class="button">Mejorar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    
+    <!-- Category Statistics -->
+    <div class="module">
+        <h2>Estadísticas por Categoría</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Categoría</th>
+                    <th>Total FAQs</th>
+                    <th>FAQs Activas</th>
+                    <th>Porcentaje Activo</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for category in category_stats %}
+                <tr>
+                    <td>
+                        <a href="{% url 'admin:chatbot_categoriafaq_change' category.id %}">
+                            {{ category.nombre }}
+                        </a>
+                    </td>
+                    <td>{{ category.faq_count }}</td>
+                    <td>{{ category.active_faq_count }}</td>
+                    <td>
+                        {% if category.faq_count > 0 %}
+                            {{ category.active_faq_count|div:category.faq_count|mul:100|floatformat:0 }}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'admin:chatbot_faq_changelist' %}?categoria={{ category.id }}" class="button">Ver FAQs</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Export Options -->
+    <div class="module">
+        <h2>Exportar Datos</h2>
+        <p>
+            <a href="{% url 'admin:chatbot_export_metrics' %}" class="button">Exportar Métricas a CSV</a>
+            <a href="{% url 'admin:chatbot_faq_changelist' %}" class="button">Gestionar FAQs</a>
+            <a href="{% url 'admin:chatbot_suggested_faqs' %}" class="button">Ver FAQs Sugeridas</a>
+        </p>
+    </div>
+</div>
+
+<style>
+.metric-card {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+}
+
+.metric-card h3 {
+    margin: 0 0 10px 0;
+    color: #6c757d;
+    font-size: 14px;
+    font-weight: normal;
+}
+
+.metric-value {
+    font-size: 32px;
+    font-weight: bold;
+    color: #495057;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.table th,
+.table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+.table tr:hover {
+    background-color: #f8f9fa;
+}
+
+.module {
+    margin-bottom: 30px;
+}
+
+.module h2 {
+    background: #417690;
+    color: white;
+    padding: 10px 15px;
+    margin: 0 0 15px 0;
+    border-radius: 4px 4px 0 0;
+}
+</style>
+{% endblock %}

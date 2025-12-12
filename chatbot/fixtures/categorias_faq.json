@@ -1,0 +1,68 @@
+[
+  {
+    "model": "chatbot.categoriafaq",
+    "pk": 1,
+    "fields": {
+      "nombre": "Cursos",
+      "descripcion": "Información sobre cursos disponibles, contenido y metodología",
+      "slug": "cursos",
+      "icono": "bi-book",
+      "orden": 1
+    }
+  },
+  {
+    "model": "chatbot.categoriafaq",
+    "pk": 2,
+    "fields": {
+      "nombre": "Inscripciones",
+      "descripcion": "Proceso de inscripción, requisitos y documentación",
+      "slug": "inscripciones",
+      "icono": "bi-person-plus",
+      "orden": 2
+    }
+  },
+  {
+    "model": "chatbot.categoriafaq",
+    "pk": 3,
+    "fields": {
+      "nombre": "Horarios",
+      "descripcion": "Horarios de clases, fechas de inicio y calendario académico",
+      "slug": "horarios",
+      "icono": "bi-calendar",
+      "orden": 3
+    }
+  },
+  {
+    "model": "chatbot.categoriafaq",
+    "pk": 4,
+    "fields": {
+      "nombre": "Pagos",
+      "descripcion": "Información sobre costos, formas de pago y becas",
+      "slug": "pagos",
+      "icono": "bi-credit-card",
+      "orden": 4
+    }
+  },
+  {
+    "model": "chatbot.categoriafaq",
+    "pk": 5,
+    "fields": {
+      "nombre": "Ubicación",
+      "descripcion": "Dirección, transporte y contacto del centro",
+      "slug": "ubicacion",
+      "icono": "bi-geo-alt",
+      "orden": 5
+    }
+  },
+  {
+    "model": "chatbot.categoriafaq",
+    "pk": 6,
+    "fields": {
+      "nombre": "General",
+      "descripcion": "Información general y preguntas diversas",
+      "slug": "general",
+      "icono": "bi-info-circle",
+      "orden": 6
+    }
+  }
+]
