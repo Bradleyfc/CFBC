@@ -32,6 +32,7 @@ from .models import (
     CursoAcademico, Curso, Matriculas, Calificaciones, Asistencia,
     FormularioAplicacion, PreguntaFormulario, OpcionRespuesta, SolicitudInscripcion, RespuestaEstudiante
 )
+from course_documents.mixins import DocumentsProfileMixin, DocumentsCourseMixin
 
 # Create your views here.
 
@@ -479,7 +480,7 @@ class BaseContextMixin:
         return context
 
 
-class HomeView(BaseContextMixin, TemplateView):
+class HomeView(DocumentsCourseMixin, BaseContextMixin, TemplateView):
     template_name = 'home.html'
 
     @override
@@ -573,7 +574,7 @@ class HomeView(BaseContextMixin, TemplateView):
 
 
 
-class ListadoCursosView(BaseContextMixin, ListView):
+class ListadoCursosView(DocumentsCourseMixin, BaseContextMixin, ListView):
     model = Curso
     template_name = 'cursos.html'
     context_object_name = 'courses'
@@ -911,7 +912,7 @@ class LoginRedirectView(LoginRequiredMixin, TemplateView):
     # Pagina de Perfil
 
 
-class ProfileView(BaseContextMixin, TemplateView):
+class ProfileView(DocumentsProfileMixin, BaseContextMixin, TemplateView):
     template_name = 'profile/profile.html'
 
     @override

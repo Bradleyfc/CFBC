@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\cfbc\settings.py
+# hypothesis_version: 6.148.7
+
+[420, 1024, '/media/', '/static/', '127.0.0.1', '5432', '7z', 'APP_DIRS', 'America/Managua', 'BACKEND', 'DIRS', 'ENGINE', 'HOST', 'NAME', 'OPTIONS', 'PASSWORD', 'PORT', 'SECRET_KEY', 'USER', 'admin', 'blog.apps.BlogConfig', 'bootstrap5', 'cfbc', 'cfbc.urls', 'context_processors', 'course_documents/', 'crispy_bootstrap5', 'crispy_forms', 'default', 'django.contrib.admin', 'django.contrib.auth', 'doc', 'docx', 'es', 'gif', 'jpeg', 'jpg', 'localhost', 'media', 'pdf', 'png', 'postgres', 'ppt', 'pptx', 'principal', 'principal:home', 'rar', 'static', 'templates', 'testserver', 'txt', 'xls', 'xlsx', 'zip']

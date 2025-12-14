@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\principal\migrations\0012_alter_opcionrespuesta_texto_and_more.py
+# hypothesis_version: 6.148.7
+
+[255, 'Escritura Libre', 'Selección Múltiple', 'Texto de la opción', 'Tipo de pregunta', 'escritura_libre', 'opcionrespuesta', 'preguntaformulario', 'principal', 'seleccion_multiple', 'texto', 'tipo']

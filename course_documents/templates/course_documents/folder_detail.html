@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ folder.name }} - {{ curso.name }}{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style>
+    .folder-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    .document-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+        transition: transform 0.2s;
+    }
+    .document-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .file-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+    .btn-primary-custom {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 25px;
+        padding: 0.75rem 1.5rem;
+    }
+    .btn-success-custom {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        border: none;
+        border-radius: 25px;
+        padding: 0.75rem 1.5rem;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="folder-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <nav aria-label="breadcrumb" class="mb-2">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'course_documents:teacher_dashboard' curso_id=curso.id %}" class="text-white-50">
+                                <i class="fas fa-home"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active text-white" aria-current="page">{{ folder.name }}</li>
+                    </ol>
+                </nav>
+                <h1><i class="fas fa-folder-open me-3"></i>{{ folder.name }}</h1>
+                <p class="mb-0 fs-5">{{ curso.name }}</p>
+                <small class="opacity-75">Gestiona los documentos de esta carpeta</small>
+            </div>
+            <div class="col-md-4 text-end">
+                <button type="button" class="btn btn-success-custom me-2" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
+                    <i class="fas fa-upload me-2"></i>Subir Documento
+                </button>
+                <a href="{% url 'course_documents:teacher_dashboard' curso_id=curso.id %}" class="btn btn-light">
+                    <i class="fas fa-arrow-left me-2"></i>Volver
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Información de la carpeta -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Carpeta:</strong> {{ folder.name }} | 
+                        <strong>Creada:</strong> {{ folder.created_at|date:"d/m/Y H:i" }} |
+                        <strong>Documentos:</strong> {{ documents.count }}
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <button class="btn btn-outline-danger btn-sm delete-folder-btn" 
+                                data-folder-id="{{ folder.id }}" 
+                                data-folder-name="{{ folder.name }}">
+                            <i class="fas fa-trash me-1"></i>Eliminar Carpeta
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de documentos -->
+    <div class="row">
+        <div class="col-12">
+            <h3 class="mb-3">
+                <i class="fas fa-file-alt me-2"></i>Documentos en la Carpeta
+            </h3>
+            
+            {% if documents %}
+                <div class="row">
+                    {% for document in documents %}
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="document-card text-center">
+                            <div class="file-icon text-primary">
+                                {% if document.file.name|slice:"-4:" == ".pdf" %}
+                                    <i class="fas fa-file-pdf"></i>
+                                {% elif document.file.name|slice:"-4:" in ".doc,.docx" %}
+                                    <i class="fas fa-file-word"></i>
+                                {% elif document.file.name|slice:"-4:" in ".xls,.xlsx" %}
+                                    <i class="fas fa-file-excel"></i>
+                                {% elif document.file.name|slice:"-4:" in ".ppt,.pptx" %}
+                                    <i class="fas fa-file-powerpoint"></i>
+                                {% elif document.file.name|slice:"-4:" in ".jpg,.jpeg,.png,.gif" %}
+                                    <i class="fas fa-file-image"></i>
+                                {% elif document.file.name|slice:"-4:" in ".zip,.rar,.7z" %}
+                                    <i class="fas fa-file-archive"></i>
+                                {% else %}
+                                    <i class="fas fa-file-alt"></i>
+                                {% endif %}
+                            </div>
+                            
+                            <h5 class="mb-2">{{ document.name }}</h5>
+                            
+                            <div class="mb-3">
+                                <small class="text-muted d-block">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    {{ document.uploaded_at|date:"d/m/Y H:i" }}
+                                </small>
+                                <small class="text-muted d-block">
+                                    <i class="fas fa-weight-hanging me-1"></i>
+                                    {{ document.file_size|filesizeformat }}
+                                </small>
+                            </div>
+                            
+                            <div class="d-flex gap-2 justify-content-center">
+                                <a href="{{ document.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye me-1"></i>Ver
+                                </a>
+                                <button class="btn btn-sm btn-outline-danger delete-document-btn" 
+                                        data-document-id="{{ document.id }}" 
+                                        data-document-name="{{ document.name }}">
+                                    <i class="fas fa-trash me-1"></i>Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-file-alt fa-4x mb-3 text-muted"></i>
+                    <h4>No hay documentos en esta carpeta</h4>
+                    <p>Sube tu primer documento para comenzar a compartir materiales con tus estudiantes.</p>
+                    <button type="button" class="btn btn-success-custom" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
+                        <i class="fas fa-upload me-2"></i>Subir Primer Documento
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal para subir documento -->
+<div class="modal fade" id="uploadDocumentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-upload me-2"></i>Subir Documento a "{{ folder.name }}"
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" enctype="multipart/form-data" action="{% url 'course_documents:upload_document' curso_id=curso.id folder_id=folder.id %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ document_form.name.id_for_label }}" class="form-label">Nombre del documento</label>
+                        {{ document_form.name }}
+                        <div class="form-text">Si no especificas un nombre, se usará el nombre del archivo.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ document_form.file.id_for_label }}" class="form-label">Archivo</label>
+                        {{ document_form.file }}
+                        <div class="form-text">
+                            Formatos permitidos: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, ZIP, JPG, PNG<br>
+                            Tamaño máximo: 50MB
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success-custom">
+                        <i class="fas fa-upload me-2"></i>Subir Documento
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Manejar eliminación de documentos
+    document.querySelectorAll('.delete-document-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const documentId = this.dataset.documentId;
+            const documentName = this.dataset.documentName;
+            
+            if (confirm(`¿Estás seguro de que deseas eliminar el documento "${documentName}"? Esta acción no se puede deshacer.`)) {
+                // Enviar petición de eliminación
+                fetch(`{% url 'course_documents:delete_document' curso_id=curso.id document_id=0 %}`.replace('0', documentId), {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/json',
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error al eliminar el documento: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    alert('Error al eliminar el documento: ' + error);
+                });
+            }
+        });
+    });
+    
+    // Manejar eliminación de carpeta
+    document.querySelector('.delete-folder-btn').addEventListener('click', function() {
+        const folderId = this.dataset.folderId;
+        const folderName = this.dataset.folderName;
+        
+        if (confirm(`¿Estás seguro de que deseas eliminar la carpeta "${folderName}"? Esta acción eliminará también todos los documentos contenidos y no se puede deshacer.`)) {
+            // Enviar petición de eliminación
+            fetch(`{% url 'course_documents:delete_folder' curso_id=curso.id folder_id=folder.id %}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Redirigir al dashboard principal
+                    window.location.href = "{% url 'course_documents:teacher_dashboard' curso_id=curso.id %}";
+                } else {
+                    alert('Error al eliminar la carpeta: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Error al eliminar la carpeta: ' + error);
+            });
+        }
+    });
+    
+    // Auto-completar nombre del documento basado en el archivo seleccionado
+    document.querySelector('#{{ document_form.file.id_for_label }}').addEventListener('change', function() {
+        const nameField = document.querySelector('#{{ document_form.name.id_for_label }}');
+        if (!nameField.value && this.files.length > 0) {
+            const fileName = this.files[0].name;
+            const nameWithoutExtension = fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
+            nameField.value = nameWithoutExtension;
+        }
+    });
+});
+</script>
+{% endblock %}

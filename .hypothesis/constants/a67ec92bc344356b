@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\course_documents\mixins.py
+# hypothesis_version: 6.148.7
+
+['Estudiantes', 'Profesores', 'assigned_courses', 'courses', 'enrolled_courses', 'global_teacher_stats', 'grouped_courses', 'has_documents', 'pending_courses', 'total_courses']

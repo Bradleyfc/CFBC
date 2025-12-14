@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\chatbot\context_processors.py
+# hypothesis_version: 6.148.7
+
+['chatbot_csrf_token', 'chatbot_history', 'chatbot_session_id', 'chatbot_suggestions']
