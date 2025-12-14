@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\accounts\migrations\0005_update_ocupacion_choices.py
+# hypothesis_version: 6.148.7
+
+[100, 'Ama de Casa', 'Desocupado', 'Estudiante', 'Trabajador Estatal', 'accounts', 'ocupacion', 'ocupacion1', 'ocupacion2', 'ocupacion3', 'ocupacion4', 'ocupacion5', 'registro']

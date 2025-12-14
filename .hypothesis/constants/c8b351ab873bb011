@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\principal\migrations\0010_alter_curso_class_quantity_and_more.py
+# hypothesis_version: 6.148.7
+
+['Cantidad de Clases', 'asistencia', 'class_quantity', 'course', 'curso', 'date', 'principal', 'student']

@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\principal\migrations\0008_remove_calificaciones_nota_1_and_more.py
+# hypothesis_version: 6.148.7
+
+['Calificación', 'Fecha de Creación', 'ID', 'Nota Individual', 'NotaIndividual', 'Notas Individuales', 'Promedio', 'Valor de la Nota', 'average', 'calificacion', 'calificaciones', 'fecha_creacion', 'id', 'nota_1', 'nota_2', 'nota_3', 'nota_4', 'nota_5', 'nota_6', 'notas', 'ordering', 'principal', 'valor', 'verbose_name', 'verbose_name_plural']

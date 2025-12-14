@@ -1,0 +1,273 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ folder.name }} - {{ curso.name }}{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style>
+    .folder-header {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    .document-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+        transition: transform 0.2s;
+    }
+    .document-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .file-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+    .btn-download {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 20px;
+        color: white;
+        padding: 0.75rem 1.5rem;
+    }
+    .btn-download:hover {
+        color: white;
+        transform: translateY(-1px);
+    }
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+    .download-stats {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="folder-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <nav aria-label="breadcrumb" class="mb-2">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'course_documents:student_dashboard' curso_id=curso.id %}" class="text-white-50">
+                                <i class="fas fa-home"></i> Documentos
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active text-white" aria-current="page">{{ folder.name }}</li>
+                    </ol>
+                </nav>
+                <h1><i class="fas fa-folder-open me-3"></i>{{ folder.name }}</h1>
+                <p class="mb-0 fs-5">{{ curso.name }}</p>
+                <small class="opacity-75">Documentos compartidos por {{ curso.teacher.get_full_name|default:curso.teacher.username }}</small>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'course_documents:student_dashboard' curso_id=curso.id %}" class="btn btn-light btn-lg">
+                    <i class="fas fa-arrow-left me-2"></i>Volver
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Estadísticas de descarga del usuario -->
+    {% if user_stats.downloads_count > 0 %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="download-stats">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <i class="fas fa-chart-bar me-2 text-primary"></i>
+                        <strong>Tus descargas en esta carpeta:</strong> {{ user_stats.downloads_count }} documento{{ user_stats.downloads_count|pluralize }}
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <a href="{% url 'course_documents:student_history' curso_id=curso.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-history me-1"></i>Ver Historial Completo
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Información de la carpeta -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Carpeta:</strong> {{ folder.name }} | 
+                <strong>Creada:</strong> {{ folder.created_at|date:"d/m/Y" }} |
+                <strong>Documentos disponibles:</strong> {{ documents.count }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de documentos -->
+    <div class="row">
+        <div class="col-12">
+            <h3 class="mb-3">
+                <i class="fas fa-download me-2"></i>Documentos Disponibles
+            </h3>
+            
+            {% if documents %}
+                <div class="row">
+                    {% for document in documents %}
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="document-card text-center">
+                            <div class="file-icon text-primary">
+                                {% if document.file.name|slice:"-4:" == ".pdf" %}
+                                    <i class="fas fa-file-pdf"></i>
+                                {% elif document.file.name|slice:"-4:" in ".doc,.docx" %}
+                                    <i class="fas fa-file-word"></i>
+                                {% elif document.file.name|slice:"-4:" in ".xls,.xlsx" %}
+                                    <i class="fas fa-file-excel"></i>
+                                {% elif document.file.name|slice:"-4:" in ".ppt,.pptx" %}
+                                    <i class="fas fa-file-powerpoint"></i>
+                                {% elif document.file.name|slice:"-4:" in ".jpg,.jpeg,.png,.gif" %}
+                                    <i class="fas fa-file-image"></i>
+                                {% elif document.file.name|slice:"-4:" in ".zip,.rar,.7z" %}
+                                    <i class="fas fa-file-archive"></i>
+                                {% else %}
+                                    <i class="fas fa-file-alt"></i>
+                                {% endif %}
+                            </div>
+                            
+                            <h5 class="mb-2">{{ document.name }}</h5>
+                            
+                            <div class="mb-3">
+                                <small class="text-muted d-block">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    Subido: {{ document.uploaded_at|date:"d/m/Y H:i" }}
+                                </small>
+                                <small class="text-muted d-block">
+                                    <i class="fas fa-weight-hanging me-1"></i>
+                                    Tamaño: {{ document.file_size|filesizeformat }}
+                                </small>
+                                <small class="text-muted d-block">
+                                    <i class="fas fa-user me-1"></i>
+                                    Por: {{ document.uploaded_by.get_full_name|default:document.uploaded_by.username }}
+                                </small>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'course_documents:download_document' curso_id=curso.id document_id=document.id %}" 
+                                   class="btn btn-download download-btn"
+                                   data-document-name="{{ document.name }}">
+                                    <i class="fas fa-download me-2"></i>Descargar
+                                </a>
+                                {% if document.file.name|slice:"-4:" == ".pdf" or document.file.name|slice:"-4:" in ".jpg,.jpeg,.png,.gif" %}
+                                <a href="{{ document.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye me-1"></i>Vista Previa
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-folder-open fa-4x mb-3 text-muted"></i>
+                    <h4>No hay documentos en esta carpeta</h4>
+                    <p>Tu profesor aún no ha subido documentos a esta carpeta.</p>
+                    <p class="text-muted">
+                        <i class="fas fa-bell me-1"></i>
+                        Recibirás una notificación por email cuando se suban nuevos documentos.
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Información adicional -->
+    {% if documents %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="alert alert-success">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Consejo:</strong> 
+                        Puedes descargar los documentos las veces que necesites. 
+                        Se registra un historial de tus descargas para tu referencia.
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <a href="{% url 'course_documents:student_history' curso_id=curso.id %}" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-history me-1"></i>Ver Mi Historial
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Manejar descargas con feedback visual
+    document.querySelectorAll('.download-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            const documentName = this.dataset.documentName;
+            const originalText = this.innerHTML;
+            
+            // Mostrar indicador de descarga
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Descargando...';
+            this.classList.add('disabled');
+            
+            // Restaurar después de un tiempo
+            setTimeout(() => {
+                this.innerHTML = '<i class="fas fa-check me-2"></i>Descargado';
+                
+                // Volver al estado original después de otro momento
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                    this.classList.remove('disabled');
+                }, 1500);
+            }, 1000);
+        });
+    });
+    
+    // Agregar tooltips para los iconos de tipo de archivo
+    const fileIcons = document.querySelectorAll('.file-icon i');
+    fileIcons.forEach(icon => {
+        let fileType = 'Documento';
+        
+        if (icon.classList.contains('fa-file-pdf')) fileType = 'Documento PDF';
+        else if (icon.classList.contains('fa-file-word')) fileType = 'Documento Word';
+        else if (icon.classList.contains('fa-file-excel')) fileType = 'Hoja de Cálculo Excel';
+        else if (icon.classList.contains('fa-file-powerpoint')) fileType = 'Presentación PowerPoint';
+        else if (icon.classList.contains('fa-file-image')) fileType = 'Imagen';
+        else if (icon.classList.contains('fa-file-archive')) fileType = 'Archivo Comprimido';
+        
+        icon.setAttribute('title', fileType);
+        icon.setAttribute('data-bs-toggle', 'tooltip');
+    });
+    
+    // Inicializar tooltips si Bootstrap está disponible
+    if (typeof bootstrap !== 'undefined') {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+});
+</script>
+{% endblock %}

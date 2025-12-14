@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\course_documents\tests.py
+# hypothesis_version: 6.148.7
+
+[b'Test content', b'Test content for allowed file', b'Test document content', 100, 200, 255, '2024-2025', 'Duplicate Name', 'Estudiantes', 'Profesores', 'Test Course', 'Test Folder', 'Test folder created', 'Validation Course', '[<>:"/\\\\|?*]', 'assigned_courses', 'bat', 'doc', 'docx', 'enrolled_courses', 'exe', 'folder_created', 'jpg', 'js', 'pdf', 'php', 'png', 'principal:profile', 'py', 'sh', 'student', 'student@test.com', 'teacher', 'teacher@test.com', 'teacher_no_courses', 'teacher_validation', 'test_document.txt', 'testpass123', 'text/plain', 'txt']

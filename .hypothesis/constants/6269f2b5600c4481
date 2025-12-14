@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\blog\admin.py
+# hypothesis_version: 6.148.7
+
+['-fecha_publicacion', 'Clasificación', 'Fechas', 'Información básica', 'SEO', 'activar_comentarios', 'activo', 'autor', 'autor__username', 'categoria', 'classes', 'collapse', 'contenido', 'descripcion', 'destacada', 'estado', 'fecha_creacion', 'fecha_publicacion', 'fields', 'imagen_principal', 'meta_descripcion', 'nombre', 'noticia', 'noticia__titulo', 'resumen', 'slug', 'titulo']

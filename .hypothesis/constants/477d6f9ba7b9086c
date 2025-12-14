@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\blog\views.py
+# hypothesis_version: 6.148.7
+
+['-fecha_creacion', 'Editores', 'POST', 'autor', 'blog:detalle_noticia', 'blog:editar_noticia', 'blog:mis_noticias', 'borrador', 'busqueda', 'categoria', 'categoria_actual', 'categorias', 'comentario_form', 'comentarios', 'descripcion', 'estado', 'estado_actual', 'form', 'mis_noticias', 'nombre', 'noticia', 'noticias_borrador', 'noticias_destacadas', 'noticias_publicadas', 'page', 'page_obj', 'publicado', 'q', 'total_noticias', 'ultimas_noticias']

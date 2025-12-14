@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\cfbc\urls.py
+# hypothesis_version: 6.148.7
+
+['accounts/', 'admin/', 'blog.urls', 'chatbot.urls', 'chatbot/', 'datos-archivados/', 'noticias/', 'principal', 'principal.urls']

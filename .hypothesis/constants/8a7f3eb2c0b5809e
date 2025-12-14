@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\datos_archivados\migrations\0002_datoarchivadodinamico.py
+# hypothesis_version: 6.148.7
+
+[100, 255, '-fecha_migracion', '0001_initial', 'Datos Originales', 'Fecha de migración', 'ID', 'Nombre del Registro', 'Tabla de Origen', 'Tipo de Registro', 'datos_archivados', 'datos_originales', 'estructura_tabla', 'fecha_migracion', 'id', 'id_original', 'indexes', 'nombre_registro', 'ordering', 'tabla_origen', 'tipo_registro', 'unique_together', 'verbose_name', 'verbose_name_plural']

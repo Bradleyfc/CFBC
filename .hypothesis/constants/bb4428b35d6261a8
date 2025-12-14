@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\chatbot\apps.py
+# hypothesis_version: 6.148.7
+
+['RUN_MAIN', 'chatbot', 'runserver', 'test', 'true']

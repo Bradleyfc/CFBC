@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\course_documents\services.py
+# hypothesis_version: 6.148.7
+
+['#', 'BASE_URL', 'SITE_NAME', 'Sistema de Cursos', 'curso', 'curso_id', 'dashboard_url', 'document', 'email_error', 'email_sent', 'folder', 'notification_error', 'site_name', 'site_url', 'student', 'student_name', 'teacher', 'teacher_name', 'text/html', 'upload_date', 'user']
