@@ -58,8 +58,8 @@
                         
                         <div class="mt-2">
                             <!-- Botón de acceso al dashboard de documentos (siempre disponible para cursos inscritos) -->
-                            <a href="{% url 'course_documents:student_dashboard' curso_id=course.id %}" class="btn btn-primary btn-sm float-end" title="Ver documentos del curso">
-                              <i class="bi bi-folder2-open"></i> Documentos
+                            <a href="{% url 'course_documents:student_dashboard' curso_id=course.id %}" class="btn btn-primary btn-sm float-end" title="Documentos">
+                              <i class="bi bi-folder2-open"></i>
                               {% if course.has_new_content_indicator %}
                                 <span class="badge bg-danger rounded-pill ms-1">Nuevo</span>
                               {% endif %}
