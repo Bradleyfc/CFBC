@@ -4,214 +4,439 @@
 {% block title %}Dashboard de Documentos - {{ curso.name }}{% endblock %}
 
 {% block extra_css %}
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <style>
     .dashboard-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #0d6efd;
         color: white;
-        padding: 2rem 0;
+        border-radius: 0;
+        padding: 2rem;
         margin-bottom: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
+    
+    .btn-primary-custom {
+        background: #0d6efd;
+        border: 1px solid #0d6efd;
+        color: white;
+        border-radius: 5px;
+        padding: 12px 24px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary-custom:hover {
+        background: #0b5ed7;
+        border-color: #0a58ca;
+        color: white;
+        transform: translateY(-1px);
+    }
+    
+    .btn-success-custom {
+        background: #198754;
+        border: 1px solid #198754;
+        color: white;
+        border-radius: 5px;
+        padding: 12px 24px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-success-custom:hover {
+        background: #157347;
+        border-color: #146c43;
+        color: white;
+        transform: translateY(-1px);
+    }
+    
+    .btn-warning-custom {
+        background: #ffc107;
+        border: 1px solid #ffc107;
+        color: #000;
+        border-radius: 5px;
+        padding: 12px 24px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-warning-custom:hover {
+        background: #ffca2c;
+        border-color: #ffc720;
+        color: #000;
+        transform: translateY(-1px);
+    }
+    
     .stats-card {
-        background: white;
-        border-radius: 10px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        margin-bottom: 1rem;
+        border: none;
+        border-radius: 5px;
+        text-align: center;
+        transition: all 0.3s ease;
+        height: 100%;
+        color: white;
     }
+    
+    .stats-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stats-card.folders {
+        background: #0d6efd;
+    }
+    
+    .stats-card.documents {
+        background: #198754;
+    }
+    
+    .stats-card.students {
+        background: #c2185b;
+    }
+    
     .folder-card {
-        background: white;
-        border-radius: 10px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        margin-bottom: 1rem;
-        transition: transform 0.2s;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        transition: all 0.3s ease;
+        height: 100%;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
+    
     .folder-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        border-color: #0d6efd;
     }
-    .btn-primary-custom {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
-        border-radius: 25px;
-        padding: 0.75rem 1.5rem;
+    
+    .folder-icon {
+        width: 50px;
+        height: 50px;
+        background: #0d6efd;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
     }
-    .btn-success-custom {
-        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-        border: none;
-        border-radius: 25px;
-        padding: 0.75rem 1.5rem;
+    
+    .folder-icon.success {
+        background: #198754;
     }
+    
+    .folder-icon.warning {
+        background: #ffc107;
+        color: #000;
+    }
+    
     .empty-state {
         text-align: center;
-        padding: 3rem;
+        padding: 4rem 2rem;
         color: #6c757d;
+    }
+    
+    .empty-state i {
+        opacity: 0.5;
+        margin-bottom: 1.5rem;
+    }
+    
+    .modal-content {
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    }
+    
+    .modal-header {
+        border-bottom: 1px solid #dee2e6;
+        border-radius: 5px 5px 0 0;
+        background: #f8f9fa;
+    }
+    
+    .modal-header.primary {
+        background: #0d6efd;
+        color: white;
+    }
+    
+    .modal-header.success {
+        background: #198754;
+        color: white;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 5px;
+        border: 1px solid #ced4da;
+        padding: 12px 16px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .badge-custom {
+        background: #0d6efd;
+        color: white;
+        border-radius: 20px;
+        padding: 8px 16px;
+        font-weight: 500;
+    }
+    
+    .badge-custom.success {
+        background: #198754;
+    }
+    
+    .badge-custom.warning {
+        background: #ffc107;
+        color: #000;
+    }
+    
+    .dropdown-menu {
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        padding: 0.5rem 0;
+    }
+    
+    .dropdown-item {
+        padding: 10px 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .dropdown-item:hover {
+        background-color: #f8f9fa;
+        color: #0d6efd;
+    }
+    
+    .main-content {
+        background: #f8f9fa;
+        min-height: 100vh;
+        padding: 2rem 0;
+    }
+    
+    .alert-info-custom {
+        background: #d1ecf1;
+        border: 1px solid #bee5eb;
+        color: #0c5460;
+        border-radius: 5px;
+    }
+    
+    .alert-success-custom {
+        background: #d1e7dd;
+        border: 1px solid #badbcc;
+        color: #0f5132;
+        border-radius: 5px;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="dashboard-header">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-md-8">
-                <h1><i class="fas fa-folder-open me-3"></i>Dashboard de Documentos</h1>
-                <p class="mb-0 fs-5">{{ curso.name }}</p>
-                <small class="opacity-75">Gestiona los documentos y materiales de tu curso</small>
-            </div>
-            <div class="col-md-4 text-end">
+<div class="main-content">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="card">
+            <div class="card-header dashboard-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="card-title mb-0">
+                        <i class="bi bi-folder-open me-2"></i>
+                        Dashboard de Documentos
+                    </h3>
+                    <p class="mb-0 opacity-90">{{ curso.name }}</p>
+                </div>
                 <a href="{% url 'principal:profile' %}" class="btn btn-light btn-lg">
-                    <i class="fas fa-arrow-left me-2"></i>Volver al Perfil
+                    <i class="bi bi-arrow-left me-2"></i>Volver al Perfil
                 </a>
             </div>
         </div>
-    </div>
-</div>
 
-<div class="container">
-    <!-- Estadísticas -->
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="stats-card text-center">
-                <i class="fas fa-folder fa-2x text-primary mb-2"></i>
-                <h3 class="mb-1">{{ stats.total_folders }}</h3>
-                <p class="text-muted mb-0">Carpetas</p>
+        <!-- Stats Cards -->
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3">
+                <div class="card stats-card folders">
+                    <div class="card-body">
+                        <i class="bi bi-folder fs-3 mb-2"></i>
+                        <h3 class="mb-1">{{ stats.total_folders }}</h3>
+                        <p class="mb-0 small">Carpetas Creadas</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card stats-card documents">
+                    <div class="card-body">
+                        <i class="bi bi-file-earmark-text fs-3 mb-2"></i>
+                        <h3 class="mb-1">{{ stats.total_documents }}</h3>
+                        <p class="mb-0 small">Documentos Subidos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card stats-card students">
+                    <div class="card-body">
+                        <i class="bi bi-people fs-3 mb-2"></i>
+                        <h3 class="mb-1">{{ curso.matriculas.count }}</h3>
+                        <p class="mb-0 small">Estudiantes Inscritos</p>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="stats-card text-center">
-                <i class="fas fa-file-alt fa-2x text-success mb-2"></i>
-                <h3 class="mb-1">{{ stats.total_documents }}</h3>
-                <p class="text-muted mb-0">Documentos</p>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="stats-card text-center">
-                <i class="fas fa-users fa-2x text-info mb-2"></i>
-                <h3 class="mb-1">{{ curso.matriculas.count }}</h3>
-                <p class="text-muted mb-0">Estudiantes</p>
-            </div>
-        </div>
-    </div>
 
-    <!-- Acciones principales -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex gap-3 flex-wrap">
-                <button type="button" class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#createFolderModal">
-                    <i class="fas fa-plus me-2"></i>Nueva Carpeta
-                </button>
-                <button type="button" class="btn btn-success-custom" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal" {% if not folders %}disabled{% endif %}>
-                    <i class="fas fa-upload me-2"></i>Subir Documento
-                </button>
+        <!-- Action Buttons -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex flex-wrap gap-3">
+                    <button type="button" class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#createFolderModal">
+                        <i class="bi bi-plus me-2"></i>Nueva Carpeta
+                    </button>
+                    <button type="button" class="btn btn-success-custom {% if not folders %}disabled{% endif %}" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal" {% if not folders %}disabled{% endif %}>
+                        <i class="bi bi-upload me-2"></i>Subir Documento
+                    </button>
+                    {% if folders %}
+                    <button type="button" class="btn btn-warning-custom">
+                        <i class="bi bi-info-circle me-2"></i>Ver Estadísticas
+                    </button>
+                    {% endif %}
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Lista de carpetas -->
-    <div class="row">
-        <div class="col-12">
-            <h3 class="mb-3">
-                <i class="fas fa-folder me-2"></i>Carpetas del Curso
-            </h3>
-            
-            {% if folders %}
-                <div class="row">
-                    {% for folder in folders %}
-                    <div class="col-md-6 col-lg-4 mb-3">
-                        <div class="folder-card">
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <h5 class="mb-0">
-                                    <i class="fas fa-folder text-warning me-2"></i>
-                                    {{ folder.name }}
-                                </h5>
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
-                                        <i class="fas fa-ellipsis-v"></i>
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li>
-                                            <a class="dropdown-item" href="{% url 'course_documents:folder_detail' curso_id=curso.id folder_id=folder.id %}">
-                                                <i class="fas fa-eye me-2"></i>Ver Detalles
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <button class="dropdown-item upload-to-folder-btn" data-folder-id="{{ folder.id }}" data-folder-name="{{ folder.name }}">
-                                                <i class="fas fa-upload me-2"></i>Subir Documento
-                                            </button>
-                                        </li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li>
-                                            <button class="dropdown-item text-danger delete-folder-btn" data-folder-id="{{ folder.id }}" data-folder-name="{{ folder.name }}">
-                                                <i class="fas fa-trash me-2"></i>Eliminar Carpeta
-                                            </button>
-                                        </li>
-                                    </ul>
+        <!-- Folders List -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card" style="border: none; border-radius: 15px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);">
+                    <div class="card-header bg-primary text-white">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-folder me-2"></i>
+                                <div>
+                                    <h5 class="mb-0">Carpetas del Curso</h5>
+                                    <small class="opacity-75">Organiza tus materiales por temas</small>
                                 </div>
                             </div>
-                            
-                            <div class="mb-3">
-                                <small class="text-muted">
-                                    <i class="fas fa-calendar me-1"></i>
-                                    Creada: {{ folder.created_at|date:"d/m/Y" }}
-                                </small>
-                            </div>
-                            
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="badge bg-primary">
-                                    {{ folder.documents.count }} documento{{ folder.documents.count|pluralize }}
-                                </span>
-                                <a href="{% url 'course_documents:folder_detail' curso_id=curso.id folder_id=folder.id %}" class="btn btn-sm btn-outline-primary">
-                                    Ver Contenido
-                                </a>
-                            </div>
+                            {% if folders %}
+                            <span class="badge bg-light text-dark">{{ folders|length }} carpeta{{ folders|length|pluralize }}</span>
+                            {% endif %}
                         </div>
                     </div>
-                    {% endfor %}
+                    <div class="card-body" style="padding: 2rem;">
+                        {% if folders %}
+                            <div class="row">
+                                {% for folder in folders %}
+                                <div class="col-md-6 col-lg-4 mb-4">
+                                    <div class="card folder-card h-100">
+                                        <div class="card-body" style="padding: 1.5rem;">
+                                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="folder-icon me-3">
+                                                        <i class="bi bi-folder"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="card-title mb-1 fw-bold">{{ folder.name }}</h6>
+                                                        <small class="text-muted">
+                                                            <i class="bi bi-calendar me-1"></i>
+                                                            {{ folder.created_at|date:"d/m/Y" }}
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" style="border-radius: 8px;">
+                                                        <i class="fas fa-ellipsis-v"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        <li>
+                                                            <a class="dropdown-item" href="{% url 'course_documents:folder_detail' curso_id=curso.id folder_id=folder.id %}">
+                                                                <i class="bi bi-eye me-2 text-primary"></i>Ver Detalles
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <button class="dropdown-item upload-to-folder-btn" data-folder-id="{{ folder.id }}" data-folder-name="{{ folder.name }}">
+                                                                <i class="bi bi-upload me-2 text-success"></i>Subir Documento
+                                                            </button>
+                                                        </li>
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        <li>
+                                                            <button class="dropdown-item text-danger delete-folder-btn" data-folder-id="{{ folder.id }}" data-folder-name="{{ folder.name }}">
+                                                                <i class="bi bi-trash me-2"></i>Eliminar Carpeta
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mt-3 pt-3" style="border-top: 1px solid #f0f0f0;">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span class="badge badge-custom">
+                                                        <i class="bi bi-file-earmark-text me-1"></i>
+                                                        {{ folder.documents.count }} documento{{ folder.documents.count|pluralize }}
+                                                    </span>
+                                                    <a href="{% url 'course_documents:folder_detail' curso_id=curso.id folder_id=folder.id %}" class="btn btn-sm btn-primary-custom" style="padding: 8px 16px;">
+                                                        <i class="bi bi-arrow-right me-1"></i>Abrir
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="bi bi-folder-plus display-1 text-primary"></i>
+                                <h3 class="mt-3 mb-3">¡Comienza a organizar!</h3>
+                                <p class="mb-4">Crea tu primera carpeta para comenzar a organizar los documentos del curso de manera eficiente.</p>
+                                <button type="button" class="btn btn-primary-custom btn-lg" data-bs-toggle="modal" data-bs-target="#createFolderModal">
+                                    <i class="bi bi-plus me-2"></i>Crear Primera Carpeta
+                                </button>
+                                <div class="mt-4">
+                                    <div class="alert alert-info-custom">
+                                        <i class="bi bi-lightbulb me-2"></i>
+                                        <strong>Tip:</strong> Las carpetas te ayudan a organizar materiales por temas, unidades o tipos de contenido
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
-            {% else %}
-                <div class="empty-state">
-                    <i class="fas fa-folder-open fa-4x mb-3 text-muted"></i>
-                    <h4>No hay carpetas creadas</h4>
-                    <p>Crea tu primera carpeta para comenzar a organizar los documentos del curso.</p>
-                    <button type="button" class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#createFolderModal">
-                        <i class="fas fa-plus me-2"></i>Crear Primera Carpeta
-                    </button>
-                </div>
-            {% endif %}
+            </div>
         </div>
     </div>
 </div>
 
 <!-- Modal para crear carpeta -->
 <div class="modal fade" id="createFolderModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header primary">
                 <h5 class="modal-title">
-                    <i class="fas fa-folder-plus me-2"></i>Nueva Carpeta
+                    <i class="bi bi-folder-plus me-2"></i>Nueva Carpeta
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form method="post" action="{% url 'course_documents:create_folder' curso_id=curso.id %}">
-                <div class="modal-body">
+                <div class="modal-body" style="padding: 2rem;">
                     {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="{{ folder_form.name.id_for_label }}" class="form-label">Nombre de la carpeta</label>
+                    <div class="mb-4">
+                        <label for="{{ folder_form.name.id_for_label }}" class="form-label fw-semibold">
+                            <i class="bi bi-tag me-2"></i>Nombre de la carpeta
+                        </label>
                         {{ folder_form.name }}
-                        <div class="form-text d-flex justify-content-between">
-                            <span>Elige un nombre descriptivo para organizar tus documentos.</span>
+                        <div class="form-text d-flex justify-content-between mt-2">
+                            <span>
+                                <i class="bi bi-info-circle me-1"></i>
+                                Elige un nombre descriptivo y claro
+                            </span>
                             <span id="folder-name-counter" class="text-muted">0/200</span>
                         </div>
-                        <div id="folder-name-error" class="text-danger small" style="display: none;"></div>
+                    </div>
+                    <div class="alert alert-info-custom">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        <strong>Sugerencias:</strong> Usa nombres como "Materiales de Clase", "Tareas", "Exámenes", "Recursos Adicionales"
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <div class="modal-footer" style="border-top: 1px solid #f0f0f0; padding: 1.5rem 2rem;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x me-2"></i>Cancelar
+                    </button>
                     <button type="submit" class="btn btn-primary-custom">
-                        <i class="fas fa-save me-2"></i>Crear Carpeta
+                        <i class="bi bi-save me-2"></i>Crear Carpeta
                     </button>
                 </div>
             </form>
@@ -221,49 +446,82 @@
 
 <!-- Modal para subir documento -->
 <div class="modal fade" id="uploadDocumentModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header success">
                 <h5 class="modal-title">
-                    <i class="fas fa-upload me-2"></i>Subir Documento
+                    <i class="bi bi-upload me-2"></i>Subir Documento
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form method="post" enctype="multipart/form-data" id="uploadDocumentForm">
-                <div class="modal-body">
+                <div class="modal-body" style="padding: 2rem;">
                     {% csrf_token %}
-                    <div class="mb-3">
-                        <label class="form-label">Seleccionar carpeta</label>
-                        <select name="folder_id" class="form-select" required>
-                            <option value="">Selecciona una carpeta...</option>
-                            {% for folder in folders %}
-                            <option value="{{ folder.id }}">{{ folder.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="{{ document_form.name.id_for_label }}" class="form-label">Nombre del documento</label>
-                        {{ document_form.name }}
-                        <div class="form-text d-flex justify-content-between">
-                            <span>Nombre descriptivo para el documento</span>
-                            <span id="document-name-counter" class="text-muted">0/200</span>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-folder me-2"></i>Seleccionar carpeta
+                                </label>
+                                <select name="folder_id" class="form-select" required>
+                                    <option value="">Selecciona una carpeta...</option>
+                                    {% for folder in folders %}
+                                    <option value="{{ folder.id }}">
+                                        <i class="fas fa-folder me-2"></i>{{ folder.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Elige dónde organizar tu documento
+                                </div>
+                            </div>
                         </div>
-                        <div id="document-name-error" class="text-danger small" style="display: none;"></div>
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label for="{{ document_form.name.id_for_label }}" class="form-label fw-semibold">
+                                    <i class="bi bi-tag me-2"></i>Nombre del documento
+                                </label>
+                                {{ document_form.name }}
+                                <div class="form-text d-flex justify-content-between mt-2">
+                                    <span>
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Nombre descriptivo y claro
+                                    </span>
+                                    <span id="document-name-counter" class="text-muted">0/200</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="{{ document_form.file.id_for_label }}" class="form-label">Archivo</label>
+                    <div class="mb-4">
+                        <label for="{{ document_form.file.id_for_label }}" class="form-label fw-semibold">
+                            <i class="bi bi-file-earmark me-2"></i>Seleccionar archivo
+                        </label>
                         {{ document_form.file }}
-                        <div class="form-text">
-                            Formatos permitidos: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, ZIP, RAR, JPG, PNG<br>
-                            Tamaño máximo: 10MB
+                    </div>
+                    <div class="alert alert-info-custom">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="mb-2">
+                                    <i class="bi bi-check-circle me-2 text-success"></i>Formatos Permitidos
+                                </h6>
+                                <small>PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, ZIP, RAR, JPG, PNG</small>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="mb-2">
+                                    <i class="bi bi-hdd me-2 text-primary"></i>Tamaño Máximo
+                                </h6>
+                                <small>10MB por archivo</small>
+                            </div>
                         </div>
-                        <div id="file-error" class="text-danger small" style="display: none;"></div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <div class="modal-footer" style="border-top: 1px solid #f0f0f0; padding: 1.5rem 2rem;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x me-2"></i>Cancelar
+                    </button>
                     <button type="submit" class="btn btn-success-custom">
-                        <i class="fas fa-upload me-2"></i>Subir Documento
+                        <i class="bi bi-upload me-2"></i>Subir Documento
                     </button>
                 </div>
             </form>
@@ -273,14 +531,12 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Validaciones en tiempo real para nombres
-    function setupCharacterCounter(inputId, counterId, maxLength, errorId) {
+    // Character counters
+    function setupCharacterCounter(inputId, counterId, maxLength) {
         const input = document.getElementById(inputId);
         const counter = document.getElementById(counterId);
-        const errorDiv = document.getElementById(errorId);
         
         if (!input || !counter) return;
         
@@ -288,7 +544,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const length = input.value.length;
             counter.textContent = `${length}/${maxLength}`;
             
-            // Cambiar color según proximidad al límite
             if (length > maxLength * 0.9) {
                 counter.className = 'text-warning';
             } else if (length >= maxLength) {
@@ -296,108 +551,39 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 counter.className = 'text-muted';
             }
-            
-            // Validar caracteres especiales para nombres de carpeta
-            if (inputId.includes('name')) {
-                const forbiddenChars = /[<>:"/\\|?*]/;
-                if (forbiddenChars.test(input.value)) {
-                    errorDiv.textContent = 'Caracteres no permitidos: < > : " / \\ | ? *';
-                    errorDiv.style.display = 'block';
-                    input.classList.add('is-invalid');
-                } else if (length > maxLength) {
-                    errorDiv.textContent = `Máximo ${maxLength} caracteres permitidos`;
-                    errorDiv.style.display = 'block';
-                    input.classList.add('is-invalid');
-                } else {
-                    errorDiv.style.display = 'none';
-                    input.classList.remove('is-invalid');
-                }
-            }
         }
         
         input.addEventListener('input', updateCounter);
-        input.addEventListener('keyup', updateCounter);
-        updateCounter(); // Inicializar
+        updateCounter();
     }
     
-    // Configurar contadores
-    setupCharacterCounter('id_name', 'folder-name-counter', 200, 'folder-name-error');
+    setupCharacterCounter('id_name', 'folder-name-counter', 200);
     
-    // Para el formulario de documento (se configura cuando se abre el modal)
-    document.getElementById('uploadDocumentModal').addEventListener('shown.bs.modal', function() {
-        setupCharacterCounter('id_name', 'document-name-counter', 200, 'document-name-error');
-        
-        // Validación de archivo
-        const fileInput = document.querySelector('#uploadDocumentForm input[type="file"]');
-        const fileError = document.getElementById('file-error');
-        
-        if (fileInput) {
-            fileInput.addEventListener('change', function() {
-                const file = this.files[0];
-                if (!file) return;
-                
-                const maxSize = 10 * 1024 * 1024; // 10MB
-                const allowedExtensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'zip', 'rar', '7z', 'jpg', 'jpeg', 'png', 'gif'];
-                
-                // Validar tamaño
-                if (file.size > maxSize) {
-                    fileError.textContent = 'El archivo es demasiado grande. Máximo 10MB permitido.';
-                    fileError.style.display = 'block';
-                    this.classList.add('is-invalid');
-                    return;
-                }
-                
-                // Validar extensión
-                const extension = file.name.split('.').pop().toLowerCase();
-                if (!allowedExtensions.includes(extension)) {
-                    fileError.textContent = 'Tipo de archivo no permitido. Consulta los formatos permitidos.';
-                    fileError.style.display = 'block';
-                    this.classList.add('is-invalid');
-                    return;
-                }
-                
-                // Si todo está bien
-                fileError.style.display = 'none';
-                this.classList.remove('is-invalid');
-                
-                // Auto-completar nombre si está vacío
-                const nameInput = document.querySelector('#uploadDocumentForm input[name="name"]');
-                if (nameInput && !nameInput.value.trim()) {
-                    const nameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.'));
-                    nameInput.value = nameWithoutExt.substring(0, 200); // Truncar si es muy largo
-                    nameInput.dispatchEvent(new Event('input')); // Trigger counter update
-                }
-            });
-        }
-    });
-    
-    // Manejar subida de documento a carpeta específica
+    // Upload to specific folder
     document.querySelectorAll('.upload-to-folder-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const folderId = this.dataset.folderId;
             const folderName = this.dataset.folderName;
             
-            // Actualizar el modal de subida
             const folderSelect = document.querySelector('#uploadDocumentForm select[name="folder_id"]');
             folderSelect.value = folderId;
             
-            // Actualizar título del modal
-            document.querySelector('#uploadDocumentModal .modal-title').innerHTML = 
-                `<i class="fas fa-upload me-2"></i>Subir Documento a "${folderName}"`;
+            const modal = new bootstrap.Modal(document.getElementById('uploadDocumentModal'));
+            modal.show();
             
-            // Mostrar modal
-            new bootstrap.Modal(document.getElementById('uploadDocumentModal')).show();
+            setTimeout(() => {
+                setupCharacterCounter('id_name', 'document-name-counter', 200);
+            }, 100);
         });
     });
     
-    // Manejar eliminación de carpetas
+    // Delete folder
     document.querySelectorAll('.delete-folder-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const folderId = this.dataset.folderId;
             const folderName = this.dataset.folderName;
             
             if (confirm(`¿Estás seguro de que deseas eliminar la carpeta "${folderName}"? Esta acción eliminará también todos los documentos contenidos y no se puede deshacer.`)) {
-                // Enviar petición de eliminación
                 fetch(`{% url 'course_documents:delete_folder' curso_id=curso.id folder_id=0 %}`.replace('0', folderId), {
                     method: 'POST',
                     headers: {
@@ -420,7 +606,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Actualizar action del formulario de subida según carpeta seleccionada
+    // Update form action when folder is selected
     document.querySelector('#uploadDocumentForm select[name="folder_id"]').addEventListener('change', function() {
         const folderId = this.value;
         if (folderId) {
