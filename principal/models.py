@@ -48,17 +48,25 @@ class Curso(models.Model):
 
     def get_dynamic_status(self):
         """
-        Obtiene el estado dinámico del curso basado en la fecha límite de inscripción
-        y la fecha actual del servidor.
+        Obtiene el estado dinámico del curso basado en la fecha límite de inscripción,
+        fecha de inicio y la fecha actual del servidor.
         """
-        if not self.enrollment_deadline:
-            # Si no hay fecha límite, usar el estado manual
-            return self.status
-        
         # Obtener la fecha actual del servidor
         today = date.today()
         
-        # Si ya pasó la fecha límite de inscripción
+        # Si hay fecha de inicio y ya comenzó el curso, debería estar en progreso
+        if self.start_date and today >= self.start_date:
+            # Si el curso ya comenzó, debería estar en progreso
+            if self.status in ['I', 'IT']:
+                return 'P'
+            # Si ya está en progreso o finalizado, mantener el estado
+            return self.status
+        
+        # Si no hay fecha límite de inscripción, usar el estado manual
+        if not self.enrollment_deadline:
+            return self.status
+        
+        # Si ya pasó la fecha límite de inscripción pero aún no ha comenzado
         if today > self.enrollment_deadline:
             # Si el curso estaba en inscripción, cambiar a "Plazo Terminado"
             if self.status == 'I':
