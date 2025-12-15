@@ -206,7 +206,7 @@
           {% endif %}
 
           <!-- Agregando fecha de inicio del curso -->
-          {% if course.start_date and course.status != 'P' and course.status != 'F' %}
+          {% if course.start_date and course.get_dynamic_status != 'P' and course.get_dynamic_status != 'F' %}
           <p class="card-text">
             <strong>Fecha de inicio del Curso:</strong> {{course.start_date|date:"d/m/Y"}}
           </p>

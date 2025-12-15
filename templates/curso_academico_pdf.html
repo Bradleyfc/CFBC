@@ -67,7 +67,7 @@
                 <tr>
                     <td>{{ curso.name }}</td>
                     <td>{{ curso.teacher.get_full_name|default:curso.teacher.username }}</td>
-                    <td>{{ curso.get_status_display }}</td>
+                    <td>{{ curso.get_dynamic_status_display }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
