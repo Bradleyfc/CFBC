@@ -40,10 +40,20 @@ class TeacherDashboardView(LoginRequiredMixin, TeacherPermissionMixin, DetailVie
         # Obtener estadísticas
         total_documents = CourseDocument.objects.filter(folder__curso=curso).count()
         total_folders = folders.count()
+        # Contar estudiantes matriculados activos
+        total_students = Matriculas.objects.filter(
+            course=curso, 
+            activo=True
+        ).count()
+        
+        # Calcular promedio de documentos por carpeta
+        average_docs_per_folder = total_documents / total_folders if total_folders > 0 else 0
         
         context['stats'] = {
             'total_folders': total_folders,
             'total_documents': total_documents,
+            'total_students': total_students,
+            'average_docs_per_folder': average_docs_per_folder,
         }
         
         # Formularios para crear carpeta y subir documento

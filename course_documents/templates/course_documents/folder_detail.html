@@ -14,20 +14,70 @@
         margin-bottom: 2rem;
     }
     .document-card {
-        background: white;
-        border-radius: 10px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        margin-bottom: 1rem;
-        transition: transform 0.2s;
+        border: none;
+        border-radius: 15px;
+        transition: all 0.3s ease;
+        height: 100%;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        overflow: hidden;
+        position: relative;
     }
+    
     .document-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        transform: translateY(-5px);
+        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
     }
+    
+    .document-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #28a745, #17a2b8, #ffc107);
+    }
+    
     .file-icon {
-        font-size: 2rem;
-        margin-bottom: 1rem;
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.8rem;
+        margin-bottom: 0;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .file-icon.pdf {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    }
+    
+    .file-icon.word {
+        background: linear-gradient(135deg, #2b579a 0%, #1e3d72 100%);
+    }
+    
+    .file-icon.excel {
+        background: linear-gradient(135deg, #217346 0%, #0f5132 100%);
+    }
+    
+    .file-icon.powerpoint {
+        background: linear-gradient(135deg, #d04423 0%, #b02a0b 100%);
+    }
+    
+    .file-icon.image {
+        background: linear-gradient(135deg, #6f42c1 0%, #5a2d91 100%);
+    }
+    
+    .file-icon.archive {
+        background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%);
+    }
+    
+    .file-icon.default {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
     }
     .btn-primary-custom {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -54,25 +104,33 @@
     <div class="container">
         <div class="row align-items-center">
             <div class="col-md-8">
-                <nav aria-label="breadcrumb" class="mb-2">
+                <nav aria-label="breadcrumb" class="mb-3">
                     <ol class="breadcrumb mb-0">
                         <li class="breadcrumb-item">
-                            <a href="{% url 'course_documents:teacher_dashboard' curso_id=curso.id %}" class="text-white-50">
+                            <a href="{% url 'course_documents:teacher_dashboard' curso_id=curso.id %}" class="text-dark">
                                 <i class="fas fa-home"></i> Dashboard
                             </a>
                         </li>
-                        <li class="breadcrumb-item active text-white" aria-current="page">{{ folder.name }}</li>
+                        <li class="breadcrumb-item active text-dark" aria-current="page">{{ folder.name }}</li>
                     </ol>
                 </nav>
-                <h1><i class="fas fa-folder-open me-3"></i>{{ folder.name }}</h1>
-                <p class="mb-0 fs-5">{{ curso.name }}</p>
-                <small class="opacity-75">Gestiona los documentos de esta carpeta</small>
+                <div class="d-flex align-items-center">
+                    <div>
+                        <h1 class="text-dark mb-1 fw-bold d-flex align-items-center">
+                            <i class="fas fa-folder-open me-3"></i>{{ folder.name }}
+                        </h1>
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-mortarboard me-2 text-muted"></i>
+                            <span class="fs-6 text-muted fw-semibold">{{ curso.name }}</span>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="col-md-4 text-end">
-                <button type="button" class="btn btn-success-custom me-2" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
-                    <i class="fas fa-upload me-2"></i>Subir Documento
+                <button type="button" class="btn btn-outline-success me-2" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
+                    <i class="bi bi-upload me-2"></i>Subir Documento
                 </button>
-                <a href="{% url 'course_documents:teacher_dashboard' curso_id=curso.id %}" class="btn btn-light">
+                <a href="{% url 'course_documents:teacher_dashboard' curso_id=curso.id %}" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left me-2"></i>Volver
                 </a>
             </div>
@@ -82,22 +140,59 @@
 
 <div class="container">
     <!-- Información de la carpeta -->
-    <div class="row mb-4">
+    <div class="row mb-5 mt-4">
         <div class="col-12">
-            <div class="alert alert-info">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Carpeta:</strong> {{ folder.name }} | 
-                        <strong>Creada:</strong> {{ folder.created_at|date:"d/m/Y H:i" }} |
-                        <strong>Documentos:</strong> {{ documents.count }}
-                    </div>
-                    <div class="col-md-4 text-end">
-                        <button class="btn btn-outline-danger btn-sm delete-folder-btn" 
-                                data-folder-id="{{ folder.id }}" 
-                                data-folder-name="{{ folder.name }}">
-                            <i class="fas fa-trash me-1"></i>Eliminar Carpeta
-                        </button>
+            <div class="card border-0 shadow-sm" style="border-radius: 15px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+                                    <i class="bi bi-folder-fill text-primary fs-5"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 fw-bold text-dark">{{ folder.name }}</h6>
+                                    <small class="text-muted">Información de la carpeta</small>
+                                </div>
+                            </div>
+                            <div class="row g-3 mt-2">
+                                <div class="col-md-4">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-calendar-event me-2 text-success"></i>
+                                        <div>
+                                            <small class="text-muted d-block">Creada</small>
+                                            <span class="fw-semibold text-dark">{{ folder.created_at|date:"d/m/Y" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-file-earmark-text me-2 text-info"></i>
+                                        <div>
+                                            <small class="text-muted d-block">Documentos</small>
+                                            <span class="fw-semibold text-dark">{{ documents.count }} archivo{{ documents.count|pluralize }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-clock me-2 text-warning"></i>
+                                        <div>
+                                            <small class="text-muted d-block">Hora</small>
+                                            <span class="fw-semibold text-dark">{{ folder.created_at|date:"H:i" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button class="btn btn-outline-danger px-4 py-2 delete-folder-btn fw-semibold" 
+                                    data-folder-id="{{ folder.id }}" 
+                                    data-folder-name="{{ folder.name }}"
+                                    style="border-radius: 10px;">
+                                <i class="bi bi-trash me-2"></i>Eliminar Carpeta
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -107,55 +202,73 @@
     <!-- Lista de documentos -->
     <div class="row">
         <div class="col-12">
-            <h3 class="mb-3">
-                <i class="fas fa-file-alt me-2"></i>Documentos en la Carpeta
+            <h3 class="mb-3 text-dark fw-bold">
+                <i class="fas fa-file-alt me-2 text-primary"></i>Documentos en la Carpeta
             </h3>
             
             {% if documents %}
                 <div class="row">
                     {% for document in documents %}
-                    <div class="col-md-6 col-lg-4 mb-3">
-                        <div class="document-card text-center">
-                            <div class="file-icon text-primary">
-                                {% if document.file.name|slice:"-4:" == ".pdf" %}
-                                    <i class="fas fa-file-pdf"></i>
-                                {% elif document.file.name|slice:"-4:" in ".doc,.docx" %}
-                                    <i class="fas fa-file-word"></i>
-                                {% elif document.file.name|slice:"-4:" in ".xls,.xlsx" %}
-                                    <i class="fas fa-file-excel"></i>
-                                {% elif document.file.name|slice:"-4:" in ".ppt,.pptx" %}
-                                    <i class="fas fa-file-powerpoint"></i>
-                                {% elif document.file.name|slice:"-4:" in ".jpg,.jpeg,.png,.gif" %}
-                                    <i class="fas fa-file-image"></i>
-                                {% elif document.file.name|slice:"-4:" in ".zip,.rar,.7z" %}
-                                    <i class="fas fa-file-archive"></i>
-                                {% else %}
-                                    <i class="fas fa-file-alt"></i>
-                                {% endif %}
-                            </div>
-                            
-                            <h5 class="mb-2">{{ document.name }}</h5>
-                            
-                            <div class="mb-3">
-                                <small class="text-muted d-block">
-                                    <i class="fas fa-calendar me-1"></i>
-                                    {{ document.uploaded_at|date:"d/m/Y H:i" }}
-                                </small>
-                                <small class="text-muted d-block">
-                                    <i class="fas fa-weight-hanging me-1"></i>
-                                    {{ document.file_size|filesizeformat }}
-                                </small>
-                            </div>
-                            
-                            <div class="d-flex gap-2 justify-content-center">
-                                <a href="{{ document.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-eye me-1"></i>Ver
-                                </a>
-                                <button class="btn btn-sm btn-outline-danger delete-document-btn" 
-                                        data-document-id="{{ document.id }}" 
-                                        data-document-name="{{ document.name }}">
-                                    <i class="fas fa-trash me-1"></i>Eliminar
-                                </button>
+                    <div class="col-md-4 col-lg-3 mb-4">
+                        <div class="card document-card h-100">
+                            <div class="card-body p-4">
+                                <!-- Header con icono -->
+                                <div class="text-center mb-3">
+                                    <div class="file-icon mx-auto
+                                        {% if document.file.name|slice:"-4:" == ".pdf" %}pdf
+                                        {% elif document.file.name|slice:"-4:" in ".doc,.docx" %}word
+                                        {% elif document.file.name|slice:"-4:" in ".xls,.xlsx" %}excel
+                                        {% elif document.file.name|slice:"-4:" in ".ppt,.pptx" %}powerpoint
+                                        {% elif document.file.name|slice:"-4:" in ".jpg,.jpeg,.png,.gif" %}image
+                                        {% elif document.file.name|slice:"-4:" in ".zip,.rar,.7z" %}archive
+                                        {% else %}default{% endif %}">
+                                        {% if document.file.name|slice:"-4:" == ".pdf" %}
+                                            <i class="fas fa-file-pdf"></i>
+                                        {% elif document.file.name|slice:"-4:" in ".doc,.docx" %}
+                                            <i class="fas fa-file-word"></i>
+                                        {% elif document.file.name|slice:"-4:" in ".xls,.xlsx" %}
+                                            <i class="fas fa-file-excel"></i>
+                                        {% elif document.file.name|slice:"-4:" in ".ppt,.pptx" %}
+                                            <i class="fas fa-file-powerpoint"></i>
+                                        {% elif document.file.name|slice:"-4:" in ".jpg,.jpeg,.png,.gif" %}
+                                            <i class="fas fa-file-image"></i>
+                                        {% elif document.file.name|slice:"-4:" in ".zip,.rar,.7z" %}
+                                            <i class="fas fa-file-archive"></i>
+                                        {% else %}
+                                            <i class="fas fa-file-alt"></i>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <!-- Título y metadatos -->
+                                <div class="mb-3">
+                                    <h5 class="card-title mb-2 fw-bold text-dark text-center" style="font-size: 1.1rem;">{{ document.name }}</h5>
+                                    <div class="text-center">
+                                        <div class="d-flex align-items-center justify-content-center text-muted mb-1">
+                                            <i class="bi bi-calendar-event me-2 text-primary"></i>
+                                            <small>{{ document.uploaded_at|date:"d/m/Y H:i" }}</small>
+                                        </div>
+                                        <div class="d-flex align-items-center justify-content-center text-muted">
+                                            <i class="bi bi-hdd me-2 text-success"></i>
+                                            <small>{{ document.file_size|filesizeformat }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Footer con botones -->
+                                <div class="d-flex justify-content-center gap-2 mt-auto">
+                                    <a href="{{ document.file.url }}" target="_blank" 
+                                       class="btn btn-primary btn-sm px-3 py-2" 
+                                       style="border-radius: 10px; font-weight: 600;">
+                                        <i class="bi bi-eye me-1"></i>Ver
+                                    </a>
+                                    <button class="btn btn-outline-danger btn-sm px-3 py-2 delete-document-btn" 
+                                            data-document-id="{{ document.id }}" 
+                                            data-document-name="{{ document.name }}"
+                                            style="border-radius: 10px; font-weight: 600;">
+                                        <i class="bi bi-trash me-1"></i>Eliminar
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -163,10 +276,10 @@
                 </div>
             {% else %}
                 <div class="empty-state">
-                    <i class="fas fa-file-alt fa-4x mb-3 text-muted"></i>
-                    <h4>No hay documentos en esta carpeta</h4>
-                    <p>Sube tu primer documento para comenzar a compartir materiales con tus estudiantes.</p>
-                    <button type="button" class="btn btn-success-custom" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
+                    <i class="fas fa-file-alt fa-4x mb-3 text-primary"></i>
+                    <h4 class="text-dark fw-bold">No hay documentos en esta carpeta</h4>
+                    <p class="text-secondary fw-semibold">Sube tu primer documento para comenzar a compartir materiales con tus estudiantes.</p>
+                    <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
                         <i class="fas fa-upload me-2"></i>Subir Primer Documento
                     </button>
                 </div>
@@ -197,18 +310,110 @@
                         <label for="{{ document_form.file.id_for_label }}" class="form-label">Archivo</label>
                         {{ document_form.file }}
                         <div class="form-text">
-                            Formatos permitidos: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, ZIP, JPG, PNG<br>
-                            Tamaño máximo: 50MB
+                            Formatos permitidos: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, ZIP, RAR, JPG, PNG<br>
+                            Tamaño máximo: 10MB
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-success-custom">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-outline-success">
                         <i class="fas fa-upload me-2"></i>Subir Documento
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para eliminar documento -->
+<div class="modal fade" id="deleteDocumentModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0" style="border-radius: 15px; overflow: hidden;">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill me-2 fs-4"></i>
+                    Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <div class="bg-danger bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <i class="bi bi-file-earmark-x text-danger" style="font-size: 2.5rem;"></i>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <h6 class="fw-bold mb-3">¿Estás seguro de eliminar este documento?</h6>
+                    <p class="text-muted mb-3">
+                        Estás a punto de eliminar el documento <strong id="documentNameToDelete" class="text-danger"></strong>
+                    </p>
+                    <div class="alert alert-warning border-0 bg-warning bg-opacity-10">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-exclamation-triangle text-warning me-2 mt-1"></i>
+                            <div class="text-start">
+                                <small class="fw-semibold text-warning">¡Atención!</small>
+                                <br>
+                                <small class="text-muted">Esta acción no se puede deshacer.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 p-4 pt-0">
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+                    <i class="bi bi-x me-2"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-danger px-4" id="confirmDeleteDocument">
+                    <i class="bi bi-trash me-2"></i>Eliminar Documento
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para eliminar carpeta -->
+<div class="modal fade" id="deleteFolderModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0" style="border-radius: 15px; overflow: hidden;">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill me-2 fs-4"></i>
+                    Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <div class="bg-danger bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <i class="bi bi-folder-x text-danger" style="font-size: 2.5rem;"></i>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <h6 class="fw-bold mb-3">¿Estás seguro de eliminar esta carpeta?</h6>
+                    <p class="text-muted mb-3">
+                        Estás a punto de eliminar la carpeta <strong id="folderNameToDelete" class="text-danger"></strong>
+                    </p>
+                    <div class="alert alert-warning border-0 bg-warning bg-opacity-10">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-exclamation-triangle text-warning me-2 mt-1"></i>
+                            <div class="text-start">
+                                <small class="fw-semibold text-warning">¡Atención!</small>
+                                <br>
+                                <small class="text-muted">Esta acción eliminará también todos los documentos contenidos y no se puede deshacer.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 p-4 pt-0">
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+                    <i class="bi bi-x me-2"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-danger px-4" id="confirmDeleteFolder">
+                    <i class="bi bi-trash me-2"></i>Eliminar Carpeta
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -218,63 +423,132 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Manejar eliminación de documentos
+    // Manejar eliminación de documentos - Show confirmation modal
+    let documentToDelete = null;
+    
     document.querySelectorAll('.delete-document-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
             const documentId = this.dataset.documentId;
             const documentName = this.dataset.documentName;
             
-            if (confirm(`¿Estás seguro de que deseas eliminar el documento "${documentName}"? Esta acción no se puede deshacer.`)) {
-                // Enviar petición de eliminación
-                fetch(`{% url 'course_documents:delete_document' curso_id=curso.id document_id=0 %}`.replace('0', documentId), {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                        'Content-Type': 'application/json',
-                    },
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        location.reload();
-                    } else {
-                        alert('Error al eliminar el documento: ' + data.error);
-                    }
-                })
-                .catch(error => {
-                    alert('Error al eliminar el documento: ' + error);
-                });
+            // Store document info for deletion
+            documentToDelete = { id: documentId, name: documentName };
+            
+            // Update modal content
+            const documentNameElement = document.getElementById('documentNameToDelete');
+            if (documentNameElement) {
+                documentNameElement.textContent = documentName;
+            }
+            
+            // Show confirmation modal
+            const modalElement = document.getElementById('deleteDocumentModal');
+            if (modalElement) {
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
             }
         });
     });
     
-    // Manejar eliminación de carpeta
-    document.querySelector('.delete-folder-btn').addEventListener('click', function() {
+    // Confirm document deletion when user clicks "Eliminar Documento" in modal
+    document.getElementById('confirmDeleteDocument').addEventListener('click', function() {
+        if (!documentToDelete) return;
+        
+        // Show loading state
+        this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Eliminando...';
+        this.disabled = true;
+        
+        fetch(`{% url 'course_documents:delete_document' curso_id=curso.id document_id=0 %}`.replace('0', documentToDelete.id), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Hide modal and reload page
+                bootstrap.Modal.getInstance(document.getElementById('deleteDocumentModal')).hide();
+                location.reload();
+            } else {
+                // Show error and restore button
+                alert('Error al eliminar el documento: ' + data.error);
+                this.innerHTML = '<i class="bi bi-trash me-2"></i>Eliminar Documento';
+                this.disabled = false;
+            }
+        })
+        .catch(error => {
+            // Show error and restore button
+            alert('Error al eliminar el documento: ' + error);
+            this.innerHTML = '<i class="bi bi-trash me-2"></i>Eliminar Documento';
+            this.disabled = false;
+        });
+    });
+    
+    // Manejar eliminación de carpeta - Show confirmation modal
+    let folderToDelete = null;
+    
+    document.querySelector('.delete-folder-btn').addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
         const folderId = this.dataset.folderId;
         const folderName = this.dataset.folderName;
         
-        if (confirm(`¿Estás seguro de que deseas eliminar la carpeta "${folderName}"? Esta acción eliminará también todos los documentos contenidos y no se puede deshacer.`)) {
-            // Enviar petición de eliminación
-            fetch(`{% url 'course_documents:delete_folder' curso_id=curso.id folder_id=folder.id %}`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                    'Content-Type': 'application/json',
-                },
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Redirigir al dashboard principal
-                    window.location.href = "{% url 'course_documents:teacher_dashboard' curso_id=curso.id %}";
-                } else {
-                    alert('Error al eliminar la carpeta: ' + data.error);
-                }
-            })
-            .catch(error => {
-                alert('Error al eliminar la carpeta: ' + error);
-            });
+        // Store folder info for deletion
+        folderToDelete = { id: folderId, name: folderName };
+        
+        // Update modal content
+        const folderNameElement = document.getElementById('folderNameToDelete');
+        if (folderNameElement) {
+            folderNameElement.textContent = folderName;
         }
+        
+        // Show confirmation modal
+        const modalElement = document.getElementById('deleteFolderModal');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+    });
+    
+    // Confirm folder deletion when user clicks "Eliminar Carpeta" in modal
+    document.getElementById('confirmDeleteFolder').addEventListener('click', function() {
+        if (!folderToDelete) return;
+        
+        // Show loading state
+        this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Eliminando...';
+        this.disabled = true;
+        
+        fetch(`{% url 'course_documents:delete_folder' curso_id=curso.id folder_id=folder.id %}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Hide modal and redirect to dashboard
+                bootstrap.Modal.getInstance(document.getElementById('deleteFolderModal')).hide();
+                window.location.href = "{% url 'course_documents:teacher_dashboard' curso_id=curso.id %}";
+            } else {
+                // Show error and restore button
+                alert('Error al eliminar la carpeta: ' + data.error);
+                this.innerHTML = '<i class="bi bi-trash me-2"></i>Eliminar Carpeta';
+                this.disabled = false;
+            }
+        })
+        .catch(error => {
+            // Show error and restore button
+            alert('Error al eliminar la carpeta: ' + error);
+            this.innerHTML = '<i class="bi bi-trash me-2"></i>Eliminar Carpeta';
+            this.disabled = false;
+        });
     });
     
     // Auto-completar nombre del documento basado en el archivo seleccionado
