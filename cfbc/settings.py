@@ -48,7 +48,6 @@ INSTALLED_APPS = [
     'accounts.apps.AccountsConfig',
     'blog.apps.BlogConfig',
     'datos_archivados.apps.DatosArchivadosConfig',
-    'chatbot.apps.ChatbotConfig',
     'course_documents.apps.CourseDocumentsConfig',
     
     
@@ -76,7 +75,6 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'chatbot.context_processors.chatbot_context',
                 'course_documents.mixins.documents_context',
             ],
         },
