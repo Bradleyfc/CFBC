@@ -2,8 +2,6 @@
 Middleware para el sistema de documentos de cursos
 """
 
-import time
-from django.core.cache import cache
 from django.http import HttpResponseTooManyRequests
 from django.utils.deprecation import MiddlewareMixin
 from django.contrib.auth.models import AnonymousUser
