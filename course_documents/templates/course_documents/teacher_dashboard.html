@@ -4,424 +4,287 @@
 {% block title %}Dashboard de Documentos - {{ curso.name }}{% endblock %}
 
 {% block extra_css %}
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-<style>
-    .dashboard-header {
-        background: #0d6efd;
-        color: white;
-        border-radius: 0;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    
-    .btn-primary-custom {
-        background: #0d6efd;
-        border: 1px solid #0d6efd;
-        color: white;
-        border-radius: 5px;
-        padding: 12px 24px;
-        font-weight: 600;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-primary-custom:hover {
-        background: #0b5ed7;
-        border-color: #0a58ca;
-        color: white;
-        transform: translateY(-1px);
-    }
-    
-    .btn-success-custom {
-        background: #198754;
-        border: 1px solid #198754;
-        color: white;
-        border-radius: 5px;
-        padding: 12px 24px;
-        font-weight: 600;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-success-custom:hover {
-        background: #157347;
-        border-color: #146c43;
-        color: white;
-        transform: translateY(-1px);
-    }
-    
-    .btn-warning-custom {
-        background: #ffc107;
-        border: 1px solid #ffc107;
-        color: #000;
-        border-radius: 5px;
-        padding: 12px 24px;
-        font-weight: 600;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-warning-custom:hover {
-        background: #ffca2c;
-        border-color: #ffc720;
-        color: #000;
-        transform: translateY(-1px);
-    }
-    
-    .stats-card {
-        border: none;
-        border-radius: 5px;
-        text-align: center;
-        transition: all 0.3s ease;
-        height: 100%;
-        color: white;
-    }
-    
-    .stats-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-    }
-    
-    .stats-card.folders {
-        background: #0d6efd;
-    }
-    
-    .stats-card.documents {
-        background: #198754;
-    }
-    
-    .stats-card.students {
-        background: #c2185b;
-    }
-    
-    .folder-card {
-        border: none;
-        border-radius: 15px;
-        transition: all 0.3s ease;
-        height: 100%;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-        overflow: hidden;
-        position: relative;
-    }
-    
-    .folder-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
-    }
-    
-    .folder-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #0d6efd, #198754, #ffc107);
-    }
-    
-    .folder-icon {
-        width: 60px;
-        height: 60px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 1.8rem;
-        margin-bottom: 0;
-        box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
-    }
-    
-    .folder-icon.success {
-        background: #198754;
-    }
-    
-    .folder-icon.warning {
-        background: #ffc107;
-        color: #000;
-    }
-    
-    .empty-state {
-        text-align: center;
-        padding: 4rem 2rem;
-        color: #6c757d;
-    }
-    
-    .empty-state i {
-        opacity: 0.5;
-        margin-bottom: 1.5rem;
-    }
-    
-    .modal-content {
-        border: 1px solid #dee2e6;
-        border-radius: 5px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    }
-    
-    .modal-header {
-        border-bottom: 1px solid #dee2e6;
-        border-radius: 5px 5px 0 0;
-        background: #f8f9fa;
-    }
-    
-    .modal-header.primary {
-        background: #0d6efd;
-        color: white;
-    }
-    
-    .modal-header.success {
-        background: #198754;
-        color: white;
-    }
-    
-    .form-control, .form-select {
-        border-radius: 5px;
-        border: 1px solid #ced4da;
-        padding: 12px 16px;
-        transition: all 0.3s ease;
-    }
-    
-    .form-control:focus, .form-select:focus {
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-    }
-    
-    .badge-custom {
-        background: #e9ecef;
-        color: black;
-        border-radius: 20px;
-        padding: 8px 16px;
-        font-weight: 500;
-    }
-    
-    .badge-custom.success {
-        background: #198754;
-    }
-    
-    .badge-custom.warning {
-        background: #ffc107;
-        color: #000;
-    }
-    
-    .dropdown-menu {
-        border: 1px solid #dee2e6;
-        border-radius: 5px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        padding: 0.5rem 0;
-    }
-    
-    .dropdown-item {
-        padding: 10px 20px;
-        transition: all 0.3s ease;
-    }
-    
-    .dropdown-item:hover {
-        background-color: #f8f9fa;
-        color: #0d6efd;
-    }
-    
-    .main-content {
-        background: #f8f9fa;
-        min-height: 100vh;
-        padding: 2rem 0;
-    }
-    
-    .alert-info-custom {
-        background: #d1ecf1;
-        border: 1px solid #bee5eb;
-        color: #0c5460;
-        border-radius: 5px;
-    }
-    
-    .alert-success-custom {
-        background: #d1e7dd;
-        border: 1px solid #badbcc;
-        color: #0f5132;
-        border-radius: 5px;
-    }
-</style>
 {% endblock %}
 
 {% block content %}
-<div class="main-content">
-    <div class="container-fluid">
+<div class="bg-gray-50/50 min-h-screen py-8">
+    <div class="max-w-7xl mx-auto px-6">
         <!-- Header -->
-        <div class="card mb-4">
-            <div class="card-header dashboard-header d-flex justify-content-between align-items-center">
-                <div>
-                    <h3 class="card-title mb-0">
-                        <i class="bi bi-folder-open me-2"></i>
+        <div class="bg-gradient-to-br from-blue-500/90 via-blue-600/90 to-indigo-700/90 backdrop-blur-md border border-blue-300/20 text-white rounded-2xl shadow-xl p-6 mb-6 transition-all duration-500 ease-out hover:shadow-2xl hover:shadow-blue-500/25 hover:-translate-y-1 hover:from-blue-400/95 hover:to-indigo-600/95 hover:border-blue-400/30">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div class="flex-1">
+                    <h3 class="text-2xl lg:text-3xl font-bold flex items-center gap-3 transition-all duration-300">
+                        <div class="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center transition-all duration-300 hover:bg-white/30 hover:scale-110 hover:rotate-12">
+                            <i class="bi bi-folder-open text-xl transition-transform duration-300"></i>
+                        </div>
                         Dashboard de Documentos
                     </h3>
                 </div>
-                <a href="{% url 'principal:profile' %}" class="btn btn-light btn-lg">
-                    <i class="bi bi-arrow-left me-2"></i>Volver al Perfil
-                </a>
+                <div class="lg:w-auto">
+                    <a href="{% url 'principal:profile' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/20 hover:border-white/40 text-white font-medium rounded-xl transition-all duration-500 hover:shadow-lg hover:shadow-white/20 hover:scale-105 hover:-translate-y-0.5">
+                        <i class="bi bi-arrow-left transition-transform duration-300 hover:-translate-x-1"></i>
+                        Volver al Perfil
+                    </a>
+                </div>
             </div>
         </div>
 
         <!-- Course Info -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="text-center">
-                    <h4 class="text-dark fw-bold mb-4">
-                        <i class="bi bi-mortarboard me-2 text-primary"></i>{{ curso.name }}
-                    </h4>
-                </div>
+        <div class="text-center mb-8">
+            <div class="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-xl shadow-lg p-6 transition-all duration-500 ease-out hover:shadow-2xl hover:bg-white/95 hover:border-gray-300/60 hover:-translate-y-1 inline-block">
+                <h4 class="text-2xl font-bold text-gray-800 flex items-center gap-3 transition-colors duration-300 hover:text-gray-900">
+                    <div class="w-10 h-10 bg-blue-100/80 rounded-lg flex items-center justify-center transition-all duration-500 hover:bg-blue-200/90 hover:scale-110 hover:rotate-12">
+                        <i class="bi bi-mortarboard text-blue-600 transition-colors duration-300 hover:text-blue-700"></i>
+                    </div>
+                    {{ curso.name }}
+                </h4>
             </div>
         </div>
 
         <!-- Stats Cards -->
-        <div class="row mb-4">
-            <div class="col-md-4 mb-3">
-                <div class="card stats-card folders">
-                    <div class="card-body">
-                        <i class="bi bi-folder fs-3 mb-2"></i>
-                        <h3 class="mb-1">{{ stats.total_folders }}</h3>
-                        <p class="mb-0 small">Carpetas Creadas</p>
-                    </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-gradient-to-br from-blue-500/90 via-blue-600/90 to-indigo-700/90 backdrop-blur-sm border border-blue-300/20 text-white rounded-xl shadow-lg p-4 text-center transition-all duration-500 ease-out hover:shadow-2xl hover:shadow-blue-500/25 hover:-translate-y-1 hover:scale-[1.02] hover:from-blue-400/95 hover:to-indigo-600/95 group">
+                <div class="w-10 h-10 mx-auto mb-3 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-500 group-hover:bg-white/30 group-hover:scale-110 group-hover:rotate-12 shadow-lg">
+                    <i class="bi bi-folder text-lg transition-transform duration-500 group-hover:scale-110"></i>
                 </div>
+                <h3 class="text-xl font-bold mb-1 transition-all duration-500 group-hover:scale-105 drop-shadow-sm">{{ stats.total_folders }}</h3>
+                <p class="text-white/90 text-xs font-medium transition-colors duration-300 group-hover:text-white">Carpetas Creadas</p>
             </div>
-            <div class="col-md-4 mb-3">
-                <div class="card stats-card documents">
-                    <div class="card-body">
-                        <i class="bi bi-file-earmark-text fs-3 mb-2"></i>
-                        <h3 class="mb-1">{{ stats.total_documents }}</h3>
-                        <p class="mb-0 small">Documentos Subidos</p>
-                    </div>
+            
+            <div class="bg-gradient-to-br from-emerald-500/90 via-green-600/90 to-teal-700/90 backdrop-blur-sm border border-green-300/20 text-white rounded-xl shadow-lg p-4 text-center transition-all duration-500 ease-out hover:shadow-2xl hover:shadow-green-500/25 hover:-translate-y-1 hover:scale-[1.02] hover:from-emerald-400/95 hover:to-teal-600/95 group">
+                <div class="w-10 h-10 mx-auto mb-3 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-500 group-hover:bg-white/30 group-hover:scale-110 group-hover:rotate-12 shadow-lg">
+                    <i class="bi bi-file-earmark-text text-lg transition-transform duration-500 group-hover:scale-110"></i>
                 </div>
+                <h3 class="text-xl font-bold mb-1 transition-all duration-500 group-hover:scale-105 drop-shadow-sm">{{ stats.total_documents }}</h3>
+                <p class="text-white/90 text-xs font-medium transition-colors duration-300 group-hover:text-white">Documentos Subidos</p>
             </div>
-            <div class="col-md-4 mb-3">
-                <div class="card stats-card students">
-                    <div class="card-body">
-                        <i class="bi bi-people fs-3 mb-2"></i>
-                        <h3 class="mb-1">{{ stats.total_students }}</h3>
-                        <p class="mb-0 small">Estudiantes Inscritos</p>
-                    </div>
+            
+            <div class="bg-gradient-to-br from-rose-500/90 via-pink-600/90 to-purple-700/90 backdrop-blur-sm border border-pink-300/20 text-white rounded-xl shadow-lg p-4 text-center transition-all duration-500 ease-out hover:shadow-2xl hover:shadow-pink-500/25 hover:-translate-y-1 hover:scale-[1.02] hover:from-rose-400/95 hover:to-purple-600/95 group">
+                <div class="w-10 h-10 mx-auto mb-3 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-500 group-hover:bg-white/30 group-hover:scale-110 group-hover:rotate-12 shadow-lg">
+                    <i class="bi bi-people text-lg transition-transform duration-500 group-hover:scale-110"></i>
                 </div>
+                <h3 class="text-xl font-bold mb-1 transition-all duration-500 group-hover:scale-105 drop-shadow-sm">{{ stats.total_students }}</h3>
+                <p class="text-white/90 text-xs font-medium transition-colors duration-300 group-hover:text-white">Estudiantes Inscritos</p>
             </div>
         </div>
 
         <!-- Action Buttons -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="d-flex flex-wrap gap-3">
-                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#createFolderModal">
-                        <i class="bi bi-plus me-2"></i>Nueva Carpeta
-                    </button>
-                    <button type="button" class="btn btn-outline-success {% if not folders %}disabled{% endif %}" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal" {% if not folders %}disabled{% endif %}>
-                        <i class="bi bi-upload me-2"></i>Subir Documento
-                    </button>
-                    {% if folders %}
-                    <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#statsModal">
-                        <i class="bi bi-bar-chart me-2"></i>Ver Estadísticas
-                    </button>
-                    {% endif %}
-                </div>
+        <div class="mb-8">
+            <div class="flex flex-wrap gap-4">
+                <button type="button" class="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-500/80 to-indigo-600/80 backdrop-blur-sm border border-blue-300/30 hover:from-blue-400/90 hover:to-indigo-500/90 hover:border-blue-400/50 text-white font-semibold transition-all duration-500 ease-out hover:shadow-xl hover:shadow-blue-500/30 hover:scale-105 hover:-translate-y-1 group" data-bs-toggle="modal" data-bs-target="#createFolderModal" style="border-radius: 20px;">
+                    <div class="w-8 h-8 bg-white/20 flex items-center justify-center transition-all duration-300 group-hover:bg-white/30 group-hover:scale-110 group-hover:rotate-12" style="border-radius: 12px;">
+                        <i class="bi bi-plus text-lg transition-transform duration-300"></i>
+                    </div>
+                    <span class="transition-all duration-300">Nueva Carpeta</span>
+                </button>
+                
+                <button type="button" class="inline-flex items-center gap-3 px-6 py-3 {% if not folders %}bg-gray-400/50 border-gray-300/30 cursor-not-allowed{% else %}bg-gradient-to-r from-emerald-500/80 to-green-600/80 backdrop-blur-sm border border-green-300/30 hover:from-emerald-400/90 hover:to-green-500/90 hover:border-green-400/50{% endif %} text-white font-semibold transition-all duration-500 ease-out {% if folders %}hover:shadow-xl hover:shadow-green-500/30 hover:scale-105 hover:-translate-y-1{% endif %} group" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal" {% if not folders %}disabled{% endif %} style="border-radius: 20px;">
+                    <div class="w-8 h-8 bg-white/20 flex items-center justify-center transition-all duration-300 {% if folders %}group-hover:bg-white/30 group-hover:scale-110 group-hover:rotate-12{% endif %}" style="border-radius: 12px;">
+                        <i class="bi bi-upload text-lg transition-transform duration-300"></i>
+                    </div>
+                    <span class="transition-all duration-300">Subir Documento</span>
+                </button>
+                
+                {% if folders %}
+                <button type="button" class="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-amber-500/80 to-orange-600/80 backdrop-blur-sm border border-amber-300/30 hover:from-amber-400/90 hover:to-orange-500/90 hover:border-amber-400/50 text-white font-semibold transition-all duration-500 ease-out hover:shadow-xl hover:shadow-amber-500/30 hover:scale-105 hover:-translate-y-1 group" data-bs-toggle="modal" data-bs-target="#statsModal" style="border-radius: 20px;">
+                    <div class="w-8 h-8 bg-white/20 flex items-center justify-center transition-all duration-300 group-hover:bg-white/30 group-hover:scale-110 group-hover:rotate-12" style="border-radius: 12px;">
+                        <i class="bi bi-bar-chart text-lg transition-transform duration-300"></i>
+                    </div>
+                    <span class="transition-all duration-300">Ver Estadísticas</span>
+                </button>
+                {% endif %}
             </div>
         </div>
 
         <!-- Folders List -->
-        <div class="row">
-            <div class="col-12">
-                <div class="card" style="border: none; border-radius: 15px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);">
-                    <div class="card-header bg-primary text-white">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-folder me-2"></i>
-                                <div>
-                                    <h5 class="mb-0">Carpetas del Curso</h5>
-                                    <small>Organiza tus materiales por temas</small>
-                                </div>
-                            </div>
-                            {% if folders %}
-                            <span class="badge bg-light text-dark">{{ folders|length }} carpeta{{ folders|length|pluralize }}</span>
-                            {% endif %}
+        <div class="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-xl shadow-lg transition-all duration-500 ease-out hover:shadow-2xl hover:bg-white/95 hover:border-gray-300/60">
+            <!-- Compact Header with Blur Effects -->
+            <div class="bg-gradient-to-br from-blue-500/90 via-blue-600/90 to-indigo-700/90 backdrop-blur-md border border-blue-300/20 text-white rounded-t-xl p-4 transition-all duration-500 ease-out hover:shadow-xl hover:shadow-blue-500/25 hover:from-blue-400/95 hover:to-indigo-600/95 hover:border-blue-400/30">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center transition-all duration-300 hover:bg-white/30 hover:scale-110 hover:rotate-12">
+                            <i class="bi bi-folder text-lg transition-transform duration-300"></i>
+                        </div>
+                        <div>
+                            <h5 class="text-lg font-bold mb-0.5 transition-all duration-300 hover:scale-105">Carpetas del Curso</h5>
+                            <p class="text-white/80 text-xs">Organiza tus materiales por temas</p>
                         </div>
                     </div>
-                    <div class="card-body" style="padding: 2rem;">
-                        {% if folders %}
-                            <div class="row">
-                                {% for folder in folders %}
-                                <div class="col-md-4 col-lg-3 mb-4">
-                                    <div class="card folder-card h-100">
-                                        <div class="card-body p-4">
-                                            <!-- Header con icono y menú -->
-                                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                                <div class="folder-icon">
-                                                    <i class="bi bi-folder-fill"></i>
-                                                </div>
-                                                <div class="dropdown">
-                                                    <button class="btn btn-sm btn-light border-0" type="button" data-bs-toggle="dropdown" style="border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                                                        <i class="bi bi-three-dots-vertical text-muted"></i>
-                                                    </button>
-                                                    <ul class="dropdown-menu shadow border-0" style="border-radius: 10px;">
-                                                        <li>
-                                                            <a class="dropdown-item py-2" href="{% url 'course_documents:folder_detail' curso_id=curso.id folder_id=folder.id %}">
-                                                                <i class="bi bi-eye me-2 text-primary"></i>Ver Detalles
-                                                            </a>
-                                                        </li>
-                                                        <li>
-                                                            <button class="dropdown-item py-2 upload-to-folder-btn" data-folder-id="{{ folder.id }}" data-folder-name="{{ folder.name }}">
-                                                                <i class="bi bi-upload me-2 text-success"></i>Subir Documento
-                                                            </button>
-                                                        </li>
-                                                        <li><hr class="dropdown-divider my-1"></li>
-                                                        <li>
-                                                            <button class="dropdown-item py-2 text-danger delete-folder-btn" data-folder-id="{{ folder.id }}" data-folder-name="{{ folder.name }}">
-                                                                <i class="bi bi-trash me-2"></i>Eliminar Carpeta
-                                                            </button>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                            </div>
+                    {% if folders %}
+                    <span class="inline-flex items-center px-2.5 py-1 bg-white/20 backdrop-blur-sm text-white text-xs font-semibold rounded-full transition-all duration-300 hover:bg-white/30 hover:scale-105">
+                        {{ folders|length }} carpeta{{ folders|length|pluralize }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="p-8">
+                {% if folders %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {% for folder in folders %}
+                        <div class="bg-gradient-to-br from-white/80 via-gray-50/70 to-white/60 backdrop-blur-lg border border-white/40 rounded-xl shadow-xl transition-all duration-700 ease-out hover:shadow-2xl hover:shadow-purple-500/10 hover:border-white/60 hover:-translate-y-3 hover:scale-[1.04] hover:from-white/95 hover:via-gray-50/85 hover:to-white/75 hover:backdrop-blur-2xl group relative overflow-hidden">
+                            <!-- Gradient top border mejorado -->
+                            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 via-green-500 to-yellow-500 transition-all duration-500 group-hover:h-1.5 group-hover:from-blue-600 group-hover:via-purple-600 group-hover:via-green-600 group-hover:to-yellow-600"></div>
+                            
+                            <!-- Efecto de brillo superior -->
+                            <div class="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-white/20 to-transparent opacity-0 transition-all duration-500 group-hover:opacity-100"></div>
+                            
+                            <!-- Efecto de reflejo lateral -->
+                            <div class="absolute top-0 left-0 w-px h-full bg-gradient-to-b from-transparent via-white/30 to-transparent opacity-0 transition-all duration-500 group-hover:opacity-100"></div>
+                            
+                            <div class="p-6">
+                                <!-- Header con icono y menú -->
+                                <div class="flex justify-between items-start mb-4">
+                                    <div class="relative w-15 h-15 group/icon">
+                                        <!-- Fondo glassmorphism del icono -->
+                                        <div class="absolute inset-0 bg-gradient-to-br from-purple-500/80 via-indigo-600/90 to-purple-700/80 backdrop-blur-sm rounded-xl shadow-lg transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-purple-500/30 group-hover:scale-110 group-hover:rotate-12 group-hover:from-purple-400/90 group-hover:via-indigo-500/95 group-hover:to-purple-600/90"></div>
+                                        
+                                        <!-- Efecto de brillo interno -->
+                                        <div class="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent rounded-xl opacity-0 transition-all duration-500 group-hover/icon:opacity-100"></div>
+                                        
+                                        <!-- Icono -->
+                                        <div class="relative w-full h-full flex items-center justify-center text-white text-2xl transition-all duration-500 group-hover:scale-110 group-hover:drop-shadow-lg">
+                                            <i class="bi bi-folder-fill transition-transform duration-300 group-hover:scale-110"></i>
+                                        </div>
+                                        
+                                        <!-- Reflejo inferior del icono -->
+                                        <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-8 h-px bg-gradient-to-r from-transparent via-purple-300/50 to-transparent opacity-0 transition-all duration-500 group-hover/icon:opacity-100"></div>
+                                    </div>
+                                    <div class="relative">
+                                        <button class="w-8 h-8 bg-gray-100/80 hover:bg-gray-200/90 rounded-lg flex items-center justify-center transition-all duration-300 hover:shadow-md hover:scale-110 group/menu folder-menu-btn" type="button" data-folder-id="{{ folder.id }}" data-folder-name="{{ folder.name }}">
+                                            <i class="bi bi-three-dots-vertical text-gray-600 transition-colors duration-300 group-hover/menu:text-gray-800"></i>
+                                        </button>
+                                        
+                                        <!-- Menú compacto -->
+                                        <div class="folder-menu absolute right-0 top-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg z-50 hidden" style="width: 160px; background: white; border: 1px solid #ccc; padding: 4px;">
                                             
-                                            <!-- Título y fecha -->
-                                            <div class="mb-3">
-                                                <h5 class="card-title mb-2 fw-bold text-dark" style="font-size: 1.1rem;">{{ folder.name }}</h5>
-                                                <div class="d-flex align-items-center text-muted">
-                                                    <i class="bi bi-calendar-event me-2 text-primary"></i>
-                                                    <small>{{ folder.created_at|date:"d/m/Y" }}</small>
-                                                </div>
-                                            </div>
+                                            <a href="{% url 'course_documents:folder_detail' curso_id=curso.id folder_id=folder.id %}" 
+                                               style="display: flex; align-items: center; gap: 6px; padding: 6px 8px; text-decoration: none; color: #374151; border-radius: 4px; font-size: 14px;"
+                                               onmouseover="this.style.backgroundColor='#f3f4f6'"
+                                               onmouseout="this.style.backgroundColor='transparent'">
+                                                <i class="bi bi-eye" style="color: #2563eb; font-size: 14px;"></i>
+                                                <span>Ver</span>
+                                            </a>
                                             
-                                            <!-- Footer con badge y botón -->
-                                            <div class="d-flex justify-content-between align-items-center mt-auto">
-                                                <div class="d-flex align-items-center">
-                                                    <div class="bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">
-                                                        <i class="bi bi-file-earmark-text me-1"></i>
-                                                        <small class="fw-semibold">{{ folder.documents.count }} doc{{ folder.documents.count|pluralize }}</small>
-                                                    </div>
-                                                </div>
-                                                <a href="{% url 'course_documents:folder_detail' curso_id=curso.id folder_id=folder.id %}" 
-                                                   class="btn btn-primary btn-sm px-3 py-2" 
-                                                   style="border-radius: 10px; font-weight: 600;">
-                                                    <i class="bi bi-arrow-right me-1"></i>Abrir
-                                                </a>
-                                            </div>
+                                            <button type="button" 
+                                                    class="upload-to-folder-btn" 
+                                                    data-folder-id="{{ folder.id }}" 
+                                                    data-folder-name="{{ folder.name }}"
+                                                    style="width: 100%; display: flex; align-items: center; gap: 6px; padding: 6px 8px; border: none; background: none; text-align: left; color: #374151; cursor: pointer; border-radius: 4px; font-size: 14px;"
+                                                    onmouseover="this.style.backgroundColor='#f3f4f6'"
+                                                    onmouseout="this.style.backgroundColor='transparent'">
+                                                <i class="bi bi-upload" style="color: #059669; font-size: 14px;"></i>
+                                                <span>Subir</span>
+                                            </button>
+                                            
+                                            <div style="height: 1px; background: #e5e7eb; margin: 4px 0;"></div>
+                                            
+                                            <button type="button" 
+                                                    class="delete-folder-btn" 
+                                                    data-folder-id="{{ folder.id }}" 
+                                                    data-folder-name="{{ folder.name }}"
+                                                    style="width: 100%; display: flex; align-items: center; gap: 6px; padding: 6px 8px; border: none; background: #fef2f2; text-align: left; color: #dc2626; cursor: pointer; border-radius: 4px; font-size: 14px;"
+                                                    onmouseover="this.style.backgroundColor='#fee2e2'"
+                                                    onmouseout="this.style.backgroundColor='#fef2f2'">
+                                                <i class="bi bi-trash" style="color: #dc2626; font-size: 14px;"></i>
+                                                <span style="color: #dc2626;">Eliminar</span>
+                                            </button>
+                                            
                                         </div>
                                     </div>
                                 </div>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            <div class="empty-state">
-                                <i class="bi bi-folder-plus display-1 text-primary"></i>
-                                <h3 class="mt-3 mb-3">¡Comienza a organizar!</h3>
-                                <p class="mb-4">Crea tu primera carpeta para comenzar a organizar los documentos del curso de manera eficiente.</p>
-                                <button type="button" class="btn btn-primary-custom btn-lg" data-bs-toggle="modal" data-bs-target="#createFolderModal">
-                                    <i class="bi bi-plus me-2"></i>Crear Primera Carpeta
-                                </button>
-                                <div class="mt-4">
-                                    <div class="alert alert-info-custom">
-                                        <i class="bi bi-lightbulb me-2"></i>
-                                        <strong>Tip:</strong> Las carpetas te ayudan a organizar materiales por temas, unidades o tipos de contenido
+                                
+                                <!-- Título y fecha -->
+                                <div class="mb-4">
+                                    <div class="relative mb-2 group/folder-title">
+                                        <!-- Fondo glassmorphism para el nombre de la carpeta -->
+                                        <div class="absolute inset-0 bg-gradient-to-r from-white/30 via-purple-50/40 to-indigo-50/30 backdrop-blur-md rounded-lg border border-white/50 shadow-md transition-all duration-700 ease-out group-hover/folder-title:from-white/50 group-hover/folder-title:via-purple-50/60 group-hover/folder-title:to-indigo-50/50 group-hover/folder-title:backdrop-blur-xl group-hover/folder-title:border-white/70 group-hover/folder-title:shadow-xl group-hover/folder-title:scale-[1.03] group-hover/folder-title:-translate-y-1"></div>
+                                        
+                                        <!-- Efecto de brillo sutil púrpura -->
+                                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-purple-100/20 to-transparent rounded-lg opacity-0 transition-all duration-500 group-hover/folder-title:opacity-100 group-hover/folder-title:animate-pulse"></div>
+                                        
+                                        <!-- Contenido del nombre de la carpeta -->
+                                        <h5 class="relative text-lg font-bold text-gray-800 px-3 py-2 transition-all duration-500 group-hover:text-gray-900 group-hover/folder-title:text-gray-900 group-hover/folder-title:font-extrabold group-hover/folder-title:tracking-wide group-hover/folder-title:drop-shadow-sm">
+                                            {{ folder.name }}
+                                        </h5>
+                                        
+                                        <!-- Efecto de reflejo inferior púrpura -->
+                                        <div class="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 w-2/3 h-px bg-gradient-to-r from-transparent via-purple-300/60 to-transparent opacity-0 transition-all duration-500 group-hover/folder-title:opacity-100 group-hover/folder-title:via-purple-400/80"></div>
+                                    </div>
+                                    <div class="flex items-center gap-2 text-gray-600">
+                                        <i class="bi bi-calendar-event text-blue-600"></i>
+                                        <span class="text-sm">{{ folder.created_at|date:"d/m/Y" }}</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Footer con badge y botón -->
+                                <div class="flex justify-between items-center">
+                                    <div class="relative group/badge">
+                                        <!-- Fondo glassmorphism del badge -->
+                                        <div class="absolute inset-0 bg-gradient-to-r from-blue-50/70 via-blue-100/80 to-blue-50/60 backdrop-blur-sm rounded-full border border-blue-200/50 shadow-md transition-all duration-500 ease-out group-hover/badge:from-blue-100/90 group-hover/badge:via-blue-200/95 group-hover/badge:to-blue-100/80 group-hover/badge:backdrop-blur-md group-hover/badge:border-blue-300/70 group-hover/badge:shadow-lg group-hover/badge:scale-105"></div>
+                                        
+                                        <!-- Efecto de brillo sutil -->
+                                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-full opacity-0 transition-all duration-400 group-hover/badge:opacity-100"></div>
+                                        
+                                        <!-- Contenido del badge -->
+                                        <div class="relative inline-flex items-center gap-2 px-3 py-2 text-blue-800 text-sm font-semibold transition-all duration-300 group-hover/badge:font-bold group-hover/badge:text-blue-900">
+                                            <i class="bi bi-file-earmark-text transition-all duration-300 group-hover/badge:scale-110 group-hover/badge:drop-shadow-sm"></i>
+                                            <span class="transition-all duration-300 group-hover/badge:tracking-wide">{{ folder.documents.count }} doc{{ folder.documents.count|pluralize }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="relative group/open-btn">
+                                        <!-- Fondo glassmorphism del botón -->
+                                        <div class="absolute inset-0 bg-gradient-to-r from-blue-500/80 via-indigo-600/90 to-blue-700/80 backdrop-blur-md rounded-lg border border-blue-300/40 shadow-lg transition-all duration-700 ease-out group-hover/open-btn:from-blue-400/90 group-hover/open-btn:via-indigo-500/95 group-hover/open-btn:to-blue-600/90 group-hover/open-btn:backdrop-blur-xl group-hover/open-btn:border-blue-400/60 group-hover/open-btn:shadow-2xl group-hover/open-btn:shadow-blue-500/30 group-hover/open-btn:scale-110 group-hover/open-btn:-translate-y-1"></div>
+                                        
+                                        <!-- Efecto de brillo interno -->
+                                        <div class="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-transparent rounded-lg opacity-0 transition-all duration-500 group-hover/open-btn:opacity-100"></div>
+                                        
+                                        <!-- Efecto de partículas brillantes -->
+                                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent rounded-lg opacity-0 transition-all duration-700 group-hover/open-btn:opacity-100 group-hover/open-btn:animate-pulse"></div>
+                                        
+                                        <!-- Contenido del botón -->
+                                        <a href="{% url 'course_documents:folder_detail' curso_id=curso.id folder_id=folder.id %}" 
+                                           class="relative inline-flex items-center gap-2 px-4 py-2 text-white text-sm font-semibold rounded-lg transition-all duration-500 hover:font-bold hover:tracking-wide hover:drop-shadow-lg group/link">
+                                            <span class="transition-all duration-300 group-hover/open-btn:scale-105">Abrir</span>
+                                            <i class="bi bi-arrow-right transition-all duration-500 group-hover/open-btn:translate-x-1 group-hover/open-btn:scale-110 group-hover/open-btn:drop-shadow-md"></i>
+                                        </a>
+                                        
+                                        <!-- Reflejo inferior del botón -->
+                                        <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-3/4 h-px bg-gradient-to-r from-transparent via-blue-300/60 to-transparent opacity-0 transition-all duration-500 group-hover/open-btn:opacity-100 group-hover/open-btn:via-blue-400/80"></div>
+                                        
+                                        <!-- Efecto de profundidad lateral -->
+                                        <div class="absolute top-0 right-0 w-px h-full bg-gradient-to-b from-transparent via-white/20 to-transparent opacity-0 transition-all duration-500 group-hover/open-btn:opacity-100"></div>
                                     </div>
                                 </div>
                             </div>
-                        {% endif %}
+                        </div>
+                        {% endfor %}
                     </div>
-                </div>
+                {% else %}
+                    <div class="text-center py-16 transition-all duration-500 ease-out">
+                        <div class="w-24 h-24 mx-auto mb-6 bg-blue-100/80 rounded-full flex items-center justify-center transition-all duration-500 hover:bg-blue-200/80 hover:scale-110 hover:rotate-12">
+                            <i class="bi bi-folder-plus text-4xl text-blue-600 transition-colors duration-300"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 transition-colors duration-300 hover:text-gray-900">¡Comienza a organizar!</h3>
+                        <p class="text-gray-600 text-lg mb-6 max-w-md mx-auto">Crea tu primera carpeta para comenzar a organizar los documentos del curso de manera eficiente.</p>
+                        <button type="button" class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600/90 hover:bg-blue-700/95 text-white font-semibold rounded-lg transition-all duration-300 ease-out hover:shadow-lg hover:scale-110 hover:-translate-y-0.5 backdrop-blur-sm group" data-bs-toggle="modal" data-bs-target="#createFolderModal">
+                            <i class="bi bi-plus transition-transform duration-300 group-hover:scale-110"></i>
+                            Crear Primera Carpeta
+                        </button>
+                        <div class="mt-8 max-w-lg mx-auto">
+                            <div class="bg-blue-50/50 backdrop-blur-sm border border-blue-200/30 rounded-xl p-6 transition-all duration-300 hover:bg-blue-50/70 hover:border-blue-300/50 hover:shadow-md">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-8 h-8 bg-blue-100/80 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-300 hover:bg-blue-200/90 hover:scale-110">
+                                        <i class="bi bi-lightbulb text-blue-600"></i>
+                                    </div>
+                                    <div class="text-left">
+                                        <h4 class="font-semibold text-blue-800 mb-2">Tip:</h4>
+                                        <p class="text-blue-700 text-sm">Las carpetas te ayudan a organizar materiales por temas, unidades o tipos de contenido</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -430,40 +293,55 @@
 <!-- Modal para crear carpeta -->
 <div class="modal fade" id="createFolderModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header primary">
-                <h5 class="modal-title">
-                    <i class="bi bi-folder-plus me-2"></i>Nueva Carpeta
+        <div class="modal-content bg-white/95 backdrop-blur-sm border border-gray-200/50 rounded-xl shadow-2xl overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6">
+                <h5 class="text-xl font-bold flex items-center gap-3">
+                    <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                        <i class="bi bi-folder-plus"></i>
+                    </div>
+                    Nueva Carpeta
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="absolute top-4 right-4 w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110" data-bs-dismiss="modal">
+                    <i class="bi bi-x text-white"></i>
+                </button>
             </div>
             <form method="post" action="{% url 'course_documents:create_folder' curso_id=curso.id %}">
-                <div class="modal-body" style="padding: 2rem;">
+                <div class="p-8">
                     {% csrf_token %}
-                    <div class="mb-4">
-                        <label for="{{ folder_form.name.id_for_label }}" class="form-label fw-semibold">
-                            <i class="bi bi-tag me-2"></i>Nombre de la carpeta
+                    <div class="mb-6">
+                        <label for="{{ folder_form.name.id_for_label }}" class="block text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                            <i class="bi bi-tag text-blue-600"></i>
+                            Nombre de la carpeta
                         </label>
-                        {{ folder_form.name }}
-                        <div class="form-text d-flex justify-content-between mt-2">
-                            <span>
-                                <i class="bi bi-info-circle me-1"></i>
+                        <input type="text" name="{{ folder_form.name.name }}" id="{{ folder_form.name.id_for_label }}" class="w-full px-4 py-3 border border-gray-300/50 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 bg-white/80 backdrop-blur-sm" placeholder="Ej: Materiales de Clase" maxlength="200">
+                        <div class="flex justify-between items-center mt-2 text-sm">
+                            <span class="text-gray-600 flex items-center gap-1">
+                                <i class="bi bi-info-circle text-blue-600"></i>
                                 Elige un nombre descriptivo y claro
                             </span>
-                            <span id="folder-name-counter" class="text-muted">0/200</span>
+                            <span id="folder-name-counter" class="text-gray-500">0/200</span>
                         </div>
                     </div>
-                    <div class="alert alert-info-custom">
-                        <i class="bi bi-lightbulb me-2"></i>
-                        <strong>Sugerencias:</strong> Usa nombres como "Materiales de Clase", "Tareas", "Exámenes", "Recursos Adicionales"
+                    <div class="bg-blue-50/50 backdrop-blur-sm border border-blue-200/30 rounded-xl p-4 transition-all duration-300 hover:bg-blue-50/70 hover:border-blue-300/50">
+                        <div class="flex items-start gap-3">
+                            <div class="w-6 h-6 bg-blue-100/80 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i class="bi bi-lightbulb text-blue-600 text-sm"></i>
+                            </div>
+                            <div>
+                                <h6 class="font-semibold text-blue-800 mb-1">Sugerencias:</h6>
+                                <p class="text-blue-700 text-sm">Usa nombres como "Materiales de Clase", "Tareas", "Exámenes", "Recursos Adicionales"</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer" style="border-top: 1px solid #f0f0f0; padding: 1.5rem 2rem;">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                        <i class="bi bi-x me-2"></i>Cancelar
+                <div class="border-t border-gray-200/50 p-6 bg-gray-50/50 flex gap-3 justify-end">
+                    <button type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100/80 hover:bg-gray-200/90 text-gray-700 hover:text-gray-900 font-medium rounded-lg transition-all duration-300 hover:shadow-md hover:scale-105" data-bs-dismiss="modal">
+                        <i class="bi bi-x"></i>
+                        Cancelar
                     </button>
-                    <button type="submit" class="btn btn-outline-primary">
-                        <i class="bi bi-save me-2"></i>Crear Carpeta
+                    <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600/90 hover:bg-blue-700/95 text-white font-medium rounded-lg transition-all duration-300 hover:shadow-lg hover:scale-105">
+                        <i class="bi bi-save"></i>
+                        Crear Carpeta
                     </button>
                 </div>
             </form>
@@ -474,81 +352,87 @@
 <!-- Modal para subir documento -->
 <div class="modal fade" id="uploadDocumentModal" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header success">
-                <h5 class="modal-title">
-                    <i class="bi bi-upload me-2"></i>Subir Documento
+        <div class="modal-content bg-white/95 backdrop-blur-sm border border-gray-200/50 rounded-xl shadow-2xl overflow-hidden">
+            <div class="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-6">
+                <h5 class="text-xl font-bold flex items-center gap-3">
+                    <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                        <i class="bi bi-upload"></i>
+                    </div>
+                    Subir Documento
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="absolute top-4 right-4 w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110" data-bs-dismiss="modal">
+                    <i class="bi bi-x text-white"></i>
+                </button>
             </div>
             <form method="post" enctype="multipart/form-data" id="uploadDocumentForm">
-                <div class="modal-body" style="padding: 2rem;">
+                <div class="p-8">
                     {% csrf_token %}
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-4">
-                                <label class="form-label fw-semibold">
-                                    <i class="bi bi-folder me-2"></i>Seleccionar carpeta
-                                </label>
-                                <select name="folder_id" class="form-select" required>
-                                    <option value="">Selecciona una carpeta...</option>
-                                    {% for folder in folders %}
-                                    <option value="{{ folder.id }}">
-                                        <i class="fas fa-folder me-2"></i>{{ folder.name }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                                <div class="form-text">
-                                    <i class="bi bi-info-circle me-1"></i>
-                                    Elige dónde organizar tu documento
-                                </div>
-                            </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                                <i class="bi bi-folder text-green-600"></i>
+                                Seleccionar carpeta
+                            </label>
+                            <select name="folder_id" class="w-full px-4 py-3 border border-gray-300/50 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all duration-300 bg-white/80 backdrop-blur-sm" required>
+                                <option value="">Selecciona una carpeta...</option>
+                                {% for folder in folders %}
+                                <option value="{{ folder.id }}">{{ folder.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <p class="text-sm text-gray-600 mt-2 flex items-center gap-1">
+                                <i class="bi bi-info-circle text-green-600"></i>
+                                Elige dónde organizar tu documento
+                            </p>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-4">
-                                <label for="{{ document_form.name.id_for_label }}" class="form-label fw-semibold">
-                                    <i class="bi bi-tag me-2"></i>Nombre del documento
-                                </label>
-                                {{ document_form.name }}
-                                <div class="form-text d-flex justify-content-between mt-2">
-                                    <span>
-                                        <i class="bi bi-info-circle me-1"></i>
-                                        Nombre descriptivo y claro
-                                    </span>
-                                    <span id="document-name-counter" class="text-muted">0/200</span>
-                                </div>
+                        <div>
+                            <label for="{{ document_form.name.id_for_label }}" class="block text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                                <i class="bi bi-tag text-green-600"></i>
+                                Nombre del documento
+                            </label>
+                            <input type="text" name="{{ document_form.name.name }}" id="{{ document_form.name.id_for_label }}" class="w-full px-4 py-3 border border-gray-300/50 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all duration-300 bg-white/80 backdrop-blur-sm" placeholder="Ej: Guía de Estudio Capítulo 1" maxlength="200">
+                            <div class="flex justify-between items-center mt-2 text-sm">
+                                <span class="text-gray-600 flex items-center gap-1">
+                                    <i class="bi bi-info-circle text-green-600"></i>
+                                    Nombre descriptivo y claro
+                                </span>
+                                <span id="document-name-counter" class="text-gray-500">0/200</span>
                             </div>
                         </div>
                     </div>
-                    <div class="mb-4">
-                        <label for="{{ document_form.file.id_for_label }}" class="form-label fw-semibold">
-                            <i class="bi bi-file-earmark me-2"></i>Seleccionar archivo
+                    <div class="mb-6">
+                        <label for="{{ document_form.file.id_for_label }}" class="block text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                            <i class="bi bi-file-earmark text-green-600"></i>
+                            Seleccionar archivo
                         </label>
-                        {{ document_form.file }}
+                        <input type="file" name="{{ document_form.file.name }}" id="{{ document_form.file.id_for_label }}" class="w-full px-4 py-3 border border-gray-300/50 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all duration-300 bg-white/80 backdrop-blur-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
                     </div>
-                    <div class="alert alert-info-custom">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6 class="mb-2">
-                                    <i class="bi bi-check-circle me-2 text-success"></i>Formatos Permitidos
+                    <div class="bg-blue-50/50 backdrop-blur-sm border border-blue-200/30 rounded-xl p-6 transition-all duration-300 hover:bg-blue-50/70 hover:border-blue-300/50">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <h6 class="font-semibold text-green-800 mb-3 flex items-center gap-2">
+                                    <i class="bi bi-check-circle text-green-600"></i>
+                                    Formatos Permitidos
                                 </h6>
-                                <small>PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, ZIP, RAR, JPG, PNG</small>
+                                <p class="text-sm text-gray-700">PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, ZIP, RAR, JPG, PNG</p>
                             </div>
-                            <div class="col-md-6">
-                                <h6 class="mb-2">
-                                    <i class="bi bi-hdd me-2 text-primary"></i>Tamaño Máximo
+                            <div>
+                                <h6 class="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                                    <i class="bi bi-hdd text-blue-600"></i>
+                                    Tamaño Máximo
                                 </h6>
-                                <small>10MB por archivo</small>
+                                <p class="text-sm text-gray-700">10MB por archivo</p>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer" style="border-top: 1px solid #f0f0f0; padding: 1.5rem 2rem;">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="bi bi-x me-2"></i>Cancelar
+                <div class="border-t border-gray-200/50 p-6 bg-gray-50/50 flex gap-3 justify-end">
+                    <button type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100/80 hover:bg-gray-200/90 text-gray-700 hover:text-gray-900 font-medium rounded-lg transition-all duration-300 hover:shadow-md hover:scale-105" data-bs-dismiss="modal">
+                        <i class="bi bi-x"></i>
+                        Cancelar
                     </button>
-                    <button type="submit" class="btn btn-outline-success">
-                        <i class="bi bi-upload me-2"></i>Subir Documento
+                    <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-green-600/90 hover:bg-green-700/95 text-white font-medium rounded-lg transition-all duration-300 hover:shadow-lg hover:scale-105">
+                        <i class="bi bi-upload"></i>
+                        Subir Documento
                     </button>
                 </div>
             </form>
@@ -559,141 +443,160 @@
 <!-- Modal de Estadísticas -->
 <div class="modal fade" id="statsModal" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-warning text-dark">
-                <h5 class="modal-title">
-                    <i class="bi bi-bar-chart me-2"></i>Estadísticas del Curso
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <h6 class="fw-bold mb-3">
-                            <i class="bi bi-info-circle me-2 text-primary"></i>
-                            Resumen General - {{ curso.name }}
-                        </h6>
+        <div class="modal-content bg-white/95 backdrop-blur-sm border border-gray-200/50 rounded-xl shadow-2xl overflow-hidden">
+            <div class="bg-gradient-to-r from-yellow-600 to-orange-600 text-white p-6">
+                <h5 class="text-xl font-bold flex items-center gap-3">
+                    <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                        <i class="bi bi-bar-chart"></i>
                     </div>
+                    Estadísticas del Curso
+                </h5>
+                <button type="button" class="absolute top-4 right-4 w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110" data-bs-dismiss="modal">
+                    <i class="bi bi-x text-white"></i>
+                </button>
+            </div>
+            <div class="p-8">
+                <div class="mb-6">
+                    <h6 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-3">
+                        <div class="w-6 h-6 bg-blue-100/80 rounded-lg flex items-center justify-center">
+                            <i class="bi bi-info-circle text-blue-600 text-sm"></i>
+                        </div>
+                        Resumen General - {{ curso.name }}
+                    </h6>
                 </div>
                 
                 <!-- Estadísticas principales -->
-                <div class="row mb-4">
-                    <div class="col-md-4 text-center">
-                        <div class="card bg-primary text-white h-100">
-                            <div class="card-body">
-                                <i class="bi bi-folder display-4 mb-2"></i>
-                                <h3 class="fw-bold">{{ stats.total_folders }}</h3>
-                                <p class="mb-0">Carpetas</p>
-                            </div>
-                        </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-xl p-6 text-center transition-all duration-500 ease-out hover:shadow-2xl hover:-translate-y-1 hover:scale-[1.02]">
+                        <i class="bi bi-folder text-4xl mb-4 block"></i>
+                        <h3 class="text-3xl font-bold mb-2">{{ stats.total_folders }}</h3>
+                        <p class="text-white/80">Carpetas</p>
                     </div>
-                    <div class="col-md-4 text-center">
-                        <div class="card bg-success text-white h-100">
-                            <div class="card-body">
-                                <i class="bi bi-file-earmark-text display-4 mb-2"></i>
-                                <h3 class="fw-bold">{{ stats.total_documents }}</h3>
-                                <p class="mb-0">Documentos</p>
-                            </div>
-                        </div>
+                    <div class="bg-gradient-to-br from-green-600 to-green-700 text-white rounded-xl p-6 text-center transition-all duration-500 ease-out hover:shadow-2xl hover:-translate-y-1 hover:scale-[1.02]">
+                        <i class="bi bi-file-earmark-text text-4xl mb-4 block"></i>
+                        <h3 class="text-3xl font-bold mb-2">{{ stats.total_documents }}</h3>
+                        <p class="text-white/80">Documentos</p>
                     </div>
-                    <div class="col-md-4 text-center">
-                        <div class="card bg-info text-white h-100">
-                            <div class="card-body">
-                                <i class="bi bi-people display-4 mb-2"></i>
-                                <h3 class="fw-bold">{{ stats.total_students }}</h3>
-                                <p class="mb-0">Estudiantes</p>
-                            </div>
-                        </div>
+                    <div class="bg-gradient-to-br from-cyan-600 to-cyan-700 text-white rounded-xl p-6 text-center transition-all duration-500 ease-out hover:shadow-2xl hover:-translate-y-1 hover:scale-[1.02]">
+                        <i class="bi bi-people text-4xl mb-4 block"></i>
+                        <h3 class="text-3xl font-bold mb-2">{{ stats.total_students }}</h3>
+                        <p class="text-white/80">Estudiantes</p>
                     </div>
                 </div>
 
                 <!-- Detalles por carpeta -->
                 {% if folders %}
-                <div class="row">
-                    <div class="col-12">
-                        <h6 class="fw-bold mb-3">
-                            <i class="bi bi-folder-open me-2 text-success"></i>
-                            Documentos por Carpeta
-                        </h6>
-                        <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th><i class="bi bi-folder me-1"></i> Carpeta</th>
-                                        <th><i class="bi bi-file-earmark me-1"></i> Documentos</th>
-                                        <th><i class="bi bi-calendar me-1"></i> Creada</th>
-                                        <th><i class="bi bi-gear me-1"></i> Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for folder in folders %}
-                                    <tr>
-                                        <td>
-                                            <i class="bi bi-folder text-primary me-2"></i>
-                                            <strong>{{ folder.name }}</strong>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-primary">{{ folder.documents.count }}</span>
-                                        </td>
-                                        <td>{{ folder.created_at|date:"d/m/Y" }}</td>
-                                        <td>
-                                            <a href="{% url 'course_documents:folder_detail' curso_id=curso.id folder_id=folder.id %}" 
-                                               class="btn btn-sm btn-outline-primary">
-                                                <i class="bi bi-eye"></i> Ver
-                                            </a>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                <div class="mb-8">
+                    <h6 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-3">
+                        <div class="w-6 h-6 bg-green-100/80 rounded-lg flex items-center justify-center">
+                            <i class="bi bi-folder-open text-green-600 text-sm"></i>
+                        </div>
+                        Documentos por Carpeta
+                    </h6>
+                    <div class="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-xl overflow-hidden shadow-lg">
+                        <div class="bg-gradient-to-r from-gray-800 to-gray-900 text-white p-4">
+                            <div class="grid grid-cols-4 gap-4 font-semibold text-sm">
+                                <div class="flex items-center gap-2">
+                                    <i class="bi bi-folder"></i>
+                                    Carpeta
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i class="bi bi-file-earmark"></i>
+                                    Documentos
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i class="bi bi-calendar"></i>
+                                    Creada
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i class="bi bi-gear"></i>
+                                    Acciones
+                                </div>
+                            </div>
+                        </div>
+                        <div class="divide-y divide-gray-200/50">
+                            {% for folder in folders %}
+                            <div class="grid grid-cols-4 gap-4 p-4 hover:bg-gray-50/50 transition-all duration-300">
+                                <div class="flex items-center gap-2">
+                                    <i class="bi bi-folder text-blue-600"></i>
+                                    <span class="font-semibold text-gray-800">{{ folder.name }}</span>
+                                </div>
+                                <div>
+                                    <span class="inline-flex items-center px-2 py-1 bg-blue-100/80 text-blue-800 text-sm font-semibold rounded-full">
+                                        {{ folder.documents.count }}
+                                    </span>
+                                </div>
+                                <div class="text-gray-600 text-sm">
+                                    {{ folder.created_at|date:"d/m/Y" }}
+                                </div>
+                                <div>
+                                    <a href="{% url 'course_documents:folder_detail' curso_id=curso.id folder_id=folder.id %}" 
+                                       class="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600/90 hover:bg-blue-700/95 text-white text-sm font-medium rounded-lg transition-all duration-300 hover:shadow-md hover:scale-105">
+                                        <i class="bi bi-eye"></i>
+                                        Ver
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>
                 {% endif %}
 
                 <!-- Información adicional -->
-                <div class="row mt-4">
-                    <div class="col-12">
-                        <div class="alert alert-info">
-                            <h6 class="fw-bold mb-2">
-                                <i class="bi bi-lightbulb me-2"></i>Información del Curso
-                            </h6>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p class="mb-1"><strong>Profesor:</strong> {{ curso.teacher.get_full_name|default:curso.teacher.username }}</p>
-                                    <p class="mb-1"><strong>Estado:</strong> 
-                                        {% if curso.status == 'I' %}
-                                            <span class="badge bg-success">{{ curso.get_status_display }}</span>
-                                        {% elif curso.status == 'P' %}
-                                            <span class="badge bg-warning text-dark">{{ curso.get_status_display }}</span>
-                                        {% elif curso.status == 'F' %}
-                                            <span class="badge bg-danger">{{ curso.get_status_display }}</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">{{ curso.get_status_display }}</span>
-                                        {% endif %}
-                                    </p>
-                                </div>
-                                <div class="col-md-6">
-                                    <p class="mb-1"><strong>Total de Archivos:</strong> {{ stats.total_documents }}</p>
-                                    <p class="mb-1"><strong>Promedio por Carpeta:</strong> 
-                                        {% if stats.total_folders > 0 %}
-                                            {{ stats.average_docs_per_folder|floatformat:1 }}
-                                        {% else %}
-                                            0
-                                        {% endif %}
-                                    </p>
-                                </div>
+                <div class="bg-blue-50/50 backdrop-blur-sm border border-blue-200/30 rounded-xl p-6 transition-all duration-300 hover:bg-blue-50/70 hover:border-blue-300/50">
+                    <h6 class="text-lg font-bold text-blue-800 mb-4 flex items-center gap-3">
+                        <div class="w-6 h-6 bg-blue-100/80 rounded-lg flex items-center justify-center">
+                            <i class="bi bi-lightbulb text-blue-600 text-sm"></i>
+                        </div>
+                        Información del Curso
+                    </h6>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-2">
+                                <span class="font-semibold text-gray-800">Profesor:</span>
+                                <span class="text-gray-700">{{ curso.teacher.get_full_name|default:curso.teacher.username }}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-semibold text-gray-800">Estado:</span>
+                                {% if curso.status == 'I' %}
+                                    <span class="inline-flex items-center px-2 py-1 bg-green-100/80 text-green-800 text-sm font-semibold rounded-full">{{ curso.get_status_display }}</span>
+                                {% elif curso.status == 'P' %}
+                                    <span class="inline-flex items-center px-2 py-1 bg-yellow-100/80 text-yellow-800 text-sm font-semibold rounded-full">{{ curso.get_status_display }}</span>
+                                {% elif curso.status == 'F' %}
+                                    <span class="inline-flex items-center px-2 py-1 bg-red-100/80 text-red-800 text-sm font-semibold rounded-full">{{ curso.get_status_display }}</span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2 py-1 bg-gray-100/80 text-gray-800 text-sm font-semibold rounded-full">{{ curso.get_status_display }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-2">
+                                <span class="font-semibold text-gray-800">Total de Archivos:</span>
+                                <span class="text-gray-700">{{ stats.total_documents }}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-semibold text-gray-800">Promedio por Carpeta:</span>
+                                <span class="text-gray-700">
+                                    {% if stats.total_folders > 0 %}
+                                        {{ stats.average_docs_per_folder|floatformat:1 }}
+                                    {% else %}
+                                        0
+                                    {% endif %}
+                                </span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x me-2"></i>Cerrar
+            <div class="border-t border-gray-200/50 p-6 bg-gray-50/50 flex gap-3 justify-end">
+                <button type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100/80 hover:bg-gray-200/90 text-gray-700 hover:text-gray-900 font-medium rounded-lg transition-all duration-300 hover:shadow-md hover:scale-105" data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i>
+                    Cerrar
                 </button>
-                <a href="{% url 'course_documents:teacher_dashboard' curso_id=curso.id %}" class="btn btn-primary">
-                    <i class="bi bi-arrow-clockwise me-2"></i>Actualizar
+                <a href="{% url 'course_documents:teacher_dashboard' curso_id=curso.id %}" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600/90 hover:bg-blue-700/95 text-white font-medium rounded-lg transition-all duration-300 hover:shadow-lg hover:scale-105">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    Actualizar
                 </a>
             </div>
         </div>
@@ -703,43 +606,50 @@
 <!-- Modal de confirmación para eliminar carpeta -->
 <div class="modal fade" id="deleteFolderModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0" style="border-radius: 15px; overflow: hidden;">
-            <div class="modal-header bg-danger text-white border-0">
-                <h5 class="modal-title d-flex align-items-center">
-                    <i class="bi bi-exclamation-triangle-fill me-2 fs-4"></i>
+        <div class="modal-content bg-white/95 backdrop-blur-sm border border-gray-200/50 rounded-xl shadow-2xl overflow-hidden">
+            <div class="bg-gradient-to-r from-red-600 to-red-700 text-white p-6">
+                <h5 class="text-xl font-bold flex items-center gap-3">
+                    <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </div>
                     Confirmar Eliminación
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="absolute top-4 right-4 w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110" data-bs-dismiss="modal">
+                    <i class="bi bi-x text-white"></i>
+                </button>
             </div>
-            <div class="modal-body p-4">
-                <div class="text-center mb-4">
-                    <div class="bg-danger bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
-                        <i class="bi bi-folder-x text-danger" style="font-size: 2.5rem;"></i>
+            <div class="p-8">
+                <div class="text-center mb-6">
+                    <div class="w-20 h-20 mx-auto bg-red-100/80 rounded-full flex items-center justify-center transition-all duration-500 hover:bg-red-200/80 hover:scale-110">
+                        <i class="bi bi-folder-x text-red-600 text-4xl"></i>
                     </div>
                 </div>
-                <div class="text-center">
-                    <h6 class="fw-bold mb-3">¿Estás seguro de eliminar esta carpeta?</h6>
-                    <p class="text-muted mb-3">
-                        Estás a punto de eliminar la carpeta <strong id="folderNameToDelete" class="text-danger"></strong>
+                <div class="text-center mb-6">
+                    <h6 class="text-xl font-bold text-gray-800 mb-4">¿Estás seguro de eliminar esta carpeta?</h6>
+                    <p class="text-gray-600 mb-4">
+                        Estás a punto de eliminar la carpeta <strong id="folderNameToDelete" class="text-red-600"></strong>
                     </p>
-                    <div class="alert alert-warning border-0 bg-warning bg-opacity-10">
-                        <div class="d-flex align-items-start">
-                            <i class="bi bi-exclamation-triangle text-warning me-2 mt-1"></i>
-                            <div class="text-start">
-                                <small class="fw-semibold text-warning">¡Atención!</small>
-                                <br>
-                                <small class="text-muted">Esta acción eliminará también todos los documentos contenidos y no se puede deshacer.</small>
+                    <div class="bg-yellow-50/50 backdrop-blur-sm border border-yellow-200/30 rounded-xl p-4 transition-all duration-300 hover:bg-yellow-50/70 hover:border-yellow-300/50">
+                        <div class="flex items-start gap-3">
+                            <div class="w-6 h-6 bg-yellow-100/80 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i class="bi bi-exclamation-triangle text-yellow-600 text-sm"></i>
+                            </div>
+                            <div class="text-left">
+                                <h6 class="font-semibold text-yellow-800 mb-1">¡Atención!</h6>
+                                <p class="text-yellow-700 text-sm">Esta acción eliminará también todos los documentos contenidos y no se puede deshacer.</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer border-0 p-4 pt-0">
-                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
-                    <i class="bi bi-x me-2"></i>Cancelar
+            <div class="border-t border-gray-200/50 p-6 bg-gray-50/50 flex gap-3 justify-end">
+                <button type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100/80 hover:bg-gray-200/90 text-gray-700 hover:text-gray-900 font-medium rounded-lg transition-all duration-300 hover:shadow-md hover:scale-105" data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i>
+                    Cancelar
                 </button>
-                <button type="button" class="btn btn-danger px-4" id="confirmDeleteFolder">
-                    <i class="bi bi-trash me-2"></i>Eliminar Carpeta
+                <button type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600/90 hover:bg-red-700/95 text-white font-medium rounded-lg transition-all duration-300 hover:shadow-lg hover:scale-105" id="confirmDeleteFolder">
+                    <i class="bi bi-trash"></i>
+                    Eliminar Carpeta
                 </button>
             </div>
         </div>
@@ -748,9 +658,42 @@
 {% endblock %}""
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Folder menu dropdowns - versión simple
+    document.querySelectorAll('.folder-menu-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            
+            // Close all other menus first
+            document.querySelectorAll('.folder-menu').forEach(menu => {
+                if (menu !== this.nextElementSibling) {
+                    menu.classList.add('hidden');
+                }
+            });
+            
+            // Toggle current menu
+            const menu = this.nextElementSibling;
+            menu.classList.toggle('hidden');
+            
+            console.log('Menu toggled, hidden:', menu.classList.contains('hidden'));
+        });
+    });
+    
+    // Close menus when clicking outside
+    document.addEventListener('click', function() {
+        document.querySelectorAll('.folder-menu').forEach(menu => {
+            menu.classList.add('hidden');
+        });
+    });
+    
+    // Prevent menu from closing when clicking inside
+    document.querySelectorAll('.folder-menu').forEach(menu => {
+        menu.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    });
+
     // Character counters
     function setupCharacterCounter(inputId, counterId, maxLength) {
         const input = document.getElementById(inputId);
@@ -763,11 +706,11 @@ document.addEventListener('DOMContentLoaded', function() {
             counter.textContent = `${length}/${maxLength}`;
             
             if (length > maxLength * 0.9) {
-                counter.className = 'text-warning';
+                counter.className = 'text-yellow-600';
             } else if (length >= maxLength) {
-                counter.className = 'text-danger';
+                counter.className = 'text-red-600';
             } else {
-                counter.className = 'text-muted';
+                counter.className = 'text-gray-500';
             }
         }
         
@@ -780,6 +723,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Upload to specific folder
     document.querySelectorAll('.upload-to-folder-btn').forEach(btn => {
         btn.addEventListener('click', function() {
+            // Close the menu
+            this.closest('.folder-menu').classList.add('hidden');
+            
             const folderId = this.dataset.folderId;
             const folderName = this.dataset.folderName;
             
@@ -803,12 +749,11 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             e.stopPropagation();
             
-            console.log('Delete button clicked'); // Debug
+            // Close the menu
+            this.closest('.folder-menu').classList.add('hidden');
             
             const folderId = this.dataset.folderId;
             const folderName = this.dataset.folderName;
-            
-            console.log('Folder ID:', folderId, 'Name:', folderName); // Debug
             
             // Store folder info for deletion
             folderToDelete = { id: folderId, name: folderName };
@@ -824,9 +769,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (modalElement) {
                 const modal = new bootstrap.Modal(modalElement);
                 modal.show();
-                console.log('Modal should be showing'); // Debug
-            } else {
-                console.error('Modal element not found');
             }
         });
     });
@@ -836,8 +778,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!folderToDelete) return;
         
         // Show loading state
-        this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Eliminando...';
+        this.innerHTML = '<i class="bi bi-arrow-clockwise animate-spin mr-2"></i>Eliminando...';
         this.disabled = true;
+        this.classList.add('opacity-75', 'cursor-not-allowed');
         
         fetch(`{% url 'course_documents:delete_folder' curso_id=curso.id folder_id=0 %}`.replace('0', folderToDelete.id), {
             method: 'POST',
@@ -855,26 +798,31 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 // Show error and restore button
                 alert('Error al eliminar la carpeta: ' + data.error);
-                this.innerHTML = '<i class="bi bi-trash me-2"></i>Eliminar Carpeta';
+                this.innerHTML = '<i class="bi bi-trash mr-2"></i>Eliminar Carpeta';
                 this.disabled = false;
+                this.classList.remove('opacity-75', 'cursor-not-allowed');
             }
         })
         .catch(error => {
             // Show error and restore button
             alert('Error al eliminar la carpeta: ' + error);
-            this.innerHTML = '<i class="bi bi-trash me-2"></i>Eliminar Carpeta';
+            this.innerHTML = '<i class="bi bi-trash mr-2"></i>Eliminar Carpeta';
             this.disabled = false;
+            this.classList.remove('opacity-75', 'cursor-not-allowed');
         });
     });
     
     // Update form action when folder is selected
-    document.querySelector('#uploadDocumentForm select[name="folder_id"]').addEventListener('change', function() {
-        const folderId = this.value;
-        if (folderId) {
-            document.getElementById('uploadDocumentForm').action = 
-                `{% url 'course_documents:upload_document' curso_id=curso.id folder_id=0 %}`.replace('0', folderId);
-        }
-    });
+    const folderSelect = document.querySelector('#uploadDocumentForm select[name="folder_id"]');
+    if (folderSelect) {
+        folderSelect.addEventListener('change', function() {
+            const folderId = this.value;
+            if (folderId) {
+                document.getElementById('uploadDocumentForm').action = 
+                    `{% url 'course_documents:upload_document' curso_id=curso.id folder_id=0 %}`.replace('0', folderId);
+            }
+        });
+    }
 });
 </script>
 {% endblock %}

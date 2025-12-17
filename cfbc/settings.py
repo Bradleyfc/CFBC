@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'blog.apps.BlogConfig',
     'datos_archivados.apps.DatosArchivadosConfig',
     'course_documents.apps.CourseDocumentsConfig',
+    'django_tailwind_cli',
     
     
 ]
@@ -135,6 +136,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR  / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Media files (User uploaded files)
 MEDIA_URL = '/media/'
