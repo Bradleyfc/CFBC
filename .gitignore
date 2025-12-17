@@ -26,3 +26,6 @@ media/
 
 # Logs
 *.log
+
+# Django Tailwind CLI ejecutables
+.django_tailwind_cli/tailwindcss-*
