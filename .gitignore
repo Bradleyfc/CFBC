@@ -3,7 +3,6 @@ venv/
 env/
 .venv/
 
-
 # Base de datos
 *.sqlite3
 *.db
@@ -11,18 +10,55 @@ env/
 # Archivos de Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
 
 # Variables de entorno/secretos
 .env
+.env.local
+.env.production
 secrets.py
 
-# Archivos de IDE
+# Archivos de IDE y editores
 .vscode/
 .idea/
+*.swp
+*.swo
+*.swn
+.DS_Store
+Thumbs.db
 
 # Archivos estáticos y medios (generados automáticamente)
 staticfiles/
-media/
+media/uploads/
+media/temp/
 
 # Logs
 *.log
+logs/
+
+# Tailwind CSS binarios
+.django_tailwind_cli/tailwindcss-windows-x64-*.exe
+.django_tailwind_cli/tailwindcss-*
+
+# Testing
+.coverage
+.pytest_cache/
+.hypothesis/
+htmlcov/
+
+# Archivos temporales del sistema
+*.tmp
+*.temp
+.cache/
+
+# Archivos de configuración local
+local_settings.py
+
+# Archivos de backup
+*.bak
+*.backup
+
+# Archivos de workspace específicos
+*.code-workspace
