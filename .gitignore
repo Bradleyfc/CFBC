@@ -31,22 +31,28 @@ Thumbs.db
 
 # Archivos estáticos y medios (generados automáticamente)
 staticfiles/
-media/uploads/
-media/temp/
+media/
 
 # Logs
 *.log
 logs/
 
-# Tailwind CSS binarios
-.django_tailwind_cli/tailwindcss-windows-x64-*.exe
-.django_tailwind_cli/tailwindcss-*
+# Tailwind CSS - toda la carpeta
+.django_tailwind_cli/
+
+# Archivos CSS compilados
+static/css/tailwind.css
+static/css/
 
 # Testing
 .coverage
 .pytest_cache/
 .hypothesis/
 htmlcov/
+tests/
+
+# Kiro IDE
+.kiro/
 
 # Archivos temporales del sistema
 *.tmp
