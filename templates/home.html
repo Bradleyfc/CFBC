@@ -2,106 +2,35 @@
 {% load static %}
 
 {% block content %}
-<style>
-  .image-container {
-    position: relative;
-    overflow: hidden;
-  }
 
-  .image-container img {
-    display: block;
-    width: 100%;
-    height: auto;
-    transition: transform 0.3s ease;
-  }
-
-  .image-container .overlay {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background-color: rgba(0, 0, 0, 0.7);
-    color: white;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    padding: 10px;
-  }
-
-  .image-container:hover .overlay {
-    opacity: 1;
-  }
-
-  .image-container:hover {
-    transform: scale(1.1); /* Increased scale for more noticeable growth */
-    z-index: 15; /* Bring to front */
-  }
-
-  .overlay h5,
-  .overlay p {
-    margin: 0;
-  }
-
-  .carousel-item img {
-    height: 150px; /* Adjust as needed */
-    object-fit: cover;
-  }
-
-  /* Estilos específicos para noticias */
-  #carouselNoticias .overlay h6 {
-    font-size: 0.9rem;
-    font-weight: bold;
-    margin-bottom: 5px;
-  }
-
-  #carouselNoticias .overlay p {
-    font-size: 0.75rem;
-    margin-bottom: 5px;
-  }
-
-  #carouselNoticias .overlay small {
-    font-size: 0.7rem;
-  }
-
-  #carouselNoticias .btn-sm {
-    font-size: 0.7rem;
-    padding: 2px 8px;
-  }
-</style>
-
-<h1 class="display-4 fw-bold text-center my-5" style="text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);">CENTRO FRAY BARTOLOME DE LAS CASAS</h1>
+<h1 class="text-5xl md:text-6xl font-bold text-center my-12 drop-shadow-lg">CENTRO FRAY BARTOLOME DE LAS CASAS</h1>
 
 {% if request.user.is_authenticated %}
-<hr>
-<div class="container" >
-<h2 class="text-center">Bienvenido {{ user.username | upper }}</h2>
+<hr class="border-gray-300 my-4">
+<div class="container mx-auto px-4">
+<h2 class="text-center text-2xl font-semibold text-gray-700">Bienvenido {{ user.username | upper }}</h2>
 </div>
-        {% endif %}
+{% endif %}
 <br>
 <br>
 <br>
-  <h3 class="text-center text-secondary">Nuestros Cursos</h3>
+  <h3 class="text-center text-gray-600 text-3xl font-semibold mb-8">Nuestros Cursos</h3>
 
 <br>
 <br>  
         
-        <div id="carouselCursos" class="carousel slide" data-bs-ride="carousel" style="max-width: 800px; margin: auto;">
-                <div class="carousel-inner">
+        <div id="carouselCursos" class="relative max-w-4xl mx-auto">
+                <div class="carousel-inner overflow-hidden">
                   {% for group in grouped_courses %}
-                  <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                    <div class="row">
+                  <div class="carousel-item {% if forloop.first %}block{% else %}hidden{% endif %}" data-slide="{{ forloop.counter0 }}">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                       {% for course in group %}
-                      <div class="col-md-3">
-                        <div class="image-container">
-                          <img src="{% if course.image %}{{ course.image.url }}{% else %}{% static 'img/default_course.jpg' %}{% endif %}" class="d-block w-100 " alt="{{ course.name }}">
-                          <div class="overlay">
-                            <h5>{{ course.name }}</h5>
-                            <p>{{ course.description }}</p>
+                      <div class="course-card">
+                        <div class="image-container relative overflow-hidden rounded-lg group cursor-pointer">
+                          <img src="{% if course.image %}{{ course.image.url }}{% else %}{% static 'img/default_course.jpg' %}{% endif %}" class="w-full h-40 object-cover transition-transform duration-300 group-hover:scale-110" alt="{{ course.name }}">
+                          <div class="overlay absolute inset-0 bg-black bg-opacity-70 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-center p-4">
+                            <h5 class="text-lg font-semibold mb-2">{{ course.name }}</h5>
+                            <p class="text-sm">{{ course.description }}</p>
                           </div>
                         </div>
                       </div>
@@ -110,13 +39,13 @@
                   </div>
                   {% endfor %}
                 </div>
-                <button class="carousel-control-prev" type="button" data-bs-target="#carouselCursos" data-bs-slide="prev">
-                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                  <span class="visually-hidden">Previous</span>
+                <button class="carousel-control-prev absolute left-0 top-1/2 transform -translate-y-1/2 text-white text-opacity-60 hover:text-opacity-100 transition-all duration-300 p-2" type="button" onclick="prevSlide('carouselCursos')">
+                  <i class="bi bi-chevron-left text-3xl drop-shadow-lg"></i>
+                  <span class="sr-only">Previous</span>
                 </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#carouselCursos" data-bs-slide="next">
-                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                  <span class="visually-hidden">Next</span>
+                <button class="carousel-control-next absolute right-0 top-1/2 transform -translate-y-1/2 text-white text-opacity-60 hover:text-opacity-100 transition-all duration-300 p-2" type="button" onclick="nextSlide('carouselCursos')">
+                  <i class="bi bi-chevron-right text-3xl drop-shadow-lg"></i>
+                  <span class="sr-only">Next</span>
                 </button>
               </div>
 
@@ -126,26 +55,25 @@
 
 <!-- Sección de Noticias -->
 {% if grouped_noticias %}
-<h3 class="text-center text-secondary">Últimas Noticias</h3>
+<h3 class="text-center text-gray-600 text-3xl font-semibold mb-8">Últimas Noticias</h3>
 
 <br>
 <br>
 
-<div id="carouselNoticias" class="carousel slide" data-bs-ride="carousel" style="max-width: 800px; margin: auto;">
-  <div class="carousel-inner">
+<div id="carouselNoticias" class="relative max-w-4xl mx-auto">
+  <div class="carousel-inner overflow-hidden">
     {% for group in grouped_noticias %}
-    <div class="carousel-item {% if forloop.first %}active{% endif %}">
-      <div class="row">
+    <div class="carousel-item {% if forloop.first %}block{% else %}hidden{% endif %}" data-slide="{{ forloop.counter0 }}">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         {% for noticia in group %}
-        <div class="col-md-3">
-          <div class="image-container">
-            <img src="{% if noticia.imagen_principal %}{{ noticia.imagen_principal.url }}{% else %}{% static 'img/default_news.jpg' %}{% endif %}" class="d-block w-100" alt="{{ noticia.titulo }}">
-            <div class="overlay">
-              <h6>{{ noticia.titulo|truncatechars:50 }}</h6>
-              <p><small>{{ noticia.resumen|truncatechars:80 }}</small></p>
-              <small class="text-light">{{ noticia.fecha_publicacion|date:"d/m/Y" }}</small>
-              <br>
-              <a href="{% url 'blog:detalle_noticia' noticia.slug %}" class="btn btn-sm btn-primary mt-2">Leer más</a>
+        <div class="news-card">
+          <div class="image-container relative overflow-hidden rounded-lg group cursor-pointer">
+            <img src="{% if noticia.imagen_principal %}{{ noticia.imagen_principal.url }}{% else %}{% static 'img/default_news.jpg' %}{% endif %}" class="w-full h-40 object-cover transition-transform duration-300 group-hover:scale-110" alt="{{ noticia.titulo }}">
+            <div class="overlay absolute inset-0 bg-black bg-opacity-70 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-center p-4">
+              <h6 class="text-lg font-semibold mb-2">{{ noticia.titulo|truncatechars:50 }}</h6>
+              <p class="text-sm mb-2">{{ noticia.resumen|truncatechars:80 }}</p>
+              <small class="text-gray-300 mb-3">{{ noticia.fecha_publicacion|date:"d/m/Y" }}</small>
+              <a href="{% url 'blog:detalle_noticia' noticia.slug %}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors duration-300">Leer más</a>
             </div>
           </div>
         </div>
@@ -154,26 +82,125 @@
     </div>
     {% endfor %}
   </div>
-  <button class="carousel-control-prev" type="button" data-bs-target="#carouselNoticias" data-bs-slide="prev">
-    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-    <span class="visually-hidden">Previous</span>
+  <button class="carousel-control-prev absolute left-0 top-1/2 transform -translate-y-1/2 text-white text-opacity-60 hover:text-opacity-100 transition-all duration-300 p-2" type="button" onclick="prevSlideNews('carouselNoticias')">
+    <i class="bi bi-chevron-left text-3xl drop-shadow-lg"></i>
+    <span class="sr-only">Previous</span>
   </button>
-  <button class="carousel-control-next" type="button" data-bs-target="#carouselNoticias" data-bs-slide="next">
-    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-    <span class="visually-hidden">Next</span>
+  <button class="carousel-control-next absolute right-0 top-1/2 transform -translate-y-1/2 text-white text-opacity-60 hover:text-opacity-100 transition-all duration-300 p-2" type="button" onclick="nextSlideNews('carouselNoticias')">
+    <i class="bi bi-chevron-right text-3xl drop-shadow-lg"></i>
+    <span class="sr-only">Next</span>
   </button>
 </div>
 
 <br>
-<div class="text-center">
-  <a href="{% url 'blog:lista_noticias' %}" class="btn btn-outline-primary">Ver todas las noticias</a>
+<div class="text-center mt-8">
+  <a href="{% url 'blog:lista_noticias' %}" class="inline-block bg-transparent border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white px-6 py-2 rounded-lg transition-colors duration-300">Ver todas las noticias</a>
 </div>
 {% endif %}
         
-                
 
+<script>
+// JavaScript personalizado para carruseles de Tailwind
+let currentSlide = 0;
+let currentNewsSlide = 0;
+const totalSlides = document.querySelectorAll('#carouselCursos .carousel-item').length;
+const totalNewsSlides = document.querySelectorAll('#carouselNoticias .carousel-item').length;
+let coursesInterval;
+let newsInterval;
 
+function showSlide(slideIndex) {
+    const slides = document.querySelectorAll('#carouselCursos .carousel-item');
+    
+    // Ocultar todas las slides
+    slides.forEach(slide => {
+        slide.classList.add('hidden');
+        slide.classList.remove('block');
+    });
+    
+    // Mostrar la slide actual
+    if (slides[slideIndex]) {
+        slides[slideIndex].classList.remove('hidden');
+        slides[slideIndex].classList.add('block');
+    }
+}
 
+function showNewsSlide(slideIndex) {
+    const slides = document.querySelectorAll('#carouselNoticias .carousel-item');
+    
+    // Ocultar todas las slides
+    slides.forEach(slide => {
+        slide.classList.add('hidden');
+        slide.classList.remove('block');
+    });
+    
+    // Mostrar la slide actual
+    if (slides[slideIndex]) {
+        slides[slideIndex].classList.remove('hidden');
+        slides[slideIndex].classList.add('block');
+    }
+}
 
+function nextSlide(carouselId) {
+    currentSlide = (currentSlide + 1) % totalSlides;
+    showSlide(currentSlide);
+    resetCoursesInterval();
+}
+
+function prevSlide(carouselId) {
+    currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+    showSlide(currentSlide);
+    resetCoursesInterval();
+}
+
+function nextSlideNews(carouselId) {
+    currentNewsSlide = (currentNewsSlide + 1) % totalNewsSlides;
+    showNewsSlide(currentNewsSlide);
+    resetNewsInterval();
+}
+
+function prevSlideNews(carouselId) {
+    currentNewsSlide = (currentNewsSlide - 1 + totalNewsSlides) % totalNewsSlides;
+    showNewsSlide(currentNewsSlide);
+    resetNewsInterval();
+}
+
+function autoAdvanceCourses() {
+    currentSlide = (currentSlide + 1) % totalSlides;
+    showSlide(currentSlide);
+}
+
+function autoAdvanceNews() {
+    currentNewsSlide = (currentNewsSlide + 1) % totalNewsSlides;
+    showNewsSlide(currentNewsSlide);
+}
+
+function resetCoursesInterval() {
+    clearInterval(coursesInterval);
+    coursesInterval = setInterval(autoAdvanceCourses, 3000);
+}
+
+function resetNewsInterval() {
+    clearInterval(newsInterval);
+    newsInterval = setInterval(autoAdvanceNews, 3000);
+}
+
+// Inicializar carruseles
+document.addEventListener('DOMContentLoaded', function() {
+    showSlide(0);
+    if (totalNewsSlides > 0) {
+        showNewsSlide(0);
+    }
+    
+    // Iniciar auto-avance para carrusel de cursos
+    if (totalSlides > 1) {
+        coursesInterval = setInterval(autoAdvanceCourses, 3000);
+    }
+    
+    // Iniciar auto-avance para carrusel de noticias
+    if (totalNewsSlides > 1) {
+        newsInterval = setInterval(autoAdvanceNews, 3000);
+    }
+});
+</script>
 
 {% endblock %}

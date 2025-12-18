@@ -1,112 +1,365 @@
 {% if user.is_authenticated %}
 {% if group_name == 'Estudiantes' %}
-<div class="container bg-primary text-white">
+<div class="container mx-auto px-4 bg-blue-800 text-white">
   {% elif group_name == 'Profesores' %}
-  <div class="container bg-success text-white">
+  <div class="container mx-auto px-4 bg-green-600 text-white">
     {% elif group_name == 'Administracion' %}
-    <div class="container bg-danger text-white">
+    <div class="container mx-auto px-4 bg-red-600 text-white">
       {% elif group_name == 'Secretaria' %}
-      <div class="container bg-secondary text-white">
+      <div class="container mx-auto px-4 bg-gray-600 text-white">
         {% else %}
-        <div class="container bg-primary text-white">
+        <div class="container mx-auto px-4 bg-blue-800 text-white">
           {% endif %}
           {% else %}
-          <div class="container bg-primary text-white">
+          <div class="container mx-auto px-4 bg-blue-800 text-white">
             {% endif %}
 
             <style>
-              .nav-link:hover {
-                opacity: 0.8;
-                transform: translateY(-2px);
-                transition: all 0.3s ease;
+              /* Glassmorphism Header Container */
+              .glass-header-container {
+                /* Fondo azul oscuro sólido */
+                background: rgba(30, 64, 175, 0.9);
+                /* Gradiente azul por encima para el efecto glass */
+                background-image: linear-gradient(135deg, 
+                  rgba(59, 130, 246, 0.3), 
+                  rgba(30, 64, 175, 0.1)
+                );
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border: 1px solid rgba(59, 130, 246, 0.4);
+                border-radius: 20px;
+                box-shadow: 
+                  0 8px 32px rgba(0, 0, 0, 0.3),
+                  inset 0 1px 0 rgba(147, 197, 253, 0.4);
+                position: relative;
+                overflow: hidden;
               }
 
-              .btn:hover {
-                opacity: 0.8;
-                transform: translateY(-2px);
-                transition: all 0.3s ease;
+              .glass-header-container::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 1px;
+                background: linear-gradient(90deg, transparent, rgba(147, 197, 253, 0.6), transparent);
+                pointer-events: none;
               }
 
-              /* Animación pulse con cambio de colores para el botón de Iniciar Sesión */
+              .glass-header-container::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(147, 197, 253, 0.3), transparent);
+                animation: shimmer 3s infinite;
+                pointer-events: none;
+              }
+
+              @keyframes shimmer {
+                0% { left: -100%; }
+                100% { left: 100%; }
+              }
+
+              /* Navigation Links con Glassmorphism - Más suaves y transparentes */
+              .glass-nav-link, .nav-link {
+                /* Fondo muy transparente */
+                background: rgba(59, 130, 246, 0.15);
+                /* Gradiente muy sutil */
+                background-image: linear-gradient(135deg, 
+                  rgba(59, 130, 246, 0.2), 
+                  rgba(37, 99, 235, 0.05)
+                );
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                border: 1px solid rgba(147, 197, 253, 0.1);
+                border-radius: 10px;
+                transition: all 0.15s ease;
+                position: relative;
+                overflow: hidden;
+                box-shadow: 
+                  0 2px 8px rgba(0, 0, 0, 0.1),
+                  inset 0 1px 0 rgba(147, 197, 253, 0.2);
+                padding: 0.4rem 0.8rem !important;
+                font-size: 0.875rem !important;
+              }
+
+              .glass-nav-link::before, .nav-link::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: linear-gradient(135deg, rgba(147, 197, 253, 0.1), transparent);
+                opacity: 0;
+                transition: opacity 0.15s ease;
+                pointer-events: none;
+              }
+
+              .glass-nav-link:hover, .nav-link:hover {
+                /* Hover más sutil */
+                background: rgba(59, 130, 246, 0.3);
+                background-image: linear-gradient(135deg, 
+                  rgba(96, 165, 250, 0.35), 
+                  rgba(59, 130, 246, 0.15)
+                );
+                border-color: rgba(147, 197, 253, 0.2);
+                transform: translateY(-1px) scale(1.01);
+                box-shadow: 
+                  0 4px 15px rgba(0, 0, 0, 0.2),
+                  inset 0 1px 0 rgba(147, 197, 253, 0.4),
+                  0 0 10px rgba(59, 130, 246, 0.2);
+              }
+
+              .glass-nav-link:hover::before, .nav-link:hover::before {
+                opacity: 1;
+              }
+
+              /* Botones de Autenticación con Glassmorphism */
+              .glass-button-oval {
+                /* Fondo azul oscuro sólido */
+                background: rgba(30, 64, 175, 0.8);
+                background-image: linear-gradient(135deg, 
+                  rgba(59, 130, 246, 0.5), 
+                  rgba(30, 64, 175, 0.3)
+                );
+                backdrop-filter: blur(15px);
+                -webkit-backdrop-filter: blur(15px);
+                border: 1px solid rgba(147, 197, 253, 0.6);
+                border-radius: 20px;
+                transition: all 0.2s ease;
+                position: relative;
+                overflow: hidden;
+                box-shadow: 
+                  0 6px 20px rgba(0, 0, 0, 0.3),
+                  inset 0 1px 0 rgba(147, 197, 253, 0.7);
+                padding: 0.4rem 1rem !important;
+                font-size: 0.875rem !important;
+              }
+
+              .glass-button-oval::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+                transition: left 0.5s ease;
+                pointer-events: none;
+              }
+
+              .glass-button-oval:hover {
+                background: rgba(147, 197, 253, 0.9);
+                background-image: linear-gradient(135deg, 
+                  rgba(147, 197, 253, 0.8), 
+                  rgba(96, 165, 250, 0.6)
+                );
+                color: #1e40af !important;
+                transform: translateY(-2px) scale(1.05);
+                box-shadow: 
+                  0 10px 30px rgba(0, 0, 0, 0.4),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.8),
+                  0 0 25px rgba(59, 130, 246, 0.6);
+              }
+
+              .glass-button-oval:hover::before {
+                left: 100%;
+              }
+
+              .glass-button-oval-solid {
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
+                backdrop-filter: blur(15px);
+                -webkit-backdrop-filter: blur(15px);
+                border: 1px solid rgba(255, 255, 255, 0.4);
+                border-radius: 20px;
+                color: #1e40af;
+                transition: all 0.2s ease;
+                position: relative;
+                overflow: hidden;
+                box-shadow: 
+                  0 6px 20px rgba(0, 0, 0, 0.15),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.5);
+                padding: 0.4rem 1rem !important;
+                font-size: 0.875rem !important;
+              }
+
+              .glass-button-oval-solid::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: linear-gradient(135deg, #1e40af, #3b82f6);
+                opacity: 0;
+                transition: opacity 0.15s ease;
+                pointer-events: none;
+              }
+
+              .glass-button-oval-solid:hover {
+                transform: translateY(-2px) scale(1.05);
+                background: linear-gradient(135deg, #1e40af, #3b82f6) !important;
+                color: white !important;
+                box-shadow: 
+                  0 10px 30px rgba(30, 64, 175, 0.3),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                  0 0 25px rgba(59, 130, 246, 0.4);
+              }
+
+              .glass-button-oval-solid:hover i,
+              .glass-button-oval-solid:hover span {
+                color: white !important;
+                z-index: 10;
+                position: relative;
+              }
+
+              .glass-button-oval-solid:hover::before {
+                opacity: 0;
+              }
+
+              /* Efectos de profundidad para el logo - Más suave */
+              .glass-logo {
+                /* Fondo muy transparente */
+                background: rgba(59, 130, 246, 0.2);
+                background-image: linear-gradient(135deg, 
+                  rgba(59, 130, 246, 0.25), 
+                  rgba(37, 99, 235, 0.1)
+                );
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                border: 1px solid rgba(147, 197, 253, 0.3);
+                border-radius: 12px;
+                transition: all 0.3s ease;
+                box-shadow: 
+                  0 2px 8px rgba(0, 0, 0, 0.15),
+                  inset 0 1px 0 rgba(147, 197, 253, 0.3);
+                padding: 0.4rem 0.8rem !important;
+              }
+
+              .glass-logo:hover {
+                transform: translateY(-1px) scale(1.02);
+                box-shadow: 
+                  0 4px 15px rgba(0, 0, 0, 0.2),
+                  inset 0 1px 0 rgba(147, 197, 253, 0.4),
+                  0 0 10px rgba(59, 130, 246, 0.3);
+              }
+
+              /* Animaciones de pulso para botones */
               .btn-login-pulse {
-                animation: pulseWithColors 1.5s infinite;
+                animation: pulse-glow 2s infinite;
               }
 
-              /* Detener animación en la página de login */
-              .btn-login-no-pulse {
-                animation: none;
-              }
-
-              @keyframes pulseWithColors {
-                0% {
-                  transform: scale(1);
-                  color: white;
-                  background-color: transparent;
-                  border-color: white;
+              @keyframes pulse-glow {
+                0%, 100% {
+                  box-shadow: 
+                    0 6px 20px rgba(0, 0, 0, 0.1),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                    0 0 0 rgba(255, 255, 255, 0.4);
                 }
                 50% {
-                  transform: scale(1.05);
-                  color: #0d6efd;
-                  background-color: white;
-                  border-color: white;
+                  box-shadow: 
+                    0 6px 20px rgba(0, 0, 0, 0.1),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                    0 0 20px rgba(255, 255, 255, 0.6);
                 }
-                100% {
-                  transform: scale(1);
-                  color: white;
-                  background-color: transparent;
-                  border-color: white;
+              }
+
+              /* Asegurar visibilidad del texto */
+              .glass-header-container .text-white {
+                color: white !important;
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+              }
+
+              .glass-nav-link, .nav-link, .glass-logo, .glass-button-oval {
+                color: white !important;
+                text-decoration: none !important;
+              }
+
+              .glass-button-oval-solid {
+                color: #1e40af !important;
+              }
+
+              /* Mover específicamente el botón registrarse hacia la izquierda */
+              a[href*="registro"].glass-button-oval-solid {
+                transform: translateX(-16px);
+              }
+
+              /* Mover específicamente el botón iniciar sesión hacia la izquierda */
+              a[href*="login"].glass-button-oval {
+                transform: translateX(-12px);
+              }
+
+              /* Responsive adjustments */
+              @media (max-width: 768px) {
+                .glass-header-container {
+                  border-radius: 15px;
+                  margin: 0.5rem;
+                }
+                
+                .glass-nav-link, .nav-link {
+                  border-radius: 8px;
+                  padding: 0.3rem 0.6rem !important;
+                  font-size: 0.8rem !important;
+                }
+                
+                .glass-button-oval, .glass-button-oval-solid {
+                  border-radius: 20px;
+                }
+
+                .glass-logo {
+                  border-radius: 10px;
+                  padding: 0.3rem 0.6rem !important;
+                }
+
+                a[href*="registro"].glass-button-oval-solid {
+                  transform: translateX(-8px);
+                }
+
+                a[href*="login"].glass-button-oval {
+                  transform: translateX(-6px);
                 }
               }
             </style>
             <header
-              class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom">
+              class="glass-header-container flex flex-wrap items-center justify-between py-4 mb-4 mx-4 mt-3">
 
-              <div class="col-md-3 mb-2 mb-md-0">
-                <a href="/" class="d-inline-flex link-body-emphasis text-decoration-none">
-                  <svg class="bi" width="40" height="32" role="img" aria-label="Bootstrap">
-                    <use xlink:href="#bootstrap"></use>
-                  </svg>
-                </a>
-              </div>
-              <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
-                <li><a href="{% url 'principal:home' %}" class="nav-link px-2 text-white">Inicio</a></li>
+
+              <ul class="flex flex-wrap justify-center space-x-4 mb-2 md:mb-0 flex-grow mx-4">
+                <li><a href="{% url 'principal:home' %}" class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Inicio</a></li>
                 {% if group_name == 'Secretaria' %}
-                <li><a href="{% url 'principal:cursos' %}" class="nav-link px-2 text-white">Administrar Cursos</a></li>
+                <li><a href="{% url 'principal:cursos' %}" class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Administrar Cursos</a></li>
                 <li><a href="{% url 'principal:registro_respuestas_general' %}"
-                    class="nav-link px-2 text-white">Registro de Respuestas</a></li>
+                    class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Registro de Respuestas</a></li>
                 {% elif group_name == 'Administracion' %}
-                <li><a href="{% url 'principal:cursos' %}" class="nav-link px-2 text-white">Nuestros Cursos</a></li>
+                <li><a href="{% url 'principal:cursos' %}" class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Nuestros Cursos</a></li>
                 <li><a href="{% url 'principal:registro_respuestas_general' %}"
-                    class="nav-link px-2 text-white">Registro de Respuestas</a></li>
+                    class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Registro de Respuestas</a></li>
                 {% elif group_name == 'Profesores' %}
-                <li><a href="{% url 'principal:cursos' %}" class="nav-link px-2 text-white">Nuestros Cursos</a></li>
+                <li><a href="{% url 'principal:cursos' %}" class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Nuestros Cursos</a></li>
                 {% else %}
-                <li><a href="{% url 'principal:cursos' %}" class="nav-link px-2 text-white">Nuestros Cursos</a></li>
+                <li><a href="{% url 'principal:cursos' %}" class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Nuestros Cursos</a></li>
                 {% endif %}
-                <li><a href="{% url 'blog:lista_noticias' %}" class="nav-link px-2 text-white">Noticias</a></li>
-                <li><a href="#" class="nav-link px-2 text-white">Acerca de</a></li>
+                <li><a href="{% url 'blog:lista_noticias' %}" class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Noticias</a></li>
+                <li><a href="#" class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Acerca de</a></li>
               </ul>
-              <div class="col-md-3 text-end">
+              <div class="flex items-center justify-end flex-shrink-0">
                 {% if request.user.is_authenticated %}
-                <li style="list-style-type: none;">
-                  <a class="nav-link px-2 text-white" href="{% url 'principal:profile' %}">{{group_name}} |
+                <div class="list-none">
+                  <a class="glass-nav-link text-white px-4 py-2 no-underline font-semibold text-base" href="{% url 'principal:profile' %}">{{group_name}} |
                     {{user.username}}</a>
-                </li>
-                <!--  {% if group_name == 'Administracion' %}
-        <a href="{% url 'principal:logout_view' %}" type="button" class="btn btn-outline-light text-white border-white" style="background-color: #ffcc00;">Cerrar Sesion</a>
-          {% else %}
-        <a href="{% url 'principal:logout_view' %}" type="button" class="btn btn-outline-light text-white border-white" style="background-color: #dc3545;">Cerrar Sesion</a>
-          {% endif %} -->
+                </div>
                 {% else %}
-                <a href="{% url 'login' %}" type="button" class="btn btn-outline-light me-2 {% if request.resolver_match.url_name == 'login' %}btn-login-no-pulse{% else %}btn-login-pulse{% endif %}">
-                  <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+                <a href="{% url 'login' %}" class="glass-button-oval text-white px-4 py-2 mr-3 no-underline font-medium text-base {% if request.resolver_match.url_name == 'login' %}btn-login-no-pulse{% else %}btn-login-pulse{% endif %}">
+                  <i class="bi bi-box-arrow-in-right mr-2"></i> Iniciar Sesión
                 </a>
-                <a href="{% url 'principal:registro' %}" type="button" class="btn btn-light">
-                  <i class="bi bi-person-plus"></i> Registrarse
+                <a href="{% url 'principal:registro' %}" class="glass-button-oval-solid text-blue-600 px-4 py-2 no-underline font-medium text-base -ml-2">
+                  <i class="bi bi-person-plus mr-2"></i> Registrarse
                 </a>
                 {% endif %}
-
-
               </div>
             </header>
           </div>
