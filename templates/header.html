@@ -1,17 +1,17 @@
 {% if user.is_authenticated %}
 {% if group_name == 'Estudiantes' %}
-<div class="container mx-auto px-4 bg-blue-800 text-white">
+<div class="container">
   {% elif group_name == 'Profesores' %}
-  <div class="container mx-auto px-4 bg-green-600 text-white">
+  <div class="container">
     {% elif group_name == 'Administracion' %}
-    <div class="container mx-auto px-4 bg-red-600 text-white">
+    <div class="container">
       {% elif group_name == 'Secretaria' %}
-      <div class="container mx-auto px-4 bg-gray-600 text-white">
+      <div class="container">
         {% else %}
-        <div class="container mx-auto px-4 bg-blue-800 text-white">
+        <div class="container">
           {% endif %}
           {% else %}
-          <div class="container mx-auto px-4 bg-blue-800 text-white">
+          <div class="container">
             {% endif %}
 
             <style>
@@ -283,14 +283,16 @@
                 color: #1e40af !important;
               }
 
-              /* Mover específicamente el botón registrarse hacia la izquierda */
-              a[href*="registro"].glass-button-oval-solid {
-                transform: translateX(-16px);
+
+
+              /* Mover botones un poco a la izquierda */
+              .flex-shrink-0 {
+                margin-right: 20px;
               }
 
-              /* Mover específicamente el botón iniciar sesión hacia la izquierda */
+              /* Separar el botón de iniciar sesión más a la izquierda */
               a[href*="login"].glass-button-oval {
-                transform: translateX(-12px);
+                margin-right: 25px;
               }
 
               /* Responsive adjustments */
@@ -315,13 +317,7 @@
                   padding: 0.3rem 0.6rem !important;
                 }
 
-                a[href*="registro"].glass-button-oval-solid {
-                  transform: translateX(-8px);
-                }
 
-                a[href*="login"].glass-button-oval {
-                  transform: translateX(-6px);
-                }
               }
             </style>
             <header

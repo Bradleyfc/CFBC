@@ -55,67 +55,425 @@
     opacity: 0;
     animation-fill-mode: forwards;
   }
+
+  /* Logo con efectos glassmorphism avanzados */
+  .glass-logo-wrapper {
+    display: inline-block !important;
+    position: relative !important;
+    border-radius: 12px !important;
+    backdrop-filter: blur(15px) !important;
+    -webkit-backdrop-filter: blur(15px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 
+      0 8px 32px rgba(59, 130, 246, 0.15),
+      0 4px 16px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    overflow: hidden !important;
+    padding: 8px !important;
+  }
+
+  .glass-logo-wrapper::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.1), 
+      rgba(255, 255, 255, 0.05),
+      rgba(59, 130, 246, 0.05)
+    ) !important;
+    border-radius: 12px !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+  }
+
+  .glass-logo-wrapper::after {
+    content: '' !important;
+    position: absolute !important;
+    top: -2px !important;
+    left: -2px !important;
+    right: -2px !important;
+    bottom: -2px !important;
+    background: linear-gradient(45deg, 
+      rgba(59, 130, 246, 0.2), 
+      rgba(147, 197, 253, 0.1),
+      rgba(59, 130, 246, 0.2)
+    ) !important;
+    border-radius: 14px !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
+    transition: opacity 0.4s ease !important;
+  }
+
+  .glass-logo-wrapper:hover {
+    transform: translateY(-4px) scale(1.02) !important;
+    box-shadow: 
+      0 16px 48px rgba(59, 130, 246, 0.25),
+      0 8px 24px rgba(0, 0, 0, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6),
+      0 0 30px rgba(59, 130, 246, 0.3) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+  }
+
+  .glass-logo-wrapper:hover::after {
+    opacity: 1 !important;
+  }
+
+  .glass-logo-wrapper img {
+    position: relative !important;
+    z-index: 2 !important;
+    border-radius: 8px !important;
+    transition: all 0.4s ease !important;
+    display: block !important;
+  }
+
+  .glass-logo-wrapper:hover img {
+    filter: brightness(1.05) contrast(1.02) !important;
+  }
+
+  /* Título principal con efectos modernos */
+  .main-title {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8, #1e40af) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    font-size: 2.5rem !important;
+    font-weight: 800 !important;
+    text-align: center !important;
+    margin-bottom: 1rem !important;
+    position: relative !important;
+    text-shadow: 0 4px 8px rgba(59, 130, 246, 0.3) !important;
+    letter-spacing: 1px !important;
+  }
+
+  .main-title::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8, #1e40af) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    filter: blur(2px) !important;
+    opacity: 0.5 !important;
+    z-index: -1 !important;
+  }
+
+  .main-title::after {
+    content: '' !important;
+    position: absolute !important;
+    bottom: -8px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 80px !important;
+    height: 3px !important;
+    background: linear-gradient(90deg, transparent, #3b82f6, transparent) !important;
+    border-radius: 2px !important;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5) !important;
+  }
+
+  /* Animación sutil para el título */
+  @keyframes titleGlow {
+    0%, 100% {
+      text-shadow: 0 4px 8px rgba(59, 130, 246, 0.3) !important;
+    }
+    50% {
+      text-shadow: 0 4px 20px rgba(59, 130, 246, 0.6) !important;
+    }
+  }
+
+  .main-title {
+    animation: titleGlow 3s ease-in-out infinite !important;
+  }
+
+  /* Responsive para el título */
+  @media (max-width: 768px) {
+    .main-title {
+      font-size: 2rem !important;
+    }
+  }
+
+  /* Botón Iniciar Sesión con Glassmorphism */
+  .glass-login-btn {
+    background: rgba(59, 130, 246, 0.8) !important;
+    background-image: linear-gradient(135deg, 
+      rgba(59, 130, 246, 0.9), 
+      rgba(29, 78, 216, 0.7)
+    ) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(147, 197, 253, 0.6) !important;
+    box-shadow: 
+      0 8px 32px rgba(59, 130, 246, 0.3),
+      inset 0 1px 0 rgba(147, 197, 253, 0.7) !important;
+    border-radius: 12px !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+
+  .glass-login-btn::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: -100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent) !important;
+    transition: left 0.6s ease !important;
+    pointer-events: none !important;
+  }
+
+  .glass-login-btn:hover {
+    background: rgba(147, 197, 253, 0.9) !important;
+    background-image: linear-gradient(135deg, 
+      rgba(147, 197, 253, 0.8), 
+      rgba(96, 165, 250, 0.6)
+    ) !important;
+    color: #1e40af !important;
+    transform: translateY(-3px) scale(1.05) !important;
+    box-shadow: 
+      0 15px 45px rgba(59, 130, 246, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      0 0 35px rgba(59, 130, 246, 0.7) !important;
+  }
+
+  .glass-login-btn:hover::before {
+    left: 100% !important;
+  }
+
+  .glass-login-btn i {
+    z-index: 10 !important;
+    position: relative !important;
+  }
+
+  /* Mejorar los enlaces del formulario */
+  .form-links a {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 8px 16px !important;
+    border-radius: 12px !important;
+    text-decoration: none !important;
+    font-weight: 500 !important;
+    transition: all 0.3s ease !important;
+    font-size: 14px !important;
+    width: auto !important;
+  }
+
+  /* Enlace de Inicio con Glassmorphism */
+  .home-link {
+    background: rgba(16, 185, 129, 0.8) !important;
+    background-image: linear-gradient(135deg, 
+      rgba(16, 185, 129, 0.9), 
+      rgba(5, 150, 105, 0.7)
+    ) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    color: white !important;
+    border: 1px solid rgba(52, 211, 153, 0.6) !important;
+    box-shadow: 
+      0 8px 32px rgba(16, 185, 129, 0.3),
+      inset 0 1px 0 rgba(167, 243, 208, 0.7) !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+
+  .home-link::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: -100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent) !important;
+    transition: left 0.5s ease !important;
+    pointer-events: none !important;
+  }
+
+  .home-link:hover {
+    background: rgba(167, 243, 208, 0.9) !important;
+    background-image: linear-gradient(135deg, 
+      rgba(167, 243, 208, 0.8), 
+      rgba(110, 231, 183, 0.6)
+    ) !important;
+    color: #047857 !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 
+      0 12px 40px rgba(16, 185, 129, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      0 0 30px rgba(16, 185, 129, 0.6) !important;
+  }
+
+  .home-link:hover::before {
+    left: 100% !important;
+  }
+
+  .home-link i {
+    color: inherit !important;
+    margin-right: 8px !important;
+    z-index: 10 !important;
+    position: relative !important;
+  }
+
+  /* Enlace de Registrarse con Glassmorphism */
+  .register-link {
+    background: rgba(239, 246, 255, 0.8) !important;
+    background-image: linear-gradient(135deg, 
+      rgba(239, 246, 255, 0.9), 
+      rgba(219, 234, 254, 0.7)
+    ) !important;
+    backdrop-filter: blur(15px) !important;
+    -webkit-backdrop-filter: blur(15px) !important;
+    color: #1d4ed8 !important;
+    border: 1px solid rgba(59, 130, 246, 0.5) !important;
+    font-style: normal !important;
+    box-shadow: 
+      0 6px 24px rgba(59, 130, 246, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+
+  .register-link::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: linear-gradient(135deg, rgba(147, 197, 253, 0.1), transparent) !important;
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
+    pointer-events: none !important;
+  }
+
+  .register-link:hover {
+    background: rgba(59, 130, 246, 0.9) !important;
+    background-image: linear-gradient(135deg, 
+      rgba(59, 130, 246, 0.95), 
+      rgba(29, 78, 216, 0.85)
+    ) !important;
+    color: white !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 
+      0 10px 35px rgba(59, 130, 246, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      0 0 25px rgba(59, 130, 246, 0.5) !important;
+  }
+
+  .register-link:hover::before {
+    opacity: 1 !important;
+  }
+
+  /* Enlace de ¿Olvidó su contraseña? */
+  .forgot-link {
+    background: rgba(249, 250, 251, 0.8) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    color: #6b7280 !important;
+    border: 1px solid rgba(209, 213, 219, 0.5) !important;
+    box-shadow: 
+      0 4px 16px rgba(0, 0, 0, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+  }
+
+  .forgot-link:hover {
+    background: rgba(239, 246, 255, 0.9) !important;
+    color: #3b82f6 !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 
+      0 6px 20px rgba(59, 130, 246, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  }
+
+  /* Contenedor de enlaces mejorado */
+  .form-links {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    margin-top: 20px !important;
+  }
+
+  .form-links .link-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+  }
 </style>
 
-<div class="container">
-  <h3>INICIAR SESIÓN</h3>
+<div class="container mx-auto px-4">
+  <h1 class="main-title">INICIAR SESIÓN</h1>
 </div>
-<hr>
-<br>
-<form action="" method="post">
+<hr class="border-gray-300 mb-6">
+
+<form action="" method="post" class="max-w-md mx-auto">
   {% csrf_token %}
 
-  <div class="card mx-auto" style="width: 30rem;">
+  <div class="bg-white rounded-lg shadow-lg p-6">
 
-    <img src="{% static 'icono.jpg' %}" class="card-img-top" alt="logo del centro"
-      style="max-width: 20%; height: auto; margin: 0 auto; display: block; padding-top: 5%;">
+    <div class="text-center mb-6">
+      <div class="glass-logo-wrapper" style="display: inline-block;">
+        <img src="{% static 'icono.jpg' %}" alt="logo del centro"
+          style="width: 120px; height: auto;">
+      </div>
+    </div>
 
-    <div class="card-body">
-      <h5 class="card-title text-center">Ingrese sus Credenciales</h5>
-      <br>
+    <div class="space-y-4">
+      <h5 class="text-xl font-semibold text-center mb-6">Ingrese sus Credenciales</h5>
       
       <!-- Campo de usuario - animación desde la derecha -->
-      <div class="mb-3 animate-from-right">
-        <label for="{{ form.username.id_for_label }}" class="form-label">{{ form.username.label }}</label>
-        <input type="text" class="form-control" name="{{ form.username.name }}" id="{{ form.username.id_for_label }}" value="{{ form.username.value|default:'' }}" required>
-        {% if form.username.errors %}
-          <div class="text-danger">{{ form.username.errors }}</div>
-        {% endif %}
+      <div class="animate-from-right">
+        {{ form.username|as_crispy_field }}
       </div>
 
       <!-- Campo de contraseña - animación desde la izquierda -->
-      <div class="mb-3 animate-from-left">
-        <label for="{{ form.password.id_for_label }}" class="form-label">{{ form.password.label }}</label>
-        <input type="password" class="form-control" name="{{ form.password.name }}" id="{{ form.password.id_for_label }}" required>
-        {% if form.password.errors %}
-          <div class="text-danger">{{ form.password.errors }}</div>
-        {% endif %}
+      <div class="animate-from-left">
+        {{ form.password|as_crispy_field }}
       </div>
 
-      <!-- Enlaces y botones - animación desde abajo -->
-      <div class="animate-from-bottom">
-        <a href="{% url 'principal:home' %}" class="card-link">
-          <i class="bi bi-house"></i> Inicio
-        </a>
-        <br>
-        <br>
-        <p>No tienes una cuenta? <a href="{% url 'principal:registro' %}" class="card-link">
-            <i class="bi bi-person-plus"></i> Registrarse
-          </a></p>
+      <!-- Mostrar errores generales del formulario -->
+      {% if form.non_field_errors %}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
 
-        <div class="d-flex justify-content-between align-items-center">
-          <a href="{% url 'principal:password_reset_request' %}" class="card-link">
-            <i class="bi bi-key"></i> ¿Olvidó su contraseña?
+      <!-- Enlaces y botones mejorados - animación desde abajo -->
+      <div class="animate-from-bottom form-links">
+        <div class="link-row">
+          <a href="{% url 'principal:home' %}" class="home-link">
+            <i class="bi bi-house"></i> Inicio
           </a>
-          <button class="btn btn-sm btn-primary" type="submit">
-            <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+        </div>
+        
+        <div class="link-row">
+          <p class="text-sm text-gray-600">
+            No tienes una cuenta? 
+            <a href="{% url 'principal:registro' %}" class="register-link">
+              <i class="bi bi-person-plus"></i> Registrarse
+            </a>
+          </p>
+          <button class="glass-login-btn text-white font-medium py-2 px-4 rounded-md transition duration-200 inline-flex items-center" type="submit">
+            <i class="bi bi-box-arrow-in-right mr-2"></i> Iniciar Sesión
           </button>
+        </div>
+
+        <div class="text-center">
+          <a href="{% url 'principal:password_reset_request' %}" class="forgot-link">
+            <i class="bi bi-key mr-1"></i> ¿Olvidó su contraseña?
+          </a>
         </div>
       </div>
     </div>
   </div>
-
-  <br>
 
 </form>
 

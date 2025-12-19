@@ -30,22 +30,577 @@
   .form-group .text-danger {
     display: block !important;
   }
+
+  /* Estilos profesionales para campos de archivo */
+  input[type="file"] {
+    border: 2px dashed #d1d5db !important;
+    border-radius: 8px !important;
+    padding: 12px !important;
+    background-color: #f9fafb !important;
+    transition: all 0.3s ease !important;
+    cursor: pointer !important;
+  }
+
+  input[type="file"]:hover {
+    border-color: #3b82f6 !important;
+    background-color: #eff6ff !important;
+  }
+
+  input[type="file"]:focus {
+    outline: none !important;
+    border-color: #2563eb !important;
+    background-color: #eff6ff !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+  }
+
+  /* Estilo para el texto "Elegir archivo" */
+  input[type="file"]::file-selector-button {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+    color: white !important;
+    border: none !important;
+    padding: 8px 16px !important;
+    border-radius: 6px !important;
+    margin-right: 12px !important;
+    cursor: pointer !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+  }
+
+  input[type="file"]::file-selector-button:hover {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+  }
+
+  /* Texto después del botón "Elegir archivo" */
+  input[type="file"] {
+    color: #6b7280 !important;
+    font-size: 14px !important;
+  }
+
+  /* Mejorar el espaciado del formulario */
+  .form-group {
+    margin-bottom: 1.5rem !important;
+  }
+
+  /* Hacer los labels más elegantes */
+  label {
+    font-weight: 600 !important;
+    color: #374151 !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  /* Checkbox personalizado más bonito */
+  input[type="checkbox"] {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    width: 20px !important;
+    height: 20px !important;
+    border: 2px solid #d1d5db !important;
+    border-radius: 6px !important;
+    background-color: #ffffff !important;
+    cursor: pointer !important;
+    position: relative !important;
+    transition: all 0.3s ease !important;
+    margin-right: 8px !important;
+  }
+
+  input[type="checkbox"]:hover {
+    border-color: #3b82f6 !important;
+    background-color: #f0f9ff !important;
+  }
+
+  input[type="checkbox"]:checked {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+    border-color: #1d4ed8 !important;
+  }
+
+  input[type="checkbox"]:checked::after {
+    content: '✓' !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    color: white !important;
+    font-size: 14px !important;
+    font-weight: bold !important;
+  }
+
+  input[type="checkbox"]:focus {
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+  }
+
+  /* Mejorar el contenedor del checkbox */
+  .form-check {
+    display: flex !important;
+    align-items: center !important;
+    padding: 12px 16px !important;
+    background-color: #f9fafb !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+  }
+
+  .form-check:hover {
+    background-color: #f0f9ff !important;
+    border-color: #3b82f6 !important;
+  }
+
+  .form-check label {
+    margin-bottom: 0 !important;
+    cursor: pointer !important;
+    font-weight: 500 !important;
+    color: #374151 !important;
+  }
+
+  /* Select personalizado más bonito */
+  select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background-color: #ffffff !important;
+    border: 2px solid #d1d5db !important;
+    border-radius: 8px !important;
+    padding: 12px 16px !important;
+    padding-right: 40px !important;
+    font-size: 1rem !important;
+    font-weight: 400 !important;
+    color: #374151 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
+    background-position: right 12px center !important;
+    background-repeat: no-repeat !important;
+    background-size: 16px !important;
+  }
+
+  select:hover {
+    border-color: #3b82f6 !important;
+    background-color: #f9fafb !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%233b82f6' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
+  }
+
+  select:focus {
+    outline: none !important;
+    border-color: #2563eb !important;
+    background-color: #eff6ff !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%232563eb' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
+  }
+
+  /* Mejorar el contenedor de los selects */
+  .form-group select {
+    width: 100% !important;
+  }
+
+  /* Hacer el select más limpio y simple */
+  select {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  select:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  select:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  /* Mejorar los enlaces del formulario */
+  .form-links a {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 8px 16px !important;
+    border-radius: 6px !important;
+    text-decoration: none !important;
+    font-weight: 500 !important;
+    transition: all 0.3s ease !important;
+    font-size: 14px !important;
+    width: auto !important;
+  }
+
+  /* Enlace de Inicio con Glassmorphism */
+  .home-link {
+    background: rgba(59, 130, 246, 0.8) !important;
+    background-image: linear-gradient(135deg, 
+      rgba(59, 130, 246, 0.9), 
+      rgba(29, 78, 216, 0.7)
+    ) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    color: white !important;
+    border: 1px solid rgba(147, 197, 253, 0.6) !important;
+    box-shadow: 
+      0 8px 32px rgba(59, 130, 246, 0.3),
+      inset 0 1px 0 rgba(147, 197, 253, 0.7) !important;
+    padding: 8px 16px !important;
+    font-weight: 500 !important;
+    border-radius: 12px !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+
+  .home-link::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: -100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent) !important;
+    transition: left 0.5s ease !important;
+    pointer-events: none !important;
+  }
+
+  .home-link:hover {
+    background: rgba(147, 197, 253, 0.9) !important;
+    background-image: linear-gradient(135deg, 
+      rgba(147, 197, 253, 0.8), 
+      rgba(96, 165, 250, 0.6)
+    ) !important;
+    color: #1e40af !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 
+      0 12px 40px rgba(59, 130, 246, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      0 0 30px rgba(59, 130, 246, 0.6) !important;
+  }
+
+  .home-link:hover::before {
+    left: 100% !important;
+  }
+
+  .home-link i {
+    color: inherit !important;
+    margin-right: 8px !important;
+    z-index: 10 !important;
+    position: relative !important;
+  }
+
+  /* Enlace de Inicia Sesión con Glassmorphism */
+  .login-link {
+    background: rgba(239, 246, 255, 0.8) !important;
+    background-image: linear-gradient(135deg, 
+      rgba(239, 246, 255, 0.9), 
+      rgba(219, 234, 254, 0.7)
+    ) !important;
+    backdrop-filter: blur(15px) !important;
+    -webkit-backdrop-filter: blur(15px) !important;
+    color: #1d4ed8 !important;
+    border: 1px solid rgba(59, 130, 246, 0.5) !important;
+    margin-left: 8px !important;
+    font-style: normal !important;
+    box-shadow: 
+      0 6px 24px rgba(59, 130, 246, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+    border-radius: 12px !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+
+  .login-link::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: linear-gradient(135deg, rgba(147, 197, 253, 0.1), transparent) !important;
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
+    pointer-events: none !important;
+  }
+
+  .login-link:hover {
+    background: rgba(59, 130, 246, 0.9) !important;
+    background-image: linear-gradient(135deg, 
+      rgba(59, 130, 246, 0.95), 
+      rgba(29, 78, 216, 0.85)
+    ) !important;
+    color: white !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 
+      0 10px 35px rgba(59, 130, 246, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      0 0 25px rgba(59, 130, 246, 0.5) !important;
+  }
+
+  .login-link:hover::before {
+    opacity: 1 !important;
+  }
+
+  /* Iconos en los enlaces */
+  .form-links i {
+    margin-right: 6px !important;
+    font-size: 14px !important;
+  }
+
+  /* Contenedor de enlaces mejorado */
+  .form-links {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    margin-top: 20px !important;
+  }
+
+  .form-links .link-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+  }
+
+  .form-links p {
+    margin: 0 !important;
+    font-size: 14px !important;
+    color: #6b7280 !important;
+    font-style: italic !important;
+    padding: 8px 12px !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 6px !important;
+    background-color: #f9fafb !important;
+    display: inline-block !important;
+  }
+
+  /* Botón Registrarse con Glassmorphism */
+  .glass-register-btn {
+    background: rgba(16, 185, 129, 0.8) !important;
+    background-image: linear-gradient(135deg, 
+      rgba(16, 185, 129, 0.9), 
+      rgba(5, 150, 105, 0.7)
+    ) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(52, 211, 153, 0.6) !important;
+    box-shadow: 
+      0 8px 32px rgba(16, 185, 129, 0.3),
+      inset 0 1px 0 rgba(167, 243, 208, 0.7) !important;
+    border-radius: 12px !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+
+  .glass-register-btn::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: -100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent) !important;
+    transition: left 0.6s ease !important;
+    pointer-events: none !important;
+  }
+
+  .glass-register-btn:hover {
+    background: rgba(167, 243, 208, 0.9) !important;
+    background-image: linear-gradient(135deg, 
+      rgba(167, 243, 208, 0.8), 
+      rgba(110, 231, 183, 0.6)
+    ) !important;
+    color: #047857 !important;
+    transform: translateY(-3px) scale(1.05) !important;
+    box-shadow: 
+      0 15px 45px rgba(16, 185, 129, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      0 0 35px rgba(16, 185, 129, 0.7) !important;
+  }
+
+  .glass-register-btn:hover::before {
+    left: 100% !important;
+  }
+
+  .glass-register-btn i {
+    z-index: 10 !important;
+    position: relative !important;
+  }
+
+  /* Título principal con efectos modernos */
+  .main-title {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8, #1e40af) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    font-size: 2.5rem !important;
+    font-weight: 800 !important;
+    text-align: center !important;
+    margin-bottom: 1rem !important;
+    position: relative !important;
+    text-shadow: 0 4px 8px rgba(59, 130, 246, 0.3) !important;
+    letter-spacing: 1px !important;
+  }
+
+  .main-title::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8, #1e40af) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    filter: blur(2px) !important;
+    opacity: 0.5 !important;
+    z-index: -1 !important;
+  }
+
+  .main-title::after {
+    content: '' !important;
+    position: absolute !important;
+    bottom: -8px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 80px !important;
+    height: 3px !important;
+    background: linear-gradient(90deg, transparent, #3b82f6, transparent) !important;
+    border-radius: 2px !important;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5) !important;
+  }
+
+  /* Animación sutil para el título */
+  @keyframes titleGlow {
+    0%, 100% {
+      text-shadow: 0 4px 8px rgba(59, 130, 246, 0.3) !important;
+    }
+    50% {
+      text-shadow: 0 4px 20px rgba(59, 130, 246, 0.6) !important;
+    }
+  }
+
+  .main-title {
+    animation: titleGlow 3s ease-in-out infinite !important;
+  }
+
+  /* Responsive para el título */
+  @media (max-width: 768px) {
+    .main-title {
+      font-size: 2rem !important;
+    }
+  }
+
+  /* Logo con efectos sutiles manteniendo forma original */
+  .glass-logo {
+    max-width: 20% !important;
+    height: auto !important;
+    margin: 0 auto 1.5rem auto !important;
+    display: block !important;
+    border-radius: 8px !important;
+    box-shadow: 
+      0 4px 16px rgba(59, 130, 246, 0.2),
+      0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.3s ease !important;
+    border: none !important;
+    padding-top: 5% !important;
+  }
+
+  .glass-logo:hover {
+    transform: translateY(-2px) scale(1.05) !important;
+    box-shadow: 
+      0 8px 24px rgba(59, 130, 246, 0.3),
+      0 4px 12px rgba(0, 0, 0, 0.15) !important;
+
+  }
+
+  /* Logo con efectos glassmorphism avanzados */
+  .glass-logo-wrapper {
+    display: inline-block !important;
+    position: relative !important;
+    border-radius: 12px !important;
+    backdrop-filter: blur(15px) !important;
+    -webkit-backdrop-filter: blur(15px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 
+      0 8px 32px rgba(59, 130, 246, 0.15),
+      0 4px 16px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    overflow: hidden !important;
+    padding: 8px !important;
+  }
+
+  .glass-logo-wrapper::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.1), 
+      rgba(255, 255, 255, 0.05),
+      rgba(59, 130, 246, 0.05)
+    ) !important;
+    border-radius: 12px !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+  }
+
+  .glass-logo-wrapper::after {
+    content: '' !important;
+    position: absolute !important;
+    top: -2px !important;
+    left: -2px !important;
+    right: -2px !important;
+    bottom: -2px !important;
+    background: linear-gradient(45deg, 
+      rgba(59, 130, 246, 0.2), 
+      rgba(147, 197, 253, 0.1),
+      rgba(59, 130, 246, 0.2)
+    ) !important;
+    border-radius: 14px !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
+    transition: opacity 0.4s ease !important;
+  }
+
+  .glass-logo-wrapper:hover {
+    transform: translateY(-4px) scale(1.02) !important;
+    box-shadow: 
+      0 16px 48px rgba(59, 130, 246, 0.25),
+      0 8px 24px rgba(0, 0, 0, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6),
+      0 0 30px rgba(59, 130, 246, 0.3) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+  }
+
+  .glass-logo-wrapper:hover::after {
+    opacity: 1 !important;
+  }
+
+  .glass-logo-wrapper img {
+    position: relative !important;
+    z-index: 2 !important;
+    border-radius: 8px !important;
+    transition: all 0.4s ease !important;
+    display: block !important;
+  }
+
+  .glass-logo-wrapper:hover img {
+    filter: brightness(1.05) contrast(1.02) !important;
+  }
 </style>
-<div class="container">
-  <h3>REGISTRO DE USUARIO</h3>
+<div class="container mx-auto px-4">
+  <h1 class="main-title">REGISTRO DE USUARIO</h1>
 </div>
-<hr>
-<br>
-<form action="" method="post" enctype="multipart/form-data">
+<hr class="border-gray-300 mb-6">
+
+<form action="" method="post" enctype="multipart/form-data" class="max-w-md mx-auto">
   {% csrf_token %}
 
-
-  <div class="card mx-auto" style="width: 30rem;">
-    <img src="{% static 'icono.jpg' %}" class="card-img-top" alt="logo del centro"
-      style="max-width: 20%; height: auto; margin: 0 auto; display: block; padding-top: 5%;">
-    <div class="card-body">
-      <h5 class="card-title text-center">Rellene todos los campos</h5>
-      <br>
+  <div class="bg-white rounded-lg shadow-lg p-6">
+    <div class="text-center" style="padding-top: 5%; margin-bottom: 1.5rem;">
+      <div class="glass-logo-wrapper" style="display: inline-block;">
+        <img src="{% static 'icono.jpg' %}" alt="logo del centro"
+          style="width: 120px; height: auto;">
+      </div>
+    </div>
+    
+    <div class="space-y-4">
+      <h5 class="text-xl font-semibold text-center mb-6">Rellene todos los campos</h5>
 
       <!-- Eliminar errores no asociados a campos específicos -->
       {% if form.non_field_errors %}
@@ -53,30 +608,28 @@
       {% endif %}
 
       {{ form | crispy }}
-      <div>
-
-        <a href="{% url 'principal:home' %}" class="card-link">
-          <i class="bi bi-house"></i> Inicio
-        </a>
-      </div>
-
-      <div class="d-flex justify-content-between align-items-center">
-        <p class="mb-0">Ya tienes una cuenta? <a href="{% url 'login' %}" class="card-link">
-            <i class="bi bi-box-arrow-in-right"></i> Inicia Sesión
-          </a></p>
-        <button class="btn btn-sm btn-primary" type="submit">
-          <i class="bi bi-person-plus"></i> Registrarse
-        </button>
+      
+      <div class="form-links">
+        <div class="link-row">
+          <a href="{% url 'principal:home' %}" class="home-link">
+            <i class="bi bi-house"></i> Inicio
+          </a>
+        </div>
+        
+        <div class="link-row">
+          <p>
+            Ya tienes una cuenta? 
+            <a href="{% url 'login' %}" class="login-link">
+              <i class="bi bi-box-arrow-in-right"></i> Inicia Sesión
+            </a>
+          </p>
+          <button class="glass-register-btn text-white font-medium py-2 px-4 rounded-md transition duration-200 inline-flex items-center" type="submit">
+            <i class="bi bi-person-plus mr-2"></i> Registrarse
+          </button>
+        </div>
       </div>
     </div>
   </div>
-
-
-  <br>
-
-
-
-
 
 </form>
 

@@ -37,7 +37,7 @@ ALLOWED_HOSTS = ['testserver', 'localhost', '127.0.0.1']
 
 INSTALLED_APPS = [
     'crispy_forms',
-    'crispy_bootstrap5',
+    'crispy_tailwind',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -150,9 +150,9 @@ LOGIN_REDIRECT_URL = 'principal:login_redirect'
 LOGOUT_REDIRECT_URL = 'principal:home'
 
 
-CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
 
-CRISPY_TEMPLATE_PACK = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "tailwind"
 
 # Backends de autenticación
 AUTHENTICATION_BACKENDS = [

@@ -1,44 +1,221 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="text-center">Verificación de Email</h2>
-                </div>
-                <div class="card-body">
-                    <p class="text-center">Se ha enviado un código de verificación a tu correo electrónico. Por favor, ingrésalo a continuación.</p>
-                    {% if error %}
-                        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
-                            <strong><i class="bi bi-exclamation-triangle-fill"></i> Error:</strong> {{ error }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    {% endif %}
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label for="code" class="form-label">Código:</label>
-                            <input type="text" class="form-control w-50 mx-auto" style="font-size: 1.5em; text-align: center;" id="code" name="code" required maxlength="4" placeholder="— — — —">
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">
-                              <i class="bi bi-check-circle"></i> Aceptar
-                            </button>
-                        </div>
-                    </form>
-                    
-                    <div class="text-center mt-3">
-                        <p class="text-muted small">¿No recibió el código?</p>
-                        <a href="{% url 'principal:registro_resend_code' %}" class="btn btn-outline-secondary btn-sm">
-                            <i class="bi bi-arrow-clockwise"></i> Reenviar código
-                        </a>
-                    </div>
+{% load crispy_forms_tags %}
+{% load static %}
 
-                </div>
-                  </div>
-              </div>
-    </div>
+<style>
+  /* Título principal con efectos modernos naranja */
+  .main-title {
+    background: linear-gradient(135deg, #f59e0b, #d97706, #b45309) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    font-size: 2.5rem !important;
+    font-weight: 800 !important;
+    text-align: center !important;
+    margin-bottom: 1rem !important;
+    position: relative !important;
+    text-shadow: 0 4px 8px rgba(245, 158, 11, 0.3) !important;
+    letter-spacing: 1px !important;
+    animation: titleGlow 3s ease-in-out infinite !important;
+  }
+
+  .main-title::after {
+    content: '' !important;
+    position: absolute !important;
+    bottom: -8px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 80px !important;
+    height: 3px !important;
+    background: linear-gradient(90deg, transparent, #f59e0b, transparent) !important;
+    border-radius: 2px !important;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.5) !important;
+  }
+
+  @keyframes titleGlow {
+    0%, 100% { text-shadow: 0 4px 8px rgba(245, 158, 11, 0.3) !important; }
+    50% { text-shadow: 0 4px 20px rgba(245, 158, 11, 0.6) !important; }
+  }
+
+  /* Logo con efectos glassmorphism naranja */
+  .glass-logo-wrapper {
+    display: inline-block !important;
+    position: relative !important;
+    border-radius: 12px !important;
+    backdrop-filter: blur(15px) !important;
+    -webkit-backdrop-filter: blur(15px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 8px 32px rgba(245, 158, 11, 0.15), 0 4px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    overflow: hidden !important;
+    padding: 8px !important;
+  }
+
+  .glass-logo-wrapper::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05), rgba(245, 158, 11, 0.05)) !important;
+    border-radius: 12px !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+  }
+
+  .glass-logo-wrapper:hover {
+    transform: translateY(-4px) scale(1.02) !important;
+    box-shadow: 0 16px 48px rgba(245, 158, 11, 0.25), 0 8px 24px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 0 30px rgba(245, 158, 11, 0.3) !important;
+  }
+
+  .glass-logo-wrapper img {
+    position: relative !important; z-index: 2 !important; border-radius: 8px !important;
+    transition: all 0.4s ease !important; display: block !important;
+  }
+
+  /* Campo de código especial naranja */
+  .code-input {
+    border: 3px solid rgba(245, 158, 11, 0.4) !important;
+    border-radius: 12px !important;
+    padding: 16px 20px !important;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 251, 235, 0.8)) !important;
+    backdrop-filter: blur(10px) !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 8px 24px rgba(245, 158, 11, 0.15) !important;
+    font-size: 24px !important;
+    font-weight: 700 !important;
+    letter-spacing: 8px !important;
+    text-align: center !important;
+    color: #b45309 !important;
+    max-width: 200px !important;
+    margin: 0 auto !important;
+  }
+
+  .code-input:focus {
+    outline: none !important;
+    border-color: #f59e0b !important;
+    background: linear-gradient(135deg, rgba(255, 251, 235, 0.95), rgba(254, 243, 199, 0.9)) !important;
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2), 0 12px 32px rgba(245, 158, 11, 0.25) !important;
+    transform: scale(1.02) !important;
+  }
+
+  .code-input::placeholder {
+    color: rgba(245, 158, 11, 0.5) !important;
+    letter-spacing: 4px !important;
+  }
+
+  /* Botones con glassmorphism naranja */
+  .glass-btn-primary {
+    background: rgba(245, 158, 11, 0.8) !important;
+    background-image: linear-gradient(135deg, rgba(245, 158, 11, 0.9), rgba(217, 119, 6, 0.7)) !important;
+    backdrop-filter: blur(20px) !important; -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(251, 191, 36, 0.6) !important;
+    box-shadow: 0 8px 32px rgba(245, 158, 11, 0.3), inset 0 1px 0 rgba(253, 230, 138, 0.7) !important;
+    border-radius: 12px !important; position: relative !important; overflow: hidden !important;
+    color: white !important; font-weight: 500 !important; padding: 10px 20px !important;
+    transition: all 0.4s ease !important;
+  }
+
+  .glass-btn-primary::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important; left: -100% !important;
+    width: 100% !important; height: 100% !important;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent) !important;
+    transition: left 0.6s ease !important;
+    pointer-events: none !important;
+  }
+
+  .glass-btn-primary:hover {
+    background: rgba(253, 230, 138, 0.9) !important;
+    background-image: linear-gradient(135deg, rgba(253, 230, 138, 0.8), rgba(252, 211, 77, 0.6)) !important;
+    color: #b45309 !important;
+    transform: translateY(-3px) scale(1.05) !important;
+    box-shadow: 0 15px 45px rgba(245, 158, 11, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 35px rgba(245, 158, 11, 0.7) !important;
+  }
+
+  .glass-btn-primary:hover::before {
+    left: 100% !important;
+  }
+
+  .glass-btn-outline {
+    background: rgba(249, 250, 251, 0.8) !important;
+    backdrop-filter: blur(15px) !important; -webkit-backdrop-filter: blur(15px) !important;
+    border: 2px solid rgba(245, 158, 11, 0.4) !important;
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+    border-radius: 12px !important; color: #d97706 !important; font-weight: 500 !important;
+    padding: 8px 16px !important; transition: all 0.3s ease !important;
+  }
+
+  .glass-btn-outline:hover {
+    background: rgba(245, 158, 11, 0.9) !important;
+    color: white !important; border-color: #f59e0b !important;
+    transform: translateY(-2px) scale(1.05) !important;
+    box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+  }
+
+  /* Alerta de error */
+  .error-alert {
+    background: rgba(239, 68, 68, 0.1) !important;
+    border: 1px solid rgba(239, 68, 68, 0.3) !important;
+    border-radius: 8px !important;
+    padding: 12px 16px !important;
+    margin-bottom: 16px !important;
+    backdrop-filter: blur(10px) !important;
+    color: #dc2626 !important;
+  }
+
+  @media (max-width: 768px) {
+    .main-title { font-size: 2rem !important; }
+    .code-input { font-size: 20px !important; letter-spacing: 6px !important; }
+  }
+</style>
+
+<div class="container mx-auto px-4">
+  <h1 class="main-title">VERIFICACIÓN DE EMAIL</h1>
 </div>
+<hr class="border-gray-300 mb-6">
+
+<form method="post" class="max-w-md mx-auto">
+  {% csrf_token %}
+
+  <div class="bg-white rounded-lg shadow-lg p-6">
+    <div class="text-center mb-6">
+      <div class="glass-logo-wrapper" style="display: inline-block;">
+        <img src="{% static 'icono.jpg' %}" alt="logo del centro" style="width: 120px; height: auto;">
+      </div>
+    </div>
+    
+    <div class="space-y-6">
+      <h5 class="text-xl font-semibold text-center mb-4">Confirme su registro</h5>
+      <p class="text-center text-gray-600 mb-6">Se ha enviado un código de verificación a tu correo electrónico. Por favor, ingrésalo a continuación.</p>
+      
+      {% if error %}
+        <div class="error-alert">
+          <strong><i class="bi bi-exclamation-triangle-fill mr-2"></i>Error:</strong> {{ error }}
+        </div>
+      {% endif %}
+      
+      <div class="text-center mb-6">
+        <label for="code" class="block text-sm font-medium text-gray-700 mb-3">Código de verificación</label>
+        <input type="text" class="code-input" id="code" name="code" required maxlength="4" pattern="[0-9]{4}" placeholder="0000">
+        <div class="text-sm text-gray-500 mt-2">Ingrese el código de 4 dígitos que recibió en su correo electrónico.</div>
+      </div>
+      
+      <div class="text-center mb-6">
+        <button type="submit" class="glass-btn-primary inline-flex items-center">
+          <i class="bi bi-check-circle mr-2"></i> Verificar y Completar Registro
+        </button>
+      </div>
+      
+      <div class="text-center pt-4 border-t border-gray-200">
+        <p class="text-gray-500 text-sm mb-3">¿No recibió el código?</p>
+        <a href="{% url 'principal:registro_resend_code' %}" class="glass-btn-outline inline-flex items-center">
+          <i class="bi bi-arrow-clockwise mr-2"></i> Reenviar código
+        </a>
+      </div>
+    </div>
+  </div>
+
+</form>
 {% endblock %}
