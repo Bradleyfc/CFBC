@@ -3,17 +3,17 @@
 {% load curso_tags %}
 
 <!-- Header Section -->
-<div class="bg-gradient-to-br from-gray-800 to-gray-900 text-white py-8 relative overflow-hidden">
-  <div class="absolute inset-0 bg-gradient-to-r from-gray-700/20 to-gray-800/20"></div>
-  <div class="absolute inset-0" style="background-image: radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);"></div>
+<div class="bg-gradient-to-br from-gray-100 to-gray-200 py-8 relative overflow-hidden">
+  <div class="absolute inset-0 bg-gradient-to-r from-white/20 to-gray-100/20"></div>
+  <div class="absolute inset-0" style="background-image: radial-gradient(circle at 25% 25%, rgba(0, 0, 0, 0.05) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(0, 0, 0, 0.03) 0%, transparent 50%);"></div>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-    <h1 class="text-3xl font-bold text-center mb-2 drop-shadow-lg text-white">
+    <h1 class="text-3xl font-bold text-center mb-2 drop-shadow-sm text-gray-800">
       Bienvenido {{ user.first_name|default:user.username }}
     </h1>
     {% if group_name == 'Secretaria' %}
-    <p class="text-xl text-center text-white drop-shadow-md">Administrar los Cursos Disponibles en el centro</p>
+    <p class="text-xl text-center text-gray-700 drop-shadow-sm">Administrar los Cursos Disponibles en el Centro</p>
     {% else %}
-    <p class="text-xl text-center text-white drop-shadow-md">Listado de Cursos Disponibles</p>
+    <p class="text-xl text-center text-gray-700 drop-shadow-sm">Listado de Cursos Disponibles</p>
     {% endif %}
   </div>
 </div>
@@ -26,64 +26,62 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
   
   <!-- Controls Section -->
-  <div class="glass-card mb-8">
-    <div class="glass-content">
-      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        
-        <!-- Filtros -->
-        <div class="flex flex-col sm:flex-row gap-4">
-          <div class="min-w-0 flex-1">
-            <label for="filtroArea" class="block text-sm font-medium text-white mb-2">Área</label>
-            <select id="filtroArea" onchange="filtrarCursos()" 
-                    class="w-full px-3 py-2 bg-white/90 backdrop-blur-md border border-white/30 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 text-gray-800">
-              <option value="" class="bg-white text-gray-800">Todas las Áreas</option>
-              <option value="idiomas" class="bg-white text-gray-800">Idiomas</option>
-              <option value="humanidades" class="bg-white text-gray-800">Humanidades</option>
-              <option value="computacion" class="bg-white text-gray-800">Computación</option>
-              <option value="diseno" class="bg-white text-gray-800">Diseño</option>
-              <option value="adolescentes" class="bg-white text-gray-800">Adolescentes</option>
-              <option value="teologia" class="bg-white text-gray-800">Teología</option>
-            </select>
-          </div>
-          <div class="min-w-0 flex-1">
-            <label for="filtroTipo" class="block text-sm font-medium text-white mb-2">Tipo</label>
-            <select id="filtroTipo" onchange="filtrarCursos()"
-                    class="w-full px-3 py-2 bg-white/90 backdrop-blur-md border border-white/30 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 text-gray-800">
-              <option value="" class="bg-white text-gray-800">Todos los Tipos</option>
-              <option value="curso" class="bg-white text-gray-800">Curso</option>
-              <option value="diplomado" class="bg-white text-gray-800">Diplomado</option>
-              <option value="grado" class="bg-white text-gray-800">Grado</option>
-              <option value="taller" class="bg-white text-gray-800">Taller</option>
-            </select>
-          </div>
+  <div class="mb-6">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      
+      <!-- Filtros -->
+      <div class="flex flex-col sm:flex-row gap-4">
+        <div class="min-w-0 flex-1">
+          <label for="filtroArea" class="block text-sm font-medium text-white mb-2">Área</label>
+          <select id="filtroArea" onchange="filtrarCursos()" 
+                  class="w-full px-3 py-2 bg-white/90 backdrop-blur-md border border-white/30 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 text-gray-800">
+            <option value="" class="bg-white text-gray-800">Todas las Áreas</option>
+            <option value="idiomas" class="bg-white text-gray-800">Idiomas</option>
+            <option value="humanidades" class="bg-white text-gray-800">Humanidades</option>
+            <option value="computacion" class="bg-white text-gray-800">Computación</option>
+            <option value="diseno" class="bg-white text-gray-800">Diseño</option>
+            <option value="adolescentes" class="bg-white text-gray-800">Adolescentes</option>
+            <option value="teologia" class="bg-white text-gray-800">Teología</option>
+          </select>
         </div>
+        <div class="min-w-0 flex-1">
+          <label for="filtroTipo" class="block text-sm font-medium text-white mb-2">Tipo</label>
+          <select id="filtroTipo" onchange="filtrarCursos()"
+                  class="w-full px-3 py-2 bg-white/90 backdrop-blur-md border border-white/30 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 text-gray-800">
+            <option value="" class="bg-white text-gray-800">Todos los Tipos</option>
+            <option value="curso" class="bg-white text-gray-800">Curso</option>
+            <option value="diplomado" class="bg-white text-gray-800">Diplomado</option>
+            <option value="grado" class="bg-white text-gray-800">Grado</option>
+            <option value="taller" class="bg-white text-gray-800">Taller</option>
+          </select>
+        </div>
+      </div>
 
-        <!-- Botón Agregar Curso -->
-        {% if group_name == 'Secretaria' %}
-        <div class="flex justify-center lg:justify-start">
-          <button class="glass-button glass-button-primary">
-            <a href="{% url 'principal:crear_cursos'%}" class="flex items-center justify-center w-full h-full">
-              <i class="bi bi-plus-circle mr-2"></i>
-              Agregar Curso
-            </a>
+      <!-- Botón Agregar Curso -->
+      {% if group_name == 'Secretaria' %}
+      <div class="flex justify-center lg:justify-start">
+        <button class="glass-button glass-button-primary">
+          <a href="{% url 'principal:crear_cursos'%}" class="flex items-center justify-center w-full h-full">
+            <i class="bi bi-plus-circle mr-2"></i>
+            Agregar Curso
+          </a>
+        </button>
+      </div>
+      {% endif %}
+
+      <!-- Vista Toggle -->
+      <div class="flex justify-center lg:justify-end">
+        <div class="inline-flex rounded-xl shadow-sm backdrop-blur-md bg-white/10 border border-white/20 p-1" role="group">
+          <button type="button" id="vistaCards" onclick="cambiarVista('cards')"
+                  class="px-4 py-2 text-sm font-medium text-gray-800 rounded-lg hover:bg-white/20 focus:z-10 focus:ring-2 focus:ring-blue-400/50 transition-all duration-200 active-view">
+            <i class="bi bi-grid-3x3-gap mr-1"></i>
+            Tarjetas
           </button>
-        </div>
-        {% endif %}
-
-        <!-- Vista Toggle -->
-        <div class="flex justify-center lg:justify-end">
-          <div class="inline-flex rounded-xl shadow-sm backdrop-blur-md bg-white/10 border border-white/20 p-1" role="group">
-            <button type="button" id="vistaCards" onclick="cambiarVista('cards')"
-                    class="px-4 py-2 text-sm font-medium text-gray-800 rounded-lg hover:bg-white/20 focus:z-10 focus:ring-2 focus:ring-blue-400/50 transition-all duration-200 active-view">
-              <i class="bi bi-grid-3x3-gap mr-1"></i>
-              Tarjetas
-            </button>
-            <button type="button" id="vistaLista" onclick="cambiarVista('lista')"
-                    class="px-4 py-2 text-sm font-medium text-gray-800 rounded-lg hover:bg-white/20 focus:z-10 focus:ring-2 focus:ring-blue-400/50 transition-all duration-200">
-              <i class="bi bi-list mr-1"></i>
-              Lista
-            </button>
-          </div>
+          <button type="button" id="vistaLista" onclick="cambiarVista('lista')"
+                  class="px-4 py-2 text-sm font-medium text-gray-800 rounded-lg hover:bg-white/20 focus:z-10 focus:ring-2 focus:ring-blue-400/50 transition-all duration-200">
+            <i class="bi bi-list mr-1"></i>
+            Lista
+          </button>
         </div>
       </div>
     </div>
@@ -110,27 +108,29 @@
           <div id="original-content-{{course.id}}" class="flex-1">
             <!-- Title with Glow Effect and Options Button -->
             <div class="flex items-start justify-between gap-2 mb-2">
-              <h3 class="text-sm font-bold text-gray-900 line-clamp-2 group-hover:text-shadow-glow transition-all duration-300 min-h-[2rem] flex-1">
+              <h3 class="text-base font-bold text-gray-900 line-clamp-2 group-hover:text-shadow-glow transition-all duration-300 min-h-[2rem] flex-1">
                 {{course.name}}
               </h3>
+              {% if group_name == 'Secretaria' %}
               <button class="glass-tag-options flex-shrink-0 mt-0.5 pulse-options-button" onclick="toggleOptionsPanel('{{course.id}}')" title="Opciones del curso">
                 ...
               </button>
+              {% endif %}
             </div>
             
             <!-- Floating Badges -->
             <div class="flex flex-wrap gap-1 mb-2">
-              <span class="glass-tag-mini glass-tag-primary text-xs">
+              <span class="glass-tag-mini glass-tag-primary text-sm">
                 {{ course.get_area_display }}
               </span>
-              <span class="glass-tag-mini glass-tag-secondary text-xs">
+              <span class="glass-tag-mini glass-tag-secondary text-sm">
                 {{ course.get_tipo_display }}
               </span>
             </div>
 
             <!-- Description with Glass Background -->
             <div class="glass-description mb-3 p-2">
-              <p class="text-gray-800 text-xs leading-tight line-clamp-2 min-h-[1.5rem]">{{course.description}}</p>
+              <p class="text-gray-800 text-sm leading-tight line-clamp-2 min-h-[1.5rem]">{{course.description}}</p>
             </div>
 
             <!-- Course Details with Icons - Dos columnas con flexbox -->
@@ -186,19 +186,19 @@
               <!-- Course Status Badge - Centered at bottom with pulsing animation -->
               <div class="text-center mb-2">
                 {% if course.get_dynamic_status == 'F' %}
-                <span class="glass-badge glass-badge-red text-xs px-2 py-0.5 pulse-badge">
+                <span class="glass-badge glass-badge-red text-xs px-1 py-0.5 pulse-badge" style="font-size: 10px; line-height: 1.2;">
                   {{course.get_dynamic_status_display|upper}}
                 </span>
                 {% elif course.get_dynamic_status == 'P' %}
-                <span class="glass-badge glass-badge-yellow text-xs px-2 py-0.5 pulse-badge">
+                <span class="glass-badge glass-badge-yellow text-xs px-1 py-0.5 pulse-badge" style="font-size: 10px; line-height: 1.2;">
                   {{course.get_dynamic_status_display|upper}}
                 </span>
                 {% elif course.get_dynamic_status == 'I' %}
-                <span class="glass-badge glass-badge-green text-xs px-2 py-0.5 pulse-badge">
+                <span class="glass-badge glass-badge-green text-xs px-1 py-0.5 pulse-badge" style="font-size: 10px; line-height: 1.2;">
                   {{course.get_dynamic_status_display|upper}}
                 </span>
                 {% elif course.get_dynamic_status == 'IT' %}
-                <span class="glass-badge glass-badge-blue text-xs px-2 py-0.5 pulse-badge">
+                <span class="glass-badge glass-badge-blue text-xs px-1 py-0.5 pulse-badge" style="font-size: 10px; line-height: 1.2;">
                   {{course.get_dynamic_status_display|upper}}
                 </span>
                 {% endif %}
@@ -242,41 +242,43 @@
           <div id="options-panel-{{course.id}}" class="options-panel hidden">
             <div class="flex justify-between items-center mb-4">
               <h3 class="text-lg font-bold text-gray-900">Opciones del Curso</h3>
-              <button class="glass-tag-options" onclick="toggleOptionsPanel('{{course.id}}')" title="Cerrar opciones">
+              <button class="glass-close-button" onclick="toggleOptionsPanel('{{course.id}}')" title="Cerrar opciones">
                 ×
               </button>
             </div>
             
-            <div class="space-y-3">
-              <a href="#" class="glass-option-link flex items-center gap-3 p-3 rounded-lg hover:bg-white/20 transition-all duration-300">
-                <div class="glass-icon-medium bg-blue-500/20">
-                  <i class="bi bi-eye text-blue-600"></i>
-                </div>
-                <span class="text-gray-800 font-medium">Ver detalles</span>
-              </a>
-              
+            <div class="space-y-2">
               {% if group_name == 'Secretaria' %}
-              <a href="#" class="glass-option-link flex items-center gap-3 p-3 rounded-lg hover:bg-white/20 transition-all duration-300">
-                <div class="glass-icon-medium bg-green-500/20">
-                  <i class="bi bi-pencil text-green-600"></i>
+              <a href="{% url 'principal:editar_curso' course.id %}" class="glass-option-link glass-option-orange glass-option-small flex items-center gap-2 p-3 rounded-lg transition-all duration-300">
+                <div class="glass-icon-small glass-icon-orange">
+                  <i class="bi bi-pencil"></i>
                 </div>
-                <span class="text-gray-800 font-medium">Editar curso</span>
+                <span class="glass-text-orange font-medium text-base">Editar Curso</span>
               </a>
               
-              <a href="#" class="glass-option-link flex items-center gap-3 p-3 rounded-lg hover:bg-white/20 transition-all duration-300">
-                <div class="glass-icon-medium bg-purple-500/20">
-                  <i class="bi bi-people text-purple-600"></i>
+              {% if course.formulario_aplicacion %}
+              <a href="{% url 'principal:formulario_update' course.formulario_aplicacion.id %}" class="glass-option-link glass-option-light-blue glass-option-small flex items-center gap-2 p-3 rounded-lg transition-all duration-300">
+                <div class="glass-icon-small glass-icon-light-blue">
+                  <i class="bi bi-file-earmark-text"></i>
                 </div>
-                <span class="text-gray-800 font-medium">Ver inscritos</span>
+                <span class="glass-text-light-blue font-medium text-base">Editar Formulario de Aplicación</span>
               </a>
-              
-              <hr class="border-gray-300/50">
-              
-              <a href="#" class="glass-option-link flex items-center gap-3 p-3 rounded-lg hover:bg-red-50 transition-all duration-300">
-                <div class="glass-icon-medium bg-red-500/20">
-                  <i class="bi bi-trash text-red-600"></i>
+              {% else %}
+              <a href="{% url 'principal:formulario_create' %}?curso_id={{ course.id }}" class="glass-option-link glass-option-green glass-option-small flex items-center gap-2 p-3 rounded-lg transition-all duration-300">
+                <div class="glass-icon-small glass-icon-green">
+                  <i class="bi bi-file-earmark-plus"></i>
                 </div>
-                <span class="text-red-600 font-medium">Eliminar curso</span>
+                <span class="glass-text-green font-medium text-base">Crear Formulario de Aplicación</span>
+              </a>
+              {% endif %}
+              
+              <hr class="glass-divider-small">
+              
+              <a href="#" class="glass-option-link glass-option-red glass-option-small flex items-center gap-2 p-3 rounded-lg transition-all duration-300" onclick="showDeleteModal('{{course.id}}', '{{course.name|escapejs}}')">
+                <div class="glass-icon-small glass-icon-red">
+                  <i class="bi bi-trash"></i>
+                </div>
+                <span class="glass-text-red font-medium text-base">Eliminar Curso</span>
               </a>
               {% endif %}
             </div>
@@ -287,6 +289,39 @@
     {% endfor %}
   </div>
 
+</div>
+
+<!-- Modal de Confirmación de Eliminación -->
+<div id="deleteModal" class="delete-modal hidden">
+  <div class="delete-modal-overlay" onclick="hideDeleteModal()"></div>
+  <div class="delete-modal-content">
+    <div class="delete-modal-header">
+      <div class="delete-modal-icon">
+        <i class="bi bi-exclamation-triangle text-red-600"></i>
+      </div>
+      <h3 class="delete-modal-title">Confirmar Eliminación</h3>
+    </div>
+    
+    <div class="delete-modal-body">
+      <p class="delete-modal-message">
+        ¿Está seguro de que desea eliminar el curso <strong id="courseNameToDelete"></strong>?
+      </p>
+      <p class="delete-modal-warning">
+        Esta acción no se puede deshacer y se eliminarán todos los datos relacionados con este curso.
+      </p>
+    </div>
+    
+    <div class="delete-modal-footer">
+      <button type="button" class="delete-modal-btn delete-modal-btn-cancel" onclick="hideDeleteModal()">
+        <i class="bi bi-x-circle mr-2"></i>
+        Cancelar
+      </button>
+      <a id="confirmDeleteLink" href="#" class="delete-modal-btn delete-modal-btn-confirm">
+        <i class="bi bi-trash mr-2"></i>
+        Eliminar Curso
+      </a>
+    </div>
+  </div>
 </div>
 
 <!-- Advanced Glassmorphism Styles -->
@@ -334,12 +369,12 @@
   }
 
   .glass-card:hover {
-    transform: translateY(-8px) scale(1.02);
+    transform: translateY(-4px) scale(1.01);
     box-shadow: 
-      0 20px 40px rgba(0, 0, 0, 0.15),
-      0 10px 20px rgba(0, 0, 0, 0.1),
-      inset 0 1px 0 rgba(255, 255, 255, 0.4);
-    border-color: rgba(255, 255, 255, 0.3);
+      0 12px 24px rgba(0, 0, 0, 0.12),
+      0 6px 12px rgba(0, 0, 0, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.25);
   }
 
   .glass-card::before {
@@ -409,18 +444,18 @@
 
   /* Glass Tags Mini - Versión más compacta verticalmente */
   .glass-tag-mini {
-    padding: 1px 6px;
-    border-radius: 4px;
-    font-size: 9px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 14px;
     font-weight: 500;
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.15);
     transition: all 0.3s ease;
-    line-height: 0.9;
+    line-height: 1.2;
     display: inline-flex;
     align-items: center;
-    height: 16px;
+    height: 20px;
     vertical-align: middle;
   }
 
@@ -873,11 +908,565 @@
     transition: all 0.3s ease;
   }
 
-  .glass-option-link:hover {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  /* Glass Options Links - Advanced Glassmorphism */
+  .glass-option-link {
+    position: relative;
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.25) 0%, 
+      rgba(255, 255, 255, 0.15) 50%, 
+      rgba(255, 255, 255, 0.1) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      0 4px 16px rgba(0, 0, 0, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.05);
     text-decoration: none;
+    overflow: hidden;
+    transform: translateZ(0);
+    will-change: transform, box-shadow;
+  }
+
+  .glass-option-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+      transparent, 
+      rgba(255, 255, 255, 0.3), 
+      transparent);
+    transition: left 0.6s ease;
+  }
+
+  .glass-option-link:hover::before {
+    left: 100%;
+  }
+
+  .glass-option-link:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 
+      0 20px 40px rgba(0, 0, 0, 0.15),
+      0 10px 20px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+  }
+
+  /* Advanced Glass Icons */
+  .glass-icon-advanced {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 600;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 
+      0 8px 16px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .glass-icon-advanced::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .glass-option-link:hover .glass-icon-advanced::after {
+    opacity: 1;
+  }
+
+  /* Orange Theme - Editar Curso */
+  .glass-option-orange {
+    background: linear-gradient(135deg, 
+      rgba(251, 146, 60, 0.2) 0%, 
+      rgba(249, 115, 22, 0.15) 50%, 
+      rgba(234, 88, 12, 0.1) 100%);
+    border-color: rgba(251, 146, 60, 0.4);
+  }
+
+  .glass-option-orange:hover {
+    background: linear-gradient(135deg, 
+      rgba(251, 146, 60, 0.3) 0%, 
+      rgba(249, 115, 22, 0.25) 50%, 
+      rgba(234, 88, 12, 0.2) 100%);
+    box-shadow: 
+      0 20px 40px rgba(251, 146, 60, 0.2),
+      0 10px 20px rgba(249, 115, 22, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
+      inset 0 -1px 0 rgba(234, 88, 12, 0.2);
+  }
+
+  .glass-icon-orange {
+    background: linear-gradient(135deg, 
+      rgba(251, 146, 60, 0.3), 
+      rgba(249, 115, 22, 0.2));
+    color: #ea580c;
+    border-color: rgba(251, 146, 60, 0.5);
+  }
+
+  .glass-text-orange {
+    color: #ea580c;
+    text-shadow: 0 1px 2px rgba(234, 88, 12, 0.3);
+  }
+
+  /* Green Theme - Crear Formulario */
+  .glass-option-green {
+    background: linear-gradient(135deg, 
+      rgba(34, 197, 94, 0.2) 0%, 
+      rgba(22, 163, 74, 0.15) 50%, 
+      rgba(21, 128, 61, 0.1) 100%);
+    border-color: rgba(34, 197, 94, 0.4);
+  }
+
+  .glass-option-green:hover {
+    background: linear-gradient(135deg, 
+      rgba(34, 197, 94, 0.3) 0%, 
+      rgba(22, 163, 74, 0.25) 50%, 
+      rgba(21, 128, 61, 0.2) 100%);
+    box-shadow: 
+      0 20px 40px rgba(34, 197, 94, 0.2),
+      0 10px 20px rgba(22, 163, 74, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
+      inset 0 -1px 0 rgba(21, 128, 61, 0.2);
+  }
+
+  .glass-icon-green {
+    background: linear-gradient(135deg, 
+      rgba(34, 197, 94, 0.3), 
+      rgba(22, 163, 74, 0.2));
+    color: #15803d;
+    border-color: rgba(34, 197, 94, 0.5);
+  }
+
+  .glass-text-green {
+    color: #15803d;
+    text-shadow: 0 1px 2px rgba(21, 128, 61, 0.3);
+  }
+
+  /* Light Blue Theme - Editar Formulario */
+  .glass-option-light-blue {
+    background: linear-gradient(135deg, 
+      rgba(56, 189, 248, 0.2) 0%, 
+      rgba(14, 165, 233, 0.15) 50%, 
+      rgba(2, 132, 199, 0.1) 100%);
+    border-color: rgba(56, 189, 248, 0.4);
+  }
+
+  .glass-option-light-blue:hover {
+    background: linear-gradient(135deg, 
+      rgba(56, 189, 248, 0.3) 0%, 
+      rgba(14, 165, 233, 0.25) 50%, 
+      rgba(2, 132, 199, 0.2) 100%);
+    box-shadow: 
+      0 20px 40px rgba(56, 189, 248, 0.2),
+      0 10px 20px rgba(14, 165, 233, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
+      inset 0 -1px 0 rgba(2, 132, 199, 0.2);
+  }
+
+  .glass-icon-light-blue {
+    background: linear-gradient(135deg, 
+      rgba(56, 189, 248, 0.3), 
+      rgba(14, 165, 233, 0.2));
+    color: #0284c7;
+    border-color: rgba(56, 189, 248, 0.5);
+  }
+
+  .glass-text-light-blue {
+    color: #0284c7;
+    text-shadow: 0 1px 2px rgba(2, 132, 199, 0.3);
+  }
+
+  /* Red Theme - Eliminar */
+  .glass-option-red {
+    background: linear-gradient(135deg, 
+      rgba(239, 68, 68, 0.2) 0%, 
+      rgba(220, 38, 38, 0.15) 50%, 
+      rgba(185, 28, 28, 0.1) 100%);
+    border-color: rgba(239, 68, 68, 0.4);
+  }
+
+  .glass-option-red:hover {
+    background: linear-gradient(135deg, 
+      rgba(239, 68, 68, 0.3) 0%, 
+      rgba(220, 38, 38, 0.25) 50%, 
+      rgba(185, 28, 28, 0.2) 100%);
+    box-shadow: 
+      0 20px 40px rgba(239, 68, 68, 0.2),
+      0 10px 20px rgba(220, 38, 38, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
+      inset 0 -1px 0 rgba(185, 28, 28, 0.2);
+  }
+
+  .glass-icon-red {
+    background: linear-gradient(135deg, 
+      rgba(239, 68, 68, 0.3), 
+      rgba(220, 38, 38, 0.2));
+    color: #b91c1c;
+    border-color: rgba(239, 68, 68, 0.5);
+  }
+
+  .glass-text-red {
+    color: #b91c1c;
+    text-shadow: 0 1px 2px rgba(185, 28, 28, 0.3);
+  }
+
+  /* Glass Divider */
+  .glass-divider {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, 
+      transparent, 
+      rgba(255, 255, 255, 0.3) 20%, 
+      rgba(0, 0, 0, 0.1) 50%, 
+      rgba(255, 255, 255, 0.3) 80%, 
+      transparent);
+    margin: 16px 0;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  /* Glass Close Button - Medium Size and Red */
+  .glass-close-button {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, 
+      rgba(239, 68, 68, 0.9) 0%, 
+      rgba(220, 38, 38, 0.8) 100%);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(239, 68, 68, 0.6);
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 
+      0 6px 12px rgba(239, 68, 68, 0.3),
+      0 3px 6px rgba(220, 38, 38, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+
+  .glass-close-button:hover {
+    transform: scale(1.1) rotate(90deg);
+    background: linear-gradient(135deg, 
+      rgba(239, 68, 68, 1) 0%, 
+      rgba(220, 38, 38, 0.9) 100%);
+    box-shadow: 
+      0 8px 16px rgba(239, 68, 68, 0.4),
+      0 4px 8px rgba(220, 38, 38, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
+
+  .glass-close-button:active {
+    transform: scale(0.95) rotate(90deg);
+  }
+
+  /* Small Glass Options - More Transparent */
+  .glass-option-small {
+    padding: 12px 16px !important;
+    border-radius: 10px !important;
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.1) 0%, 
+      rgba(255, 255, 255, 0.05) 100%) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .glass-option-small:hover {
+    transform: translateY(-2px) scale(1.01) !important;
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.15) 0%, 
+      rgba(255, 255, 255, 0.08) 100%) !important;
+    box-shadow: 
+      0 12px 24px rgba(0, 0, 0, 0.1),
+      0 6px 12px rgba(0, 0, 0, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  }
+
+  /* Small Glass Icons */
+  .glass-icon-small {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 
+      0 4px 8px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-option-small:hover .glass-icon-small {
+    transform: scale(1.05);
+    box-shadow: 
+      0 6px 12px rgba(0, 0, 0, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  }
+
+  /* Small Divider */
+  .glass-divider-small {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, 
+      transparent, 
+      rgba(255, 255, 255, 0.2) 20%, 
+      rgba(0, 0, 0, 0.1) 50%, 
+      rgba(255, 255, 255, 0.2) 80%, 
+      transparent);
+    margin: 8px 0;
+  }
+
+  /* Override for small options - Orange - More Transparent */
+  .glass-option-small.glass-option-orange {
+    background: linear-gradient(135deg, 
+      rgba(251, 146, 60, 0.08) 0%, 
+      rgba(249, 115, 22, 0.05) 100%) !important;
+    border-color: rgba(251, 146, 60, 0.2);
+  }
+
+  .glass-option-small.glass-option-orange:hover {
+    background: linear-gradient(135deg, 
+      rgba(251, 146, 60, 0.15) 0%, 
+      rgba(249, 115, 22, 0.1) 100%) !important;
+    box-shadow: 
+      0 12px 24px rgba(251, 146, 60, 0.1),
+      0 6px 12px rgba(249, 115, 22, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  }
+
+  /* Override for small options - Green - More Transparent */
+  .glass-option-small.glass-option-green {
+    background: linear-gradient(135deg, 
+      rgba(34, 197, 94, 0.08) 0%, 
+      rgba(22, 163, 74, 0.05) 100%) !important;
+    border-color: rgba(34, 197, 94, 0.2);
+  }
+
+  .glass-option-small.glass-option-green:hover {
+    background: linear-gradient(135deg, 
+      rgba(34, 197, 94, 0.15) 0%, 
+      rgba(22, 163, 74, 0.1) 100%) !important;
+    box-shadow: 
+      0 12px 24px rgba(34, 197, 94, 0.1),
+      0 6px 12px rgba(22, 163, 74, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  }
+
+  /* Override for small options - Light Blue - More Transparent */
+  .glass-option-small.glass-option-light-blue {
+    background: linear-gradient(135deg, 
+      rgba(56, 189, 248, 0.08) 0%, 
+      rgba(14, 165, 233, 0.05) 100%) !important;
+    border-color: rgba(56, 189, 248, 0.2);
+  }
+
+  .glass-option-small.glass-option-light-blue:hover {
+    background: linear-gradient(135deg, 
+      rgba(56, 189, 248, 0.15) 0%, 
+      rgba(14, 165, 233, 0.1) 100%) !important;
+    box-shadow: 
+      0 12px 24px rgba(56, 189, 248, 0.1),
+      0 6px 12px rgba(14, 165, 233, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  }
+
+  /* Override for small options - Red - More Transparent */
+  .glass-option-small.glass-option-red {
+    background: linear-gradient(135deg, 
+      rgba(239, 68, 68, 0.08) 0%, 
+      rgba(220, 38, 38, 0.05) 100%) !important;
+    border-color: rgba(239, 68, 68, 0.2);
+  }
+
+  .glass-option-small.glass-option-red:hover {
+    background: linear-gradient(135deg, 
+      rgba(239, 68, 68, 0.15) 0%, 
+      rgba(220, 38, 38, 0.1) 100%) !important;
+    box-shadow: 
+      0 12px 24px rgba(239, 68, 68, 0.1),
+      0 6px 12px rgba(220, 38, 38, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  }
+
+  /* Delete Modal Styles */
+  .delete-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .delete-modal.show {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .delete-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .delete-modal-content {
+    position: relative;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 
+      0 20px 40px rgba(0, 0, 0, 0.15),
+      0 10px 20px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    transform: scale(0.9);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .delete-modal.show .delete-modal-content {
+    transform: scale(1);
+  }
+
+  .delete-modal-header {
+    padding: 24px 24px 16px;
+    text-align: center;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .delete-modal-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 16px;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    border: 2px solid rgba(239, 68, 68, 0.3);
+  }
+
+  .delete-modal-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #374151;
+    margin: 0;
+  }
+
+  .delete-modal-body {
+    padding: 24px;
+    text-align: center;
+  }
+
+  .delete-modal-message {
+    font-size: 16px;
+    color: #374151;
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+
+  .delete-modal-warning {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  .delete-modal-footer {
+    padding: 16px 24px 24px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .delete-modal-btn {
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    min-width: 140px;
+  }
+
+  .delete-modal-btn-cancel {
+    background: linear-gradient(135deg, rgba(107, 114, 128, 0.2), rgba(75, 85, 99, 0.1));
+    color: #374151;
+    border: 1px solid rgba(107, 114, 128, 0.3);
+  }
+
+  .delete-modal-btn-cancel:hover {
+    background: linear-gradient(135deg, rgba(107, 114, 128, 0.3), rgba(75, 85, 99, 0.2));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+  }
+
+  .delete-modal-btn-confirm {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.8));
+    color: white;
+    border: 1px solid rgba(239, 68, 68, 0.5);
+  }
+
+  .delete-modal-btn-confirm:hover {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 1), rgba(220, 38, 38, 0.9));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    text-decoration: none;
+    color: white;
   }
 
   /* Dropdown Menu Styles */
@@ -1192,6 +1781,44 @@
       }, 10);
     }
   }
+
+  // Funciones para el modal de eliminación
+  function showDeleteModal(courseId, courseName) {
+    const modal = document.getElementById('deleteModal');
+    const courseNameElement = document.getElementById('courseNameToDelete');
+    const confirmLink = document.getElementById('confirmDeleteLink');
+    
+    // Establecer el nombre del curso y el enlace de confirmación
+    courseNameElement.textContent = courseName;
+    confirmLink.href = `/cursos/eliminar/${courseId}/`;
+    
+    // Mostrar el modal
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+      modal.classList.add('show');
+    }, 10);
+    
+    // Prevenir scroll del body
+    document.body.style.overflow = 'hidden';
+  }
+
+  function hideDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+    
+    modal.classList.remove('show');
+    setTimeout(() => {
+      modal.classList.add('hidden');
+      // Restaurar scroll del body
+      document.body.style.overflow = '';
+    }, 300);
+  }
+
+  // Cerrar modal con tecla Escape
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+      hideDeleteModal();
+    }
+  });
 
   // Cerrar dropdown al hacer clic fuera
   document.addEventListener('click', function(event) {
