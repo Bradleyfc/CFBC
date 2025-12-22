@@ -60,12 +60,10 @@
       <!-- Botón Agregar Curso -->
       {% if group_name == 'Secretaria' %}
       <div class="flex justify-center lg:justify-start">
-        <button class="glass-button glass-button-primary">
-          <a href="{% url 'principal:crear_cursos'%}" class="flex items-center justify-center w-full h-full">
-            <i class="bi bi-plus-circle mr-2"></i>
-            Agregar Curso
-          </a>
-        </button>
+        <a href="{% url 'principal:crear_cursos'%}" class="glass-button glass-button-primary flex items-center justify-center">
+          <i class="bi bi-plus-circle mr-2"></i>
+          Agregar Curso
+        </a>
       </div>
       {% endif %}
 

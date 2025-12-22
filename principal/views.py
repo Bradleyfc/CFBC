@@ -1797,6 +1797,21 @@ class FormularioAplicacionCreateView(LoginRequiredMixin, SecretariaRequiredMixin
     form_class = FormularioAplicacionForm
     template_name = 'formularios/formulario_form.html'
     
+    def get_form(self, form_class=None):
+        """
+        Personaliza el formulario dinámicamente según si hay curso preseleccionado.
+        """
+        form = super().get_form(form_class)
+        
+        # Si hay un curso preseleccionado, ocultar el campo curso del formulario
+        curso_id = self.request.GET.get('curso_id')
+        if curso_id:
+            # Eliminar el campo curso del formulario ya que está preseleccionado
+            if 'curso' in form.fields:
+                del form.fields['curso']
+        
+        return form
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo'] = 'Crear Formulario de Aplicación'

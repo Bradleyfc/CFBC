@@ -567,26 +567,17 @@
             {% if object %}
             <h5 class="text-xl font-semibold text-center mb-6">Editando Formulario de Aplicación</h5>
             {% else %}
-            <h5 class="text-xl font-semibold text-center mb-6">Creando Formulario de Aplicación</h5>
+            <h5 class="text-xl font-semibold text-center mb-2">Creando Formulario de Aplicación</h5>
+            {% if curso_preseleccionado %}
+            <p class="text-lg text-center text-blue-600 font-medium mb-6">{{ curso_preseleccionado.name }}</p>
+            {% endif %}
             {% endif %}
             
             {{ form|crispy }}
 
-            {% if not object %}
-            <div class="form-group">
-                <label for="curso" class="form-label">Curso</label>
-                <select name="curso" id="curso" class="form-select" required>
-                    <option value="">Seleccione un curso</option>
-                    {% if curso_preseleccionado %}
-                    <option value="{{ curso_preseleccionado.id }}" selected>{{ curso_preseleccionado.name }}</option>
-                    {% else %}
-                    {% for curso in cursos %}
-                    <option value="{{ curso.id }}">{{ curso.name }}</option>
-                    {% endfor %}
-                    {% endif %}
-                </select>
-                <div class="form-text">Seleccione el curso para el que desea crear el formulario de aplicación.</div>
-            </div>
+            {% if not object and curso_preseleccionado %}
+                <!-- Campo oculto para el curso preseleccionado -->
+                <input type="hidden" name="curso" value="{{ curso_preseleccionado.id }}">
             {% endif %}
 
             <div class="form-actions">
