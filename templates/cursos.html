@@ -238,45 +238,45 @@
 
           <!-- Options Panel - Hidden by default -->
           <div id="options-panel-{{course.id}}" class="options-panel hidden">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-bold text-gray-900">Opciones del Curso</h3>
-              <button class="glass-close-button" onclick="toggleOptionsPanel('{{course.id}}')" title="Cerrar opciones">
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="text-sm font-bold text-gray-900">Opciones</h3>
+              <button class="glass-close-button" onclick="toggleOptionsPanel('{{course.id}}')" title="Cerrar opciones" style="width: 24px; height: 24px; font-size: 14px;">
                 ×
               </button>
             </div>
             
-            <div class="space-y-2">
+            <div class="space-y-1.5">
               {% if group_name == 'Secretaria' %}
-              <a href="{% url 'principal:editar_curso' course.id %}" class="glass-option-link glass-option-orange glass-option-small flex items-center gap-2 p-3 rounded-lg transition-all duration-300">
-                <div class="glass-icon-small glass-icon-orange">
+              <a href="{% url 'principal:editar_curso' course.id %}" class="glass-option-link glass-option-orange glass-option-compact flex items-center gap-1.5 p-2 rounded-md transition-all duration-300">
+                <div class="glass-icon-compact-opt glass-icon-orange">
                   <i class="bi bi-pencil"></i>
                 </div>
-                <span class="glass-text-orange font-medium text-base">Editar Curso</span>
+                <span class="glass-text-orange font-medium text-xs">Editar Curso</span>
               </a>
               
               {% if course.formulario_aplicacion %}
-              <a href="{% url 'principal:formulario_update' course.formulario_aplicacion.id %}" class="glass-option-link glass-option-light-blue glass-option-small flex items-center gap-2 p-3 rounded-lg transition-all duration-300">
-                <div class="glass-icon-small glass-icon-light-blue">
+              <a href="{% url 'principal:formulario_update' course.formulario_aplicacion.id %}" class="glass-option-link glass-option-light-blue glass-option-compact flex items-center gap-1.5 p-2 rounded-md transition-all duration-300">
+                <div class="glass-icon-compact-opt glass-icon-light-blue">
                   <i class="bi bi-file-earmark-text"></i>
                 </div>
-                <span class="glass-text-light-blue font-medium text-base">Editar Formulario de Aplicación</span>
+                <span class="glass-text-light-blue font-medium text-xs">Editar Formulario</span>
               </a>
               {% else %}
-              <a href="{% url 'principal:formulario_create' %}?curso_id={{ course.id }}" class="glass-option-link glass-option-green glass-option-small flex items-center gap-2 p-3 rounded-lg transition-all duration-300">
-                <div class="glass-icon-small glass-icon-green">
+              <a href="{% url 'principal:formulario_create' %}?curso_id={{ course.id }}" class="glass-option-link glass-option-green glass-option-compact flex items-center gap-1.5 p-2 rounded-md transition-all duration-300">
+                <div class="glass-icon-compact-opt glass-icon-green">
                   <i class="bi bi-file-earmark-plus"></i>
                 </div>
-                <span class="glass-text-green font-medium text-base">Crear Formulario de Aplicación</span>
+                <span class="glass-text-green font-medium text-xs">Crear Formulario</span>
               </a>
               {% endif %}
               
-              <hr class="glass-divider-small">
+              <hr class="glass-divider-compact">
               
-              <a href="#" class="glass-option-link glass-option-red glass-option-small flex items-center gap-2 p-3 rounded-lg transition-all duration-300" onclick="showDeleteModal('{{course.id}}', '{{course.name|escapejs}}')">
-                <div class="glass-icon-small glass-icon-red">
+              <a href="#" class="glass-option-link glass-option-red glass-option-compact flex items-center gap-1.5 p-2 rounded-md transition-all duration-300" onclick="showDeleteModal('{{course.id}}', '{{course.name|escapejs}}')">
+                <div class="glass-icon-compact-opt glass-icon-red">
                   <i class="bi bi-trash"></i>
                 </div>
-                <span class="glass-text-red font-medium text-base">Eliminar Curso</span>
+                <span class="glass-text-red font-medium text-xs">Eliminar Curso</span>
               </a>
               {% endif %}
             </div>
@@ -346,7 +346,6 @@
 
   /* Forzar tamaño fijo de imagen - TODAS las vistas */
   .glass-card img,
-  .vista-lista .course-card img,
   .course-card .glass-card img {
     width: 100% !important;
     height: 144px !important;
@@ -356,14 +355,15 @@
     max-height: 144px !important;
   }
 
-  /* Ajustes específicos para vista lista */
+  /* Ajustes específicos para vista lista - Imagen debe cubrir todo el alto */
   .vista-lista .course-card img {
-    width: 12rem !important;
-    height: 144px !important;
-    border-top-left-radius: 24px;
-    border-bottom-left-radius: 24px;
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
+    width: 240px !important;
+    height: 200px !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    min-height: 200px !important;
+    max-height: 200px !important;
+    border-radius: 24px 0 0 24px !important;
   }
 
   .glass-card:hover {
@@ -709,39 +709,116 @@
     border-color: rgba(59, 130, 246, 0.4);
   }
 
-  /* Vista de lista adaptations */
+  /* Vista de lista adaptations - Tarjetas una debajo de la otra */
   .vista-lista {
-    grid-template-columns: repeat(1, minmax(0, 1fr));
+    grid-template-columns: 1fr !important;
     gap: 1rem;
+    max-width: 64rem;
+    margin: 0 auto;
   }
   
   .vista-lista .course-card > .glass-card {
     display: flex;
     flex-direction: row;
-    max-width: 64rem;
-    margin-left: auto;
-    margin-right: auto;
+    width: 100%;
+    height: 200px;
     min-height: 200px;
+    max-height: 200px;
   }
   
-  /* Contenedor de imagen - tamaño fijo en todas las vistas */
-  .course-card .relative,
+  /* Contenedor de imagen en vista lista - a la izquierda */
   .vista-lista .course-card .relative {
-    height: 144px !important;
-    min-height: 144px !important;
-    max-height: 144px !important;
+    width: 240px !important;
+    height: 200px !important;
+    min-height: 200px !important;
+    max-height: 200px !important;
+    flex-shrink: 0;
+    overflow: hidden !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-top-left-radius: 24px !important;
+    border-bottom-left-radius: 24px !important;
   }
 
-  /* Ajustes específicos para vista lista */
-  .vista-lista .course-card .relative {
-    flex-shrink: 0;
-    width: 12rem !important;
+  /* Sobrescribir la clase h-36 de Tailwind en vista lista */
+  .vista-lista .course-card .relative.h-36 {
+    height: 200px !important;
+    min-height: 200px !important;
+    max-height: 200px !important;
+  }
+
+  /* Asegurar que el contenedor de imagen ocupe toda la altura en vista lista */
+  .vista-lista .course-card > .glass-card > .relative {
+    height: 200px !important;
+    min-height: 200px !important;
+    max-height: 200px !important;
+  }
+
+  /* Regla con máxima especificidad para sobrescribir h-36 */
+  .vista-lista .course-card .glass-card .relative.overflow-hidden.rounded-t-2xl.h-36 {
+    height: 200px !important;
+    min-height: 200px !important;
+    max-height: 200px !important;
+    border-radius: 24px 0 0 24px !important;
   }
   
   .vista-lista .course-card .glass-content {
     flex: 1;
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
+    border-top-right-radius: 24px;
+    border-bottom-right-radius: 24px;
+    min-height: 200px;
+    padding: 16px;
+  }
+
+  /* Layout de tres columnas para vista lista */
+  .vista-lista .original-content {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    height: 100%;
+    align-items: flex-start;
+  }
+
+  /* Columna izquierda - información principal (más ancha) */
+  .vista-lista .column-left {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* Columna del medio - datos numéricos */
+  .vista-lista .column-middle {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* Columna derecha - botón de opciones (pequeña y fija) */
+  .vista-lista .column-right {
+    flex: 0 0 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Imagen en vista lista - a la izquierda - Cubrir todo el alto de la tarjeta */
+  .vista-lista .course-card img {
+    width: 240px !important;
+    height: 200px !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    min-height: 200px !important;
+    max-height: 200px !important;
+    border-top-left-radius: 24px !important;
+    border-bottom-left-radius: 24px !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    display: block !important;
+    flex-shrink: 0 !important;
   }
 
   /* Grid responsivo mejorado - máximo 4 columnas */
@@ -885,11 +962,12 @@
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-radius: 20px;
-    padding: 20px;
+    padding: 10px; /* Reducido a 10px para ajustarse al alto de la tarjeta */
     z-index: 10;
     opacity: 0;
     transform: scale(0.9);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden; /* Asegurar que el contenido no se salga */
   }
 
   .options-panel.show {
@@ -1245,6 +1323,360 @@
       rgba(255, 255, 255, 0.2) 80%, 
       transparent);
     margin: 8px 0;
+  }
+
+  /* Mini Glass Options - Más pequeñas para vista lista */
+  .glass-option-mini {
+    padding: 6px 8px !important;
+    border-radius: 6px !important;
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.08) 0%, 
+      rgba(255, 255, 255, 0.04) 100%) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .glass-option-mini:hover {
+    transform: translateY(-1px) scale(1.01) !important;
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.12) 0%, 
+      rgba(255, 255, 255, 0.06) 100%) !important;
+    box-shadow: 
+      0 6px 12px rgba(0, 0, 0, 0.08),
+      0 3px 6px rgba(0, 0, 0, 0.04),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  }
+
+  /* Mini Glass Icons */
+  .glass-icon-mini {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 
+      0 2px 4px rgba(0, 0, 0, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-option-mini:hover .glass-icon-mini {
+    transform: scale(1.05);
+    box-shadow: 
+      0 3px 6px rgba(0, 0, 0, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+
+  /* Mini Divider */
+  .glass-divider-mini {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, 
+      transparent, 
+      rgba(255, 255, 255, 0.15) 20%, 
+      rgba(0, 0, 0, 0.08) 50%, 
+      rgba(255, 255, 255, 0.15) 80%, 
+      transparent);
+    margin: 4px 0;
+  }
+
+  /* Override para opciones mini - Orange */
+  .glass-option-mini.glass-option-orange {
+    background: linear-gradient(135deg, 
+      rgba(251, 146, 60, 0.06) 0%, 
+      rgba(249, 115, 22, 0.04) 100%) !important;
+    border-color: rgba(251, 146, 60, 0.15);
+  }
+
+  .glass-option-mini.glass-option-orange:hover {
+    background: linear-gradient(135deg, 
+      rgba(251, 146, 60, 0.12) 0%, 
+      rgba(249, 115, 22, 0.08) 100%) !important;
+  }
+
+  /* Override para opciones mini - Green */
+  .glass-option-mini.glass-option-green {
+    background: linear-gradient(135deg, 
+      rgba(34, 197, 94, 0.06) 0%, 
+      rgba(22, 163, 74, 0.04) 100%) !important;
+    border-color: rgba(34, 197, 94, 0.15);
+  }
+
+  .glass-option-mini.glass-option-green:hover {
+    background: linear-gradient(135deg, 
+      rgba(34, 197, 94, 0.12) 0%, 
+      rgba(22, 163, 74, 0.08) 100%) !important;
+  }
+
+  /* Override para opciones mini - Light Blue */
+  .glass-option-mini.glass-option-light-blue {
+    background: linear-gradient(135deg, 
+      rgba(56, 189, 248, 0.06) 0%, 
+      rgba(14, 165, 233, 0.04) 100%) !important;
+    border-color: rgba(56, 189, 248, 0.15);
+  }
+
+  .glass-option-mini.glass-option-light-blue:hover {
+    background: linear-gradient(135deg, 
+      rgba(56, 189, 248, 0.12) 0%, 
+      rgba(14, 165, 233, 0.08) 100%) !important;
+  }
+
+  /* Override para opciones mini - Red */
+  .glass-option-mini.glass-option-red {
+    background: linear-gradient(135deg, 
+      rgba(239, 68, 68, 0.06) 0%, 
+      rgba(220, 38, 38, 0.04) 100%) !important;
+    border-color: rgba(239, 68, 68, 0.15);
+  }
+
+  .glass-option-mini.glass-option-red:hover {
+    background: linear-gradient(135deg, 
+      rgba(239, 68, 68, 0.12) 0%, 
+      rgba(220, 38, 38, 0.08) 100%) !important;
+  }
+
+  /* Medium Glass Options - Tamaño intermedio para vista lista */
+  .glass-option-medium {
+    padding: 10px 12px !important;
+    border-radius: 8px !important;
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.1) 0%, 
+      rgba(255, 255, 255, 0.05) 100%) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+
+  .glass-option-medium:hover {
+    transform: translateY(-1px) scale(1.01) !important;
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.15) 0%, 
+      rgba(255, 255, 255, 0.08) 100%) !important;
+    box-shadow: 
+      0 8px 16px rgba(0, 0, 0, 0.1),
+      0 4px 8px rgba(0, 0, 0, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+  }
+
+  /* Medium Glass Icons para opciones */
+  .glass-icon-medium-opt {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 
+      0 3px 6px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-option-medium:hover .glass-icon-medium-opt {
+    transform: scale(1.05);
+    box-shadow: 
+      0 4px 8px rgba(0, 0, 0, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+
+  /* Medium Divider */
+  .glass-divider-medium {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, 
+      transparent, 
+      rgba(255, 255, 255, 0.18) 20%, 
+      rgba(0, 0, 0, 0.1) 50%, 
+      rgba(255, 255, 255, 0.18) 80%, 
+      transparent);
+    margin: 6px 0;
+  }
+
+  /* Override para opciones medium - Orange */
+  .glass-option-medium.glass-option-orange {
+    background: linear-gradient(135deg, 
+      rgba(251, 146, 60, 0.08) 0%, 
+      rgba(249, 115, 22, 0.05) 100%) !important;
+    border-color: rgba(251, 146, 60, 0.18);
+  }
+
+  .glass-option-medium.glass-option-orange:hover {
+    background: linear-gradient(135deg, 
+      rgba(251, 146, 60, 0.15) 0%, 
+      rgba(249, 115, 22, 0.1) 100%) !important;
+  }
+
+  /* Override para opciones medium - Green */
+  .glass-option-medium.glass-option-green {
+    background: linear-gradient(135deg, 
+      rgba(34, 197, 94, 0.08) 0%, 
+      rgba(22, 163, 74, 0.05) 100%) !important;
+    border-color: rgba(34, 197, 94, 0.18);
+  }
+
+  .glass-option-medium.glass-option-green:hover {
+    background: linear-gradient(135deg, 
+      rgba(34, 197, 94, 0.15) 0%, 
+      rgba(22, 163, 74, 0.1) 100%) !important;
+  }
+
+  /* Override para opciones medium - Light Blue */
+  .glass-option-medium.glass-option-light-blue {
+    background: linear-gradient(135deg, 
+      rgba(56, 189, 248, 0.08) 0%, 
+      rgba(14, 165, 233, 0.05) 100%) !important;
+    border-color: rgba(56, 189, 248, 0.18);
+  }
+
+  .glass-option-medium.glass-option-light-blue:hover {
+    background: linear-gradient(135deg, 
+      rgba(56, 189, 248, 0.15) 0%, 
+      rgba(14, 165, 233, 0.1) 100%) !important;
+  }
+
+  /* Override para opciones medium - Red */
+  .glass-option-medium.glass-option-red {
+    background: linear-gradient(135deg, 
+      rgba(239, 68, 68, 0.08) 0%, 
+      rgba(220, 38, 38, 0.05) 100%) !important;
+    border-color: rgba(239, 68, 68, 0.18);
+  }
+
+  .glass-option-medium.glass-option-red:hover {
+    background: linear-gradient(135deg, 
+      rgba(239, 68, 68, 0.15) 0%, 
+      rgba(220, 38, 38, 0.1) 100%) !important;
+  }
+
+  /* Compact Glass Options - Ajustadas al alto de la tarjeta */
+  .glass-option-compact {
+    padding: 6px 8px !important;
+    border-radius: 6px !important;
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.08) 0%, 
+      rgba(255, 255, 255, 0.04) 100%) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .glass-option-compact:hover {
+    transform: translateY(-1px) scale(1.01) !important;
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.12) 0%, 
+      rgba(255, 255, 255, 0.06) 100%) !important;
+    box-shadow: 
+      0 4px 8px rgba(0, 0, 0, 0.08),
+      0 2px 4px rgba(0, 0, 0, 0.04),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  }
+
+  /* Compact Glass Icons para opciones */
+  .glass-icon-compact-opt {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 
+      0 2px 4px rgba(0, 0, 0, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-option-compact:hover .glass-icon-compact-opt {
+    transform: scale(1.05);
+    box-shadow: 
+      0 3px 6px rgba(0, 0, 0, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
+
+  /* Compact Divider */
+  .glass-divider-compact {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, 
+      transparent, 
+      rgba(255, 255, 255, 0.15) 20%, 
+      rgba(0, 0, 0, 0.08) 50%, 
+      rgba(255, 255, 255, 0.15) 80%, 
+      transparent);
+    margin: 3px 0;
+  }
+
+  /* Override para opciones compact - Orange */
+  .glass-option-compact.glass-option-orange {
+    background: linear-gradient(135deg, 
+      rgba(251, 146, 60, 0.06) 0%, 
+      rgba(249, 115, 22, 0.04) 100%) !important;
+    border-color: rgba(251, 146, 60, 0.15);
+  }
+
+  .glass-option-compact.glass-option-orange:hover {
+    background: linear-gradient(135deg, 
+      rgba(251, 146, 60, 0.12) 0%, 
+      rgba(249, 115, 22, 0.08) 100%) !important;
+  }
+
+  /* Override para opciones compact - Green */
+  .glass-option-compact.glass-option-green {
+    background: linear-gradient(135deg, 
+      rgba(34, 197, 94, 0.06) 0%, 
+      rgba(22, 163, 74, 0.04) 100%) !important;
+    border-color: rgba(34, 197, 94, 0.15);
+  }
+
+  .glass-option-compact.glass-option-green:hover {
+    background: linear-gradient(135deg, 
+      rgba(34, 197, 94, 0.12) 0%, 
+      rgba(22, 163, 74, 0.08) 100%) !important;
+  }
+
+  /* Override para opciones compact - Light Blue */
+  .glass-option-compact.glass-option-light-blue {
+    background: linear-gradient(135deg, 
+      rgba(56, 189, 248, 0.06) 0%, 
+      rgba(14, 165, 233, 0.04) 100%) !important;
+    border-color: rgba(56, 189, 248, 0.15);
+  }
+
+  .glass-option-compact.glass-option-light-blue:hover {
+    background: linear-gradient(135deg, 
+      rgba(56, 189, 248, 0.12) 0%, 
+      rgba(14, 165, 233, 0.08) 100%) !important;
+  }
+
+  /* Override para opciones compact - Red */
+  .glass-option-compact.glass-option-red {
+    background: linear-gradient(135deg, 
+      rgba(239, 68, 68, 0.06) 0%, 
+      rgba(220, 38, 38, 0.04) 100%) !important;
+    border-color: rgba(239, 68, 68, 0.15);
+  }
+
+  .glass-option-compact.glass-option-red:hover {
+    background: linear-gradient(135deg, 
+      rgba(239, 68, 68, 0.12) 0%, 
+      rgba(220, 38, 38, 0.08) 100%) !important;
   }
 
   /* Override for small options - Orange - More Transparent */
@@ -1720,18 +2152,142 @@
       // Vista de tarjetas (3 columnas)
       container.className = 'grid-3-cols transition-all duration-300';
 
+      // Restaurar estructura original para todas las tarjetas
+      document.querySelectorAll('.course-card').forEach(card => {
+        const originalContent = card.querySelector('[id^="original-content-"]');
+        if (originalContent && originalContent.hasAttribute('data-original-html')) {
+          // Restaurar HTML original
+          originalContent.innerHTML = originalContent.getAttribute('data-original-html');
+          originalContent.removeAttribute('data-original-html');
+          originalContent.classList.remove('lista-layout');
+          originalContent.style.display = '';
+          originalContent.style.flexDirection = '';
+          originalContent.style.gap = '';
+          originalContent.style.height = '';
+        }
+      });
+
       // Actualizar botones
       vistaCardsBtn.classList.add('active-view');
       vistaListaBtn.classList.remove('active-view');
 
     } else if (vista === 'lista') {
-      // Vista de lista (1 columna)
+      // Vista de lista (tarjetas una debajo de la otra)
       container.className = 'grid-3-cols vista-lista transition-all duration-300';
+
+      // Reorganizar contenido para vista lista
+      document.querySelectorAll('.course-card').forEach(card => {
+        const originalContent = card.querySelector('[id^="original-content-"]');
+        if (originalContent && !originalContent.hasAttribute('data-original-html')) {
+          // Guardar HTML original antes de modificar
+          originalContent.setAttribute('data-original-html', originalContent.innerHTML);
+          reorganizarParaLista(originalContent);
+        }
+      });
 
       // Actualizar botones
       vistaListaBtn.classList.add('active-view');
       vistaCardsBtn.classList.remove('active-view');
     }
+  }
+
+  function reorganizarParaLista(originalContent) {
+    // Marcar como reorganizado
+    originalContent.classList.add('lista-layout');
+    
+    // Crear estructura de tres columnas
+    const leftColumn = document.createElement('div');
+    leftColumn.className = 'column-left';
+    leftColumn.style.flex = '2';
+    
+    const middleColumn = document.createElement('div');
+    middleColumn.className = 'column-middle';
+    middleColumn.style.flex = '1';
+    
+    const rightColumn = document.createElement('div');
+    rightColumn.className = 'column-right';
+    rightColumn.style.flex = '0 0 60px';
+    
+    // Obtener elementos específicos
+    const titleContainer = originalContent.querySelector('.flex.items-start.justify-between');
+    const badges = originalContent.querySelector('.flex.flex-wrap.gap-1');
+    const description = originalContent.querySelector('.glass-description');
+    const statusBadge = originalContent.querySelector('.text-center');
+    
+    // Extraer título y botón de opciones
+    let title = null;
+    let optionsButton = null;
+    
+    if (titleContainer) {
+      title = titleContainer.querySelector('h3');
+      optionsButton = titleContainer.querySelector('button');
+    }
+    
+    // Columna izquierda: título, badges, descripción, estado
+    if (title) {
+      const titleDiv = document.createElement('div');
+      titleDiv.className = 'mb-2';
+      titleDiv.appendChild(title.cloneNode(true));
+      leftColumn.appendChild(titleDiv);
+    }
+    
+    if (badges) leftColumn.appendChild(badges.cloneNode(true));
+    if (description) leftColumn.appendChild(description.cloneNode(true));
+    
+    if (statusBadge) {
+      const statusClone = statusBadge.cloneNode(true);
+      statusClone.className = 'text-left mb-2';
+      leftColumn.appendChild(statusClone);
+    }
+    
+    // Columna del medio: solo elementos específicos de datos (clases, inscritos, fechas)
+    const courseTitle = title ? title.textContent.trim() : '';
+    
+    const allElements = originalContent.querySelectorAll('*');
+    allElements.forEach(element => {
+      if (element.classList.contains('glass-detail-item-medium')) {
+        const span = element.querySelector('span');
+        if (span) {
+          const spanText = span.textContent.trim();
+          
+          // Verificar patrones específicos y que NO sea el título del curso
+          const isNotTitle = spanText !== courseTitle && !spanText.includes(courseTitle);
+          
+          if (isNotTitle && (
+            spanText.match(/^\d+\s+clases?$/i) ||
+            spanText.match(/^\d+\s+inscritos?$/i) ||
+            spanText.match(/^\d{1,2}\/\d{1,2}$/)
+          )) {
+            const detailClone = element.cloneNode(true);
+            detailClone.style.justifyContent = 'flex-start';
+            middleColumn.appendChild(detailClone);
+          }
+        }
+      }
+    });
+    
+    // Columna derecha: botón de opciones
+    if (optionsButton) {
+      const optionsDiv = document.createElement('div');
+      optionsDiv.className = 'text-center';
+      optionsDiv.style.paddingTop = '8px';
+      optionsDiv.appendChild(optionsButton.cloneNode(true));
+      rightColumn.appendChild(optionsDiv);
+    }
+    
+    // Limpiar y reorganizar
+    originalContent.innerHTML = '';
+    originalContent.appendChild(leftColumn);
+    originalContent.appendChild(middleColumn);
+    originalContent.appendChild(rightColumn);
+    
+    // Aplicar estilos
+    originalContent.style.display = 'flex';
+    originalContent.style.flexDirection = 'row';
+    originalContent.style.gap = '16px';
+    originalContent.style.height = '100%';
+    originalContent.style.alignItems = 'flex-start';
+    originalContent.classList.add('original-content');
   }
 
   // Inicializar vista por defecto al cargar la página
