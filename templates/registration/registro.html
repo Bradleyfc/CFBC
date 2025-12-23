@@ -207,6 +207,42 @@
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), 0 4px 6px rgba(0, 0, 0, 0.1) !important;
   }
 
+  /* Enlace de ¿Olvidó su contraseña? y botón inicio */
+  .forgot-link {
+    background: rgba(249, 250, 251, 0.8) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    color: #6b7280 !important;
+    border: 1px solid rgba(209, 213, 219, 0.5) !important;
+    box-shadow: 
+      0 4px 16px rgba(0, 0, 0, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 8px 16px !important;
+    border-radius: 12px !important;
+    text-decoration: none !important;
+    font-weight: 500 !important;
+    transition: all 0.3s ease !important;
+    font-size: 14px !important;
+  }
+
+  .forgot-link:hover {
+    background: rgba(239, 246, 255, 0.9) !important;
+    color: #3b82f6 !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 
+      0 6px 20px rgba(59, 130, 246, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  }
+
+  .forgot-link i {
+    color: inherit !important;
+    z-index: 10 !important;
+    position: relative !important;
+  }
+
   /* Mejorar los enlaces del formulario */
   .form-links a {
     display: inline-flex !important;
@@ -276,6 +312,64 @@
     margin-right: 8px !important;
     z-index: 10 !important;
     position: relative !important;
+  }
+
+  /* Enlace de Registrarse con Glassmorphism */
+  .register-link {
+    background: rgba(239, 246, 255, 0.8) !important;
+    background-image: linear-gradient(135deg, 
+      rgba(239, 246, 255, 0.9), 
+      rgba(219, 234, 254, 0.7)
+    ) !important;
+    backdrop-filter: blur(15px) !important;
+    -webkit-backdrop-filter: blur(15px) !important;
+    color: #1d4ed8 !important;
+    border: 1px solid rgba(59, 130, 246, 0.5) !important;
+    font-style: normal !important;
+    box-shadow: 
+      0 6px 24px rgba(59, 130, 246, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+    border-radius: 12px !important;
+    position: relative !important;
+    overflow: hidden !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 8px 16px !important;
+    text-decoration: none !important;
+    font-weight: 500 !important;
+    transition: all 0.3s ease !important;
+    font-size: 14px !important;
+  }
+
+  .register-link::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: linear-gradient(135deg, rgba(147, 197, 253, 0.1), transparent) !important;
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
+    pointer-events: none !important;
+  }
+
+  .register-link:hover {
+    background: rgba(59, 130, 246, 0.9) !important;
+    background-image: linear-gradient(135deg, 
+      rgba(59, 130, 246, 0.95), 
+      rgba(29, 78, 216, 0.85)
+    ) !important;
+    color: white !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 
+      0 10px 35px rgba(59, 130, 246, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      0 0 25px rgba(59, 130, 246, 0.5) !important;
+  }
+
+  .register-link:hover::before {
+    opacity: 1 !important;
   }
 
   /* Enlace de Inicia Sesión con Glassmorphism */
@@ -362,6 +456,59 @@
     border-radius: 6px !important;
     background-color: #f9fafb !important;
     display: inline-block !important;
+  }
+
+  /* Botón Iniciar Sesión/Registrarse con Glassmorphism */
+  .glass-login-btn {
+    background: rgba(59, 130, 246, 0.8) !important;
+    background-image: linear-gradient(135deg, 
+      rgba(59, 130, 246, 0.9), 
+      rgba(29, 78, 216, 0.7)
+    ) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(147, 197, 253, 0.6) !important;
+    box-shadow: 
+      0 8px 32px rgba(59, 130, 246, 0.3),
+      inset 0 1px 0 rgba(147, 197, 253, 0.7) !important;
+    border-radius: 12px !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+
+  .glass-login-btn::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: -100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent) !important;
+    transition: left 0.6s ease !important;
+    pointer-events: none !important;
+  }
+
+  .glass-login-btn:hover {
+    background: rgba(147, 197, 253, 0.9) !important;
+    background-image: linear-gradient(135deg, 
+      rgba(147, 197, 253, 0.8), 
+      rgba(96, 165, 250, 0.6)
+    ) !important;
+    color: #1e40af !important;
+    transform: translateY(-3px) scale(1.05) !important;
+    box-shadow: 
+      0 15px 45px rgba(59, 130, 246, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      0 0 35px rgba(59, 130, 246, 0.7) !important;
+  }
+
+  .glass-login-btn:hover::before {
+    left: 100% !important;
+  }
+
+  .glass-login-btn i {
+    z-index: 10 !important;
+    position: relative !important;
   }
 
   /* Botón Registrarse con Glassmorphism */
@@ -611,30 +758,24 @@
       
       <div class="form-links">
         <div class="link-row">
-          <a href="{% url 'principal:home' %}" class="home-link">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"></path>
-            </svg>
-            Inicio
-          </a>
-        </div>
-        
-        <div class="link-row">
-          <p>
-            Ya tienes una cuenta? 
-            <a href="{% url 'login' %}" class="login-link">
-              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75"></path>
-              </svg>
-              Inicia Sesión
-            </a>
-          </p>
           <button class="glass-register-btn text-white font-medium py-2 px-4 rounded-md transition duration-200 inline-flex items-center" type="submit">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"></path>
             </svg>
             Registrarse
           </button>
+        </div>
+        
+        <div class="text-center" style="display: flex; justify-content: space-between; align-items: center;">
+          <p class="text-sm text-gray-600" style="margin: 0 !important; font-size: 14px !important; color: #6b7280 !important; font-style: italic !important; padding: 8px 12px !important; border: 1px solid #e5e7eb !important; border-radius: 6px !important; background-color: #f9fafb !important; display: inline-block !important;">
+            Ya tienes una cuenta? 
+            <a href="{% url 'login' %}" class="register-link" style="margin-left: 12px; padding: 4px 8px !important; font-size: 12px !important; border-radius: 12px !important;">
+              <i class="bi bi-box-arrow-in-right" style="margin-right: 6px;"></i> Inicia Sesión
+            </a>
+          </p>
+          <a href="{% url 'principal:home' %}" class="forgot-link" style="padding: 6px 12px !important; font-size: 13px !important;" title="Ir a Inicio">
+            <i class="bi bi-house"></i>
+          </a>
         </div>
       </div>
     </div>

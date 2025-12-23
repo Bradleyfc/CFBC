@@ -449,26 +449,23 @@
       <!-- Enlaces y botones mejorados - animación desde abajo -->
       <div class="animate-from-bottom form-links">
         <div class="link-row">
-          <a href="{% url 'principal:home' %}" class="home-link">
-            <i class="bi bi-house"></i> Inicio
-          </a>
-        </div>
-        
-        <div class="link-row">
-          <p class="text-sm text-gray-600">
-            No tienes una cuenta? 
-            <a href="{% url 'principal:registro' %}" class="register-link">
-              <i class="bi bi-person-plus"></i> Registrarse
-            </a>
-          </p>
           <button class="glass-login-btn text-white font-medium py-2 px-4 rounded-md transition duration-200 inline-flex items-center" type="submit">
             <i class="bi bi-box-arrow-in-right mr-2"></i> Iniciar Sesión
           </button>
         </div>
-
-        <div class="text-center">
-          <a href="{% url 'principal:password_reset_request' %}" class="forgot-link">
-            <i class="bi bi-key mr-1"></i> ¿Olvidó su contraseña?
+        
+        <div class="text-center" style="display: flex; justify-content: space-between; align-items: center;">
+          <p class="text-sm text-gray-600" style="margin: 0 !important; font-size: 14px !important; color: #6b7280 !important; font-style: italic !important; padding: 8px 12px !important; border: 1px solid #e5e7eb !important; border-radius: 6px !important; background-color: #f9fafb !important; display: inline-block !important;">
+            No tienes una cuenta? 
+            <a href="{% url 'principal:registro' %}" class="register-link" style="margin-left: 12px; padding: 4px 8px !important; font-size: 12px !important; border-radius: 12px !important;">
+              <i class="bi bi-person-plus" style="margin-right: 6px;"></i> Registrarse
+            </a>
+          </p>
+          <a href="{% url 'principal:password_reset_request' %}" class="forgot-link" style="padding: 6px 12px; font-size: 13px;" title="¿Olvidó su contraseña?">
+            <i class="bi bi-key"></i>
+          </a>
+          <a href="{% url 'principal:home' %}" class="forgot-link" style="padding: 6px 12px; font-size: 13px;" title="Ir a Inicio">
+            <i class="bi bi-house"></i>
           </a>
         </div>
       </div>
