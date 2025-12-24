@@ -823,7 +823,17 @@ def verify_email(request):
                 for file_info in temp_files_data.values():
                     if os.path.exists(file_info['path']):
                         os.unlink(file_info['path'])
-                error_message = 'Error al crear el usuario. Por favor, intente nuevamente.'
+                
+                # Recopilar errores específicos para mostrar en modal
+                error_messages = []
+                for field, errors in user_creation_form.errors.items():
+                    for error in errors:
+                        error_messages.append(error)
+                
+                if error_messages:
+                    error_message = ' '.join(error_messages)
+                else:
+                    error_message = 'Error al crear el usuario. Por favor, intente nuevamente.'
         else:
             error_message = 'Código incorrecto. Por favor, intente nuevamente.'
 
@@ -2533,7 +2543,9 @@ def eliminar_formulario(request, pk):
 # Vistas para recuperación de contraseña
 import random
 from django.contrib.auth.hashers import make_password
+from django.http import JsonResponse
 from django.contrib.auth.models import User
+from accounts.models import Registro
 
 def password_reset_request(request):
     """
@@ -2686,3 +2698,40 @@ Centro Fray Bartolomé de las Casas'''
             return redirect('principal:password_reset_request')
     
     return render(request, 'registration/password_reset_confirm.html')
+
+# Vistas para validación AJAX en tiempo real
+def validate_username(request):
+    """Validar si el username ya existe"""
+    if request.method == 'GET':
+        username = request.GET.get('username', '').strip()
+        if username:
+            exists = User.objects.filter(username=username).exists()
+            return JsonResponse({
+                'exists': exists,
+                'message': f"El nombre de usuario '{username}' ya existe." if exists else "Nombre de usuario disponible."
+            })
+    return JsonResponse({'exists': False, 'message': ''})
+
+def validate_email(request):
+    """Validar si el email ya existe"""
+    if request.method == 'GET':
+        email = request.GET.get('email', '').strip()
+        if email:
+            exists = User.objects.filter(email=email).exists()
+            return JsonResponse({
+                'exists': exists,
+                'message': f"El correo '{email}' ya está registrado." if exists else "Correo disponible."
+            })
+    return JsonResponse({'exists': False, 'message': ''})
+
+def validate_carnet(request):
+    """Validar si el carnet ya existe"""
+    if request.method == 'GET':
+        carnet = request.GET.get('carnet', '').strip()
+        if carnet:
+            exists = Registro.objects.filter(carnet=carnet).exists()
+            return JsonResponse({
+                'exists': exists,
+                'message': f"El carnet '{carnet}' ya está registrado." if exists else "Carnet disponible."
+            })
+    return JsonResponse({'exists': False, 'message': ''})

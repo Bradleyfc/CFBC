@@ -25,8 +25,8 @@ class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True, label='Correo Electrónico')
     
     # Campos del Registro model
-    nacionalidad = forms.CharField(max_length=150, required=False, label='Nacionalidad')
-    carnet = forms.CharField(max_length=11, required=False, label='Carnet')
+    nacionalidad = forms.CharField(max_length=150, required=True, label='Nacionalidad')
+    carnet = forms.CharField(max_length=11, required=True, label='Carnet')
     foto_carnet = forms.ImageField(required=False, label='Foto del Carnet')
     
     SEXO_CHOICES = [
@@ -36,11 +36,11 @@ class CustomUserCreationForm(UserCreationForm):
     sexo = forms.ChoiceField(choices=SEXO_CHOICES, initial='M', label='Sexo')
     
     image = forms.ImageField(required=False, label='Imagen de perfil')
-    address = forms.CharField(max_length=150, required=False, label='Dirección')
-    location = forms.CharField(max_length=150, required=False, label='Municipio')
-    provincia = forms.CharField(max_length=150, required=False, label='Provincia')
+    address = forms.CharField(max_length=150, required=True, label='Dirección')
+    location = forms.CharField(max_length=150, required=True, label='Municipio')
+    provincia = forms.CharField(max_length=150, required=True, label='Provincia')
     telephone = forms.CharField(max_length=50, required=False, label='Teléfono')
-    movil = forms.CharField(max_length=50, required=False, label='Móvil')
+    movil = forms.CharField(max_length=50, required=True, label='Móvil')
     
     GRADO_CHOICES = [
         ("grado1", "Ninguno"),
@@ -59,7 +59,7 @@ class CustomUserCreationForm(UserCreationForm):
     ]
     ocupacion = forms.ChoiceField(choices=OCUPACION_CHOICES, initial="ocupacion1", label='Ocupación')
     
-    titulo = forms.CharField(max_length=150, required=False, label='Título')
+    titulo = forms.CharField(max_length=150, required=True, label='Título')
     foto_titulo = forms.ImageField(required=False, label='Foto del Título')
     es_religioso = forms.BooleanField(required=False, label='Es Religioso')
     
@@ -88,6 +88,66 @@ class CustomUserCreationForm(UserCreationForm):
                 field.widget.attrs.update({
                     'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
                 })
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError(f"El nombre de usuario '{username}' ya existe en la base de datos.")
+        return username
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError(f"El correo electrónico '{email}' ya está registrado en la base de datos.")
+        return email
+
+    def clean_carnet(self):
+        carnet = self.cleaned_data.get('carnet')
+        if not carnet or not carnet.strip():
+            raise forms.ValidationError("El carnet es obligatorio.")
+        if Registro.objects.filter(carnet=carnet).exists():
+            raise forms.ValidationError(f"El número de carnet '{carnet}' ya está registrado en la base de datos.")
+        return carnet
+
+    def clean_password2(self):
+        password1 = self.cleaned_data.get('password1')
+        password2 = self.cleaned_data.get('password2')
+        
+        if password1 and password2:
+            if password1 != password2:
+                raise forms.ValidationError("Las contraseñas no coinciden.")
+        
+        return password2
+
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        # Validar campos obligatorios
+        required_fields = {
+            'username': 'nombre de usuario',
+            'first_name': 'nombre',
+            'last_name': 'apellidos', 
+            'email': 'correo electrónico',
+            'password1': 'contraseña',
+            'password2': 'confirmación de contraseña',
+            'nacionalidad': 'nacionalidad',
+            'carnet': 'carnet',
+            'address': 'dirección',
+            'location': 'municipio',
+            'provincia': 'provincia',
+            'movil': 'móvil',
+            'titulo': 'título'
+        }
+        
+        missing_fields = []
+        for field_name, field_label in required_fields.items():
+            if not cleaned_data.get(field_name):
+                missing_fields.append(field_label)
+        
+        if missing_fields:
+            raise forms.ValidationError(f"Los siguientes campos obligatorios están vacíos: {', '.join(missing_fields)}.")
+        
+        return cleaned_data
     
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -98,25 +158,45 @@ class CustomUserCreationForm(UserCreationForm):
         if commit:
             user.save()
             
-            # Crear el registro asociado
-            registro = Registro.objects.create(
-                user=user,
-                nacionalidad=self.cleaned_data.get('nacionalidad', ''),
-                carnet=self.cleaned_data.get('carnet', ''),
-                foto_carnet=self.cleaned_data.get('foto_carnet'),
-                sexo=self.cleaned_data.get('sexo', 'M'),
-                image=self.cleaned_data.get('image'),
-                address=self.cleaned_data.get('address', ''),
-                location=self.cleaned_data.get('location', ''),
-                provincia=self.cleaned_data.get('provincia', ''),
-                telephone=self.cleaned_data.get('telephone', ''),
-                movil=self.cleaned_data.get('movil', ''),
-                grado=self.cleaned_data.get('grado', 'grado1'),
-                ocupacion=self.cleaned_data.get('ocupacion', 'ocupacion1'),
-                titulo=self.cleaned_data.get('titulo', ''),
-                foto_titulo=self.cleaned_data.get('foto_titulo'),
-                es_religioso=self.cleaned_data.get('es_religioso', False),
-            )
+            # Actualizar el registro existente creado por la señal
+            try:
+                registro = user.registro
+                registro.nacionalidad = self.cleaned_data.get('nacionalidad', '')
+                registro.carnet = self.cleaned_data.get('carnet', '')
+                registro.foto_carnet = self.cleaned_data.get('foto_carnet') or registro.foto_carnet
+                registro.sexo = self.cleaned_data.get('sexo', 'M')
+                registro.image = self.cleaned_data.get('image') or registro.image
+                registro.address = self.cleaned_data.get('address', '')
+                registro.location = self.cleaned_data.get('location', '')
+                registro.provincia = self.cleaned_data.get('provincia', '')
+                registro.telephone = self.cleaned_data.get('telephone', '')
+                registro.movil = self.cleaned_data.get('movil', '')
+                registro.grado = self.cleaned_data.get('grado', 'grado1')
+                registro.ocupacion = self.cleaned_data.get('ocupacion', 'ocupacion1')
+                registro.titulo = self.cleaned_data.get('titulo', '')
+                registro.foto_titulo = self.cleaned_data.get('foto_titulo') or registro.foto_titulo
+                registro.es_religioso = self.cleaned_data.get('es_religioso', False)
+                registro.save()
+            except Registro.DoesNotExist:
+                # Si por alguna razón no existe el registro, crearlo
+                Registro.objects.create(
+                    user=user,
+                    nacionalidad=self.cleaned_data.get('nacionalidad', ''),
+                    carnet=self.cleaned_data.get('carnet', ''),
+                    foto_carnet=self.cleaned_data.get('foto_carnet'),
+                    sexo=self.cleaned_data.get('sexo', 'M'),
+                    image=self.cleaned_data.get('image'),
+                    address=self.cleaned_data.get('address', ''),
+                    location=self.cleaned_data.get('location', ''),
+                    provincia=self.cleaned_data.get('provincia', ''),
+                    telephone=self.cleaned_data.get('telephone', ''),
+                    movil=self.cleaned_data.get('movil', ''),
+                    grado=self.cleaned_data.get('grado', 'grado1'),
+                    ocupacion=self.cleaned_data.get('ocupacion', 'ocupacion1'),
+                    titulo=self.cleaned_data.get('titulo', ''),
+                    foto_titulo=self.cleaned_data.get('foto_titulo'),
+                    es_religioso=self.cleaned_data.get('es_religioso', False),
+                )
         
         return user
 

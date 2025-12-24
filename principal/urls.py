@@ -76,6 +76,11 @@ urlpatterns = [
     # Rutas para registro
     path('registro/resend-code/', views.registro_resend_code, name='registro_resend_code'),
     
+    # Rutas para validación AJAX
+    path('validate-username/', views.validate_username, name='validate_username'),
+    path('validate-email/', views.validate_email, name='validate_email'),
+    path('validate-carnet/', views.validate_carnet, name='validate_carnet'),
+    
     # Rutas para registro de respuestas de formularios
     path('registro-respuestas/', RegistroRespuestasGeneralView.as_view(), name='registro_respuestas_general'),
     path('registro-respuestas/curso/<int:pk>/', RegistroRespuestasCursoView.as_view(), name='registro_respuestas_curso'),

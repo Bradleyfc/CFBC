@@ -783,4 +783,557 @@
 
 </form>
 
+<!-- Modal de Error para Validaciones con Glassmorphism -->
+<div id="validationErrorModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+        </svg>
+      </div>
+      <h3 class="modal-title">Error de Validación</h3>
+    </div>
+    <div class="modal-message" id="validationErrorMessage">
+      <!-- El mensaje se insertará aquí dinámicamente -->
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="modal-btn modal-btn-cancel" onclick="closeValidationErrorModal()">
+        Entendido
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Modal glassmorphism - Igual que los modales de confirmación */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.modal-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-content {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.2),
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  padding: 32px;
+  max-width: 400px;
+  width: 90%;
+  transform: scale(0.8) translateY(20px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-overlay.show .modal-content {
+  transform: scale(1) translateY(0);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.modal-icon svg {
+  width: 24px;
+  height: 24px;
+  color: #dc2626;
+}
+
+.modal-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #dc2626;
+  margin: 0;
+}
+
+.modal-message {
+  color: #6b7280;
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.modal-btn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 100px;
+}
+
+.modal-btn-cancel {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.modal-btn-cancel:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+}
+
+/* Animación de entrada */
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Responsive para modal */
+@media (max-width: 768px) {
+  .modal-content {
+    padding: 24px;
+    margin: 20px;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+  }
+  
+  .modal-btn {
+    width: 100%;
+  }
+}
+</style>
+
+<script>
+// Variables para controlar el estado de validación
+let validationState = {
+  username: false,
+  email: false,
+  carnet: false, // Ahora el carnet es obligatorio
+  password: false,
+  requiredFields: false
+};
+
+// Función para resaltar palabras clave en rojo
+function highlightKeywords(text) {
+  const keywords = {
+    'nombre de usuario': '<span style="color: #dc2626; font-weight: 600;">nombre de usuario</span>',
+    'correo electrónico': '<span style="color: #dc2626; font-weight: 600;">correo electrónico</span>',
+    'carnet': '<span style="color: #dc2626; font-weight: 600;">carnet</span>',
+    'contraseña': '<span style="color: #dc2626; font-weight: 600;">contraseña</span>',
+    'contraseñas': '<span style="color: #dc2626; font-weight: 600;">contraseñas</span>',
+    'nombre': '<span style="color: #dc2626; font-weight: 600;">nombre</span>',
+    'apellidos': '<span style="color: #dc2626; font-weight: 600;">apellidos</span>',
+    'nacionalidad': '<span style="color: #dc2626; font-weight: 600;">nacionalidad</span>',
+    'dirección': '<span style="color: #dc2626; font-weight: 600;">dirección</span>',
+    'municipio': '<span style="color: #dc2626; font-weight: 600;">municipio</span>',
+    'provincia': '<span style="color: #dc2626; font-weight: 600;">provincia</span>',
+    'móvil': '<span style="color: #dc2626; font-weight: 600;">móvil</span>',
+    'título': '<span style="color: #dc2626; font-weight: 600;">título</span>',
+    'confirmación de contraseña': '<span style="color: #dc2626; font-weight: 600;">confirmación de contraseña</span>',
+    'campos obligatorios': '<span style="color: #dc2626; font-weight: 600;">campos obligatorios</span>',
+    'ya existe': '<span style="color: #dc2626; font-weight: 600;">ya existe</span>',
+    'ya está registrado': '<span style="color: #dc2626; font-weight: 600;">ya está registrado</span>',
+    'no coinciden': '<span style="color: #dc2626; font-weight: 600;">no coinciden</span>',
+    '8 caracteres': '<span style="color: #dc2626; font-weight: 600;">8 caracteres</span>',
+    'muy común': '<span style="color: #dc2626; font-weight: 600;">muy común</span>',
+    'completamente numérica': '<span style="color: #dc2626; font-weight: 600;">completamente numérica</span>',
+    'obligatorio': '<span style="color: #dc2626; font-weight: 600;">obligatorio</span>'
+  };
+  
+  let highlightedText = text;
+  
+  // Aplicar resaltado a cada palabra clave (case insensitive)
+  Object.keys(keywords).forEach(keyword => {
+    const regex = new RegExp(keyword, 'gi');
+    highlightedText = highlightedText.replace(regex, keywords[keyword]);
+  });
+  
+  return highlightedText;
+}
+
+// Función para mostrar modal de error
+function showValidationError(message) {
+  const highlightedMessage = highlightKeywords(message);
+  document.getElementById('validationErrorMessage').innerHTML = highlightedMessage;
+  document.getElementById('validationErrorModal').classList.add('show');
+}
+
+// Función para cerrar modal de error
+function closeValidationErrorModal() {
+  document.getElementById('validationErrorModal').classList.remove('show');
+}
+
+// Función para validar username
+function validateUsername() {
+  const username = document.getElementById('id_username').value.trim();
+  const feedbackElement = document.getElementById('username-feedback');
+  
+  if (!username) {
+    validationState.username = false;
+    if (feedbackElement) feedbackElement.textContent = '';
+    return;
+  }
+
+  fetch(`/validate-username/?username=${encodeURIComponent(username)}`)
+    .then(response => response.json())
+    .then(data => {
+      validationState.username = !data.exists;
+      if (feedbackElement) {
+        feedbackElement.textContent = data.message;
+        feedbackElement.className = data.exists ? 'text-red-600 text-sm mt-1' : 'text-green-600 text-sm mt-1';
+      }
+    })
+    .catch(error => {
+      console.error('Error validating username:', error);
+      validationState.username = false;
+    });
+}
+
+// Función para validar email
+function validateEmail() {
+  const email = document.getElementById('id_email').value.trim();
+  const feedbackElement = document.getElementById('email-feedback');
+  
+  if (!email) {
+    validationState.email = false;
+    if (feedbackElement) feedbackElement.textContent = '';
+    return;
+  }
+
+  fetch(`/validate-email/?email=${encodeURIComponent(email)}`)
+    .then(response => response.json())
+    .then(data => {
+      validationState.email = !data.exists;
+      if (feedbackElement) {
+        feedbackElement.textContent = data.message;
+        feedbackElement.className = data.exists ? 'text-red-600 text-sm mt-1' : 'text-green-600 text-sm mt-1';
+      }
+    })
+    .catch(error => {
+      console.error('Error validating email:', error);
+      validationState.email = false;
+    });
+}
+
+// Función para validar carnet
+function validateCarnet() {
+  const carnet = document.getElementById('id_carnet').value.trim();
+  const feedbackElement = document.getElementById('carnet-feedback');
+  
+  if (!carnet) {
+    validationState.carnet = false; // Ahora el carnet es obligatorio
+    if (feedbackElement) {
+      feedbackElement.textContent = 'El carnet es obligatorio.';
+      feedbackElement.className = 'text-red-600 text-sm mt-1';
+    }
+    return;
+  }
+
+  fetch(`/validate-carnet/?carnet=${encodeURIComponent(carnet)}`)
+    .then(response => response.json())
+    .then(data => {
+      validationState.carnet = !data.exists;
+      if (feedbackElement) {
+        feedbackElement.textContent = data.message;
+        feedbackElement.className = data.exists ? 'text-red-600 text-sm mt-1' : 'text-green-600 text-sm mt-1';
+      }
+    })
+    .catch(error => {
+      console.error('Error validating carnet:', error);
+      validationState.carnet = false;
+    });
+}
+
+// Función para verificar si el formulario es válido
+function isFormValid() {
+  return validationState.username && validationState.email && validationState.carnet && validationState.password && validationState.requiredFields;
+}
+
+// Función para validar contraseñas
+function validatePasswords() {
+  const password1 = document.getElementById('id_password1').value;
+  const password2 = document.getElementById('id_password2').value;
+  
+  let errors = [];
+  
+  // Verificar que las contraseñas no estén vacías
+  if (!password1 || !password2) {
+    errors.push('Ambos campos de contraseña son obligatorios.');
+    validationState.password = false;
+    return errors;
+  }
+  
+  // Verificar que las contraseñas coincidan
+  if (password1 !== password2) {
+    errors.push('Las contraseñas no coinciden.');
+    validationState.password = false;
+    return errors;
+  }
+  
+  // Verificar longitud mínima
+  if (password1.length < 8) {
+    errors.push('La contraseña debe tener al menos 8 caracteres.');
+    validationState.password = false;
+    return errors;
+  }
+  
+  // Verificar que no sea muy común
+  const commonPasswords = ['12345678', 'password', 'qwerty123', '123456789', 'password123'];
+  if (commonPasswords.includes(password1.toLowerCase())) {
+    errors.push('La contraseña es muy común. Elige una más segura.');
+    validationState.password = false;
+    return errors;
+  }
+  
+  // Verificar que no sea solo numérica
+  if (/^\d+$/.test(password1)) {
+    errors.push('La contraseña no puede ser completamente numérica.');
+    validationState.password = false;
+    return errors;
+  }
+  
+  // Verificar que no sea similar al nombre de usuario
+  const username = document.getElementById('id_username').value;
+  if (username && password1.toLowerCase().includes(username.toLowerCase())) {
+    errors.push('La contraseña no puede ser similar al nombre de usuario.');
+    validationState.password = false;
+    return errors;
+  }
+  
+  validationState.password = true;
+  return [];
+}
+
+// Función para validar campos obligatorios
+function validateRequiredFields() {
+  const requiredFields = [
+    { id: 'id_username', name: 'nombre de usuario' },
+    { id: 'id_first_name', name: 'nombre' },
+    { id: 'id_last_name', name: 'apellidos' },
+    { id: 'id_email', name: 'correo electrónico' },
+    { id: 'id_password1', name: 'contraseña' },
+    { id: 'id_password2', name: 'confirmación de contraseña' },
+    { id: 'id_nacionalidad', name: 'nacionalidad' },
+    { id: 'id_carnet', name: 'carnet' },
+    { id: 'id_address', name: 'dirección' },
+    { id: 'id_location', name: 'municipio' },
+    { id: 'id_provincia', name: 'provincia' },
+    { id: 'id_movil', name: 'móvil' },
+    { id: 'id_titulo', name: 'título' }
+  ];
+  
+  let missingFields = [];
+  
+  requiredFields.forEach(field => {
+    const element = document.getElementById(field.id);
+    if (element && !element.value.trim()) {
+      missingFields.push(field.name);
+    }
+  });
+  
+  if (missingFields.length > 0) {
+    validationState.requiredFields = false;
+    return [`Los siguientes campos obligatorios están vacíos: ${missingFields.join(', ')}.`];
+  }
+  
+  validationState.requiredFields = true;
+  return [];
+}
+
+// Event listeners cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+  // Agregar elementos de feedback si no existen
+  const usernameField = document.getElementById('id_username');
+  const emailField = document.getElementById('id_email');
+  const carnetField = document.getElementById('id_carnet');
+  
+  if (usernameField && !document.getElementById('username-feedback')) {
+    const feedback = document.createElement('div');
+    feedback.id = 'username-feedback';
+    feedback.className = 'text-sm mt-1';
+    usernameField.parentNode.appendChild(feedback);
+  }
+  
+  if (emailField && !document.getElementById('email-feedback')) {
+    const feedback = document.createElement('div');
+    feedback.id = 'email-feedback';
+    feedback.className = 'text-sm mt-1';
+    emailField.parentNode.appendChild(feedback);
+  }
+  
+  if (carnetField && !document.getElementById('carnet-feedback')) {
+    const feedback = document.createElement('div');
+    feedback.id = 'carnet-feedback';
+    feedback.className = 'text-sm mt-1';
+    carnetField.parentNode.appendChild(feedback);
+  }
+
+  // Agregar event listeners para validación en tiempo real
+  if (usernameField) {
+    usernameField.addEventListener('blur', validateUsername);
+    usernameField.addEventListener('input', function() {
+      // Debounce para evitar demasiadas peticiones
+      clearTimeout(this.validationTimeout);
+      this.validationTimeout = setTimeout(validateUsername, 500);
+    });
+  }
+
+  if (emailField) {
+    emailField.addEventListener('blur', validateEmail);
+    emailField.addEventListener('input', function() {
+      clearTimeout(this.validationTimeout);
+      this.validationTimeout = setTimeout(validateEmail, 500);
+    });
+  }
+
+  if (carnetField) {
+    carnetField.addEventListener('blur', validateCarnet);
+    carnetField.addEventListener('input', function() {
+      clearTimeout(this.validationTimeout);
+      this.validationTimeout = setTimeout(validateCarnet, 500);
+    });
+  }
+
+  // Agregar validación de contraseñas
+  const password1Field = document.getElementById('id_password1');
+  const password2Field = document.getElementById('id_password2');
+  
+  if (password1Field && password2Field) {
+    // Agregar elementos de feedback para contraseñas si no existen
+    if (!document.getElementById('password-feedback')) {
+      const feedback = document.createElement('div');
+      feedback.id = 'password-feedback';
+      feedback.className = 'text-sm mt-1';
+      password2Field.parentNode.appendChild(feedback);
+    }
+    
+    const validatePasswordsWithFeedback = function() {
+      const errors = validatePasswords();
+      const feedbackElement = document.getElementById('password-feedback');
+      
+      if (errors.length > 0) {
+        feedbackElement.textContent = errors[0]; // Mostrar el primer error
+        feedbackElement.className = 'text-red-600 text-sm mt-1';
+      } else if (password1Field.value && password2Field.value) {
+        feedbackElement.textContent = 'Las contraseñas son válidas.';
+        feedbackElement.className = 'text-green-600 text-sm mt-1';
+      } else {
+        feedbackElement.textContent = '';
+      }
+    };
+    
+    password1Field.addEventListener('blur', validatePasswordsWithFeedback);
+    password2Field.addEventListener('blur', validatePasswordsWithFeedback);
+    password1Field.addEventListener('input', function() {
+      clearTimeout(this.validationTimeout);
+      this.validationTimeout = setTimeout(validatePasswordsWithFeedback, 300);
+    });
+    password2Field.addEventListener('input', function() {
+      clearTimeout(this.validationTimeout);
+      this.validationTimeout = setTimeout(validatePasswordsWithFeedback, 300);
+    });
+  }
+
+  // Interceptar el envío del formulario
+  const form = document.querySelector('form');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      // Validar todos los aspectos del formulario
+      let allErrors = [];
+      
+      // Validar campos obligatorios
+      const requiredFieldErrors = validateRequiredFields();
+      allErrors = allErrors.concat(requiredFieldErrors);
+      
+      // Validar contraseñas
+      const passwordErrors = validatePasswords();
+      allErrors = allErrors.concat(passwordErrors);
+      
+      // Verificar duplicados solo si los campos básicos están llenos
+      if (validationState.requiredFields) {
+        if (!validationState.username) {
+          allErrors.push('El nombre de usuario ya existe en la base de datos.');
+        }
+        if (!validationState.email) {
+          allErrors.push('El correo electrónico ya está registrado en la base de datos.');
+        }
+        if (!validationState.carnet) {
+          allErrors.push('El número de carnet ya está registrado en la base de datos.');
+        }
+      }
+      
+      // Si hay errores, prevenir el envío y mostrar modal
+      if (allErrors.length > 0) {
+        e.preventDefault();
+        showValidationError(allErrors.join(' '));
+        return false;
+      }
+    });
+  }
+});
+
+// Cerrar modal al hacer clic fuera de él
+document.addEventListener('click', function(e) {
+  const modal = document.getElementById('validationErrorModal');
+  if (e.target === modal) {
+    closeValidationErrorModal();
+  }
+});
+
+// Cerrar modal con tecla Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeValidationErrorModal();
+  }
+});
+</script>
+
 {% endblock %}
