@@ -20,6 +20,9 @@ urlpatterns = [
     path('migracion/configurar/', views.configurar_migracion_view, name='configurar_migracion'),
     path('migracion/estado/', views.estado_migracion_ajax, name='estado_migracion'),
     
+    # Combinación de datos
+    path('combinacion/estado/', views.estado_combinacion_ajax, name='estado_combinacion'),
+    
     # Usuarios archivados - DESHABILITADO (ya no es necesario con la nueva implementación de combinación)
     # path('reclamar-usuario/', views.reclamar_usuario_archivado, name='reclamar_usuario'),
     # path('verificar-codigo-reclamacion-tradicional/', views.verificar_codigo_reclamacion_tradicional, name='verificar_codigo_reclamacion_tradicional'),

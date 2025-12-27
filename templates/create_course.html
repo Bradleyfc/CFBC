@@ -249,84 +249,31 @@
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), 0 4px 6px rgba(0, 0, 0, 0.1) !important;
   }
 
-  /* Estilos especiales para campos de fecha con icono de calendario */
-  .date-input-wrapper {
-    position: relative !important;
-    display: inline-block !important;
-    width: 100% !important;
+  /* Estilos específicos para campos glass-input-compact */
+  .glass-input-compact {
+    width: 100%;
+    padding: 0.375rem 0.75rem;
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #374151;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
   }
 
-  .date-input-wrapper input[type="date"],
-  .date-input-wrapper input[type="datetime-local"] {
-    padding-right: 45px !important;
-    cursor: pointer !important;
+  .glass-input-compact:focus {
+    outline: none;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3));
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
 
-  .date-input-wrapper::after {
-    content: '' !important;
-    position: absolute !important;
-    right: 12px !important;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
-    width: 20px !important;
-    height: 20px !important;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='%236b7280'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' d='M6.75 3v2.25M17.25 3v2.25m-10.5 0h10.5v16.5H6.75V5.25zM8.25 7.5h7.5M8.25 10.5h7.5M8.25 13.5h7.5'/%3e%3c/svg%3e") !important;
-    background-repeat: no-repeat !important;
-    background-position: center !important;
-    background-size: contain !important;
-    pointer-events: none !important;
-    z-index: 1 !important;
-  }
-
-  .date-input-wrapper:hover::after {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='%233b82f6'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' d='M6.75 3v2.25M17.25 3v2.25m-10.5 0h10.5v16.5H6.75V5.25zM8.25 7.5h7.5M8.25 10.5h7.5M8.25 13.5h7.5'/%3e%3c/svg%3e") !important;
-  }
-
-  .date-input-wrapper input[type="date"]:focus + .calendar-icon,
-  .date-input-wrapper input[type="datetime-local"]:focus + .calendar-icon,
-  .date-input-wrapper input[type="date"]:focus ~ ::after,
-  .date-input-wrapper input[type="datetime-local"]:focus ~ ::after {
-    color: #2563eb !important;
-  }
-
-  /* Ocultar el icono nativo del navegador en campos de fecha */
-  input[type="date"]::-webkit-calendar-picker-indicator,
-  input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-    opacity: 0 !important;
-    cursor: pointer !important;
-    position: absolute !important;
-    right: 0 !important;
-    width: 45px !important;
-    height: 100% !important;
-  }
-
-  /* Estilos para Firefox */
-  input[type="date"]::-moz-calendar-picker-indicator,
-  input[type="datetime-local"]::-moz-calendar-picker-indicator {
-    opacity: 0 !important;
-  }
-
-  /* Mejorar la apariencia del calendario cuando se abre */
-  input[type="date"]::-webkit-datetime-edit,
-  input[type="datetime-local"]::-webkit-datetime-edit {
-    color: #374151 !important;
-  }
-
-  input[type="date"]::-webkit-datetime-edit-fields-wrapper,
-  input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper {
-    padding: 0 !important;
-  }
-
-  /* Placeholder personalizado para campos de fecha */
-  input[type="date"]:invalid,
-  input[type="datetime-local"]:invalid {
-    color: #9ca3af !important;
-  }
-
-  input[type="date"]:invalid::before,
-  input[type="datetime-local"]:invalid::before {
-    content: attr(placeholder) !important;
-    color: #9ca3af !important;
+  .glass-input-compact:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3));
+    border-color: rgba(59, 130, 246, 0.3);
   }
 
   /* Título principal con efectos modernos */
@@ -704,51 +651,8 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Buscar todos los campos de fecha y datetime-local
-    const dateInputs = document.querySelectorAll('input[type="date"], input[type="datetime-local"]');
-    
-    dateInputs.forEach(function(input) {
-        // Verificar si ya está envuelto
-        if (!input.parentElement.classList.contains('date-input-wrapper')) {
-            // Crear el wrapper
-            const wrapper = document.createElement('div');
-            wrapper.className = 'date-input-wrapper';
-            
-            // Insertar el wrapper antes del input
-            input.parentNode.insertBefore(wrapper, input);
-            
-            // Mover el input dentro del wrapper
-            wrapper.appendChild(input);
-            
-            // Agregar placeholder personalizado si no existe
-            if (!input.getAttribute('placeholder')) {
-                if (input.type === 'date') {
-                    input.setAttribute('placeholder', 'Seleccione una fecha');
-                } else if (input.type === 'datetime-local') {
-                    input.setAttribute('placeholder', 'Seleccione fecha y hora');
-                }
-            }
-        }
-    });
-    
-    // Mejorar la experiencia del usuario con los campos de fecha
-    dateInputs.forEach(function(input) {
-        // Agregar evento para mostrar el calendario al hacer clic en el icono
-        input.addEventListener('click', function() {
-            this.showPicker && this.showPicker();
-        });
-        
-        // Agregar evento para el hover
-        input.addEventListener('mouseenter', function() {
-            this.style.borderColor = '#3b82f6';
-        });
-        
-        input.addEventListener('mouseleave', function() {
-            if (document.activeElement !== this) {
-                this.style.borderColor = '#d1d5db';
-            }
-        });
-    });
+    // Simple initialization - no complex date handling needed
+    console.log('Course form loaded successfully');
 });
 </script>
 

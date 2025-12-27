@@ -1,127 +1,300 @@
+<div class="space-y-4">
+    <!-- Cursos Inscritos Card -->
+    <div class="glass-card">
+        <div class="glass-content">
+            <h5 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <i class="bi bi-book mr-2"></i>
+                Cursos Inscritos
+            </h5>
+            <div class="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent mb-4"></div>
 
-
-<div class="card border rounded-2 shadow p-3 mb-3 mt-3">
-    <div class="card-body">
-        <h5 class="card-title">Cursos Inscritos</h5>
-        <hr>
-        <br>
-        {% if enrolled_courses %}
-            <ul class="list-group list-group-flush">
+            {% if enrolled_courses %}
+            <div class="space-y-4">
                 {% for course in enrolled_courses %}
-                    <li class="list-group-item">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <strong class="fs-5">{{ course.name }}</strong>
-                                <div class="mt-2">
-                                    <p class="mb-1">Estado del curso:
-                                    {% if course.get_dynamic_status == 'F' %}
-                                    <span class="badge bg-danger px-3 py-1.5 text-center" style="min-width: 120px;">{{course.get_dynamic_status_display}}</span>
-                                    {% elif course.get_dynamic_status == 'P' %}
-                                    <span class="badge bg-warning text-dark px-3 py-1.5  text-center" style="min-width: 120px;">{{course.get_dynamic_status_display}}</span>
-                                    {% elif course.get_dynamic_status == 'I' %}
-                                    <span class="badge bg-success px-3 py-1.5 text-center" style="min-width: 120px;">{{course.get_dynamic_status_display}}</span>
-                                    {% elif course.get_dynamic_status == 'IT' %}
-                                    <span class="badge bg-info px-3 py-1.5 text-center" style="min-width: 120px;">{{course.get_dynamic_status_display}}</span>
-                                    {% else %}
-                                    ({{ course.get_dynamic_status_display }})
-                                    {% endif %}
-                                    </p>
-                                </div>
-                            </div>
-                            
-                            <!-- Mostrar estado de matrícula solo para cursos aprobados en inscripción o plazo terminado -->
-                            {% if course.get_dynamic_status == 'I' or course.get_dynamic_status == 'IT' %}
-                                {% if course.solicitud_estado == 'aprobada' %}
-                                <div class="col-md-4">
-                                    <div class="card border-1 shadow-sm">
-                                        <div class="card-body p-2">
-                                            <small class="card-title mb-2 text-center d-block text-muted" style="font-size: 0.8rem;">
-                                                <i class="bi bi-clipboard-check me-1"></i>Estado de Matrícula
-                                            </small>
-                                            <div class="text-center">
-                                                <span class="badge bg-success px-2 py-1" style="font-size: 0.75rem;">
-                                                    <i class="bi bi-check-circle me-1"></i>Matrícula Aprobada
-                                                </span>
-                                                {% if course.fecha_revision %}
-                                                    <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">
-                                                        <i class="bi bi-calendar-check me-1"></i>
-                                                        {{ course.fecha_revision|date:"d/m/Y" }}
-                                                    </small>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endif %}
-                            {% endif %}
-                        </div>
-                        
-                        {% if course.get_dynamic_status == 'P' or course.get_dynamic_status == 'F' %}
-                            <div class="mt-2">
-                                <a href="{% url 'principal:student_course_attendances' student_id=user.id course_id=course.id %}" class="btn btn-info btn-sm float-end">
-                                  <i class="bi bi-calendar-check"></i> Ver asistencias
-                                </a>
-                                <a href="{% url 'principal:student_course_notes' student_id=user.id course_id=course.id %}" class="btn btn-success btn-sm float-end me-2">
-                                  <i class="bi bi-clipboard-data"></i> Ver Notas
-                                </a>
-                            </div>
-                        {% endif %}
-                        
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>No estás inscrito en ningún curso actualmente.</p>
-        {% endif %}
-    </div>
-</div>
-
-<!-- Sección de Cursos Pendientes -->
-{% if pending_courses %}
-<div class="card border rounded-2 shadow p-3 mb-3">
-    <div class="card-body">
-        <h5 class="card-title">
-            <i class="bi bi-clock-history me-2"></i>Cursos Pendientes
-        </h5>
-        <hr>
-        <p class="text-muted mb-3">Cursos con solicitudes esperando revisión del profesor</p>
-        
-        <ul class="list-group list-group-flush">
-            {% for course in pending_courses %}
-                <li class="list-group-item">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <strong class="fs-5">{{ course.name }}</strong>
-                            <div class="mt-2">
-                                <p class="mb-1">Estado del curso:
-                                {% if course.get_dynamic_status == 'I' %}
-                                <span class="badge bg-success px-3 py-1.5 text-center" style="min-width: 120px;">{{course.get_dynamic_status_display}}</span>
+                <div class="glass-course-item">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Course Info Column -->
+                        <div class="md:col-span-2">
+                            <h6 class="text-lg font-bold text-gray-800 mb-2">{{ course.name }}</h6>
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-sm text-gray-600">Estado del curso:</span>
+                                {% if course.get_dynamic_status == 'F' %}
+                                <span class="glass-badge-status glass-badge-red">
+                                    {{course.get_dynamic_status_display}}
+                                </span>
+                                {% elif course.get_dynamic_status == 'P' %}
+                                <span class="glass-badge-status glass-badge-yellow">
+                                    {{course.get_dynamic_status_display}}
+                                </span>
+                                {% elif course.get_dynamic_status == 'I' %}
+                                <span class="glass-badge-status glass-badge-green">
+                                    {{course.get_dynamic_status_display}}
+                                </span>
                                 {% elif course.get_dynamic_status == 'IT' %}
-                                <span class="badge bg-info px-3 py-1.5 text-center" style="min-width: 120px;">{{course.get_dynamic_status_display}}</span>
+                                <span class="glass-badge-status glass-badge-blue">
+                                    {{course.get_dynamic_status_display}}
+                                </span>
                                 {% endif %}
-                                </p>
                             </div>
                         </div>
-                        
-                        <div class="col-md-4">
-                            <div class="card border-warning">
-                                <div class="card-body p-2 bg-warning bg-opacity-10">
-                                    <div class="text-center">
-                                        <span class="badge bg-warning text-dark px-2 py-1" style="font-size: 0.75rem;">
-                                            <i class="bi bi-clock me-1"></i>Pendiente de Revisión
-                                        </span>
-                                        <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">
-                                            <i class="bi bi-info-circle me-1"></i>
-                                            Esperando respuesta del profesor
-                                        </small>
-                                    </div>
+
+                        <!-- Enrollment Status Column -->
+                        {% if course.get_dynamic_status == 'I' or course.get_dynamic_status == 'IT' %}
+                        {% if course.solicitud_estado == 'aprobada' %}
+                        <div class="md:col-span-1">
+                            <div class="glass-enrollment-card">
+                                <div class="text-center">
+                                    <p class="text-xs text-gray-600 mb-2">
+                                        <i class="bi bi-clipboard-check mr-1"></i>
+                                        Estado de Matrícula
+                                    </p>
+                                    <span class="glass-badge-enrollment glass-badge-green-enrollment">
+                                        <i class="bi bi-check-circle mr-1"></i>
+                                        Matrícula Aprobada
+                                    </span>
+                                    {% if course.fecha_revision %}
+                                    <p class="text-xs text-gray-500 mt-2">
+                                        <i class="bi bi-calendar-check mr-1"></i>
+                                        {{ course.fecha_revision|date:"d/m/Y" }}
+                                    </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+
+                    <!-- Action Buttons -->
+                    {% if course.get_dynamic_status == 'P' or course.get_dynamic_status == 'F' %}
+                    <div class="flex flex-col gap-2 mt-3">
+                        <a href="{% url 'principal:student_course_attendances' student_id=user.id course_id=course.id %}"
+                            class="glass-action-button glass-action-info w-full">
+                            <i class="bi bi-calendar-check mr-1"></i>
+                            Ver asistencias
+                        </a>
+                        <a href="{% url 'principal:student_course_notes' student_id=user.id course_id=course.id %}"
+                            class="glass-action-button glass-action-success w-full">
+                            <i class="bi bi-clipboard-data mr-1"></i>
+                            Ver Notas
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="glass-alert glass-alert-info">
+                <i class="bi bi-info-circle mr-2"></i>
+                No estás inscrito en ningún curso actualmente.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Cursos Pendientes Card -->
+    {% if pending_courses %}
+    <div class="glass-card">
+        <div class="glass-content">
+            <h5 class="text-xl font-bold text-gray-800 mb-2 flex items-center">
+                <i class="bi bi-clock-history mr-2"></i>
+                Cursos Pendientes
+            </h5>
+            <p class="text-sm text-gray-600 mb-4">Cursos con solicitudes esperando revisión del profesor</p>
+            <div class="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent mb-4"></div>
+
+            <div class="space-y-4">
+                {% for course in pending_courses %}
+                <div class="glass-course-item">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Course Info Column -->
+                        <div class="md:col-span-2">
+                            <h6 class="text-lg font-bold text-gray-800 mb-2">{{ course.name }}</h6>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-gray-600">Estado del curso:</span>
+                                {% if course.get_dynamic_status == 'I' %}
+                                <span class="glass-badge-status glass-badge-green">
+                                    {{course.get_dynamic_status_display}}
+                                </span>
+                                {% elif course.get_dynamic_status == 'IT' %}
+                                <span class="glass-badge-status glass-badge-blue">
+                                    {{course.get_dynamic_status_display}}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Pending Status Column -->
+                        <div class="md:col-span-1">
+                            <div class="glass-pending-card">
+                                <div class="text-center">
+                                    <span class="glass-badge-pending">
+                                        <i class="bi bi-clock mr-1"></i>
+                                        Pendiente de Revisión
+                                    </span>
+                                    <p class="text-xs text-gray-600 mt-2">
+                                        <i class="bi bi-info-circle mr-1"></i>
+                                        Esperando respuesta del profesor
+                                    </p>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </li>
-            {% endfor %}
-        </ul>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
     </div>
+    {% endif %}
 </div>
-{% endif %}
+
+<style>
+    /* Glass Course Item */
+    .glass-course-item {
+        padding: 1.25rem;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .glass-course-item:hover {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3));
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Glass Badge Status */
+    .glass-badge-status {
+        display: inline-block;
+        padding: 0.375rem 0.75rem;
+        border-radius: 16px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        white-space: nowrap;
+    }
+
+    .glass-badge-red {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.2));
+        color: #7f1d1d;
+    }
+
+    .glass-badge-yellow {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(217, 119, 6, 0.2));
+        color: #78350f;
+    }
+
+    .glass-badge-green {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+        color: #14532d;
+    }
+
+    .glass-badge-blue {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        color: #1e3a8a;
+    }
+
+    /* Glass Enrollment Card */
+    .glass-enrollment-card {
+        padding: 0.75rem;
+        border-radius: 10px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3));
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .glass-badge-enrollment {
+        display: inline-block;
+        padding: 0.5rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .glass-badge-green-enrollment {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+        color: #14532d;
+    }
+
+    /* Glass Pending Card */
+    .glass-pending-card {
+        padding: 0.75rem;
+        border-radius: 10px;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1));
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .glass-badge-pending {
+        display: inline-block;
+        padding: 0.5rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(217, 119, 6, 0.2));
+        color: #78350f;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Glass Action Button */
+    .glass-action-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.625rem 1rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+        white-space: nowrap;
+    }
+
+    .glass-action-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .glass-action-info {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        color: #1e3a8a;
+    }
+
+    .glass-action-success {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+        color: #14532d;
+    }
+
+    /* Glass Alert */
+    .glass-alert {
+        padding: 1rem;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+    }
+
+    .glass-alert-info {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        color: #1e3a8a;
+    }
+</style>

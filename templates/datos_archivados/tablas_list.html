@@ -1,410 +1,1009 @@
 {% extends 'base.html' %}
 
-{% block title %}Tablas Archivadas{% endblock %}
-
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-success text-white">
-                    <h3 class="card-title mb-0">
-                        <i class="bi bi-table"></i>
-                        Tablas Archivadas
+<!-- Background Section with Gradient -->
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-30"
+        style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;">
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        <!-- Page Title -->
+        <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Tablas Archivadas</h2>
+
+        <!-- Search Card -->
+        <div class="glass-card mb-6">
+            <div class="glass-header">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <i class="bi bi-search mr-2"></i>
+                    Buscar en Datos Archivados
+                </h3>
+            </div>
+            <div class="glass-content">
+                <form method="GET" id="searchForm">
+                    <div class="flex flex-wrap gap-3 mb-4 items-end">
+                        <div class="flex-1 min-w-64">
+                            <label for="searchInput" class="block text-xs font-medium text-gray-600 mb-1">Término de búsqueda:</label>
+                            <div class="flex">
+                                <input type="text" 
+                                       class="glass-input-compact flex-1 rounded-r-none" 
+                                       id="searchInput" 
+                                       name="search" 
+                                       value="{{ search_query }}"
+                                       placeholder="Ingrese término de búsqueda..."
+                                       autocomplete="off">
+                                <button class="glass-button glass-button-secondary rounded-l-none border-l-0" type="button" id="clearSearch" title="Limpiar búsqueda">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex-1 min-w-48">
+                            <label for="searchType" class="block text-xs font-medium text-gray-600 mb-1">Tipo de búsqueda:</label>
+                            <select class="glass-select-compact" id="searchType" name="search_type">
+                                <option value="global" {% if search_type == 'global' or not search_type %}selected{% endif %}>
+                                    Búsqueda global (todo)
+                                </option>
+                                <option value="tabla" {% if search_type == 'tabla' %}selected{% endif %}>
+                                    Solo nombres de tablas
+                                </option>
+                                <option value="contenido" {% if search_type == 'contenido' %}selected{% endif %}>
+                                    Solo contenido de registros
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-wrap gap-2 justify-end">
+                        <button type="submit" class="glass-button glass-button-primary">
+                            <i class="bi bi-search mr-2"></i>
+                            Buscar
+                        </button>
+                        <button type="button" class="glass-button glass-button-success" id="btnBusquedaRapida">
+                            <i class="bi bi-lightning mr-2"></i>
+                            Búsqueda Rápida
+                        </button>
+                        <a href="{% url 'datos_archivados:dashboard' %}" class="glass-button glass-button-secondary group hover:scale-105 transition-all duration-200">
+                            <i class="bi bi-house-door mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                            <span class="font-medium">Ir al Dashboard</span>
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Quick Search Results -->
+        <div id="quickSearchResults" class="glass-card mb-6 hidden">
+            <div class="glass-header">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                        <i class="bi bi-lightning-fill mr-2"></i>
+                        Resultados de Búsqueda Rápida
                     </h3>
+                    <button type="button" class="glass-button glass-button-secondary" id="closeQuickSearch">
+                        <i class="bi bi-x"></i>
+                    </button>
                 </div>
-                <div class="card-body">
-                    <!-- Barra de búsqueda -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <div class="card bg-light">
-                                <div class="card-body py-3">
-                                    <form method="GET" id="searchForm" class="row g-3 align-items-end">
-                                        <div class="col-md-5">
-                                            <label for="searchInput" class="form-label">
-                                                <i class="bi bi-search"></i> Buscar en datos archivados
-                                            </label>
-                                            <div class="input-group">
-                                                <input type="text" 
-                                                       class="form-control" 
-                                                       id="searchInput" 
-                                                       name="search" 
-                                                       value="{{ search_query }}"
-                                                       placeholder="Ingrese término de búsqueda..."
-                                                       autocomplete="off">
-                                                <button class="btn btn-outline-secondary" type="button" id="clearSearch" title="Limpiar búsqueda">
-                                                    <i class="bi bi-x-circle"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <label for="searchType" class="form-label">Tipo de búsqueda</label>
-                                            <select class="form-select" id="searchType" name="search_type">
-                                                <option value="tabla" {% if search_type == 'tabla' %}selected{% endif %}>
-                                                    Solo nombres de tablas
-                                                </option>
-                                                <option value="contenido" {% if search_type == 'contenido' %}selected{% endif %}>
-                                                    Solo contenido de registros
-                                                </option>
-                                                <option value="global" {% if search_type == 'global' %}selected{% endif %}>
-                                                    Búsqueda global (todo)
-                                                </option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <button type="submit" class="btn btn-primary w-100">
-                                                <i class="bi bi-search"></i> Buscar
-                                            </button>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <button type="button" class="btn btn-success w-100" id="btnBusquedaRapida">
-                                                <i class="bi bi-lightning"></i> Búsqueda Rápida
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            </div>
+            <div class="glass-content" id="quickSearchContent">
+                <!-- Contenido dinámico -->
+            </div>
+        </div>
 
-                    <!-- Resultados de búsqueda rápida -->
-                    <div id="quickSearchResults" class="mb-4" style="display: none;">
-                        <div class="card border-success">
-                            <div class="card-header bg-success text-white">
-                                <h6 class="mb-0">
-                                    <i class="bi bi-lightning-fill"></i> Resultados de Búsqueda Rápida
-                                    <button type="button" class="btn btn-sm btn-outline-light float-end" id="closeQuickSearch">
-                                        <i class="bi bi-x"></i>
-                                    </button>
-                                </h6>
-                            </div>
-                            <div class="card-body" id="quickSearchContent">
-                                <!-- Contenido dinámico -->
-                            </div>
-                        </div>
+        <!-- Action Bar -->
+        <div class="glass-card mb-6">
+            <div class="glass-content">
+                <div class="flex flex-wrap gap-3 justify-between items-center">
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" class="glass-button glass-button-success" id="btnCombinar">
+                            <i class="bi bi-arrow-down-up mr-2"></i>
+                            Combinar Datos
+                        </button>
+                        <button type="button" class="glass-button glass-button-info" id="btnModoSeleccion">
+                            <i class="bi bi-check-square mr-2"></i>
+                            Seleccionar Tablas
+                        </button>
+                        <button type="button" class="glass-button glass-button-danger opacity-50 hidden" id="btnEliminar">
+                            <i class="bi bi-trash mr-2"></i>
+                            Eliminar Seleccionadas (<span id="contadorSeleccionadas">0</span>)
+                        </button>
                     </div>
-
-                    <!-- Barra de acciones y estadísticas -->
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <a href="{% url 'datos_archivados:dashboard' %}" class="btn btn-primary">
-                                <i class="bi bi-arrow-left"></i> Volver al Dashboard
+                    <div class="flex items-center gap-2">
+                        {% if is_filtered %}
+                            <span class="glass-badge glass-badge-warning">
+                                <i class="bi bi-funnel mr-1"></i>
+                                Filtrado: {{ total_tablas }} tablas | {{ total_registros_filtrados }} registros
+                            </span>
+                            <a href="{% url 'datos_archivados:tablas_list' %}" class="glass-button glass-button-secondary">
+                                <i class="bi bi-x-circle mr-1"></i>
+                                Limpiar filtros
                             </a>
-                            <button type="button" class="btn btn-success" id="btnCombinar">
-                                <i class="bi bi-arrow-down-up"></i> Combinar Datos
-                            </button>
-                            <button type="button" class="btn btn-info" id="btnModoSeleccion">
-                                <i class="bi bi-check-square"></i> Seleccionar Tablas
-                            </button>
-                            <button type="button" class="btn btn-danger" id="btnEliminar" style="display: none;" disabled>
-                                <i class="bi bi-trash"></i> Eliminar Seleccionadas (<span id="contadorSeleccionadas">0</span>)
-                            </button>
-                        </div>
-                        <div class="col-md-6 text-end">
-                            {% if is_filtered %}
-                                <span class="badge bg-warning fs-6 me-2">
-                                    <i class="bi bi-funnel"></i> Filtrado: {{ total_tablas }} tablas | {{ total_registros_filtrados }} registros
-                                </span>
-                                <a href="{% url 'datos_archivados:tablas_list' %}" class="btn btn-sm btn-outline-secondary">
-                                    <i class="bi bi-x-circle"></i> Limpiar filtros
-                                </a>
-                            {% else %}
-                                <span class="badge bg-info fs-6">
-                                    <i class="bi bi-table"></i> {{ total_tablas }} tablas | 
-                                    <i class="bi bi-database"></i> {{ total_registros }} registros totales
-                                </span>
-                            {% endif %}
-                        </div>
+                        {% else %}
+                            <span class="glass-badge glass-badge-info">
+                                <i class="bi bi-table mr-1"></i>
+                                {{ total_tablas }} tablas | 
+                                <i class="bi bi-database ml-2 mr-1"></i>
+                                {{ total_registros }} registros totales
+                            </span>
+                        {% endif %}
                     </div>
-
-                    <!-- Mensaje de filtros activos -->
-                    {% if is_filtered %}
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle"></i>
-                        <strong>Filtros activos:</strong> 
-                        Búsqueda "{{ search_query }}" en 
-                        {% if search_type == 'tabla' %}nombres de tablas
-                        {% elif search_type == 'contenido' %}contenido de registros
-                        {% else %}todos los campos{% endif %}
-                        - Mostrando {{ total_tablas }} de {{ total_registros }} tablas totales
-                    </div>
-                    {% endif %}
-                    
-                    {% if tablas_stats %}
-                    <div class="alert alert-success">
-                        <i class="bi bi-check-circle"></i> Se encontraron <strong>{{ total_tablas }}</strong> tablas con datos archivados
-                    </div>
-                    
-                    <div class="row">
-                        {% for tabla in tablas_stats %}
-                        <div class="col-md-6 col-lg-4 mb-4">
-                            <div class="card h-100 shadow-sm hover-shadow tabla-card" data-tabla="{{ tabla.tabla_origen }}">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <h5 class="card-title mb-0 flex-grow-1">
-                                            <i class="bi bi-table text-primary"></i>
-                                            {{ tabla.tabla_origen }}
-                                        </h5>
-                                        <div class="form-check checkbox-seleccion" style="display: none;">
-                                            <input class="form-check-input tabla-checkbox fs-4" type="checkbox" 
-                                                   value="{{ tabla.tabla_origen }}" 
-                                                   id="check_{{ forloop.counter }}"
-                                                   style="cursor: pointer; width: 1.5em; height: 1.5em;">
-                                        </div>
-                                    </div>
-                                    <hr>
-                                    <div class="mb-3">
-                                        <p class="mb-2">
-                                            <i class="bi bi-database text-info"></i>
-                                            <strong>Registros:</strong> 
-                                            <span class="badge bg-info">{{ tabla.total_registros }}</span>
-                                        </p>
-                                        <p class="mb-2">
-                                            <i class="bi bi-clock text-secondary"></i>
-                                            <strong>Última migración:</strong><br>
-                                            <small>{{ tabla.ultima_migracion|date:"d/m/Y H:i" }}</small>
-                                        </p>
-                                    </div>
-                                    <a href="{% url 'datos_archivados:datos_list' tabla.tabla_origen %}" 
-                                       class="btn btn-success w-100 btn-ver-registros">
-                                        <i class="bi bi-eye"></i> Ver Registros
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <div class="alert alert-info">
-                        <h5><i class="bi bi-info-circle"></i> No hay datos archivados</h5>
-                        <p>Aún no se han migrado datos desde la base de datos MariaDB.</p>
-                        <p>Para migrar datos:</p>
-                        <ol>
-                            <li>Vaya al <a href="{% url 'datos_archivados:dashboard' %}">Dashboard</a></li>
-                            <li>Haga clic en "Configurar Migración"</li>
-                            <li>Ingrese los datos de conexión de su base de datos MariaDB</li>
-                            <li>El sistema migrará automáticamente todos los datos</li>
-                        </ol>
-                    </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
+
+        <!-- Filter Info -->
+        {% if is_filtered %}
+        <div class="glass-alert glass-alert-info mb-6">
+            <i class="bi bi-info-circle mr-2"></i>
+            <strong>Filtros activos:</strong> 
+            Búsqueda "{{ search_query }}" en 
+            {% if search_type == 'tabla' %}nombres de tablas
+            {% elif search_type == 'contenido' %}contenido de registros
+            {% else %}todos los campos{% endif %}
+            - Mostrando {{ total_tablas }} de {{ total_registros }} tablas totales
+        </div>
+        {% endif %}
+        
+        {% if tablas_stats %}
+        <!-- Success Message -->
+        <div class="glass-alert glass-alert-success mb-6">
+            <i class="bi bi-check-circle mr-2"></i>
+            Se encontraron <strong>{{ total_tablas }}</strong> tablas con datos archivados
+        </div>
+        
+        <!-- Tables Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for tabla in tablas_stats %}
+            <div class="glass-card tabla-card hover-lift" data-tabla="{{ tabla.tabla_origen }}">
+                <div class="glass-content">
+                    <div class="flex justify-between items-start mb-4">
+                        <h4 class="text-lg font-bold text-gray-800 flex items-center flex-1">
+                            <i class="bi bi-table text-blue-600 mr-2"></i>
+                            {{ tabla.tabla_origen }}
+                        </h4>
+                        <div class="checkbox-seleccion hidden">
+                            <input class="tabla-checkbox w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2" 
+                                   type="checkbox" 
+                                   value="{{ tabla.tabla_origen }}" 
+                                   id="check_{{ forloop.counter }}">
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3 mb-4">
+                        <div class="flex items-center">
+                            <i class="bi bi-database text-blue-500 mr-2"></i>
+                            <span class="text-sm text-gray-600 mr-2">Registros:</span>
+                            <span class="glass-badge glass-badge-info">{{ tabla.total_registros }}</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="bi bi-clock text-gray-500 mr-2"></i>
+                            <span class="text-sm text-gray-600">Última migración:</span>
+                        </div>
+                        <div class="text-xs text-gray-500 ml-6">
+                            {{ tabla.ultima_migracion|date:"d/m/Y H:i" }}
+                        </div>
+                    </div>
+                    
+                    <a href="{% url 'datos_archivados:datos_list' tabla.tabla_origen %}" 
+                       class="glass-button glass-button-success w-full btn-ver-registros">
+                        <i class="bi bi-eye mr-2"></i>
+                        Ver Registros
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="glass-alert glass-alert-info">
+            <div class="text-center">
+                <i class="bi bi-info-circle text-4xl text-blue-500 mb-4"></i>
+                <h4 class="text-xl font-bold text-gray-800 mb-2">No hay datos archivados</h4>
+                <p class="text-gray-600 mb-4">Aún no se han migrado datos desde la base de datos MariaDB.</p>
+                <div class="text-left max-w-md mx-auto">
+                    <p class="font-semibold text-gray-700 mb-2">Para migrar datos:</p>
+                    <ol class="list-decimal list-inside space-y-1 text-sm text-gray-600">
+                        <li>Vaya al <a href="{% url 'datos_archivados:dashboard' %}" class="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105">
+                            <i class="bi bi-house-door mr-2"></i>
+                            Dashboard
+                        </a></li>
+                        <li>Haga clic en <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-200 text-black text-xs font-bold">
+                            <i class="bi bi-gear mr-2"></i>
+                            Configurar Migración
+                        </span></li>
+                        <li>Ingrese los datos de conexión de su base de datos MariaDB</li>
+                        <li>El sistema migrará automáticamente todos los datos</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 
+<!-- Modal de Error - Sin Datos para Combinar -->
+<div id="errorModalCombinar" class="modal-overlay hidden">
+  <div class="modal-content">
+    <div class="modal-header-danger">
+      <h3 class="modal-title">
+        <i class="bi bi-exclamation-circle mr-2"></i>
+        Sin Datos para Combinar
+      </h3>
+      <button type="button" class="modal-close-btn" id="closeErrorModalCombinar">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="glass-alert glass-alert-warning mb-4">
+        <i class="bi bi-info-circle-fill mr-2"></i>
+        <div>
+          <p class="font-semibold mb-2">No se encontraron datos archivados para combinar.</p>
+          <p class="text-sm">Para poder combinar datos, primero debe migrar información desde la base de datos MariaDB.</p>
+        </div>
+      </div>
+      
+      <div class="text-left">
+        <p class="font-semibold text-gray-700 mb-2">Para migrar datos:</p>
+        <ol class="list-decimal list-inside space-y-1 text-sm text-gray-600">
+          <li>Vaya al <a href="{% url 'datos_archivados:dashboard' %}" class="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105">
+            <i class="bi bi-house-door mr-2"></i>
+            Dashboard
+          </a></li>
+          <li>Haga clic en <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-200 text-black text-xs font-bold">
+            <i class="bi bi-gear mr-2"></i>
+            Configurar Migración
+          </span></li>
+          <li>Ingrese los datos de conexión de su base de datos MariaDB</li>
+          <li>El sistema migrará automáticamente todos los datos</li>
+          <li>Una vez migrados, podrá combinar los datos con el sistema actual</li>
+        </ol>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <a href="{% url 'datos_archivados:dashboard' %}" class="glass-button glass-button-primary group hover:scale-105 transition-all duration-200">
+        <i class="bi bi-house-door mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+        <span class="font-medium">Ir al Dashboard</span>
+      </a>
+      <button type="button" class="glass-button glass-button-success" onclick="hideErrorModalCombinar()">
+        <i class="bi bi-check-circle mr-2"></i>
+        Entendido
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal de Confirmación de Combinación -->
-<div class="modal fade" id="modalConfirmacionCombinacion" tabindex="-1" aria-labelledby="modalCombinacionLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title" id="modalCombinacionLabel">
-                    <i class="bi bi-arrow-down-up"></i> Combinar Datos Archivados
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle-fill"></i>
+<div id="modalConfirmacionCombinacion" class="modal-overlay hidden">
+    <div class="modal-content-large">
+        <div class="modal-header-success">
+            <h3 class="modal-title">
+                <i class="bi bi-arrow-down-up mr-2"></i>
+                Combinar Datos Archivados
+            </h3>
+            <button type="button" class="modal-close-btn" id="closeModalCombinacion">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="glass-alert glass-alert-info mb-4">
+                <i class="bi bi-info-circle-fill mr-2"></i>
+                <div>
                     <strong>¿Qué hace esta función?</strong>
-                    <p class="mb-0 mt-2">Esta función combinará <strong>TODA</strong> la información de las tablas archivadas con las tablas activas de su base de datos:</p>
-                    <ul class="mt-2 mb-0">
+                    <p class="mt-2 mb-2">Esta función combinará <strong>TODA</strong> la información de las tablas archivadas con las tablas activas de su base de datos:</p>
+                    <ul class="mt-2 mb-0 list-disc list-inside space-y-1">
                         <li><strong>Copia TODOS los campos</strong> de cada registro</li>
                         <li><strong>Crea campos automáticamente</strong> si no existen en las tablas actuales</li>
                         <li><strong>Preserva contraseñas hasheadas</strong> para que los usuarios puedan iniciar sesión</li>
                     </ul>
                 </div>
-                
-                <div class="mb-3">
-                    <h6><i class="bi bi-diagram-3"></i> Proceso de Combinación:</h6>
-                    <ul class="list-group">
-                        <li class="list-group-item">
-                            <strong>auth_user</strong> → Se combinarán con la tabla <code>auth_user</code> actual
-                            <br><small class="text-muted">✓ Usuarios archivados se fusionarán con usuarios existentes</small>
-                            <br><small class="text-success"><strong>✓ Contraseñas se procesarán automáticamente:</strong></small>
-                            <br><small class="text-muted">&nbsp;&nbsp;&nbsp;• Hasheadas → Se copian directamente</small>
-                            <br><small class="text-muted">&nbsp;&nbsp;&nbsp;• Texto plano → Se hashean automáticamente</small>
-                            <br><small class="text-success">✓ Los usuarios podrán iniciar sesión con sus contraseñas originales</small>
-                        </li>
-                        <li class="list-group-item">
-                            <strong>auth_user_groups</strong> → Se asignarán grupos a usuarios
-                            <br><small class="text-muted">✓ Los grupos se crearán automáticamente si no existen</small>
-                        </li>
-                        <li class="list-group-item">
-                            <strong>Docencia_studentpersonalinformation</strong> → Se combinarán con <code>accounts_registro</code>
-                            <br><small class="text-muted">✓ Los campos coincidentes se mantendrán</small>
-                            <br><small class="text-muted">✓ Los nuevos campos se agregarán automáticamente</small>
-                            <br><small class="text-info">✓ Los usuarios se asignarán al grupo <strong>Estudiantes</strong></small>
-                        </li>
-                        <li class="list-group-item">
-                            <strong>Docencia_teacherpersonalinformation</strong> → Se combinarán con <code>accounts_registro</code>
-                            <br><small class="text-muted">✓ Los campos coincidentes se mantendrán</small>
-                            <br><small class="text-muted">✓ Los nuevos campos se agregarán automáticamente</small>
-                            <br><small class="text-success"><strong>✓ Los usuarios se asignarán al grupo PROFESORES</strong></small>
-                        </li>
-                        <li class="list-group-item">
-                            <strong>Todas las demás tablas</strong> → Cursos, matrículas, asistencias, calificaciones, etc.
-                            <br><small class="text-muted">✓ Se combinarán automáticamente manteniendo las relaciones</small>
-                        </li>
-                    </ul>
+            </div>
+            
+            <div class="mb-4">
+                <h4 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                    <i class="bi bi-diagram-3 mr-2"></i>
+                    Proceso de Combinación:
+                </h4>
+                <div class="space-y-3">
+                    <div class="glass-card-small">
+                        <div class="p-3">
+                            <strong class="text-blue-600">auth_user</strong> → Se combinarán con la tabla <code class="bg-gray-100 px-1 rounded">auth_user</code> actual
+                            <div class="text-sm text-gray-600 mt-1">✓ Usuarios archivados se fusionarán con usuarios existentes</div>
+                            <div class="text-sm text-green-600 mt-1"><strong>✓ Contraseñas se procesarán automáticamente:</strong></div>
+                            <div class="text-sm text-gray-500 ml-4">• Hasheadas → Se copian directamente</div>
+                            <div class="text-sm text-gray-500 ml-4">• Texto plano → Se hashean automáticamente</div>
+                            <div class="text-sm text-green-600 mt-1">✓ Los usuarios podrán iniciar sesión con sus contraseñas originales</div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-card-small">
+                        <div class="p-3">
+                            <strong class="text-blue-600">auth_user_groups</strong> → Se asignarán grupos a usuarios
+                            <div class="text-sm text-gray-600 mt-1">✓ Los grupos se crearán automáticamente si no existen</div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-card-small">
+                        <div class="p-3">
+                            <strong class="text-blue-600">Docencia_studentpersonalinformation</strong> → Se combinarán con <code class="bg-gray-100 px-1 rounded">accounts_registro</code>
+                            <div class="text-sm text-gray-600 mt-1">✓ Los campos coincidentes se mantendrán</div>
+                            <div class="text-sm text-gray-600">✓ Los nuevos campos se agregarán automáticamente</div>
+                            <div class="text-sm text-blue-600">✓ Los usuarios se asignarán al grupo <strong>Estudiantes</strong></div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-card-small">
+                        <div class="p-3">
+                            <strong class="text-blue-600">Docencia_teacherpersonalinformation</strong> → Se combinarán con <code class="bg-gray-100 px-1 rounded">accounts_registro</code>
+                            <div class="text-sm text-gray-600 mt-1">✓ Los campos coincidentes se mantendrán</div>
+                            <div class="text-sm text-gray-600">✓ Los nuevos campos se agregarán automáticamente</div>
+                            <div class="text-sm text-green-600"><strong>✓ Los usuarios se asignarán al grupo PROFESORES</strong></div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-card-small">
+                        <div class="p-3">
+                            <strong class="text-blue-600">Todas las demás tablas</strong> → Cursos, matrículas, asistencias, calificaciones, etc.
+                            <div class="text-sm text-gray-600 mt-1">✓ Se combinarán automáticamente manteniendo las relaciones</div>
+                        </div>
+                    </div>
                 </div>
-                
-                <div class="alert alert-warning">
-                    <i class="bi bi-exclamation-triangle-fill"></i>
+            </div>
+            
+            <div class="glass-alert glass-alert-warning mb-4">
+                <i class="bi bi-exclamation-triangle-fill mr-2"></i>
+                <div>
                     <strong>Importante:</strong>
-                    <ul class="mb-0">
+                    <ul class="mt-2 mb-0 list-disc list-inside space-y-1 text-sm">
                         <li>Los datos existentes no se eliminarán</li>
                         <li>Los registros duplicados se actualizarán</li>
                         <li>Los campos nuevos se agregarán a la tabla destino</li>
                         <li><strong>TODOS los campos se copiarán automáticamente</strong></li>
                         <li><strong>Los campos faltantes se crearán automáticamente</strong> en las tablas actuales</li>
-                        <li><strong>Las contraseñas se procesarán automáticamente:</strong>
-                            <ul>
-                                <li>Contraseñas hasheadas → Se copian directamente</li>
-                                <li>Contraseñas en texto plano → Se hashean automáticamente</li>
-                            </ul>
-                        </li>
-                        <li>Los usuarios podrán iniciar sesión con sus contraseñas originales</li>
-                        <li>Los grupos de usuarios se asignarán automáticamente</li>
-                        <li>Si un usuario ya existe, se actualizará en lugar de crear uno duplicado</li>
                         <li>Este proceso puede tardar varios minutos dependiendo de la cantidad de datos</li>
                     </ul>
                 </div>
-                
-                <div id="progressContainer" style="display: none;">
-                    <h6>Progreso de Combinación:</h6>
-                    <div class="progress mb-2" style="height: 25px;">
-                        <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" 
-                             role="progressbar" style="width: 0%">0%</div>
-                    </div>
-                    <div id="progressMessage" class="text-center">
-                        <small class="text-muted">Iniciando proceso...</small>
+            </div>
+            
+            <div id="progressContainer" class="hidden">
+                <h4 class="text-lg font-semibold text-gray-800 mb-3">Progreso de Combinación:</h4>
+                <div class="glass-progress-container">
+                    <div id="progressBar" class="glass-progress-bar" style="width: 0%">
+                        <span class="glass-progress-text">0%</span>
                     </div>
                 </div>
+                <div id="progressMessage" class="text-center">
+                    <small class="text-gray-600">Iniciando proceso...</small>
+                </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="btnCancelarCombinacion">
-                    <i class="bi bi-x-circle"></i> Cancelar
-                </button>
-                <button type="button" class="btn btn-success" id="btnConfirmarCombinacion">
-                    <i class="bi bi-arrow-down-up"></i> Sí, Combinar Datos
-                </button>
-            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="glass-button glass-button-secondary" id="btnCancelarCombinacion">
+                <i class="bi bi-x-circle mr-2"></i>
+                Cancelar
+            </button>
+            <button type="button" class="glass-button glass-button-success" id="btnConfirmarCombinacion">
+                <i class="bi bi-arrow-down-up mr-2"></i>
+                Sí, Combinar Datos
+            </button>
         </div>
     </div>
 </div>
 
-<!-- Modal de Confirmación de Eliminación -->
-<div class="modal fade" id="modalConfirmacionEliminacion" tabindex="-1" aria-labelledby="modalConfirmacionLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="modalConfirmacionLabel">
-                    <i class="bi bi-exclamation-triangle"></i> Confirmar Eliminación
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-warning">
-                    <i class="bi bi-exclamation-triangle-fill"></i>
-                    <strong>¡ADVERTENCIA!</strong> Esta acción no se puede deshacer.
+<!-- Modal de Error - Sin Tablas o Sin Selección -->
+<div id="errorModal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <div class="modal-header-danger">
+            <h3 class="modal-title">
+                <i class="bi bi-exclamation-circle mr-2"></i>
+                Sin Datos Disponibles
+            </h3>
+            <button type="button" class="modal-close-btn" id="closeErrorModal">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="glass-alert glass-alert-warning mb-4">
+                <i class="bi bi-info-circle-fill mr-2"></i>
+                <div id="errorMessage">
+                    <!-- Mensaje dinámico -->
                 </div>
-                <p class="mb-3">Está a punto de eliminar <strong id="cantidadTablas">0</strong> tabla(s) y todos sus registros.</p>
-                <div class="mb-3">
-                    <strong>Tablas a eliminar:</strong>
-                    <ul id="listaTablas" class="mt-2"></ul>
-                </div>
-                <p class="text-danger mb-0">
-                    <i class="bi bi-info-circle"></i>
-                    Se eliminarán permanentemente todos los datos de estas tablas.
-                </p>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-circle"></i> Cancelar
-                </button>
-                <button type="button" class="btn btn-danger" id="btnConfirmarEliminacion">
-                    <i class="bi bi-trash"></i> Sí, Eliminar
-                </button>
+        </div>
+        <div class="modal-footer">
+            <a href="{% url 'datos_archivados:dashboard' %}" class="glass-button glass-button-primary group hover:scale-105 transition-all duration-200">
+                <i class="bi bi-house-door mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                <span class="font-medium">Ir al Dashboard</span>
+            </a>
+            <button type="button" class="glass-button glass-button-secondary" id="btnCerrarError">
+                <i class="bi bi-check-circle mr-2"></i>
+                Entendido
+            </button>
+        </div>
+    </div>
+</div>
+<div id="modalConfirmacionEliminacion" class="modal-overlay hidden">
+    <div class="modal-content">
+        <div class="modal-header-danger">
+            <h3 class="modal-title">
+                <i class="bi bi-exclamation-triangle mr-2"></i>
+                Confirmar Eliminación
+            </h3>
+            <button type="button" class="modal-close-btn" id="closeModalEliminacion">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="glass-alert glass-alert-warning mb-4">
+                <i class="bi bi-exclamation-triangle-fill mr-2"></i>
+                <strong>¡ADVERTENCIA!</strong> Esta acción no se puede deshacer.
             </div>
+            <p class="mb-3">Está a punto de eliminar <strong id="cantidadTablas">0</strong> tabla(s) y todos sus registros.</p>
+            <div class="mb-3">
+                <strong>Tablas a eliminar:</strong>
+                <ul id="listaTablas" class="mt-2 space-y-1"></ul>
+            </div>
+            <p class="text-red-600 mb-0 flex items-center">
+                <i class="bi bi-info-circle mr-2"></i>
+                Se eliminarán permanentemente todos los datos de estas tablas.
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="glass-button glass-button-secondary" id="btnCancelarEliminacion">
+                <i class="bi bi-x-circle mr-2"></i>
+                Cancelar
+            </button>
+            <button type="button" class="glass-button glass-button-danger" id="btnConfirmarEliminacion">
+                <i class="bi bi-trash mr-2"></i>
+                Sí, Eliminar
+            </button>
         </div>
     </div>
 </div>
 
 <style>
-.hover-shadow {
-    transition: all 0.3s ease;
-}
-.hover-shadow:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-}
-.tabla-card.seleccionada {
-    border: 3px solid #0d6efd !important;
-    background-color: #e7f3ff !important;
-    box-shadow: 0 0 15px rgba(13, 110, 253, 0.3) !important;
-}
-.checkbox-seleccion {
-    margin-left: 10px;
-}
-.tabla-checkbox {
-    cursor: pointer !important;
-    width: 1.5em !important;
-    height: 1.5em !important;
-    border: 2px solid #0d6efd !important;
-}
-.tabla-checkbox:checked {
-    background-color: #0d6efd !important;
-    border-color: #0d6efd !important;
-}
-.tabla-checkbox:hover {
-    transform: scale(1.1);
-    box-shadow: 0 0 5px rgba(13, 110, 253, 0.5);
-}
+    /* Glass Card */
+    .glass-card {
+        position: relative;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            0 4px 16px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-/* Estilos para búsqueda */
-#searchInput {
-    border-radius: 0.375rem 0 0 0.375rem;
-}
+    .glass-card-small {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.4));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+    }
 
-#clearSearch {
-    border-radius: 0 0.375rem 0.375rem 0;
-}
+    .glass-header {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
 
-#quickSearchResults {
-    animation: slideDown 0.3s ease-out;
-}
+    .glass-content {
+        padding: 2rem;
+    }
 
-@keyframes slideDown {
-    from {
+    /* Glass Button */
+    .glass-button {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.625rem 1.25rem;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .glass-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .glass-button-primary {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        color: #1e40af;
+    }
+
+    .glass-button-secondary {
+        background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
+        color: #374151;
+    }
+
+    .glass-button-success {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+        color: #14532d;
+    }
+
+    .glass-button-info {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        color: #1e40af;
+    }
+
+    .glass-button-danger {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.2));
+        color: #7f1d1d;
+    }
+
+    .glass-button-warning {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(217, 119, 6, 0.2));
+        color: #78350f;
+    }
+
+    /* Glass Input & Select */
+    .glass-input-compact, .glass-select-compact {
+        width: 100%;
+        padding: 0.375rem 0.75rem;
+        border-radius: 8px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #374151;
+        font-size: 0.8rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .glass-input-compact:focus, .glass-select-compact:focus {
+        outline: none;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3));
+        border-color: rgba(59, 130, 246, 0.5);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Glass Badge */
+    .glass-badge {
+        display: inline-block;
+        padding: 0.375rem 0.75rem;
+        border-radius: 16px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .glass-badge-info {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        color: #1e3a8a;
+    }
+
+    .glass-badge-warning {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(217, 119, 6, 0.2));
+        color: #78350f;
+    }
+
+    .glass-badge-success {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+        color: #14532d;
+    }
+
+    /* Glass Alert */
+    .glass-alert {
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: flex-start;
+        font-size: 0.875rem;
+    }
+
+    .glass-alert-info {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        color: #1e3a8a;
+    }
+
+    .glass-alert-success {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.1));
+        color: #14532d;
+    }
+
+    .glass-alert-warning {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.1));
+        color: #78350f;
+    }
+
+    /* Hover Effects */
+    .hover-lift {
+        transition: all 0.3s ease;
+    }
+
+    .hover-lift:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .tabla-card.seleccionada {
+        border: 2px solid #3b82f6 !important;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05)) !important;
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.3) !important;
+    }
+
+    .checkbox-seleccion {
+        margin-left: 10px;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         opacity: 0;
-        transform: translateY(-10px);
+        visibility: hidden;
+        transition: all 0.3s ease;
     }
-    to {
+
+    .modal-overlay.show {
         opacity: 1;
-        transform: translateY(0);
+        visibility: visible;
     }
-}
 
-.search-highlight {
-    background-color: #fff3cd;
-    padding: 2px 4px;
-    border-radius: 3px;
-    font-weight: bold;
-}
+    .modal-content {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        max-width: 500px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+    }
 
-.quick-search-item {
-    transition: all 0.2s ease;
-}
+    .modal-content-large {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        max-width: 800px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+    }
 
-.quick-search-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
+    .modal-overlay.show .modal-content,
+    .modal-overlay.show .modal-content-large {
+        transform: scale(1);
+    }
+
+    .modal-header-success {
+        padding: 1.5rem 2rem 1rem;
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.1));
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px 20px 0 0;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+
+    .modal-header-danger {
+        padding: 1.5rem 2rem 1rem;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px 20px 0 0;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+
+    .modal-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #374151;
+        margin: 0;
+        flex: 1;
+    }
+
+    .modal-close-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid #ef4444;
+        border-radius: 8px;
+        padding: 0.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        color: #ef4444;
+    }
+
+    .modal-close-btn:hover {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: #dc2626;
+        color: #dc2626;
+        transform: scale(1.1);
+    }
+
+    .modal-body {
+        padding: 1.5rem 2rem;
+    }
+
+    .modal-footer {
+        padding: 1rem 2rem 2rem;
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        border-radius: 0 0 20px 20px;
+    }
+
+    /* Animation for quick search */
+    .slide-down {
+        animation: slideDown 0.3s ease-out;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .search-highlight {
+        background-color: #fef3c7;
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-weight: bold;
+    }
+
+    .opacity-50 {
+        opacity: 0.5;
+    }
+
+    /* Glass Progress Bar */
+    .glass-progress-container {
+        width: 100%;
+        height: 32px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 
+            0 4px 16px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        overflow: hidden;
+        position: relative;
+        margin-bottom: 0.5rem;
+    }
+
+    .glass-progress-bar {
+        height: 100%;
+        background: linear-gradient(135deg, 
+            rgba(34, 197, 94, 0.8), 
+            rgba(22, 163, 74, 0.9),
+            rgba(21, 128, 61, 0.8)
+        );
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border-radius: 16px;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        box-shadow: 
+            0 2px 8px rgba(34, 197, 94, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        
+        /* Animated gradient effect */
+        background-size: 200% 100%;
+        animation: progressShimmer 2s ease-in-out infinite;
+    }
+
+    .glass-progress-text {
+        color: white;
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        z-index: 1;
+    }
+
+    /* Progress bar shimmer animation */
+    @keyframes progressShimmer {
+        0% {
+            background-position: -200% 0;
+        }
+        50% {
+            background-position: 200% 0;
+        }
+        100% {
+            background-position: -200% 0;
+        }
+    }
+
+    /* Enhanced progress bar when completed */
+    .glass-progress-bar.completed {
+        background: linear-gradient(135deg, 
+            rgba(34, 197, 94, 0.8), 
+            rgba(22, 163, 74, 0.9),
+            rgba(21, 128, 61, 0.8)
+        );
+        box-shadow: 
+            0 2px 8px rgba(34, 197, 94, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        animation: none;
+    }
+
+    /* Professional Dashboard Links */
+    .dashboard-link-professional {
+        position: relative;
+        overflow: hidden;
+        background: #3b82f6;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .dashboard-link-professional::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .dashboard-link-professional:hover::before {
+        left: 100%;
+    }
+
+    .dashboard-link-professional:hover {
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        background: #1d4ed8;
+    }
+
+    .dashboard-link-professional i {
+        transition: transform 0.3s ease;
+    }
+
+    .dashboard-link-professional:hover i {
+        transform: scale(1.2) rotate(5deg);
+    }
+
+    /* Configuration Button Professional */
+    .config-button-professional {
+        background: #059669;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Animation for modal buttons */
+    .modal-footer .glass-button {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .modal-footer .glass-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Improved glass button primary for dashboard links */
+    .glass-button-primary {
+        background: #3b82f6;
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 
+            0 8px 32px rgba(59, 130, 246, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .glass-button-primary:hover {
+        background: #1d4ed8;
+        box-shadow: 
+            0 12px 40px rgba(59, 130, 246, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        transform: translateY(-3px) scale(1.05);
+    }
+
+    /* Enhanced hover effects for inline dashboard links */
+    .inline-flex.items-center.px-3.py-1.rounded-lg {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .inline-flex.items-center.px-3.py-1.rounded-lg::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: left 0.6s ease;
+    }
+
+    .inline-flex.items-center.px-3.py-1.rounded-lg:hover::before {
+        left: 100%;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 640px) {
+        .modal-footer {
+            flex-direction: column;
+        }
+        
+        .dashboard-link-professional {
+            justify-content: center;
+            width: 100%;
+        }
+        
+        .inline-flex.items-center.px-3.py-1.rounded-lg {
+            justify-content: center;
+            width: auto;
+            min-width: 120px;
+        }
+    }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Asegurar que "Búsqueda global" esté seleccionado por defecto
+    const searchTypeSelect = document.getElementById('searchType');
+    if (!searchTypeSelect.value || searchTypeSelect.value === '') {
+        searchTypeSelect.value = 'global';
+    }
+    
     // Variables para búsqueda
     const searchInput = document.getElementById('searchInput');
     const searchType = document.getElementById('searchType');
@@ -422,20 +1021,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const type = searchType.value;
         
         if (!query) {
-            quickSearchResults.style.display = 'none';
+            quickSearchResults.classList.add('hidden');
             return;
         }
         
         // Mostrar loading
         quickSearchContent.innerHTML = `
-            <div class="text-center py-3">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Buscando...</span>
-                </div>
-                <p class="mt-2 mb-0">Buscando "${query}"...</p>
+            <div class="text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <p class="mt-4 text-gray-600">Buscando "${query}"...</p>
             </div>
         `;
-        quickSearchResults.style.display = 'block';
+        quickSearchResults.classList.remove('hidden');
+        quickSearchResults.classList.add('slide-down');
         
         // Realizar búsqueda AJAX
         const searchUrl = '{% url "datos_archivados:buscar_datos_ajax" %}';
@@ -444,8 +1042,9 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.error) {
                     quickSearchContent.innerHTML = `
-                        <div class="alert alert-danger">
-                            <i class="bi bi-exclamation-triangle"></i> ${data.error}
+                        <div class="glass-alert glass-alert-warning">
+                            <i class="bi bi-exclamation-triangle mr-2"></i>
+                            ${data.error}
                         </div>
                     `;
                     return;
@@ -453,8 +1052,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (data.results.length === 0) {
                     quickSearchContent.innerHTML = `
-                        <div class="alert alert-warning">
-                            <i class="bi bi-search"></i> No se encontraron resultados para "${query}"
+                        <div class="glass-alert glass-alert-warning">
+                            <i class="bi bi-search mr-2"></i>
+                            No se encontraron resultados para "${query}"
                         </div>
                     `;
                     return;
@@ -462,56 +1062,53 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Mostrar resultados
                 let html = `
-                    <div class="mb-3">
-                        <strong><i class="bi bi-search"></i> Encontrados ${data.total} registros en ${data.results.length} tabla(s)</strong>
+                    <div class="mb-4">
+                        <div class="glass-badge glass-badge-success">
+                            <i class="bi bi-search mr-1"></i>
+                            Encontrados ${data.total} registros en ${data.results.length} tabla(s)
+                        </div>
                     </div>
                 `;
                 
                 data.results.forEach(tabla => {
                     html += `
-                        <div class="card mb-3 border-success">
-                            <div class="card-header bg-light">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h6 class="mb-0">
-                                        <i class="bi bi-table text-success"></i> ${tabla.tabla}
-                                    </h6>
-                                    <span class="badge bg-success">${tabla.total_registros} registros</span>
+                        <div class="glass-card-small mb-4">
+                            <div class="p-4">
+                                <div class="flex justify-between items-center mb-3">
+                                    <h4 class="text-lg font-semibold text-gray-800 flex items-center">
+                                        <i class="bi bi-table text-green-600 mr-2"></i>
+                                        ${tabla.tabla}
+                                    </h4>
+                                    <span class="glass-badge glass-badge-success">${tabla.total_registros} registros</span>
                                 </div>
-                            </div>
-                            <div class="card-body py-2">
                     `;
                     
                     if (tabla.ejemplos.length > 0) {
-                        html += '<div class="row">';
+                        html += '<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">';
                         tabla.ejemplos.forEach(ejemplo => {
                             html += `
-                                <div class="col-md-4 mb-2">
-                                    <div class="border rounded p-2 bg-light">
-                                        <small class="text-muted">ID: ${ejemplo.id}</small><br>
-                                        <strong>${ejemplo.nombre}</strong>
+                                <div class="bg-gray-50 rounded-lg p-3 border">
+                                    <div class="text-xs text-gray-500 mb-1">ID: ${ejemplo.id}</div>
+                                    <div class="font-semibold text-gray-800 mb-2">${ejemplo.nombre}</div>
                             `;
                             
                             if (ejemplo.campos_coincidentes.length > 0) {
-                                html += '<br><small class="text-success">';
                                 ejemplo.campos_coincidentes.forEach(campo => {
-                                    html += `<strong>${campo.campo}:</strong> ${campo.valor}<br>`;
+                                    html += `<div class="text-xs text-green-600"><strong>${campo.campo}:</strong> ${campo.valor}</div>`;
                                 });
-                                html += '</small>';
                             }
                             
-                            html += `
-                                    </div>
-                                </div>
-                            `;
+                            html += `</div>`;
                         });
                         html += '</div>';
                     }
                     
                     html += `
-                                <div class="text-end mt-2">
+                                <div class="text-right">
                                     <a href="/datos-archivados/tablas/${tabla.tabla}/" 
-                                       class="btn btn-sm btn-success">
-                                        <i class="bi bi-eye"></i> Ver todos los registros
+                                       class="glass-button glass-button-success">
+                                        <i class="bi bi-eye mr-2"></i>
+                                        Ver todos los registros
                                     </a>
                                 </div>
                             </div>
@@ -523,8 +1120,9 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 quickSearchContent.innerHTML = `
-                    <div class="alert alert-danger">
-                        <i class="bi bi-exclamation-triangle"></i> Error en la búsqueda: ${error.message}
+                    <div class="glass-alert glass-alert-warning">
+                        <i class="bi bi-exclamation-triangle mr-2"></i>
+                        Error en la búsqueda: ${error.message}
                     </div>
                 `;
             });
@@ -540,7 +1138,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (searchInput.value.trim().length >= 2) {
                 realizarBusquedaRapida();
             } else {
-                quickSearchResults.style.display = 'none';
+                quickSearchResults.classList.add('hidden');
             }
         }, 500);
     });
@@ -548,7 +1146,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Limpiar búsqueda
     clearSearchBtn.addEventListener('click', function() {
         searchInput.value = '';
-        quickSearchResults.style.display = 'none';
+        quickSearchResults.classList.add('hidden');
         // Opcional: recargar página para mostrar todas las tablas
         if (window.location.search) {
             window.location.href = window.location.pathname;
@@ -557,7 +1155,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Cerrar búsqueda rápida
     closeQuickSearch.addEventListener('click', function() {
-        quickSearchResults.style.display = 'none';
+        quickSearchResults.classList.add('hidden');
     });
     
     // Cambio en tipo de búsqueda
@@ -567,7 +1165,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Variables para modo selección (código existente)
+    // Variables para modo selección
     let modoSeleccion = false;
     const btnModoSeleccion = document.getElementById('btnModoSeleccion');
     const btnEliminar = document.getElementById('btnEliminar');
@@ -578,19 +1176,30 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Activar/desactivar modo selección
     btnModoSeleccion.addEventListener('click', function() {
+        // Verificar si hay tablas disponibles
+        const tablasDisponibles = document.querySelectorAll('.tabla-card').length;
+        
+        if (tablasDisponibles === 0) {
+            // Mostrar modal de error si no hay tablas
+            showErrorModal(
+                'No hay tablas disponibles',
+                'No se encontraron tablas archivadas para seleccionar. Primero debe migrar datos desde la base de datos MariaDB.'
+            );
+            return;
+        }
+        
         modoSeleccion = !modoSeleccion;
         
         if (modoSeleccion) {
             // Activar modo selección
-            btnModoSeleccion.innerHTML = '<i class="bi bi-x-circle"></i> Cancelar Selección';
-            btnModoSeleccion.classList.remove('btn-info');
-            btnModoSeleccion.classList.add('btn-secondary');
-            btnEliminar.style.display = 'inline-block';
+            btnModoSeleccion.innerHTML = '<i class="bi bi-x-circle mr-2"></i>Cancelar Selección';
+            btnModoSeleccion.classList.remove('glass-button-info');
+            btnModoSeleccion.classList.add('glass-button-secondary');
+            btnEliminar.classList.remove('hidden');
             
-            // Mostrar checkboxes con animación
+            // Mostrar checkboxes
             checkboxContainers.forEach(container => {
-                container.style.display = 'flex';
-                container.style.alignItems = 'center';
+                container.classList.remove('hidden');
             });
             
             // Deshabilitar botones de ver registros
@@ -605,14 +1214,14 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         } else {
             // Desactivar modo selección
-            btnModoSeleccion.innerHTML = '<i class="bi bi-check-square"></i> Seleccionar Tablas';
-            btnModoSeleccion.classList.remove('btn-secondary');
-            btnModoSeleccion.classList.add('btn-info');
-            btnEliminar.style.display = 'none';
+            btnModoSeleccion.innerHTML = '<i class="bi bi-check-square mr-2"></i>Seleccionar Tablas';
+            btnModoSeleccion.classList.remove('glass-button-secondary');
+            btnModoSeleccion.classList.add('glass-button-info');
+            btnEliminar.classList.add('hidden');
             
             // Ocultar checkboxes y desmarcar
             checkboxContainers.forEach(container => {
-                container.style.display = 'none';
+                container.classList.add('hidden');
             });
             checkboxes.forEach(checkbox => {
                 checkbox.checked = false;
@@ -664,7 +1273,13 @@ document.addEventListener('DOMContentLoaded', function() {
     function actualizarContador() {
         const seleccionadas = document.querySelectorAll('.tabla-checkbox:checked').length;
         contadorSeleccionadas.textContent = seleccionadas;
-        btnEliminar.disabled = seleccionadas === 0;
+        
+        // Solo cambiar la opacidad, mantener el color rojo
+        if (seleccionadas === 0) {
+            btnEliminar.classList.add('opacity-50');
+        } else {
+            btnEliminar.classList.remove('opacity-50');
+        }
     }
     
     // Manejar eliminación - Mostrar modal
@@ -672,7 +1287,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const seleccionadas = Array.from(document.querySelectorAll('.tabla-checkbox:checked'))
             .map(cb => cb.value);
         
-        if (seleccionadas.length === 0) return;
+        if (seleccionadas.length === 0) {
+            // Mostrar modal de error si no hay tablas seleccionadas
+            showErrorModal(
+                'No hay tablas seleccionadas',
+                'Debe seleccionar al menos una tabla para eliminar. Marque las casillas de verificación de las tablas que desea eliminar.'
+            );
+            return;
+        }
         
         // Actualizar contenido del modal
         document.getElementById('cantidadTablas').textContent = seleccionadas.length;
@@ -681,13 +1303,13 @@ document.addEventListener('DOMContentLoaded', function() {
         listaTablas.innerHTML = '';
         seleccionadas.forEach(tabla => {
             const li = document.createElement('li');
-            li.innerHTML = `<i class="bi bi-table text-danger"></i> <strong>${tabla}</strong>`;
+            li.innerHTML = `<i class="bi bi-table text-red-600 mr-2"></i><strong>${tabla}</strong>`;
+            li.className = 'flex items-center';
             listaTablas.appendChild(li);
         });
         
         // Mostrar modal
-        const modal = new bootstrap.Modal(document.getElementById('modalConfirmacionEliminacion'));
-        modal.show();
+        showModal('modalConfirmacionEliminacion');
     });
     
     // Confirmar eliminación desde el modal
@@ -703,16 +1325,11 @@ document.addEventListener('DOMContentLoaded', function() {
         form.action = '{% url "datos_archivados:eliminar_tablas" %}';
         
         // CSRF token
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
-        if (csrfToken) {
-            form.appendChild(csrfToken.cloneNode());
-        } else {
-            const csrfInput = document.createElement('input');
-            csrfInput.type = 'hidden';
-            csrfInput.name = 'csrfmiddlewaretoken';
-            csrfInput.value = '{{ csrf_token }}';
-            form.appendChild(csrfInput);
-        }
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = '{{ csrf_token }}';
+        form.appendChild(csrfInput);
         
         // Agregar tablas seleccionadas
         seleccionadas.forEach(tabla => {
@@ -736,18 +1353,36 @@ document.addEventListener('DOMContentLoaded', function() {
     const progressMessage = document.getElementById('progressMessage');
     
     btnCombinar.addEventListener('click', function() {
-        const modal = new bootstrap.Modal(document.getElementById('modalConfirmacionCombinacion'));
-        modal.show();
+        // Verificar si hay tablas con datos para combinar
+        const tablasCards = document.querySelectorAll('.tabla-card');
+        const hayDatos = tablasCards.length > 0;
+        
+        if (hayDatos) {
+            // Si hay datos, mostrar modal de confirmación
+            showModal('modalConfirmacionCombinacion');
+        } else {
+            // Si no hay datos, mostrar modal de error
+            showErrorModalCombinar();
+        }
     });
     
     btnConfirmarCombinacion.addEventListener('click', function() {
         // Deshabilitar botones
         btnConfirmarCombinacion.disabled = true;
         btnCancelarCombinacion.disabled = true;
-        btnConfirmarCombinacion.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Procesando...';
+        btnConfirmarCombinacion.innerHTML = '<span class="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>Procesando...';
         
         // Mostrar barra de progreso
-        progressContainer.style.display = 'block';
+        progressContainer.classList.remove('hidden');
+        
+        // Inicializar progreso
+        const progressText = progressBar.querySelector('.glass-progress-text');
+        if (progressText) {
+            progressText.textContent = '0%';
+        }
+        
+        // Iniciar monitoreo de progreso
+        let intervalId = setInterval(verificarEstadoCombinacion, 2000);
         
         // Realizar petición AJAX
         fetch('{% url "datos_archivados:combinar_datos" %}', {
@@ -760,54 +1395,242 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Actualizar progreso al 100%
-                progressBar.style.width = '100%';
-                progressBar.textContent = '100%';
-                progressBar.classList.remove('progress-bar-animated');
+                // La combinación se inició correctamente, el progreso se monitoreará via AJAX
                 progressMessage.innerHTML = `
-                    <div class="alert alert-success mt-3">
-                        <i class="bi bi-check-circle-fill"></i>
-                        <strong>¡Combinación completada exitosamente!</strong>
-                        <ul class="mb-0 mt-2">
-                            <li><strong>Usuarios:</strong> ${data.usuarios_combinados || 0} combinados</li>
-                            <li><strong>Registros de estudiantes:</strong> ${data.registros_combinados || 0} combinados</li>
-                            <li><strong>Cursos académicos:</strong> ${data.cursos_academicos_combinados || 0} combinados</li>
-                            <li><strong>Cursos:</strong> ${data.cursos_combinados || 0} combinados</li>
-                            <li><strong>Matrículas:</strong> ${data.matriculas_combinadas || 0} combinadas</li>
-                            <li><strong>Asistencias:</strong> ${data.asistencias_combinadas || 0} combinadas</li>
-                            <li><strong>Calificaciones:</strong> ${data.calificaciones_combinadas || 0} combinadas</li>
-                            <li><strong>Notas individuales:</strong> ${data.notas_combinadas || 0} combinadas</li>
-                            <li><strong>Campos nuevos detectados:</strong> ${data.campos_agregados || 0}</li>
-                        </ul>
+                    <div class="glass-alert glass-alert-info mt-4">
+                        <i class="bi bi-info-circle-fill mr-2"></i>
+                        <strong>Combinación iniciada:</strong> Monitoreando progreso en tiempo real...
                     </div>
                 `;
-                
-                // Recargar página después de 3 segundos
-                setTimeout(() => {
-                    window.location.reload();
-                }, 3000);
             } else {
+                // Error al iniciar
+                clearInterval(intervalId);
                 progressMessage.innerHTML = `
-                    <div class="alert alert-danger mt-3">
-                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    <div class="glass-alert glass-alert-warning mt-4">
+                        <i class="bi bi-exclamation-triangle-fill mr-2"></i>
                         <strong>Error:</strong> ${data.error || 'Error desconocido'}
                     </div>
                 `;
                 btnConfirmarCombinacion.disabled = false;
                 btnCancelarCombinacion.disabled = false;
-                btnConfirmarCombinacion.innerHTML = '<i class="bi bi-arrow-down-up"></i> Reintentar';
+                btnConfirmarCombinacion.innerHTML = '<i class="bi bi-arrow-down-up mr-2"></i>Reintentar';
             }
         })
         .catch(error => {
+            clearInterval(intervalId);
             progressMessage.innerHTML = `
-                <div class="alert alert-danger mt-3">
-                    <i class="bi bi-exclamation-triangle-fill"></i>
+                <div class="glass-alert glass-alert-warning mt-4">
+                    <i class="bi bi-exclamation-triangle-fill mr-2"></i>
                     <strong>Error de conexión:</strong> ${error.message}
                 </div>
             `;
             btnConfirmarCombinacion.disabled = false;
             btnCancelarCombinacion.disabled = false;
-            btnConfirmarCombinacion.innerHTML = '<i class="bi bi-arrow-down-up"></i> Reintentar';
+            btnConfirmarCombinacion.innerHTML = '<i class="bi bi-arrow-down-up mr-2"></i>Reintentar';
+        });
+        
+        // Función para verificar estado de combinación
+        function verificarEstadoCombinacion() {
+            fetch('{% url "datos_archivados:estado_combinacion" %}')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.en_progreso) {
+                        // Actualizar progreso
+                        const progreso = data.progreso_real || 0;
+                        progressBar.style.width = progreso + '%';
+                        const progressText = progressBar.querySelector('.glass-progress-text');
+                        if (progressText) {
+                            progressText.textContent = progreso + '%';
+                        }
+                        
+                        // Actualizar mensaje de estado
+                        progressMessage.innerHTML = `
+                            <div class="glass-alert glass-alert-info mt-4">
+                                <i class="bi bi-gear mr-2"></i>
+                                <div>
+                                    <strong>Estado:</strong> ${data.estado}<br>
+                                    <small>Paso ${data.pasos_completados}/${data.pasos_totales}</small>
+                                    ${data.usuarios_combinados > 0 ? `<br><small>Usuarios: ${data.usuarios_combinados}</small>` : ''}
+                                    ${data.registros_combinados > 0 ? `<br><small>Registros: ${data.registros_combinados}</small>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    } else if (data.completada_recientemente) {
+                        // Combinación completada
+                        clearInterval(intervalId);
+                        progressBar.style.width = '100%';
+                        progressBar.classList.add('completed');
+                        const progressText = progressBar.querySelector('.glass-progress-text');
+                        if (progressText) {
+                            progressText.textContent = '100%';
+                        }
+                        
+                        progressMessage.innerHTML = `
+                            <div class="glass-alert glass-alert-success mt-4">
+                                <i class="bi bi-check-circle-fill mr-2"></i>
+                                <div>
+                                    <strong>¡Combinación completada exitosamente!</strong>
+                                    <ul class="mt-2 mb-0 list-disc list-inside space-y-1 text-sm">
+                                        <li><strong>Usuarios:</strong> ${data.usuarios_combinados || 0} combinados</li>
+                                        <li><strong>Registros:</strong> ${data.registros_combinados || 0} combinados</li>
+                                        <li><strong>Cursos:</strong> ${data.cursos_combinados || 0} combinados</li>
+                                        <li><strong>Matrículas:</strong> ${data.matriculas_combinadas || 0} combinadas</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Recargar página después de 3 segundos
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 3000);
+                    } else if (data.estado === 'error') {
+                        // Error en la combinación
+                        clearInterval(intervalId);
+                        progressMessage.innerHTML = `
+                            <div class="glass-alert glass-alert-warning mt-4">
+                                <i class="bi bi-exclamation-triangle-fill mr-2"></i>
+                                <strong>Error en la combinación:</strong> ${data.mensaje || 'Error desconocido'}
+                            </div>
+                        `;
+                        btnConfirmarCombinacion.disabled = false;
+                        btnCancelarCombinacion.disabled = false;
+                        btnConfirmarCombinacion.innerHTML = '<i class="bi bi-arrow-down-up mr-2"></i>Reintentar';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error verificando estado de combinación:', error);
+                });
+        }
+    });
+    
+    // Funciones para manejar modales
+    function showModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.classList.remove('hidden');
+        modal.classList.add('show');
+    }
+    
+    function hideModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.classList.remove('show');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+    
+    // Función genérica para mostrar modal de error
+    function showErrorModal(titulo, mensaje) {
+        const modal = document.getElementById('errorModal');
+        const errorMessage = document.getElementById('errorMessage');
+        
+        // Actualizar contenido del modal
+        const modalTitle = modal.querySelector('.modal-title');
+        modalTitle.innerHTML = `<i class="bi bi-exclamation-circle mr-2"></i>${titulo}`;
+        
+        errorMessage.innerHTML = `
+            <div>
+                <p class="font-semibold mb-2">${mensaje}</p>
+            </div>
+        `;
+        
+        // Mostrar modal
+        modal.classList.remove('hidden');
+        modal.classList.add('show');
+        
+        // Agregar event listeners para cerrar con ESC o click fuera
+        document.addEventListener('keydown', handleEscapeKeyError);
+        modal.addEventListener('click', handleOutsideClickError);
+    }
+    
+    function hideErrorModal() {
+        const modal = document.getElementById('errorModal');
+        modal.classList.remove('show');
+        
+        // Pequeño delay antes de ocultar completamente
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+        
+        // Remover event listeners
+        document.removeEventListener('keydown', handleEscapeKeyError);
+        modal.removeEventListener('click', handleOutsideClickError);
+    }
+    
+    // Manejar tecla ESC para modal de error genérico
+    function handleEscapeKeyError(event) {
+        if (event.key === 'Escape') {
+            hideErrorModal();
+        }
+    }
+    
+    // Manejar click fuera del modal de error genérico
+    function handleOutsideClickError(event) {
+        if (event.target === event.currentTarget) {
+            hideErrorModal();
+        }
+    }
+    
+    // Funciones específicas para el modal de error de combinar
+    function showErrorModalCombinar() {
+        const modal = document.getElementById('errorModalCombinar');
+        modal.classList.remove('hidden');
+        modal.classList.add('show');
+        
+        // Agregar event listeners para cerrar con ESC o click fuera
+        document.addEventListener('keydown', handleEscapeKeyCombinar);
+        modal.addEventListener('click', handleOutsideClickCombinar);
+    }
+    
+    function hideErrorModalCombinar() {
+        const modal = document.getElementById('errorModalCombinar');
+        modal.classList.remove('show');
+        
+        // Pequeño delay antes de ocultar completamente
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+        
+        // Remover event listeners
+        document.removeEventListener('keydown', handleEscapeKeyCombinar);
+        modal.removeEventListener('click', handleOutsideClickCombinar);
+    }
+    
+    // Manejar tecla ESC para modal de combinar
+    function handleEscapeKeyCombinar(event) {
+        if (event.key === 'Escape') {
+            hideErrorModalCombinar();
+        }
+    }
+    
+    // Manejar click fuera del modal de combinar
+    function handleOutsideClickCombinar(event) {
+        if (event.target === event.currentTarget) {
+            hideErrorModalCombinar();
+        }
+    }
+    
+    // Hacer la función global para que pueda ser llamada desde el HTML
+    window.hideErrorModalCombinar = hideErrorModalCombinar;
+    
+    // Event listeners para cerrar modales
+    document.getElementById('closeModalCombinacion').addEventListener('click', () => hideModal('modalConfirmacionCombinacion'));
+    document.getElementById('closeModalEliminacion').addEventListener('click', () => hideModal('modalConfirmacionEliminacion'));
+    document.getElementById('closeErrorModalCombinar').addEventListener('click', () => hideErrorModalCombinar());
+    document.getElementById('closeErrorModal').addEventListener('click', () => hideErrorModal());
+    document.getElementById('btnCerrarError').addEventListener('click', () => hideErrorModal());
+    document.getElementById('btnCancelarCombinacion').addEventListener('click', () => hideModal('modalConfirmacionCombinacion'));
+    document.getElementById('btnCancelarEliminacion').addEventListener('click', () => hideModal('modalConfirmacionEliminacion'));
+    
+    // Cerrar modal al hacer clic fuera
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('show');
+                setTimeout(() => {
+                    this.classList.add('hidden');
+                }, 300);
+            }
         });
     });
 });

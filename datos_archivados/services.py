@@ -752,6 +752,10 @@ class MigracionService:
             modelos_dinamicos = self.inspector.inspeccionar_base_datos_completa()
             self.modelos_dinamicos = modelos_dinamicos
             
+            # Actualizar log con tablas inspeccionadas
+            self.migration_log.tablas_inspeccionadas = len(modelos_dinamicos)
+            self.migration_log.save()
+            
             # Migrar datos usando los modelos dinámicos
             total_registros_migrados = 0
             
@@ -759,9 +763,9 @@ class MigracionService:
             tablas_vacias = 0
             registros_nuevos_migrados = 0
             
-            for nombre_tabla, modelo_dinamico in modelos_dinamicos.items():
+            for i, (nombre_tabla, modelo_dinamico) in enumerate(modelos_dinamicos.items(), 1):
                 try:
-                    logger.info(f"Migrando datos de la tabla: {nombre_tabla}")
+                    logger.info(f"Migrando datos de la tabla: {nombre_tabla} ({i}/{len(modelos_dinamicos)})")
                     registros_en_origen = self.migrar_tabla_dinamica(nombre_tabla, modelo_dinamico)
                     
                     # Contar si la tabla tiene datos en el origen
@@ -771,19 +775,35 @@ class MigracionService:
                     else:
                         tablas_vacias += 1
                         logger.info(f"○ Tabla {nombre_tabla} está vacía")
+                    
+                    # Actualizar progreso después de cada tabla
+                    self.migration_log.tablas_con_datos = tablas_con_datos
+                    self.migration_log.tablas_vacias = tablas_vacias
+                    
+                    # Contar registros migrados hasta ahora
+                    from .models import DatoArchivadoDinamico
+                    registros_actuales = DatoArchivadoDinamico.objects.filter(
+                        fecha_migracion__gte=self.migration_log.fecha_inicio
+                    ).count()
+                    self.migration_log.usuarios_migrados = registros_actuales
+                    self.migration_log.save()
                         
                 except Exception as e:
                     logger.error(f"Error migrando tabla {nombre_tabla}: {e}")
                     tablas_vacias += 1  # Contar como vacía si hay error
+                    
+                    # Actualizar progreso incluso si hay error
+                    self.migration_log.tablas_vacias = tablas_vacias
+                    self.migration_log.save()
                     continue
             
-            # Contar registros realmente migrados (nuevos)
+            # Contar registros realmente migrados (nuevos) - conteo final
             from .models import DatoArchivadoDinamico
             registros_nuevos_migrados = DatoArchivadoDinamico.objects.filter(
                 fecha_migracion__gte=self.migration_log.fecha_inicio
             ).count()
             
-            # Actualizar log con totales
+            # Actualizar log con totales finales
             self.migration_log.usuarios_migrados = registros_nuevos_migrados
             self.migration_log.tablas_inspeccionadas = len(modelos_dinamicos)
             self.migration_log.tablas_con_datos = tablas_con_datos
@@ -794,7 +814,7 @@ class MigracionService:
             
             # Finalizar migración exitosa
             self.finalizar_migracion('completada')
-            logger.info(f"Migración automática completada. Total de registros migrados: {total_registros_migrados}")
+            logger.info(f"Migración automática completada. Total de registros migrados: {registros_nuevos_migrados}")
             
             return self.migration_log
             

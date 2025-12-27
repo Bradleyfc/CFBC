@@ -1,58 +1,234 @@
 {% extends 'base.html' %} {% load static %} {% block content %}
 
-<div class="container" my-3>
-  <div class="row">
-    <div class="col-md-4">
-      <!-- Datos de perfil -->
-      <div class="card border rounded-2 shadow p-3 mb-3">
-        <div class="card-body">
-          {% if user.registro.image %}
-          <img class="img-thumbnail rounded-circle mb-3" src="{{ user.registro.image.url }}" alt="{{user.username}}"
-            style="width: 100px" />
-          {% else %}
-          <img class="img-thumbnail rounded-circle mb-3" src="{% static 'plantilla.jpg' %}" alt="{{user.username}}"
-            style="width: 100px" />
-          {% endif %}
-          <h2 class="text-center">{{user.first_name}} {{user.last_name}}</h2>
-          <h5>{{group_name}}</h5>
-          <hr>
-          <p><strong>Nombre de Usuario: </strong> {{user.username}}</p>
-          <p><strong>Direccion: </strong> {{user.registro.address}}</p>
-          <p><strong>Telefono: </strong> {{user.registro.telephone}}</p>
-          <p><strong>Correo: </strong> {{user.email}}</p>
-          <p><strong>Religioso: </strong> {{user.registro.es_religioso|yesno:"Sí,No"}}</p>
-          <hr>
-          <a class="btn btn-danger w-100" href="{% url 'principal:logout_view' %}">
-            <i class="bi bi-box-arrow-right"></i> Cerrar Sesion
-          </a>
+<!-- Background Section with Gradient -->
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12">
+  <!-- Background Pattern -->
+  <div class="absolute inset-0 opacity-30"
+    style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;">
+  </div>
 
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+
+    <!-- Two Column Flex Layout - 30/70 -->
+    <div class="profile-layout-container">
+
+      <!-- Left Column - Profile Data (30%) -->
+      <div class="profile-left-column">
+        <div class="glass-card">
+          <div class="glass-content">
+            <!-- Profile Image -->
+            <div class="text-center mb-4">
+              {% if user.registro.image %}
+              <img class="w-24 h-24 rounded-full mx-auto border-4 border-white/30 shadow-lg"
+                src="{{ user.registro.image.url }}" alt="{{user.username}}">
+              {% else %}
+              <img class="w-24 h-24 rounded-full mx-auto border-4 border-white/30 shadow-lg"
+                src="{% static 'plantilla.jpg' %}" alt="{{user.username}}">
+              {% endif %}
+            </div>
+
+            <!-- Name and Role -->
+            <h2 class="text-2xl font-bold text-center text-gray-800 mb-1">{{user.first_name}} {{user.last_name}}</h2>
+            <div class="text-center mb-4">
+              <span class="glass-badge-role">{{group_name}}</span>
+            </div>
+
+            <!-- Divider -->
+            <div class="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent mb-4"></div>
+
+            <!-- Profile Details -->
+            <div class="space-y-3">
+              <div class="glass-detail-item">
+                <span class="font-semibold text-gray-700">Nombre de Usuario:</span>
+                <span class="text-gray-600">{{user.username}}</span>
+              </div>
+              <div class="glass-detail-item">
+                <span class="font-semibold text-gray-700">Dirección:</span>
+                <span class="text-gray-600">{{user.registro.address}}</span>
+              </div>
+              <div class="glass-detail-item">
+                <span class="font-semibold text-gray-700">Teléfono:</span>
+                <span class="text-gray-600">{{user.registro.telephone}}</span>
+              </div>
+              <div class="glass-detail-item">
+                <span class="font-semibold text-gray-700">Correo:</span>
+                <span class="text-gray-600">{{user.email}}</span>
+              </div>
+              <div class="glass-detail-item">
+                <span class="font-semibold text-gray-700">Religioso:</span>
+                <span class="text-gray-600">{{user.registro.es_religioso|yesno:"Sí,No"}}</span>
+              </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent my-4"></div>
+
+            <!-- Logout Button -->
+            <a class="glass-button glass-button-danger w-full flex items-center justify-center"
+              href="{% url 'principal:logout_view' %}">
+              <i class="bi bi-box-arrow-right mr-2"></i>
+              Cerrar Sesión
+            </a>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="col-md-8">
-      <!-- Datos de tarjeta parte derecha-->
-      <div class="card border rounded-2 shadow p-3 mb-3">
-        <div class="card-body">
-          <!-- evaluando el grupo del usuario -->
-          {% if group_name == 'Estudiantes' %}
-          {% include 'profile/estudiantes.html' %}
-          {% elif group_name == 'Profesores' %}
-          {% include 'profile/profesores.html' %}
-          {% elif group_name == 'Administracion' %}
-          {% include 'profile/admin.html' %}
-          {% elif group_name == 'Secretaria' %}
-          {% include 'profile/secretaria.html' %}
-          {% endif %}
 
-
-
-        </div>
-
+      <!-- Right Column - Role Specific Content (70%) -->
+      <div class="profile-right-column">
+        {% if group_name == 'Estudiantes' %}
+        {% include 'profile/estudiantes.html' %}
+        {% elif group_name == 'Profesores' %}
+        {% include 'profile/profesores.html' %}
+        {% elif group_name == 'Administracion' %}
+        {% include 'profile/admin.html' %}
+        {% elif group_name == 'Secretaria' %}
+        {% include 'profile/secretaria.html' %}
+        {% endif %}
       </div>
-
 
     </div>
   </div>
 </div>
+
+<!-- Glassmorphism Styles -->
+<style>
+  /* Profile Layout - 30/70 Split */
+  .profile-layout-container {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+  }
+
+  .profile-left-column {
+    flex: 0 0 30%;
+    max-width: 30%;
+  }
+
+  .profile-right-column {
+    flex: 0 0 calc(70% - 1.5rem);
+    max-width: calc(70% - 1.5rem);
+  }
+
+  /* Responsive: stack on small screens */
+  @media (max-width: 768px) {
+    .profile-layout-container {
+      flex-direction: column;
+    }
+
+    .profile-left-column,
+    .profile-right-column {
+      flex: 1 1 100%;
+      max-width: 100%;
+    }
+  }
+
+  /* Glass Card */
+  .glass-card {
+    position: relative;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      0 4px 16px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-card:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      0 12px 40px rgba(0, 0, 0, 0.15),
+      0 6px 20px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
+
+  /* Glass Content */
+  .glass-content {
+    padding: 2rem;
+  }
+
+  /* Glass Badge for Role */
+  .glass-badge-role {
+    display: inline-block;
+    padding: 0.5rem 1.5rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+    color: #1e40af;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Glass Detail Item */
+  .glass-detail-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .glass-detail-item:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3));
+    transform: translateX(4px);
+  }
+
+  /* Glass Button */
+  .glass-button {
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 500;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  .glass-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .glass-button:hover::before {
+    left: 100%;
+  }
+
+  .glass-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
+
+  .glass-button-danger {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.2));
+    color: #7f1d1d;
+  }
+
+  .glass-button-danger:hover {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.4), rgba(220, 38, 38, 0.3));
+  }
+</style>
 
 {% endblock %}

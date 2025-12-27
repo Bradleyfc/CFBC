@@ -1,119 +1,815 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Listado de Estudiantes Registrados{% endblock %}
-
 {% block content %}
-<div class="container mt-4">
-    <h2 class="mb-4 text-center">Listado de Estudiantes Registrados</h2>
-
-    <div class="d-flex justify-content-end mb-3">
-        <a href="{% url 'principal:export_usuarios_excel' %}{% if request.GET.search %}?search={{ request.GET.search }}{% endif %}" class="btn btn-success ml-2" target="_blank">
-            <i class="bi bi-file-earmark-excel"></i> Exportar a Excel
-        </a>
+<!-- Background Section with Gradient -->
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-30"
+        style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;">
     </div>
 
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">Filtrar Usuarios</h5>
-        </div>
-        <div class="card-body">
-            <form method="get" class="row g-3 align-items-end">
-                <div class="col-md-8">
-                    <label for="search" class="form-label">Buscar:</label>
-                    <input type="text" name="search" id="search" class="form-control" placeholder="Nombre o apellido..." value="{{ request.GET.search }}">
-                </div>
-                <div class="col-md-4">
-                    <button type="submit" class="btn btn-primary w-100">
-                      <i class="bi bi-funnel"></i> Filtrar
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        <!-- Page Title -->
+        <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Listado de Estudiantes Registrados</h2>
 
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>Foto de Perfil</th>
-                    <th>Nombre</th>
-                    <th>Apellidos</th>
-                    <th>Email</th>
-                    <th>Nacionalidad</th>
-                    <th>Carnet ID</th>
-                    <th>Descargar Carnet</th>
-                    <th>Sexo</th>
-                    <th>Dirección</th>
-                    <th>Municipio</th>
-                    <th>Provincia</th>
-                    <th>Móvil</th>
-                    <th>Grado Académico</th>
-                    <th>Ocupación</th>
-                    <th>Religioso</th>
-                    <th>Título</th>
-                    <th>Descargar Título</th>
-                    <th>Grupo</th>
-                    <th>Fecha de Registro</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for registro in registros %}
-                <tr>
-                    <td>
-                        {% if registro.image and registro.image.name %}
-                            <img src="{{ registro.image.url }}" alt="Imagen de perfil" width="50" height="50" class="rounded-circle" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                            <div class="rounded-circle bg-secondary align-items-center justify-content-center" style="width: 50px; height: 50px; display: none;">
-                                <i class="bi bi-person-fill text-white" style="font-size: 24px;"></i>
-                            </div>
-                        {% else %}
-                            <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                <i class="bi bi-person-fill text-white" style="font-size: 24px;"></i>
-                            </div>
-                        {% endif %}
-                    </td>
-                    <td>{{ registro.user.first_name }}</td>
-                    <td>{{ registro.user.last_name }}</td>
-                    <td>{{ registro.user.email }}</td>
-                    <td>{{ registro.nacionalidad }}</td>
-                    <td>{{ registro.carnet }}</td>
-                    <td>
-                        {% if registro.foto_carnet %}
-                            <a href="{{ registro.foto_carnet.url }}" class="btn btn-sm btn-outline-primary" download>
-                                <i class="bi bi-download"></i> Descargar
-                            </a>
-                        {% else %}
-                            <span class="text-muted">No disponible</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ registro.get_sexo_display }}</td>
-                    <td>{{ registro.address }}</td>
-                    <td>{{ registro.location }}</td>
-                    <td>{{ registro.provincia }}</td>
-                    <td>{{ registro.movil }}</td>
-                    <td>{{ registro.get_grado_display }}</td>
-                    <td>{{ registro.get_ocupacion_display }}</td>
-                    <td>{{ registro.es_religioso|yesno:"Sí,No" }}</td>
-                    <td>{{ registro.titulo }}</td>
-                    <td>
-                        {% if registro.foto_titulo %}
-                            <a href="{{ registro.foto_titulo.url }}" class="btn btn-sm btn-outline-success" download>
-                                <i class="bi bi-download"></i> Descargar
-                            </a>
-                        {% else %}
-                            <span class="text-muted">No disponible</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ registro.user.groups.first.name|default:"Sin grupo" }}</td>
-                    <td>{{ registro.user.date_joined|date:"d/m/Y" }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="19" class="text-center">No hay usuarios registrados que coincidan con los filtros.</td>
-                </tr>
+        <!-- Filters Card -->
+        <div class="glass-card mb-6">
+            <div class="glass-header">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <i class="bi bi-funnel mr-2"></i>
+                    Filtros
+                </h3>
+            </div>
+            <div class="glass-content">
+                <form method="GET" action="{% url 'principal:usuarios_registrados' %}">
+                    <div class="flex flex-wrap gap-3 mb-4 items-end">
+                        <div class="flex-1 min-w-64">
+                            <label for="search" class="block text-xs font-medium text-gray-600 mb-1">Buscar:</label>
+                            <input type="text" name="search" id="search" class="glass-input-compact" placeholder="Nombre o apellido..." value="{{ request.GET.search }}">
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-wrap gap-2 justify-end">
+                        <button type="submit" class="glass-button glass-button-primary">
+                            <i class="bi bi-funnel mr-2"></i>
+                            Aplicar Filtros
+                        </button>
+                        <a href="{% url 'principal:usuarios_registrados' %}" class="glass-button glass-button-secondary">
+                            <i class="bi bi-arrow-clockwise mr-2"></i>
+                            Limpiar Filtros
+                        </a>
+                        <a href="{% url 'principal:profile' %}" class="glass-button glass-button-secondary">
+                            <i class="bi bi-arrow-left mr-2"></i>
+                            Volver
+                        </a>
+                        <a href="#" onclick="checkUsuariosBeforeExport('excel')" class="glass-button glass-button-success">
+                            <i class="bi bi-file-earmark-excel mr-2"></i>
+                            Exportar Excel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if registros %}
+        <!-- Table Card -->
+        <div class="glass-card mb-6">
+            <div class="overflow-x-auto">
+                <table class="glass-table resizable-table" id="usuariosTable">
+                    <thead>
+                        <tr>
+                            <th class="resizable-th" data-column="foto">
+                                Foto
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="nombre">
+                                Nombre
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="apellidos">
+                                Apellidos
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="email">
+                                Email
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="nacionalidad">
+                                Nacionalidad
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="carnet">
+                                Carnet ID
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="carnet-doc">
+                                Carnet
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="sexo">
+                                Sexo
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="direccion">
+                                Dirección
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="municipio">
+                                Municipio
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="provincia">
+                                Provincia
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="movil">
+                                Móvil
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="grado">
+                                Grado
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="ocupacion">
+                                Ocupación
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="religioso">
+                                Religioso
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="titulo">
+                                Título
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="titulo-doc">
+                                Título Doc
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="grupo">
+                                Grupo
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="registro">
+                                Registro
+                                <div class="resize-handle"></div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for registro in registros %}
+                        <tr>
+                            <td class="resizable-td" data-column="foto">
+                                {% if registro.image and registro.image.name %}
+                                    <img src="{{ registro.image.url }}" alt="Imagen de perfil" class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div class="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center border-2 border-white shadow-md" style="display: none;">
+                                        <i class="bi bi-person-fill text-gray-600 text-lg"></i>
+                                    </div>
+                                {% else %}
+                                    <div class="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center border-2 border-white shadow-md">
+                                        <i class="bi bi-person-fill text-gray-600 text-lg"></i>
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td class="resizable-td" data-column="nombre">{{ registro.user.first_name }}</td>
+                            <td class="resizable-td" data-column="apellidos">{{ registro.user.last_name }}</td>
+                            <td class="resizable-td" data-column="email" title="{{ registro.user.email }}">{{ registro.user.email }}</td>
+                            <td class="resizable-td" data-column="nacionalidad">{{ registro.nacionalidad }}</td>
+                            <td class="resizable-td" data-column="carnet">{{ registro.carnet }}</td>
+                            <td class="resizable-td" data-column="carnet-doc">
+                                {% if registro.foto_carnet %}
+                                    <a href="{{ registro.foto_carnet.url }}" class="glass-badge glass-badge-success text-xs" download>
+                                        <i class="bi bi-download mr-1"></i>Descargar
+                                    </a>
+                                {% else %}
+                                    <span class="glass-badge glass-badge-secondary text-xs">No disponible</span>
+                                {% endif %}
+                            </td>
+                            <td class="resizable-td" data-column="sexo">{{ registro.get_sexo_display }}</td>
+                            <td class="resizable-td" data-column="direccion" title="{{ registro.address }}">{{ registro.address }}</td>
+                            <td class="resizable-td" data-column="municipio">{{ registro.location }}</td>
+                            <td class="resizable-td" data-column="provincia">{{ registro.provincia }}</td>
+                            <td class="resizable-td" data-column="movil">{{ registro.movil }}</td>
+                            <td class="resizable-td" data-column="grado">{{ registro.get_grado_display }}</td>
+                            <td class="resizable-td" data-column="ocupacion">{{ registro.get_ocupacion_display }}</td>
+                            <td class="resizable-td" data-column="religioso">
+                                {% if registro.es_religioso %}
+                                <span class="glass-badge glass-badge-success">Sí</span>
+                                {% else %}
+                                <span class="glass-badge glass-badge-secondary">No</span>
+                                {% endif %}
+                            </td>
+                            <td class="resizable-td" data-column="titulo" title="{{ registro.titulo }}">{{ registro.titulo }}</td>
+                            <td class="resizable-td" data-column="titulo-doc">
+                                {% if registro.foto_titulo %}
+                                    <a href="{{ registro.foto_titulo.url }}" class="glass-badge glass-badge-success text-xs" download>
+                                        <i class="bi bi-download mr-1"></i>Descargar
+                                    </a>
+                                {% else %}
+                                    <span class="glass-badge glass-badge-secondary text-xs">No disponible</span>
+                                {% endif %}
+                            </td>
+                            <td class="resizable-td" data-column="grupo">{{ registro.user.groups.first.name|default:"Sin grupo" }}</td>
+                            <td class="resizable-td" data-column="registro">{{ registro.user.date_joined|date:"d/m/Y" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <nav aria-label="Page navigation" class="flex justify-center">
+            <ul class="glass-pagination">
+                {% if page_obj.has_previous %}
+                <li>
+                    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
+                        class="glass-page-link">
+                        Anterior
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for i in page_obj.paginator.page_range %}
+                {% if page_obj.number == i %}
+                <li>
+                    <span class="glass-page-link glass-page-link-active">{{ i }}</span>
+                </li>
+                {% else %}
+                <li>
+                    <a href="?page={{ i }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
+                        class="glass-page-link">
+                        {{ i }}
+                    </a>
+                </li>
+                {% endif %}
                 {% endfor %}
-            </tbody>
-        </table>
+
+                {% if page_obj.has_next %}
+                <li>
+                    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
+                        class="glass-page-link">
+                        Siguiente
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        {% else %}
+        <!-- Empty State -->
+        <div class="glass-alert glass-alert-info">
+            <i class="bi bi-info-circle mr-2"></i>
+            No hay usuarios registrados que coincidan con los filtros.
+        </div>
+        {% endif %}
+
     </div>
 </div>
+
+<!-- Modal de Error - Sin Usuarios -->
+<div id="errorModal" class="error-modal hidden">
+  <div class="error-modal-overlay" onclick="hideErrorModal()"></div>
+  <div class="error-modal-content">
+    <div class="error-modal-header">
+      <div class="error-modal-icon">
+        <i class="bi bi-exclamation-circle text-orange-600"></i>
+      </div>
+      <h3 class="error-modal-title">Sin Datos para Exportar</h3>
+    </div>
+    
+    <div class="error-modal-body">
+      <p class="error-modal-message">
+        No se encontraron usuarios registrados con los filtros seleccionados.
+      </p>
+      <p class="error-modal-warning">
+        Por favor, ajuste los filtros o verifique que existan usuarios registrados.
+      </p>
+    </div>
+    
+    <div class="error-modal-footer">
+      <button type="button" class="error-modal-btn error-modal-btn-ok" onclick="hideErrorModal()">
+        <i class="bi bi-check-circle mr-2"></i>
+        Entendido
+      </button>
+    </div>
+  </div>
+</div>
+<style>
+    /* Glass Card */
+    .glass-card {
+        position: relative;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            0 4px 16px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-header {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .glass-content {
+        padding: 2rem;
+    }
+
+    /* Glass Button */
+    .glass-button {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.625rem 1.25rem;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .glass-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .glass-button-primary {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        color: #1e40af;
+    }
+
+    .glass-button-secondary {
+        background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
+        color: #374151;
+    }
+
+    .glass-button-success {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+        color: #14532d;
+    }
+
+    /* Glass Input */
+    .glass-input-compact {
+        width: 100%;
+        padding: 0.375rem 0.75rem;
+        border-radius: 8px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #374151;
+        font-size: 0.8rem;
+        transition: all 0.3s ease;
+    }
+
+    .glass-input-compact:focus {
+        outline: none;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3));
+        border-color: rgba(59, 130, 246, 0.5);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Glass Table */
+    .glass-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: fixed;
+    }
+
+    .glass-table thead tr {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        backdrop-filter: blur(10px);
+    }
+
+    .glass-table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: #1e40af;
+        border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+        font-size: 0.9rem;
+        position: relative;
+        min-width: 80px;
+    }
+
+    /* Resizable Table Styles */
+    .resizable-table {
+        position: relative;
+    }
+
+    .resizable-th {
+        position: relative;
+        user-select: none;
+    }
+
+    .resize-handle {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 5px;
+        height: 100%;
+        background: transparent;
+        cursor: col-resize;
+        user-select: none;
+        z-index: 10;
+    }
+
+    .resize-handle:hover {
+        background: rgba(59, 130, 246, 0.3);
+    }
+
+    .resize-handle.resizing {
+        background: rgba(59, 130, 246, 0.5);
+    }
+
+    .resizable-td {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        position: relative;
+    }
+
+    /* Default column widths */
+    .resizable-th[data-column="foto"], .resizable-td[data-column="foto"] { width: 80px; }
+    .resizable-th[data-column="nombre"], .resizable-td[data-column="nombre"] { width: 120px; }
+    .resizable-th[data-column="apellidos"], .resizable-td[data-column="apellidos"] { width: 120px; }
+    .resizable-th[data-column="email"], .resizable-td[data-column="email"] { width: 200px; }
+    .resizable-th[data-column="nacionalidad"], .resizable-td[data-column="nacionalidad"] { width: 100px; }
+    .resizable-th[data-column="carnet"], .resizable-td[data-column="carnet"] { width: 100px; }
+    .resizable-th[data-column="carnet-doc"], .resizable-td[data-column="carnet-doc"] { width: 100px; }
+    .resizable-th[data-column="sexo"], .resizable-td[data-column="sexo"] { width: 80px; }
+    .resizable-th[data-column="direccion"], .resizable-td[data-column="direccion"] { width: 150px; }
+    .resizable-th[data-column="municipio"], .resizable-td[data-column="municipio"] { width: 100px; }
+    .resizable-th[data-column="provincia"], .resizable-td[data-column="provincia"] { width: 100px; }
+    .resizable-th[data-column="movil"], .resizable-td[data-column="movil"] { width: 100px; }
+    .resizable-th[data-column="grado"], .resizable-td[data-column="grado"] { width: 120px; }
+    .resizable-th[data-column="ocupacion"], .resizable-td[data-column="ocupacion"] { width: 120px; }
+    .resizable-th[data-column="religioso"], .resizable-td[data-column="religioso"] { width: 80px; }
+    .resizable-th[data-column="titulo"], .resizable-td[data-column="titulo"] { width: 150px; }
+    .resizable-th[data-column="titulo-doc"], .resizable-td[data-column="titulo-doc"] { width: 100px; }
+    .resizable-th[data-column="grupo"], .resizable-td[data-column="grupo"] { width: 100px; }
+    .resizable-th[data-column="registro"], .resizable-td[data-column="registro"] { width: 100px; }
+
+    .glass-table tbody tr {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .glass-table tbody tr:hover {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .glass-table td {
+        padding: 0.875rem 1rem;
+        color: #374151;
+        font-size: 0.9rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Glass Badge */
+    .glass-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .glass-badge:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .glass-badge-success {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+        color: #14532d;
+    }
+
+    .glass-badge-secondary {
+        background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
+        color: #374151;
+    }
+
+    /* Glass Pagination */
+    .glass-pagination {
+        display: flex;
+        gap: 0.5rem;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .glass-page-link {
+        display: inline-block;
+        padding: 0.5rem 0.875rem;
+        border-radius: 8px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #374151;
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .glass-page-link:hover {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3));
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .glass-page-link-active {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.4), rgba(37, 99, 235, 0.3));
+        color: #1e40af;
+        border-color: rgba(59, 130, 246, 0.5);
+    }
+
+    /* Glass Alert */
+    .glass-alert {
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        font-size: 0.875rem;
+    }
+
+    .glass-alert-info {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        color: #1e3a8a;
+    }
+
+    /* Error Modal Styles */
+    .error-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .error-modal.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .error-modal-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+
+    .error-modal-content {
+        position: relative;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        max-width: 500px;
+        width: 90%;
+        margin: 10% auto;
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+    }
+
+    .error-modal.show .error-modal-content {
+        transform: scale(1);
+    }
+
+    .error-modal-header {
+        padding: 2rem 2rem 1rem;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .error-modal-icon {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 1rem;
+        background: linear-gradient(135deg, rgba(251, 146, 60, 0.2), rgba(245, 101, 101, 0.1));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .error-modal-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #374151;
+        margin: 0;
+    }
+
+    .error-modal-body {
+        padding: 1.5rem 2rem;
+        text-align: center;
+    }
+
+    .error-modal-message {
+        font-size: 1rem;
+        color: #374151;
+        margin-bottom: 0.75rem;
+        font-weight: 500;
+    }
+
+    .error-modal-warning {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .error-modal-footer {
+        padding: 1rem 2rem 2rem;
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .error-modal-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .error-modal-btn-ok {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+        color: #14532d;
+    }
+
+    .error-modal-btn-ok:hover {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.4), rgba(22, 163, 74, 0.3));
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(34, 197, 94, 0.2);
+    }
+</style>
+
+<script>
+    // Variables para el redimensionamiento de columnas
+    let isResizing = false;
+    let currentColumn = null;
+    let startX = 0;
+    let startWidth = 0;
+
+    // Inicializar redimensionamiento de columnas
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeColumnResizing();
+    });
+
+    function initializeColumnResizing() {
+        const table = document.getElementById('usuariosTable');
+        if (!table) return;
+
+        const resizeHandles = table.querySelectorAll('.resize-handle');
+        
+        resizeHandles.forEach(handle => {
+            handle.addEventListener('mousedown', startResize);
+        });
+
+        document.addEventListener('mousemove', doResize);
+        document.addEventListener('mouseup', stopResize);
+    }
+
+    function startResize(e) {
+        isResizing = true;
+        currentColumn = e.target.parentElement;
+        startX = e.clientX;
+        startWidth = parseInt(window.getComputedStyle(currentColumn).width, 10);
+        
+        e.target.classList.add('resizing');
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    }
+
+    function doResize(e) {
+        if (!isResizing) return;
+
+        const width = startWidth + e.clientX - startX;
+        const minWidth = 60; // Ancho mínimo
+        const maxWidth = 400; // Ancho máximo
+        
+        if (width >= minWidth && width <= maxWidth) {
+            const columnName = currentColumn.getAttribute('data-column');
+            
+            // Actualizar ancho del header
+            currentColumn.style.width = width + 'px';
+            
+            // Actualizar ancho de todas las celdas de la misma columna
+            const cells = document.querySelectorAll(`[data-column="${columnName}"]`);
+            cells.forEach(cell => {
+                cell.style.width = width + 'px';
+            });
+        }
+    }
+
+    function stopResize(e) {
+        if (!isResizing) return;
+        
+        isResizing = false;
+        document.body.style.cursor = '';
+        
+        const resizeHandle = document.querySelector('.resize-handle.resizing');
+        if (resizeHandle) {
+            resizeHandle.classList.remove('resizing');
+        }
+        
+        currentColumn = null;
+    }
+
+    // Verificar si hay usuarios antes de exportar
+    function checkUsuariosBeforeExport(type) {
+        // Verificar si hay usuarios contando las filas de la tabla
+        const tableRows = document.querySelectorAll('.glass-table tbody tr');
+        const hasUsuarios = tableRows.length > 0;
+        
+        if (hasUsuarios) {
+            // Si hay usuarios, proceder con la exportación
+            let baseUrl = '';
+            if (type === 'excel') {
+                baseUrl = '/export-usuarios-excel/';
+            }
+            
+            // Obtener los parámetros actuales de la URL
+            const currentParams = window.location.search;
+            const finalUrl = baseUrl + currentParams;
+            
+            window.location.href = finalUrl;
+        } else {
+            // Si no hay usuarios, mostrar modal de error
+            showErrorModal();
+        }
+    }
+
+    // Mostrar modal de error
+    function showErrorModal() {
+        const modal = document.getElementById('errorModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('show');
+        
+        // Agregar event listeners para cerrar con ESC o click fuera
+        document.addEventListener('keydown', handleEscapeKey);
+        modal.addEventListener('click', handleOutsideClick);
+    }
+
+    // Ocultar modal de error
+    function hideErrorModal() {
+        const modal = document.getElementById('errorModal');
+        modal.classList.remove('show');
+        
+        // Pequeño delay antes de ocultar completamente
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+        
+        // Remover event listeners
+        document.removeEventListener('keydown', handleEscapeKey);
+        modal.removeEventListener('click', handleOutsideClick);
+    }
+
+    // Manejar tecla ESC
+    function handleEscapeKey(event) {
+        if (event.key === 'Escape') {
+            hideErrorModal();
+        }
+    }
+
+    // Manejar click fuera del modal
+    function handleOutsideClick(event) {
+        if (event.target === event.currentTarget) {
+            hideErrorModal();
+        }
+    }
+</script>
 {% endblock %}

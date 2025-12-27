@@ -169,18 +169,19 @@ def generate_excel(context_dict={}):
         ws_info['A2'] = f"Activo: {'Sí' if curso_academico.activo else 'No'}"
         ws_info['A3'] = f"Archivado: {'Sí' if curso_academico.archivado else 'No'}"
         ws_info['A4'] = f"Fecha de Creación: {curso_academico.fecha_creacion}"
+        # Crear hoja de matrículas como hoja adicional
+        ws_matriculas = wb.create_sheet(title="Matrículas")
     else:
-        # Remove the default active sheet if no curso_academico is provided
-        if 'Sheet' in wb.sheetnames:
-            std = wb['Sheet']
-            wb.remove(std)
+        # Si no hay curso_academico, usar la hoja activa para matrículas
+        ws_matriculas = wb.active
+        ws_matriculas.title = "Matrículas"
     
     # Hoja de cursos
     if cursos:
         ws_cursos = wb.create_sheet(title="Cursos")
         # Encabezados
-        headers = ["Nombre del Curso", "Profesor", "Estado"]
-        for col_num, header in enumerate(headers, 1):
+        headers_cursos = ["Nombre del Curso", "Profesor", "Estado"]
+        for col_num, header in enumerate(headers_cursos, 1):
             cell = ws_cursos.cell(row=1, column=col_num, value=header)
             cell.font = header_font
             cell.fill = header_fill
@@ -207,18 +208,16 @@ def generate_excel(context_dict={}):
             adjusted_width = (max_length + 2)
             ws_cursos.column_dimensions[column].width = adjusted_width
     
-    # Hoja de matrículas
+    # Encabezados para la hoja de matrículas
+    headers = ["Estudiante", "Curso Académico", "Curso", "Fecha Matrícula", "Estado Matrícula"]
+    for col_num, header in enumerate(headers, 1):
+        cell = ws_matriculas.cell(row=1, column=col_num, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+        cell.border = border
+    
     if matriculas:
-        ws_matriculas = wb.create_sheet(title="Matrículas")
-        # Encabezados
-        headers = ["Estudiante", "Curso Académico", "Curso", "Fecha Matrícula", "Estado Matrícula"]
-        for col_num, header in enumerate(headers, 1):
-            cell = ws_matriculas.cell(row=1, column=col_num, value=header)
-            cell.font = header_font
-            cell.fill = header_fill
-            cell.alignment = header_alignment
-            cell.border = border
-        
         # Datos
         for row_num, matricula in enumerate(matriculas, 2):
             ws_matriculas.cell(row=row_num, column=1, value=matricula.student.get_full_name() or matricula.student.username)
@@ -230,16 +229,22 @@ def generate_excel(context_dict={}):
             # Aplicar bordes a todas las celdas
             for col_num in range(1, 6):
                 ws_matriculas.cell(row=row_num, column=col_num).border = border
-        
-        # Ajustar ancho de columnas
-        for col in ws_matriculas.columns:
-            max_length = 0
-            column = col[0].column_letter
-            for cell in col:
-                if cell.value:
-                    max_length = max(max_length, len(str(cell.value)))
-            adjusted_width = (max_length + 2)
-            ws_matriculas.column_dimensions[column].width = adjusted_width
+    else:
+        # Si no hay matrículas, agregar una fila indicándolo
+        ws_matriculas.cell(row=2, column=1, value="No se encontraron matrículas con los filtros seleccionados")
+        ws_matriculas.merge_cells('A2:E2')
+        ws_matriculas.cell(row=2, column=1).alignment = Alignment(horizontal='center')
+        ws_matriculas.cell(row=2, column=1).font = Font(italic=True, color='666666')
+    
+    # Ajustar ancho de columnas
+    for col in ws_matriculas.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            if cell.value:
+                max_length = max(max_length, len(str(cell.value)))
+        adjusted_width = (max_length + 2)
+        ws_matriculas.column_dimensions[column].width = adjusted_width
 
     
     # Hoja de calificaciones

@@ -1,33 +1,153 @@
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-8 offset-md-2">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h2 class="mb-0 text-center">Perfil de Administracion</h2>
+<div class="glass-card h-full">
+    <div class="glass-header">
+        <h2 class="text-2xl font-bold text-center text-gray-800">Perfil de Administración</h2>
+    </div>
+    <div class="glass-content">
+        <div class="flex flex-col space-y-3">
+            <a href="{% url 'admin:index' %}" class="glass-link glass-link-warning">
+                <div class="glass-link-icon glass-icon-warning">
+                    <i class="bi bi-gear"></i>
                 </div>
-                <div class="card-body">
-                   
-                      
-                    <div class="d-grid gap-2 mt-3">
-                        <a href="{% url 'admin:index' %}" class="btn btn-warning text-white">
-                            <i class="bi bi-gear"></i> Administrador de Django
-                        </a>
-                        
-                        <a href="{% url 'datos_archivados:dashboard' %}" class="btn btn-danger btn-lg d-block mb-3">
-                            <i class="bi bi-hdd-stack me-2"></i> Dashboard Datos Archivados
-                        </a>
-                        
-                        <a href="{% url 'datos_archivados:configurar_migracion' %}" class="btn btn-warning btn-lg d-block mb-3">
-                            <i class="bi bi-gear me-2"></i> Configurar Migración
-                        </a>
-                        
-                        <a href="{% url 'datos_archivados:debug_permisos' %}" class="btn btn-info btn-lg d-block mb-3">
-                            <i class="bi bi-bug me-2"></i> Debug Permisos
-                        </a>
-                        
-                    </div>
+                <span class="glass-link-text">Administrador de Django</span>
+            </a>
+
+            <a href="{% url 'datos_archivados:dashboard' %}" class="glass-link glass-link-danger">
+                <div class="glass-link-icon glass-icon-danger">
+                    <i class="bi bi-hdd-stack"></i>
                 </div>
-            </div>
+                <span class="glass-link-text">Dashboard Datos Archivados</span>
+            </a>
+
+            <a href="{% url 'datos_archivados:configurar_migracion' %}" class="glass-link glass-link-warning">
+                <div class="glass-link-icon glass-icon-warning">
+                    <i class="bi bi-gear"></i>
+                </div>
+                <span class="glass-link-text">Configurar Migración</span>
+            </a>
+
+            <a href="{% url 'datos_archivados:debug_permisos' %}" class="glass-link glass-link-info">
+                <div class="glass-link-icon glass-icon-info">
+                    <i class="bi bi-bug"></i>
+                </div>
+                <span class="glass-link-text">Debug Permisos</span>
+            </a>
         </div>
     </div>
 </div>
+
+<style>
+    /* Glass Header */
+    .glass-header {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Glass Link - Advanced Effect - SCOPED */
+    .glass-content .glass-link {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 1rem;
+        padding: 1.25rem 1.5rem 1.25rem 16rem !important;
+        border-radius: 20px;
+
+        /* Advanced Glassmorphism */
+        background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.35) 0%,
+                rgba(255, 255, 255, 0.05) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+
+        /* Depth Borders (Light top/left, Dark bottom/right) */
+        border-top: 1px solid rgba(255, 255, 255, 0.8);
+        border-left: 1px solid rgba(255, 255, 255, 0.8);
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+
+        /* Deep Shadow */
+        box-shadow:
+            0 8px 32px 0 rgba(31, 38, 135, 0.15),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+
+        transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        text-decoration: none;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .glass-content .glass-link:hover {
+        padding-left: 12rem !important;
+        background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.5) 0%,
+                rgba(255, 255, 255, 0.15) 100%);
+        box-shadow:
+            0 15px 45px 0 rgba(31, 38, 135, 0.25),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+        transform: translateY(-2px);
+    }
+
+    /* Glass Link Icon - SCOPED */
+    .glass-content .glass-link-icon {
+        width: 2.5rem !important;
+        min-width: 2.5rem !important;
+        max-width: 2.5rem !important;
+        height: 2.5rem;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        flex-shrink: 0;
+    }
+
+    .glass-content .glass-icon-warning {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(217, 119, 6, 0.2));
+        color: #78350f;
+    }
+
+    .glass-content .glass-icon-danger {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.2));
+        color: #7f1d1d;
+    }
+
+    .glass-content .glass-icon-info {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        color: #1e3a8a;
+    }
+
+    /* Glass Link Text - SCOPED */
+    .glass-content .glass-link-text {
+        font-weight: 600;
+        font-size: 1.15rem;
+    }
+
+    .glass-content .glass-link-warning .glass-link-text {
+        color: #78350f;
+    }
+
+    .glass-content .glass-link-danger .glass-link-text {
+        color: #7f1d1d;
+    }
+
+    .glass-content .glass-link-info .glass-link-text {
+        color: #1e3a8a;
+    }
+
+    /* Chevron color - SCOPED */
+    .glass-content .glass-link-warning i.bi-chevron-right {
+        color: #78350f;
+    }
+
+    .glass-content .glass-link-danger i.bi-chevron-right {
+        color: #7f1d1d;
+    }
+
+    .glass-content .glass-link-info i.bi-chevron-right {
+        color: #1e3a8a;
+    }
+</style>

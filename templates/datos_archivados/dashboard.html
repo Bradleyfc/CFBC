@@ -3,227 +3,454 @@
 {% block title %}Dashboard - Datos Archivados{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h3 class="card-title mb-0">
-                        <i class="bi bi-hdd-stack"></i>
+<!-- Background Section with Gradient -->
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-30"
+        style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;">
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        <!-- Page Title -->
+        <div class="glass-card mb-6">
+            <div class="glass-header">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-3xl font-bold text-gray-800 flex items-center">
+                        <i class="bi bi-hdd-stack mr-3"></i>
                         Dashboard de Datos Archivados
-                    </h3>
+                    </h2>
                     <!-- Indicador de migración en progreso -->
-                    <div id="indicadorMigracion" class="d-none">
-                        <div class="d-flex align-items-center">
-                            <div class="spinner-border spinner-border-sm text-light me-2" role="status">
-                                <span class="visually-hidden">Migrando...</span>
-                            </div>
-                            <span class="badge bg-warning text-dark fs-6">
-                                <i class="bi bi-gear-fill"></i> Migración en Progreso
+                    <div id="indicadorMigracion" class="hidden">
+                        <div class="flex items-center">
+                            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-2"></div>
+                            <span class="glass-badge glass-badge-warning">
+                                <i class="bi bi-gear-fill mr-1"></i> Migración en Progreso
                             </span>
                         </div>
                     </div>
                 </div>
-                <div class="card-body">
-                    {% if sin_permisos %}
-                    <div class="alert alert-danger">
-                        <h4><i class="bi bi-exclamation-triangle"></i> Sin Permisos</h4>
-                        <p>No tiene permisos para acceder a esta sección. Solo usuarios del grupo "Secretaria" pueden
-                            acceder.</p>
-                        <p><strong>Usuario actual:</strong> {{ user.username }}</p>
-                        <p><strong>Grupos:</strong>
+            </div>
+        </div>
+
+        {% if sin_permisos %}
+        <!-- Sin Permisos -->
+        <div class="glass-card">
+            <div class="glass-content">
+                <div class="glass-alert glass-alert-warning">
+                    <i class="bi bi-exclamation-triangle mr-2"></i>
+                    <div>
+                        <h4 class="text-xl font-bold mb-2">Sin Permisos</h4>
+                        <p class="mb-2">No tiene permisos para acceder a esta sección. Solo usuarios del grupo "Secretaria" pueden acceder.</p>
+                        <p class="mb-1"><strong>Usuario actual:</strong> {{ user.username }}</p>
+                        <p class="mb-4"><strong>Grupos:</strong>
                             {% for grupo in user.groups.all %}
                             {{ grupo.name }}{% if not forloop.last %}, {% endif %}
                             {% empty %}
                             Ninguno
                             {% endfor %}
                         </p>
-                        <div class="mt-3">
-                            <a href="{% url 'principal:profile' %}" class="btn btn-primary">Volver al Perfil</a>
-                            <a href="{% url 'datos_archivados:debug_permisos' %}" class="btn btn-info">Ver Debug</a>
+                        <div class="flex gap-3">
+                            <a href="{% url 'principal:profile' %}" class="glass-button glass-button-primary">
+                                <i class="bi bi-arrow-left mr-2"></i>
+                                Volver al Perfil
+                            </a>
+                            <a href="{% url 'datos_archivados:debug_permisos' %}" class="glass-button glass-button-info">
+                                <i class="bi bi-bug mr-2"></i>
+                                Ver Debug
+                            </a>
                         </div>
                     </div>
-                    {% else %}
-
-                    <!-- Alerta de migración en progreso -->
-                    <div id="alertaMigracionProgreso" class="alert alert-info d-none">
-                        <div class="row align-items-center">
-                            <div class="col-md-2 text-center">
-                                <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
-                                    <span class="visually-hidden">Migrando...</span>
-                                </div>
-                            </div>
-                            <div class="col-md-10">
-                                <h4><i class="bi bi-gear-fill"></i> Migración Automática en Progreso</h4>
-                                <p class="mb-2" id="estadoMigracionDashboard">Procesando datos desde la base de datos remota...</p>
-                                <div class="progress" style="height: 20px;">
-                                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
-                                         role="progressbar" style="width: 0%" id="barraProgresoDashboard">
-                                        <span id="textoProgresoDashboard">Iniciando...</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Mensaje de bienvenida -->
-                    <div class="alert alert-success alert-dismissible" id="alertaBienvenida">
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-                        <h4><i class="bi bi-check-circle"></i> ¡Sistema de Migración Automática Funcionando!</h4>
-                        <p><strong>Usuario:</strong> {{ user.username }}</p>
-                        <p>Bienvenido al sistema de migración automática de datos desde MariaDB.</p>
-                        {% if ultima_migracion and ultima_migracion.tablas_inspeccionadas > 0 %}
-                        <hr>
-                        <p class="mb-0">
-                            <i class="bi bi-info-circle"></i> 
-                            <strong>Última migración:</strong> 
-                            Se inspeccionaron {{ ultima_migracion.tablas_inspeccionadas }} tablas, 
-                            {{ ultima_migracion.tablas_con_datos }} con datos y 
-                            {{ ultima_migracion.tablas_vacias }} vacías.
-                        </p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Estadísticas principales -->
-                    <div class="row mb-4">
-                        <!-- Primera fila -->
-                        <div class="col-md-4 col-lg-2 mb-3">
-                            <div class="card bg-primary text-white h-100">
-                                <div class="card-body text-center">
-                                    <i class="bi bi-database fs-3 mb-2"></i>
-                                    <h3 class="mb-1">{{ total_datos_archivados|default:0 }}</h3>
-                                    <p class="mb-0 small">Registros Archivados</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 col-lg-2 mb-3">
-                            <div class="card bg-success text-white h-100">
-                                <div class="card-body text-center">
-                                    <i class="bi bi-table fs-3 mb-2"></i>
-                                    <h3 class="mb-1">{{ total_tablas_migradas|default:0 }}</h3>
-                                    <p class="mb-0 small">Tablas con Datos</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 col-lg-2 mb-3">
-                            <div class="card text-white h-100" style="background-color: #c2185b;">
-                                <div class="card-body text-center">
-                                    <i class="bi bi-search fs-3 mb-2"></i>
-                                    <h3 class="mb-1">{{ tablas_inspeccionadas_actuales|default:0 }}</h3>
-                                    <p class="mb-0 small">Tablas Inspeccionadas</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 col-lg-2 mb-3">
-                            <div class="card bg-secondary text-white h-100">
-                                <div class="card-body text-center">
-                                    <i class="bi bi-inbox fs-3 mb-2"></i>
-                                    <h3 class="mb-1">{{ tablas_vacias_actuales|default:0 }}</h3>
-                                    <p class="mb-0 small">Tablas Vacías</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 col-lg-2 mb-3">
-                            <div class="card bg-dark text-white h-100">
-                                <div class="card-body text-center">
-                                    <i class="bi bi-calendar-event fs-3 mb-2"></i>
-                                    <h3 class="mb-1" style="font-size: 1.2rem;">{% if ultima_migracion %}{{ ultima_migracion.fecha_inicio|date:"d/m/Y" }}{% else %}N/A{% endif %}</h3>
-                                    <p class="mb-0 small">Última Migración</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 col-lg-2 mb-3">
-                            <div class="card bg-warning text-dark h-100">
-                                <div class="card-body text-center">
-                                    <i class="bi bi-check-circle fs-3 mb-2"></i>
-                                    <h3 class="mb-1">{% if ultima_migracion %}{{ ultima_migracion.estado|title }}{% else %}Inactivo{% endif %}</h3>
-                                    <p class="mb-0 small">Estado</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Acciones principales -->
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <div class="card bg-primary text-white h-100">
-                                <div class="card-body text-center">
-                                    <i class="bi bi-download display-4 mb-3"></i>
-                                    <h4>Migración Automática</h4>
-                                    <p>Configure y ejecute la migración desde su base de datos MariaDB remota</p>
-                                    <a href="{% url 'datos_archivados:configurar_migracion' %}"
-                                        class="btn btn-light btn-lg">
-                                        <i class="bi bi-gear"></i> Configurar Migración
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card bg-success text-white h-100">
-                                <div class="card-body text-center">
-                                    <i class="bi bi-table display-4 mb-3"></i>
-                                    <h4>Consultar Datos</h4>
-                                    <p>Explore y busque en todos los datos archivados migrados</p>
-                                    <a href="{% url 'datos_archivados:tablas_list' %}" class="btn btn-light btn-lg">
-                                        <i class="bi bi-search"></i> Ver Datos Archivados
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Información del sistema -->
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5><i class="bi bi-info-circle"></i> Características del Sistema</h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <ul class="list-unstyled">
-                                                <li><i class="bi bi-check-circle text-success"></i> <strong>Inspección
-                                                        automática</strong> de todas las tablas</li>
-                                                <li><i class="bi bi-check-circle text-success"></i> <strong>Modelos
-                                                        dinámicos</strong> creados automáticamente</li>
-                                            </ul>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <ul class="list-unstyled">
-                                                <li><i class="bi bi-check-circle text-success"></i> <strong>Migración
-                                                        inteligente</strong> de tipos de datos</li>
-                                                <li><i class="bi bi-check-circle text-success"></i>
-                                                    <strong>Almacenamiento flexible</strong> en formato JSON
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {% endif %}
                 </div>
+            </div>
+        </div>
+        {% else %}
+
+        <!-- Alerta de migración en progreso -->
+        <div id="alertaMigracionProgreso" class="glass-card mb-6 hidden">
+            <div class="glass-content">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 mr-6">
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="text-xl font-bold text-gray-800 mb-2 flex items-center">
+                            <i class="bi bi-gear-fill mr-2"></i>
+                            Migración Automática en Progreso
+                        </h4>
+                        <p class="text-gray-600 mb-3" id="estadoMigracionDashboard">Procesando datos desde la base de datos remota...</p>
+                        <div class="w-full bg-gray-200 rounded-full h-5">
+                            <div class="bg-blue-600 h-5 rounded-full transition-all duration-300 flex items-center justify-center text-white text-sm font-semibold" 
+                                 style="width: 0%" id="barraProgresoDashboard">
+                                <span id="textoProgresoDashboard">Iniciando...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mensaje de bienvenida -->
+        <div class="glass-card mb-6" id="alertaBienvenida">
+            <div class="glass-content">
+                <div class="glass-alert glass-alert-success">
+                    <i class="bi bi-check-circle mr-2"></i>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="text-xl font-bold mb-2">¡Sistema de Migración Automática Funcionando!</h4>
+                                <p class="mb-2"><strong>Usuario:</strong> {{ user.username }}</p>
+                                <p class="mb-3">Bienvenido al sistema de migración automática de datos desde MariaDB.</p>
+                                {% if ultima_migracion and ultima_migracion.tablas_inspeccionadas > 0 %}
+                                <div class="border-t border-green-200 pt-3 mt-3">
+                                    <p class="mb-0 flex items-center">
+                                        <i class="bi bi-info-circle mr-2"></i>
+                                        <strong>Última migración:</strong> 
+                                        Se inspeccionaron {{ ultima_migracion.tablas_inspeccionadas }} tablas, 
+                                        {{ ultima_migracion.tablas_con_datos }} con datos y 
+                                        {{ ultima_migracion.tablas_vacias }} vacías.
+                                    </p>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <button type="button" class="glass-button glass-button-secondary ml-4" onclick="cerrarAlertaBienvenida()">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estadísticas principales -->
+        <div class="flex justify-center mb-6">
+            <div class="flex gap-3" style="margin-left: 5mm;">
+                <!-- Registros Archivados -->
+                <div class="glass-card hover-lift flex-shrink-0" style="width: 175px; min-width: 175px;">
+                    <div class="glass-content p-4 text-center">
+                        <div class="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="bi bi-archive text-lg text-blue-600"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">{{ total_datos_archivados|default:0 }}</h3>
+                        <p class="text-sm text-gray-600">Registros</p>
+                    </div>
+                </div>
+
+                <!-- Tablas con Datos -->
+                <div class="glass-card hover-lift flex-shrink-0" style="width: 175px; min-width: 175px;">
+                    <div class="glass-content p-4 text-center">
+                        <div class="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="bi bi-grid-3x3-gap text-lg text-green-600"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">{{ total_tablas_migradas|default:0 }}</h3>
+                        <p class="text-sm text-gray-600">Tablas</p>
+                    </div>
+                </div>
+
+                <!-- Tablas Inspeccionadas -->
+                <div class="glass-card hover-lift flex-shrink-0" style="width: 175px; min-width: 175px;">
+                    <div class="glass-content p-4 text-center">
+                        <div class="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="bi bi-clipboard-data text-lg" style="color: #ec4899;"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">{{ tablas_inspeccionadas_actuales|default:0 }}</h3>
+                        <p class="text-sm text-gray-600">Inspeccionadas</p>
+                    </div>
+                </div>
+
+                <!-- Tablas Vacías -->
+                <div class="glass-card hover-lift flex-shrink-0" style="width: 175px; min-width: 175px;">
+                    <div class="glass-content p-4 text-center">
+                        <div class="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="bi bi-file-earmark text-lg" style="color: #ea580c;"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">{{ tablas_vacias_actuales|default:0 }}</h3>
+                        <p class="text-sm text-gray-600">Vacías</p>
+                    </div>
+                </div>
+
+                <!-- Última Migración -->
+                <div class="glass-card hover-lift flex-shrink-0" style="width: 175px; min-width: 175px;">
+                    <div class="glass-content p-4 text-center">
+                        <div class="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="bi bi-clock-history text-lg" style="color: #9333ea;"></i>
+                        </div>
+                        <h3 class="text-base font-bold text-gray-800 mb-2">{% if ultima_migracion %}{{ ultima_migracion.fecha_inicio|date:"d/m" }}{% else %}N/A{% endif %}</h3>
+                        <p class="text-sm text-gray-600">Última</p>
+                    </div>
+                </div>
+
+                <!-- Estado -->
+                <div class="glass-card hover-lift flex-shrink-0" style="width: 175px; min-width: 175px;">
+                    <div class="glass-content p-4 text-center">
+                        <div class="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="bi bi-activity text-lg" style="color: #4f46e5;"></i>
+                        </div>
+                        <h3 class="text-base font-bold text-gray-800 mb-2">{% if ultima_migracion %}{{ ultima_migracion.estado|title }}{% else %}Inactivo{% endif %}</h3>
+                        <p class="text-sm text-gray-600">Estado</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Acciones principales -->
+        <div class="grid md:grid-cols-2 gap-6 mb-6">
+            <!-- Migración Automática -->
+            <div class="glass-card hover-lift">
+                <div class="glass-content text-center">
+                    <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="bi bi-download text-4xl text-blue-600"></i>
+                    </div>
+                    <h4 class="text-2xl font-bold text-gray-800 mb-3">Migración Automática</h4>
+                    <p class="text-gray-600 mb-6">Configure y ejecute la migración desde su base de datos MariaDB remota</p>
+                    <a href="{% url 'datos_archivados:configurar_migracion' %}" class="glass-button glass-button-primary">
+                        <i class="bi bi-gear mr-2"></i>
+                        Configurar Migración
+                    </a>
+                </div>
+            </div>
+
+            <!-- Consultar Datos -->
+            <div class="glass-card hover-lift">
+                <div class="glass-content text-center">
+                    <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="bi bi-table text-4xl text-green-600"></i>
+                    </div>
+                    <h4 class="text-2xl font-bold text-gray-800 mb-3">Consultar Datos</h4>
+                    <p class="text-gray-600 mb-6">Explore y busque en todos los datos archivados migrados</p>
+                    <a href="{% url 'datos_archivados:tablas_list' %}" class="glass-button glass-button-success">
+                        <i class="bi bi-search mr-2"></i>
+                        Ver Datos Archivados
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información del sistema -->
+        <div class="glass-card">
+            <div class="glass-header">
+                <h5 class="text-xl font-bold text-gray-800 flex items-center">
+                    <i class="bi bi-info-circle mr-2"></i>
+                    Características del Sistema
+                </h5>
+            </div>
+            <div class="glass-content">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <ul class="space-y-3">
+                            <li class="flex items-center">
+                                <i class="bi bi-check-circle text-green-600 mr-3"></i>
+                                <span><strong>Inspección automática</strong> de todas las tablas</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="bi bi-check-circle text-green-600 mr-3"></i>
+                                <span><strong>Modelos dinámicos</strong> creados automáticamente</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div>
+                        <ul class="space-y-3">
+                            <li class="flex items-center">
+                                <i class="bi bi-check-circle text-green-600 mr-3"></i>
+                                <span><strong>Migración inteligente</strong> de tipos de datos</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="bi bi-check-circle text-green-600 mr-3"></i>
+                                <span><strong>Almacenamiento flexible</strong> en formato JSON</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% endif %}
+    </div>
+</div>
+
+<!-- Toast de Notificación -->
+<div class="fixed bottom-4 right-4 z-50">
+    <div id="toastMigracion" class="glass-card hidden transform transition-all duration-300 translate-y-full opacity-0">
+        <div class="glass-content">
+            <div class="flex items-center">
+                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                    <i class="bi bi-check-circle-fill text-green-600"></i>
+                </div>
+                <div class="flex-1">
+                    <strong class="text-gray-800">Migración Completada</strong>
+                    <p class="text-sm text-gray-600 mb-0">¡La migración de datos se ha completado exitosamente! La página se actualizará automáticamente.</p>
+                </div>
+                <button type="button" class="glass-button glass-button-secondary ml-3" onclick="cerrarToast()">
+                    <i class="bi bi-x"></i>
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Toast de Notificación -->
-<div class="toast-container position-fixed bottom-0 end-0 p-3">
-    <div id="toastMigracion" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="toast-header bg-success text-white">
-            <i class="bi bi-check-circle-fill me-2"></i>
-            <strong class="me-auto">Migración Completada</strong>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-        <div class="toast-body">
-            ¡La migración de datos se ha completado exitosamente! La página se actualizará automáticamente.
-        </div>
-    </div>
-</div>
+<style>
+    /* Aspect ratio for square cards */
+    .aspect-square {
+        aspect-ratio: 1 / 1;
+    }
+
+    /* Glass Card */
+    .glass-card {
+        position: relative;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            0 4px 16px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-header {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .glass-content {
+        padding: 2rem;
+    }
+
+    /* Glass Button */
+    .glass-button {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.625rem 1.25rem;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .glass-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .glass-button-primary {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        color: #1e40af;
+    }
+
+    .glass-button-secondary {
+        background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
+        color: #374151;
+    }
+
+    .glass-button-success {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+        color: #14532d;
+    }
+
+    .glass-button-info {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        color: #1e40af;
+    }
+
+    /* Glass Badge */
+    .glass-badge {
+        display: inline-block;
+        padding: 0.375rem 0.75rem;
+        border-radius: 16px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .glass-badge-warning {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(217, 119, 6, 0.2));
+        color: #78350f;
+    }
+
+    /* Glass Alert */
+    .glass-alert {
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: flex-start;
+        font-size: 0.875rem;
+    }
+
+    .glass-alert-success {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.1));
+        color: #14532d;
+    }
+
+    .glass-alert-warning {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.1));
+        color: #78350f;
+    }
+
+    /* Hover Effects */
+    .hover-lift {
+        transition: all 0.3s ease;
+    }
+
+    .hover-lift:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Animaciones */
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    .animate-pulse-custom {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes slideInDown {
+        from {
+            transform: translateY(-20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .slide-in-down {
+        animation: slideInDown 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    .fade-in {
+        animation: fadeIn 0.5s ease-out;
+    }
+</style>
 
 <script>
 // Verificar estado de migración cada 3 segundos
@@ -296,13 +523,14 @@ function mostrarIndicadoresMigracion(data) {
     // Mostrar indicador en header
     const indicadorHeader = document.getElementById('indicadorMigracion');
     if (indicadorHeader) {
-        indicadorHeader.classList.remove('d-none');
+        indicadorHeader.classList.remove('hidden');
     }
     
     // Mostrar alerta de progreso
     const alertaProgreso = document.getElementById('alertaMigracionProgreso');
     if (alertaProgreso) {
-        alertaProgreso.classList.remove('d-none');
+        alertaProgreso.classList.remove('hidden');
+        alertaProgreso.classList.add('slide-in-down');
     }
     
     // Actualizar estado inicial
@@ -335,13 +563,13 @@ function ocultarIndicadoresMigracion() {
     // Ocultar indicador en header
     const indicadorHeader = document.getElementById('indicadorMigracion');
     if (indicadorHeader) {
-        indicadorHeader.classList.add('d-none');
+        indicadorHeader.classList.add('hidden');
     }
     
     // Ocultar alerta de progreso
     const alertaProgreso = document.getElementById('alertaMigracionProgreso');
     if (alertaProgreso) {
-        alertaProgreso.classList.add('d-none');
+        alertaProgreso.classList.add('hidden');
     }
 }
 
@@ -351,8 +579,16 @@ function mostrarNotificacionCompletada() {
         return;
     }
     
-    const toast = new bootstrap.Toast(document.getElementById('toastMigracion'));
-    toast.show();
+    const toast = document.getElementById('toastMigracion');
+    if (toast) {
+        toast.classList.remove('hidden', 'translate-y-full', 'opacity-0');
+        toast.classList.add('translate-y-0', 'opacity-100');
+        
+        // Auto-ocultar después de 5 segundos
+        setTimeout(() => {
+            cerrarToast();
+        }, 5000);
+    }
     
     // Notificación del navegador
     if (Notification.permission === 'granted') {
@@ -363,6 +599,26 @@ function mostrarNotificacionCompletada() {
     }
     
     console.log('Notificación de migración completada mostrada');
+}
+
+function cerrarToast() {
+    const toast = document.getElementById('toastMigracion');
+    if (toast) {
+        toast.classList.add('translate-y-full', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        
+        setTimeout(() => {
+            toast.classList.add('hidden');
+        }, 300);
+    }
+}
+
+function cerrarAlertaBienvenida() {
+    const alerta = document.getElementById('alertaBienvenida');
+    if (alerta) {
+        alerta.style.display = 'none';
+        localStorage.setItem('alerta_bienvenida_cerrada', 'true');
+    }
 }
 
 // Limpiar notificaciones antiguas (más de 1 hora)
@@ -397,12 +653,6 @@ function manejarAlertaBienvenida() {
     
     if (alertaCerrada === 'true') {
         alerta.style.display = 'none';
-    } else {
-        // Escuchar cuando se cierre la alerta
-        alerta.addEventListener('closed.bs.alert', function() {
-            localStorage.setItem('alerta_bienvenida_cerrada', 'true');
-            console.log('Alerta de bienvenida cerrada y guardada en localStorage');
-        });
     }
 }
 
@@ -432,63 +682,4 @@ if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
 }
 </script>
-
-<style>
-/* Animaciones para indicadores de migración */
-#indicadorMigracion .badge {
-    animation: pulse 2s infinite;
-}
-
-#alertaMigracionProgreso {
-    border-left: 5px solid #0d6efd;
-    animation: slideInDown 0.5s ease-out;
-}
-
-/* Estilos para alerta de bienvenida */
-#alertaBienvenida {
-    position: relative;
-    animation: fadeIn 0.5s ease-out;
-}
-
-#alertaBienvenida .btn-close {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-}
-
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-}
-
-@keyframes slideInDown {
-    from {
-        transform: translateY(-20px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-.spinner-border {
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-</style>
 {% endblock %}

@@ -10,7 +10,7 @@ from django.forms import inlineformset_factory, modelformset_factory
 # Importar modelos necesarios
 from .models import (
     Curso, Calificaciones, NotaIndividual, FormularioAplicacion, PreguntaFormulario,
-    OpcionRespuesta, RespuestaEstudiante
+    OpcionRespuesta, RespuestaEstudiante, CursoAcademico
 )
 from accounts.models import Registro
 
@@ -228,9 +228,52 @@ class CourseForm(forms.ModelForm):
     """
     Formulario para crear y editar cursos
     """
+    enrollment_deadline = forms.DateField(
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'glass-input-compact'
+        }),
+        required=False,
+        label='Fecha límite de inscripción'
+    )
+    
+    start_date = forms.DateField(
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'glass-input-compact'
+        }),
+        required=False,
+        label='Fecha de inicio del curso'
+    )
+    
     class Meta:
         model = Curso
-        fields = '__all__'
+        exclude = ['curso_academico']  # Excluir curso_academico ya que se asigna automáticamente
+    
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        
+        # Asignar automáticamente el curso académico activo
+        try:
+            curso_academico_activo = CursoAcademico.objects.get(activo=True)
+            instance.curso_academico = curso_academico_activo
+        except CursoAcademico.DoesNotExist:
+            # Si no hay curso académico activo, crear uno para el año actual
+            from datetime import datetime
+            current_year = datetime.now().year
+            next_year = current_year + 1
+            nombre_curso = f"{current_year}-{next_year}"
+            
+            curso_academico_activo, created = CursoAcademico.objects.get_or_create(
+                nombre=nombre_curso,
+                defaults={'activo': True}
+            )
+            instance.curso_academico = curso_academico_activo
+        
+        if commit:
+            instance.save()
+        
+        return instance
 
 
 class CalificacionesForm(forms.ModelForm):
