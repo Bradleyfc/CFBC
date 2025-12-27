@@ -338,10 +338,49 @@ PreguntaFormularioFormSet = inlineformset_factory(
 )
 
 
-class RespuestaEstudianteForm(forms.ModelForm):
+class RespuestaEstudianteForm(forms.Form):
     """
-    Formulario para respuestas de estudiantes
+    Formulario dinámico para respuestas de estudiantes
     """
-    class Meta:
-        model = RespuestaEstudiante
-        fields = '__all__'
+    def __init__(self, *args, **kwargs):
+        # Extraer el parámetro pregunta si existe
+        self.pregunta = kwargs.pop('pregunta', None)
+        super().__init__(*args, **kwargs)
+        
+        # Si se proporciona una pregunta, configurar el formulario según el tipo
+        if self.pregunta:
+            self.configure_for_question()
+    
+    def configure_for_question(self):
+        """Configura el formulario según el tipo de pregunta"""
+        field_name = f'pregunta_{self.pregunta.id}'
+        
+        if self.pregunta.tipo == 'escritura_libre':
+            # Para preguntas de escritura libre, crear un campo de texto
+            self.fields[field_name] = forms.CharField(
+                widget=forms.Textarea(attrs={
+                    'rows': 3,
+                    'class': 'form-control',
+                    'placeholder': 'Escribe tu respuesta aquí...'
+                }),
+                required=self.pregunta.requerida,
+                label=''
+            )
+        elif self.pregunta.tipo == 'seleccion_unica':
+            # Para selección única, crear campo de radio buttons
+            opciones = [(opcion.id, opcion.texto) for opcion in self.pregunta.opciones.all()]
+            self.fields[field_name] = forms.ChoiceField(
+                choices=opciones,
+                widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+                required=self.pregunta.requerida,
+                label=''
+            )
+        elif self.pregunta.tipo == 'seleccion_multiple':
+            # Para selección múltiple, crear campo de checkboxes
+            opciones = [(opcion.id, opcion.texto) for opcion in self.pregunta.opciones.all()]
+            self.fields[field_name] = forms.MultipleChoiceField(
+                choices=opciones,
+                widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+                required=self.pregunta.requerida,
+                label=''
+            )

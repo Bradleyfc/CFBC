@@ -4,76 +4,632 @@
 {% block title %}Aplicar al Curso{% endblock %}
 
 {% block content %}
-<div class="container text-center">
-    <h3>APLICAR AL CURSO</h3>
-</div>
-<hr>
-<br>
-
-{% if messages %}
-<div class="container">
-    {% for message in messages %}
-    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-        {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<!-- Background Section with Gradient -->
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-30"
+        style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;">
     </div>
-    {% endfor %}
-</div>
-{% endif %}
 
-<form method="post">
-    {% csrf_token %}
+    <div class="custom-form-width mx-auto px-4 sm:px-6 lg:px-8 py-6 relative z-10">
+        <!-- Page Title -->
+        <h2 class="text-2xl font-bold text-center text-gray-800 mb-4">Aplicar al Curso</h2>
 
-    <div class="card mx-auto" style="width: 40rem;">
-
-        <img src="{% static 'icono.jpg' %}" class="card-img-top" alt="logo del centro"
-            style="max-width: 20%; height: auto; margin: 0 auto; display: block; padding-top: 5%;">
-
-        <div class="card-body">
-            <h5 class="card-title text-center">{{ curso.name }}</h5>
-            <p class="text-center text-muted">{{ curso.description }}</p>
-
-            <h6 class="text-center mb-3">{{ formulario.titulo }}</h6>
-            {% if formulario.descripcion %}
-            <p class="text-center text-muted mb-4">{{ formulario.descripcion }}</p>
-            {% endif %}
-            {% for pregunta, form in formularios_preguntas %}
-            <div class="card mb-3">
-                <div class="card-body">
-                    <h6 class="card-title">{{ pregunta.texto }}{% if pregunta.requerida %} <span
-                            class="text-danger">*</span>{% endif %}</h6>
-
-                    {% for field in form %}
-                    <div class="mt-2">
-                        {{ field }}
-                    </div>
-                    {% endfor %}
-                </div>
+        <!-- Messages -->
+        {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+            <div class="glass-alert glass-alert-{{ message.tags }} mb-3">
+                <i class="bi bi-info-circle mr-2"></i>
+                {{ message }}
             </div>
             {% endfor %}
+        </div>
+        {% endif %}
 
-            <div class="text-center mt-4 mb-3">
-                <p class="text-muted">
-                    Al seleccionar Enviar Solicitud a continuación, acepto
-                    <a href="#" class="text-decoration-none">Reglamento del Curso</a>.
-                </p>
-            </div>
+        <form method="post">
+            {% csrf_token %}
 
-            <div class="d-flex justify-content-between mt-4">
-                <a href="{% url 'principal:cursos' %}" class="btn btn-secondary">
-                  <i class="bi bi-x-circle"></i> Cancelar
-                </a>
-                <button type="submit" class="btn btn-primary">
-                  <i class="bi bi-send"></i> Enviar Solicitud
-                </button>
+            <!-- Main Card -->
+            <div class="glass-card mb-4">
+                <!-- Logo Section -->
+                <div class="text-center py-4">
+                    <div class="glass-logo-wrapper inline-block">
+                        <img src="{% static 'icono.jpg' %}" alt="logo del centro" class="w-20 h-auto">
+                    </div>
+                </div>
+
+                <div class="glass-content">
+                    <!-- Course Info -->
+                    <div class="text-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">{{ curso.name }}</h3>
+                        <p class="text-gray-600 mb-3 text-sm">{{ curso.description }}</p>
+                        
+                        <h4 class="text-lg font-semibold text-blue-600 mb-1">{{ formulario.titulo }}</h4>
+                        {% if formulario.descripcion %}
+                        <p class="text-gray-600 text-sm">{{ formulario.descripcion }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Questions Section -->
+                    <div class="space-y-4">
+                        {% for pregunta, form in formularios_preguntas %}
+                        <div class="glass-card border border-gray-200">
+                            <div class="glass-content-compact">
+                                <h6 class="text-base font-semibold text-gray-800 mb-3">
+                                    {{ pregunta.texto }}
+                                    {% if pregunta.requerida %}
+                                    <span class="text-red-500 ml-1">*</span>
+                                    {% endif %}
+                                </h6>
+
+                                <div class="space-y-2">
+                                    {% for field in form %}
+                                    <div class="form-field">
+                                        {{ field }}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Terms Section -->
+                    <div class="text-center mt-6 mb-4">
+                        <p class="text-gray-600 text-sm">
+                            Al seleccionar Enviar Solicitud a continuación, acepto el
+                            <a href="#" class="text-blue-600 hover:text-blue-800 font-medium">Reglamento del Curso</a>.
+                        </p>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-col sm:flex-row justify-between gap-3 mt-6">
+                        <a href="{% url 'principal:cursos' %}" class="glass-button glass-button-secondary flex items-center justify-center">
+                            <i class="bi bi-x-circle mr-2"></i>
+                            Cancelar
+                        </a>
+                        <button type="button" onclick="showConfirmModal()" class="glass-button glass-button-primary flex items-center justify-center">
+                            <i class="bi bi-send mr-2"></i>
+                            Enviar Solicitud
+                        </button>
+                    </div>
+                </div>
             </div>
+        </form>
+
+        <!-- Footer -->
+        <div class="text-center mt-6">
+            <p class="text-gray-500 text-sm">Centro Fray Bartolomé de las Casas © 1998-2025</p>
         </div>
     </div>
-</form>
-
-<div class="text-center mt-4">
-    <p class="text-muted">Centro Fray Bartolomé de las Casas © 1998-2025</p>
 </div>
 
-<br>
+<!-- Modal de Confirmación -->
+<div id="confirmModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <h3 class="modal-title">Confirmar Solicitud</h3>
+        </div>
+        <div class="modal-message">
+            <p>¿Estás seguro de que deseas enviar tu solicitud de inscripción al curso <strong>{{ curso.name }}</strong>?</p>
+            <p class="text-sm text-gray-600 mt-2">Una vez enviada, tu solicitud será revisada por el profesor del curso.</p>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="modal-btn modal-btn-cancel" onclick="closeConfirmModal()">
+                <i class="bi bi-x-circle mr-2"></i>
+                Cancelar
+            </button>
+            <button type="button" class="modal-btn modal-btn-confirm" onclick="confirmSubmit()">
+                <i class="bi bi-check-circle mr-2"></i>
+                Confirmar Envío
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Custom form width - 60% with 20% margin on each side */
+    .custom-form-width {
+        width: 60%;
+        max-width: 60%;
+    }
+
+    /* Responsive adjustments for custom width */
+    @media (max-width: 768px) {
+        .custom-form-width {
+            width: 90%;
+            max-width: 90%;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .custom-form-width {
+            width: 95%;
+            max-width: 95%;
+        }
+    }
+
+    /* Glass Card */
+    .glass-card {
+        position: relative;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            0 4px 16px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-content {
+        padding: 1.5rem;
+    }
+
+    .glass-content-compact {
+        padding: 1rem;
+    }
+
+    /* Glass Logo */
+    .glass-logo-wrapper {
+        display: inline-block;
+        position: relative;
+        border-radius: 12px;
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 
+            0 8px 32px rgba(59, 130, 246, 0.15),
+            0 4px 16px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        padding: 8px;
+    }
+
+    .glass-logo-wrapper::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.1), 
+            rgba(255, 255, 255, 0.05),
+            rgba(59, 130, 246, 0.05)
+        );
+        border-radius: 12px;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .glass-logo-wrapper::after {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, 
+            rgba(59, 130, 246, 0.2), 
+            rgba(147, 197, 253, 0.1),
+            rgba(59, 130, 246, 0.2)
+        );
+        border-radius: 14px;
+        z-index: -1;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+    }
+
+    .glass-logo-wrapper:hover {
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 
+            0 16px 48px rgba(59, 130, 246, 0.25),
+            0 8px 24px rgba(0, 0, 0, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6),
+            0 0 30px rgba(59, 130, 246, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .glass-logo-wrapper:hover::after {
+        opacity: 1;
+    }
+
+    .glass-logo-wrapper img {
+        position: relative;
+        z-index: 2;
+        border-radius: 8px;
+        transition: all 0.4s ease;
+        display: block;
+    }
+
+    .glass-logo-wrapper:hover img {
+        filter: brightness(1.05) contrast(1.02);
+    }
+
+    /* Glass Button */
+    .glass-button {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+        font-size: 0.875rem;
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+
+    .glass-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: left 0.6s ease;
+        pointer-events: none;
+    }
+
+    .glass-button:hover::before {
+        left: 100%;
+    }
+
+    .glass-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .glass-button-primary {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        color: #1e40af;
+    }
+
+    .glass-button-secondary {
+        background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
+        color: #374151;
+    }
+
+    /* Glass Alert */
+    .glass-alert {
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        font-size: 0.875rem;
+    }
+
+    .glass-alert-success {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.1));
+        color: #14532d;
+    }
+
+    .glass-alert-error {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
+        color: #7f1d1d;
+    }
+
+    .glass-alert-warning {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.1));
+        color: #78350f;
+    }
+
+    .glass-alert-info {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        color: #1e3a8a;
+    }
+
+    /* Form Fields Styling */
+    .form-field input[type="text"],
+    .form-field input[type="email"],
+    .form-field textarea,
+    .form-field select {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #374151;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-field input:focus,
+    .form-field textarea:focus,
+    .form-field select:focus {
+        outline: none;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3));
+        border-color: rgba(59, 130, 246, 0.5);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Radio and Checkbox Styling */
+    .form-field input[type="radio"],
+    .form-field input[type="checkbox"] {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 18px;
+        height: 18px;
+        border: 2px solid #d1d5db;
+        border-radius: 4px;
+        background-color: rgba(255, 255, 255, 0.8);
+        cursor: pointer;
+        position: relative;
+        transition: all 0.3s ease;
+        margin-right: 8px;
+    }
+
+    .form-field input[type="radio"] {
+        border-radius: 50%;
+    }
+
+    .form-field input[type="radio"]:checked,
+    .form-field input[type="checkbox"]:checked {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        border-color: #1d4ed8;
+    }
+
+    .form-field input[type="radio"]:checked::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 6px;
+        height: 6px;
+        background: white;
+        border-radius: 50%;
+    }
+
+    .form-field input[type="checkbox"]:checked::after {
+        content: '✓';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .form-field label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        padding: 0.25rem;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+        margin-bottom: 0.25rem;
+    }
+
+    .form-field label:hover {
+        background: rgba(59, 130, 246, 0.05);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 640px) {
+        .glass-content {
+            padding: 1rem;
+        }
+        
+        .glass-content-compact {
+            padding: 0.75rem;
+        }
+        
+        .glass-button {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .modal-overlay.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .modal-content {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 
+            0 20px 60px rgba(0, 0, 0, 0.2),
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        padding: 32px;
+        max-width: 450px;
+        width: 90%;
+        transform: scale(0.8) translateY(20px);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .modal-overlay.show .modal-content {
+        transform: scale(1) translateY(0);
+    }
+
+    .modal-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .modal-icon {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 16px;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .modal-icon svg {
+        width: 24px;
+        height: 24px;
+        color: #3b82f6;
+    }
+
+    .modal-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #1e40af;
+        margin: 0;
+    }
+
+    .modal-message {
+        color: #6b7280;
+        font-size: 16px;
+        line-height: 1.5;
+        margin-bottom: 24px;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+    }
+
+    .modal-btn {
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 16px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 120px;
+    }
+
+    .modal-btn-cancel {
+        background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
+        color: #374151;
+        border: 1px solid rgba(156, 163, 175, 0.3);
+        box-shadow: 0 4px 12px rgba(156, 163, 175, 0.2);
+    }
+
+    .modal-btn-cancel:hover {
+        background: linear-gradient(135deg, rgba(107, 114, 128, 0.4), rgba(75, 85, 99, 0.3));
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(107, 114, 128, 0.3);
+    }
+
+    .modal-btn-confirm {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        color: white;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .modal-btn-confirm:hover {
+        background: linear-gradient(135deg, #1d4ed8, #1e40af);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    }
+
+    /* Responsive para modal */
+    @media (max-width: 768px) {
+        .modal-content {
+            padding: 24px;
+            margin: 20px;
+        }
+        
+        .modal-actions {
+            flex-direction: column;
+        }
+        
+        .modal-btn {
+            width: 100%;
+        }
+    }
+</style>
+
+<script>
+    // Función para mostrar el modal de confirmación
+    function showConfirmModal() {
+        const modal = document.getElementById('confirmModal');
+        modal.classList.add('show');
+        
+        // Prevenir scroll del body cuando el modal está abierto
+        document.body.style.overflow = 'hidden';
+    }
+
+    // Función para cerrar el modal de confirmación
+    function closeConfirmModal() {
+        const modal = document.getElementById('confirmModal');
+        modal.classList.remove('show');
+        
+        // Restaurar scroll del body
+        document.body.style.overflow = 'auto';
+    }
+
+    // Función para confirmar y enviar el formulario
+    function confirmSubmit() {
+        // Cerrar el modal
+        closeConfirmModal();
+        
+        // Enviar el formulario
+        document.querySelector('form').submit();
+    }
+
+    // Cerrar modal al hacer clic fuera de él
+    document.getElementById('confirmModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeConfirmModal();
+        }
+    });
+
+    // Cerrar modal con la tecla Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeConfirmModal();
+        }
+    });
+</script>
+
 {% endblock %}

@@ -113,6 +113,21 @@
               <button class="glass-tag-options flex-shrink-0 mt-0.5 pulse-options-button" onclick="toggleOptionsPanel('{{course.id}}')" title="Opciones del curso">
                 ...
               </button>
+              {% elif group_name == 'Estudiantes' %}
+                {% tiene_solicitud_pendiente user.id course.id as tiene_solicitud_pendiente %}
+                {% tiene_solicitud_rechazada user.id course.id as tiene_solicitud_rechazada %}
+                {% if not tiene_solicitud_pendiente and not tiene_solicitud_rechazada and not course.is_enrolled and course.get_dynamic_status == 'I' and course.formulario_aplicacion %}
+                <a href="{% url 'principal:aplicar_curso' course.id %}" 
+                   class="glass-tag-apply flex-shrink-0 mt-0.5 pulse-options-button" 
+                   title="Aplicar al curso" 
+                   id="apply-btn-{{ course.id }}">
+                  <i class="bi bi-check-circle"></i>
+                </a>
+                {% elif tiene_solicitud_pendiente %}
+                <button class="glass-tag-applied flex-shrink-0 mt-0.5" title="Ya has aplicado a este curso" disabled>
+                  <i class="bi bi-check-circle-fill"></i>
+                </button>
+                {% endif %}
               {% endif %}
             </div>
             
@@ -124,6 +139,23 @@
               <span class="glass-tag-mini glass-tag-secondary text-sm">
                 {{ course.get_tipo_display }}
               </span>
+              {% if group_name == 'Estudiantes' %}
+                {% tiene_solicitud_pendiente user.id course.id as tiene_solicitud_pendiente %}
+                {% tiene_solicitud_rechazada user.id course.id as tiene_solicitud_rechazada %}
+                {% if tiene_solicitud_pendiente %}
+                <span class="glass-tag-mini glass-tag-warning text-sm ml-2">
+                  Pendiente
+                </span>
+                {% elif tiene_solicitud_rechazada %}
+                <span class="glass-tag-mini glass-tag-danger text-sm ml-2">
+                  Denegado
+                </span>
+                {% elif course.is_enrolled %}
+                <span class="glass-tag-mini glass-tag-success text-sm ml-2">
+                  Inscrito
+                </span>
+                {% endif %}
+              {% endif %}
             </div>
 
             <!-- Description with Glass Background -->
@@ -208,25 +240,10 @@
                 {% tiene_solicitud_pendiente user.id course.id as tiene_solicitud_pendiente %}
                 {% tiene_solicitud_rechazada user.id course.id as tiene_solicitud_rechazada %}
                 
-                {% if tiene_solicitud_pendiente %}
-                <div class="glass-status glass-status-warning p-1">
-                  <span class="text-amber-900 font-medium text-xs">Pendiente</span>
-                </div>
-                {% elif tiene_solicitud_rechazada %}
+                {% if tiene_solicitud_rechazada %}
                 <div class="glass-status glass-status-error p-1">
                   <span class="text-red-900 font-medium text-xs">Denegada</span>
                 </div>
-                {% elif course.is_enrolled %>
-                <div class="glass-status glass-status-success p-1">
-                  <span class="text-green-900 font-medium text-xs">Inscrito</span>
-                </div>
-                {% elif course.get_dynamic_status == 'I' and course.formulario_aplicacion %}
-                <button class="glass-button-ultra glass-button-primary w-full group/btn">
-                  <a href="{% url 'principal:aplicar_curso' course.id %}" class="flex items-center justify-center w-full h-full text-xs">
-                    <i class="bi bi-file-earmark-text mr-1 group-hover/btn:animate-pulse"></i>
-                    Aplicar
-                  </a>
-                </button>
                 {% endif %}
                 {% else %}
                 <!-- Espacio reservado para mantener altura consistente en vista de secretaria -->
@@ -318,6 +335,39 @@
         <i class="bi bi-trash mr-2"></i>
         Eliminar Curso
       </a>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Confirmación de Aplicación -->
+<div id="applyModal" class="apply-modal hidden">
+  <div class="apply-modal-overlay" onclick="hideApplyModal()"></div>
+  <div class="apply-modal-content">
+    <div class="apply-modal-header">
+      <div class="apply-modal-icon">
+        <i class="bi bi-check-circle text-green-600"></i>
+      </div>
+      <h3 class="apply-modal-title">Confirmar Aplicación</h3>
+    </div>
+    
+    <div class="apply-modal-body">
+      <p class="apply-modal-message">
+        ¿Estás seguro de que deseas aplicar al curso <strong id="courseNameToApply"></strong>?
+      </p>
+      <p class="apply-modal-info">
+        Se enviará tu solicitud de inscripción y podrás completar el formulario de aplicación.
+      </p>
+    </div>
+    
+    <div class="apply-modal-footer">
+      <button type="button" class="apply-modal-btn apply-modal-btn-cancel" onclick="hideApplyModal()">
+        <i class="bi bi-x-circle mr-2"></i>
+        Cancelar
+      </button>
+      <button type="button" class="apply-modal-btn apply-modal-btn-confirm" onclick="confirmApply()">
+        <i class="bi bi-check-circle mr-2"></i>
+        Aplicar al Curso
+      </button>
     </div>
   </div>
 </div>
@@ -484,6 +534,26 @@
     color: #374151;
   }
 
+  .glass-tag-warning {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.1));
+    color: #78350f;
+  }
+
+  .glass-tag-success {
+    background: rgba(255, 255, 255, 0.9);
+    color: #1f2937;
+    border: 2px solid rgba(75, 85, 99, 0.3);
+    font-weight: 600;
+  }
+
+  .glass-tag-danger {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(220, 38, 38, 0.85));
+    color: #991b1b;
+    border: 2px solid rgba(239, 68, 68, 0.8);
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
   .glass-tag-options {
     background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(79, 70, 229, 0.1));
     color: #3730a3;
@@ -507,6 +577,59 @@
     background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(79, 70, 229, 0.2));
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  }
+
+  /* Glass Tag Apply Button for Students */
+  .glass-tag-apply {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.1));
+    color: #14532d;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 500;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    line-height: 0.9;
+    display: inline-flex;
+    align-items: center;
+    height: 16px;
+    vertical-align: middle;
+    text-decoration: none;
+  }
+
+  .glass-tag-apply:hover {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+    text-decoration: none;
+  }
+
+  /* Glass Tag Applied State for Students */
+  .glass-tag-applied {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.4), rgba(22, 163, 74, 0.3));
+    color: #14532d;
+    cursor: default;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 500;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    line-height: 0.9;
+    display: inline-flex;
+    align-items: center;
+    height: 16px;
+    vertical-align: middle;
+    text-decoration: none;
+    opacity: 0.8;
+  }
+
+  .glass-tag-applied:hover {
+    opacity: 1;
   }
 
   .glass-tag:hover {
@@ -1899,6 +2022,147 @@
     color: white;
   }
 
+  /* Apply Modal Styles */
+  .apply-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .apply-modal.show {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .apply-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+
+  .apply-modal-content {
+    position: relative;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    width: 90%;
+    margin: 10% auto;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+  }
+
+  .apply-modal.show .apply-modal-content {
+    transform: scale(1);
+  }
+
+  .apply-modal-header {
+    padding: 24px 24px 16px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .apply-modal-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 16px;
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.1));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+  }
+
+  .apply-modal-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #374151;
+    margin: 0;
+  }
+
+  .apply-modal-body {
+    padding: 24px;
+    text-align: center;
+  }
+
+  .apply-modal-message {
+    font-size: 16px;
+    color: #374151;
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+
+  .apply-modal-info {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .apply-modal-footer {
+    padding: 16px 24px 24px;
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  .apply-modal-btn {
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .apply-modal-btn-cancel {
+    background: linear-gradient(135deg, rgba(107, 114, 128, 0.2), rgba(75, 85, 99, 0.1));
+    color: #374151;
+    border: 1px solid rgba(107, 114, 128, 0.3);
+  }
+
+  .apply-modal-btn-cancel:hover {
+    background: linear-gradient(135deg, rgba(107, 114, 128, 0.3), rgba(75, 85, 99, 0.2));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+  }
+
+  .apply-modal-btn-confirm {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.9), rgba(22, 163, 74, 0.8));
+    color: white;
+    border: 1px solid rgba(34, 197, 94, 0.5);
+  }
+
+  .apply-modal-btn-confirm:hover {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 1), rgba(22, 163, 74, 0.9));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+    text-decoration: none;
+    color: white;
+  }
+
   /* Dropdown Menu Styles */
   .dropdown-menu {
     opacity: 0;
@@ -2367,10 +2631,116 @@
     }, 300);
   }
 
+  // Variables globales para el modal de aplicación
+  let currentCourseId = null;
+  let currentCourseName = null;
+  let currentApplyUrl = null;
+
+  // Funciones para el modal de aplicación
+  function showApplyModal(courseId, courseName) {
+    console.log('showApplyModal called with:', courseId, courseName); // Debug
+    
+    // Validar que los parámetros no sean null o undefined
+    if (!courseId || courseId === 'null' || courseId === 'undefined') {
+      console.error('Invalid courseId:', courseId);
+      alert('Error: ID de curso no válido. Por favor, recarga la página e intenta de nuevo.');
+      return;
+    }
+    
+    if (!courseName || courseName === 'null' || courseName === 'undefined') {
+      console.error('Invalid courseName:', courseName);
+      courseName = 'este curso'; // Fallback
+    }
+    
+    const modal = document.getElementById('applyModal');
+    const courseNameElement = document.getElementById('courseNameToApply');
+    
+    // Guardar los datos del curso
+    currentCourseId = String(courseId); // Asegurar que sea string
+    currentCourseName = courseName;
+    
+    console.log('currentCourseId set to:', currentCourseId); // Debug
+    
+    // Establecer el nombre del curso
+    courseNameElement.textContent = courseName;
+    
+    // Mostrar el modal
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+      modal.classList.add('show');
+    }, 10);
+    
+    // Prevenir scroll del body
+    document.body.style.overflow = 'hidden';
+  }
+
+  function hideApplyModal() {
+    const modal = document.getElementById('applyModal');
+    
+    modal.classList.remove('show');
+    setTimeout(() => {
+      modal.classList.add('hidden');
+      // Restaurar scroll del body
+      document.body.style.overflow = '';
+    }, 300);
+    
+    // Limpiar variables
+    currentCourseId = null;
+    currentCourseName = null;
+    currentApplyUrl = null;
+  }
+
+  function confirmApply() {
+    console.log('confirmApply called, currentCourseId:', currentCourseId, 'currentApplyUrl:', currentApplyUrl); // Debug
+    
+    if (currentCourseId && currentApplyUrl) {
+      // Cambiar el estado del botón inmediatamente
+      const button = document.getElementById(`apply-btn-${currentCourseId}`);
+      
+      if (button) {
+        // Remover animación
+        button.classList.remove('pulse-options-button');
+        
+        // Cambiar clases y estilo
+        button.classList.remove('glass-tag-apply');
+        button.classList.add('glass-tag-applied');
+        
+        // Cambiar icono a filled
+        const icon = button.querySelector('i');
+        if (icon) {
+          icon.classList.remove('bi-check-circle');
+          icon.classList.add('bi-check-circle-fill');
+        }
+        
+        // Cambiar tooltip
+        button.title = 'Ya has aplicado a este curso';
+        
+        // Convertir a span para deshabilitarlo completamente
+        const span = document.createElement('span');
+        span.className = button.className;
+        span.title = button.title;
+        span.id = button.id;
+        span.innerHTML = button.innerHTML;
+        button.parentNode.replaceChild(span, button);
+      }
+      
+      // Ocultar modal
+      hideApplyModal();
+      
+      // Usar la URL original que ya funcionaba
+      console.log('Redirecting to:', currentApplyUrl); // Debug
+      window.location.href = currentApplyUrl;
+    } else {
+      console.error('Missing data:', { currentCourseId, currentApplyUrl }); // Debug
+      alert('Error: Datos de curso no válidos. Por favor, recarga la página e intenta de nuevo.');
+    }
+  }
+
   // Cerrar modal con tecla Escape
   document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
       hideDeleteModal();
+      hideApplyModal();
     }
   });
 

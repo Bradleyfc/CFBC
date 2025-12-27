@@ -4,249 +4,314 @@
 {% block title %}Respuestas - {{ solicitud.estudiante.get_full_name|default:solicitud.estudiante.username }}{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <!-- Encabezado -->
-            <div class="mb-4">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item">
-                            <a href="{% url 'principal:registro_respuestas_general' %}">Registro General</a>
-                        </li>
-                        <li class="breadcrumb-item">
-                            <a href="{% url 'principal:registro_respuestas_curso' solicitud.curso.pk %}">{{ solicitud.curso.name }}</a>
-                        </li>
-                        <li class="breadcrumb-item active">{{ solicitud.estudiante.get_full_name|default:solicitud.estudiante.username }}</li>
-                    </ol>
-                </nav>
-                <h2 class="mb-1 text-center">Respuestas Detalladas del Estudiante</h2>
-            </div>
+<!-- Background Section with Gradient -->
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-30"
+        style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;">
+    </div>
 
-            <div class="row">
-                <!-- Información del estudiante -->
-                <div class="col-md-4">
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">
-                                <i class="bi bi-person"></i> Información del Estudiante
-                            </h5>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        <!-- Breadcrumb and Header -->
+        <div class="mb-6">
+            <nav class="flex mb-4" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                    <li class="inline-flex items-center">
+                        <a href="{% url 'principal:registro_respuestas_general' %}" 
+                           class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+                            <i class="bi bi-house mr-2"></i>
+                            Registro General
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <i class="bi bi-chevron-right text-gray-400"></i>
+                            <a href="{% url 'principal:registro_respuestas_curso' solicitud.curso.pk %}" 
+                               class="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2">
+                                {{ solicitud.curso.name }}
+                            </a>
                         </div>
-                        <div class="card-body">
-                            {% if registro_estudiante and registro_estudiante.image %}
-                                <div class="text-center mb-3">
-                                    <img src="{{ registro_estudiante.image.url }}" alt="Foto del estudiante" 
-                                         class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
-                                </div>
-                            {% endif %}
-                            
-                            <table class="table table-sm">
-                                <tr>
-                                    <td><strong>Nombre:</strong></td>
-                                    <td>{{ solicitud.estudiante.get_full_name|default:solicitud.estudiante.username }}</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Email:</strong></td>
-                                    <td>{{ solicitud.estudiante.email }}</td>
-                                </tr>
-                                {% if registro_estudiante %}
-                                    <tr>
-                                        <td><strong>Carnet:</strong></td>
-                                        <td>{{ registro_estudiante.carnet|default:"No especificado" }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Nacionalidad:</strong></td>
-                                        <td>{{ registro_estudiante.nacionalidad|default:"No especificada" }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Sexo:</strong></td>
-                                        <td>{{ registro_estudiante.get_sexo_display }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Teléfono:</strong></td>
-                                        <td>{{ registro_estudiante.telephone|default:"No especificado" }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Móvil:</strong></td>
-                                        <td>{{ registro_estudiante.movil|default:"No especificado" }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Dirección:</strong></td>
-                                        <td>{{ registro_estudiante.address|default:"No especificada" }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Municipio:</strong></td>
-                                        <td>{{ registro_estudiante.location|default:"No especificado" }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Provincia:</strong></td>
-                                        <td>{{ registro_estudiante.provincia|default:"No especificada" }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Grado Académico:</strong></td>
-                                        <td>{{ registro_estudiante.get_grado_display }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Ocupación:</strong></td>
-                                        <td>{{ registro_estudiante.get_ocupacion_display }}</td>
-                                    </tr>
-                                    {% if registro_estudiante.titulo %}
-                                        <tr>
-                                            <td><strong>Título:</strong></td>
-                                            <td>{{ registro_estudiante.titulo }}</td>
-                                        </tr>
-                                    {% endif %}
-                                {% endif %}
-                            </table>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <i class="bi bi-chevron-right text-gray-400"></i>
+                            <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">
+                                {{ solicitud.estudiante.get_full_name|default:solicitud.estudiante.username }}
+                            </span>
                         </div>
+                    </li>
+                </ol>
+            </nav>
+            
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Respuestas Detalladas del Estudiante</h2>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Student Information -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Student Info Card -->
+                <div class="glass-card">
+                    <div class="glass-header">
+                        <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i class="bi bi-person mr-2"></i>
+                            Información del Estudiante
+                        </h3>
                     </div>
-
-                    <!-- Información de la solicitud -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">
-                                <i class="bi bi-clipboard-data"></i> Información de la Solicitud
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <table class="table table-sm">
-                                <tr>
-                                    <td><strong>Curso:</strong></td>
-                                    <td>{{ solicitud.curso.name }}</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Profesor:</strong></td>
-                                    <td>{{ solicitud.curso.teacher.get_full_name|default:solicitud.curso.teacher.username }}</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Estado:</strong></td>
-                                    <td>
-                                        <span class="badge badge-{{ solicitud.estado }}">
-                                            {{ solicitud.get_estado_display }}
-                                        </span>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Fecha de Solicitud:</strong></td>
-                                    <td>{{ solicitud.fecha_solicitud|date:"d/m/Y H:i" }}</td>
-                                </tr>
-                                {% if solicitud.fecha_revision %}
-                                    <tr>
-                                        <td><strong>Fecha de Revisión:</strong></td>
-                                        <td>{{ solicitud.fecha_revision|date:"d/m/Y H:i" }}</td>
-                                    </tr>
+                    <div class="glass-content">
+                        {% if registro_estudiante and registro_estudiante.image %}
+                            <div class="text-center mb-6">
+                                <img src="{{ registro_estudiante.image.url }}" alt="Foto del estudiante" 
+                                     class="w-24 h-24 rounded-full object-cover mx-auto border-4 border-white shadow-lg">
+                            </div>
+                        {% endif %}
+                        
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="font-medium text-gray-600">Nombre:</span>
+                                <span class="text-gray-800">{{ solicitud.estudiante.get_full_name|default:solicitud.estudiante.username }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-medium text-gray-600">Email:</span>
+                                <span class="text-gray-800">{{ solicitud.estudiante.email }}</span>
+                            </div>
+                            {% if registro_estudiante %}
+                                <div class="flex justify-between">
+                                    <span class="font-medium text-gray-600">Carnet:</span>
+                                    <span class="text-gray-800">{{ registro_estudiante.carnet|default:"No especificado" }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="font-medium text-gray-600">Nacionalidad:</span>
+                                    <span class="text-gray-800">{{ registro_estudiante.nacionalidad|default:"No especificada" }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="font-medium text-gray-600">Sexo:</span>
+                                    <span class="text-gray-800">{{ registro_estudiante.get_sexo_display }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="font-medium text-gray-600">Teléfono:</span>
+                                    <span class="text-gray-800">{{ registro_estudiante.telephone|default:"No especificado" }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="font-medium text-gray-600">Móvil:</span>
+                                    <span class="text-gray-800">{{ registro_estudiante.movil|default:"No especificado" }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="font-medium text-gray-600">Dirección:</span>
+                                    <span class="text-gray-800">{{ registro_estudiante.address|default:"No especificada" }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="font-medium text-gray-600">Municipio:</span>
+                                    <span class="text-gray-800">{{ registro_estudiante.location|default:"No especificado" }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="font-medium text-gray-600">Provincia:</span>
+                                    <span class="text-gray-800">{{ registro_estudiante.provincia|default:"No especificada" }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="font-medium text-gray-600">Grado Académico:</span>
+                                    <span class="text-gray-800">{{ registro_estudiante.get_grado_display }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="font-medium text-gray-600">Ocupación:</span>
+                                    <span class="text-gray-800">{{ registro_estudiante.get_ocupacion_display }}</span>
+                                </div>
+                                {% if registro_estudiante.titulo %}
+                                    <div class="flex justify-between">
+                                        <span class="font-medium text-gray-600">Título:</span>
+                                        <span class="text-gray-800">{{ registro_estudiante.titulo }}</span>
+                                    </div>
                                 {% endif %}
-                                {% if solicitud.revisado_por %}
-                                    <tr>
-                                        <td><strong>Revisado por:</strong></td>
-                                        <td>{{ solicitud.revisado_por.get_full_name|default:solicitud.revisado_por.username }}</td>
-                                    </tr>
-                                {% endif %}
-                            </table>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
 
-                <!-- Respuestas del formulario -->
-                <div class="col-md-8">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">
-                                <i class="bi bi-question-circle"></i> Respuestas del Formulario de Aplicación
-                            </h5>
+                <!-- Application Info Card -->
+                <div class="glass-card">
+                    <div class="glass-header">
+                        <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i class="bi bi-clipboard-data mr-2"></i>
+                            Información de la Solicitud
+                        </h3>
+                    </div>
+                    <div class="glass-content">
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="font-medium text-gray-600">Curso:</span>
+                                <span class="text-gray-800">{{ solicitud.curso.name }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-medium text-gray-600">Profesor:</span>
+                                <span class="text-gray-800">{{ solicitud.curso.teacher.get_full_name|default:solicitud.curso.teacher.username }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-medium text-gray-600">Estado:</span>
+                                <span class="glass-badge {% if solicitud.estado == 'pendiente' %}glass-badge-warning{% elif solicitud.estado == 'aprobada' %}glass-badge-success{% elif solicitud.estado == 'rechazada' %}glass-badge-danger{% endif %}">
+                                    {{ solicitud.get_estado_display }}
+                                </span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-medium text-gray-600">Fecha de Solicitud:</span>
+                                <span class="text-gray-800">{{ solicitud.fecha_solicitud|date:"d/m/Y H:i" }}</span>
+                            </div>
+                            {% if solicitud.fecha_revision %}
+                                <div class="flex justify-between">
+                                    <span class="font-medium text-gray-600">Fecha de Revisión:</span>
+                                    <span class="text-gray-800">{{ solicitud.fecha_revision|date:"d/m/Y H:i" }}</span>
+                                </div>
+                            {% endif %}
+                            {% if solicitud.revisado_por %}
+                                <div class="flex justify-between">
+                                    <span class="font-medium text-gray-600">Revisado por:</span>
+                                    <span class="text-gray-800">{{ solicitud.revisado_por.get_full_name|default:solicitud.revisado_por.username }}</span>
+                                </div>
+                            {% endif %}
                         </div>
-                        <div class="card-body">
-                            {% if respuestas %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Responses -->
+            <div class="lg:col-span-2">
+                <div class="glass-card">
+                    <div class="glass-header">
+                        <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i class="bi bi-question-circle mr-2"></i>
+                            Respuestas del Formulario de Aplicación
+                        </h3>
+                    </div>
+                    <div class="glass-content">
+                        {% if respuestas %}
+                            <div class="space-y-6">
                                 {% for respuesta in respuestas %}
-                                    <div class="mb-4 p-3 border rounded">
-                                        <div class="row">
-                                            <div class="col-md-4">
-                                                <h6 class="text-primary mb-2">
-                                                    <i class="bi bi-question-circle"></i> Pregunta {{ forloop.counter }}
-                                                </h6>
-                                                <p class="mb-2"><strong>{{ respuesta.pregunta.texto }}</strong></p>
-                                                <small class="text-muted">
-                                                    Tipo: {{ respuesta.pregunta.get_tipo_display }}
-                                                    {% if respuesta.pregunta.requerida %}
-                                                        <span class="badge bg-warning text-dark">Requerida</span>
-                                                    {% endif %}
-                                                </small>
-                                            </div>
-                                            <div class="col-md-8">
-                                                <h6 class="text-success mb-2">
-                                                    <i class="bi bi-reply"></i> Respuesta
-                                                </h6>
-                                                <div class="bg-light p-3 rounded">
-                                                    {% if respuesta.opciones_seleccionadas.all %}
-                                                        {% if respuesta.pregunta.tipo == 'seleccion_multiple' %}
-                                                            {% for opcion in respuesta.opciones_seleccionadas.all %}
-                                                                <span class="badge bg-primary me-1 mb-1">{{ opcion.texto }}</span>
-                                                            {% endfor %}
-                                                        {% elif respuesta.pregunta.tipo == 'seleccion_unica' %}
-                                                            {% for opcion in respuesta.opciones_seleccionadas.all %}
-                                                                <span class="badge bg-success me-1 mb-1">{{ opcion.texto }}</span>
-                                                            {% endfor %}
-                                                        {% else %}
-                                                            <!-- Para preguntas de escritura libre -->
-                                                            {% for opcion in respuesta.opciones_seleccionadas.all %}
-                                                                <p class="mb-0">{{ opcion.texto }}</p>
-                                                            {% endfor %}
+                                    <div class="glass-card border border-gray-200">
+                                        <div class="glass-content">
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div>
+                                                    <h6 class="text-blue-600 font-semibold mb-2 flex items-center">
+                                                        <i class="bi bi-question-circle mr-2"></i>
+                                                        Pregunta {{ forloop.counter }}
+                                                    </h6>
+                                                    <p class="font-semibold text-gray-800 mb-2">{{ respuesta.pregunta.texto }}</p>
+                                                    <div class="text-sm text-gray-500">
+                                                        Tipo: {{ respuesta.pregunta.get_tipo_display }}
+                                                        {% if respuesta.pregunta.requerida %}
+                                                            <span class="glass-badge glass-badge-warning ml-2">Requerida</span>
                                                         {% endif %}
-                                                    {% else %}
-                                                        <span class="text-muted">Sin respuesta</span>
-                                                    {% endif %}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <h6 class="text-green-600 font-semibold mb-2 flex items-center">
+                                                        <i class="bi bi-reply mr-2"></i>
+                                                        Respuesta
+                                                    </h6>
+                                                    <div class="bg-gradient-to-r from-gray-50 to-gray-100 p-4 rounded-lg">
+                                                        {% if respuesta.opciones_seleccionadas.all %}
+                                                            {% if respuesta.pregunta.tipo == 'seleccion_multiple' %}
+                                                                <div class="flex flex-wrap gap-2">
+                                                                    {% for opcion in respuesta.opciones_seleccionadas.all %}
+                                                                        <span class="glass-badge glass-badge-secondary">{{ opcion.texto }}</span>
+                                                                    {% endfor %}
+                                                                </div>
+                                                            {% elif respuesta.pregunta.tipo == 'seleccion_unica' %}
+                                                                <div class="flex flex-wrap gap-2">
+                                                                    {% for opcion in respuesta.opciones_seleccionadas.all %}
+                                                                        <span class="glass-badge glass-badge-success">{{ opcion.texto }}</span>
+                                                                    {% endfor %}
+                                                                </div>
+                                                            {% else %}
+                                                                <!-- Para preguntas de escritura libre -->
+                                                                {% for opcion in respuesta.opciones_seleccionadas.all %}
+                                                                    <p class="text-gray-800">{{ opcion.texto }}</p>
+                                                                {% endfor %}
+                                                            {% endif %}
+                                                        {% else %}
+                                                            <span class="text-gray-500 italic">Sin respuesta</span>
+                                                        {% endif %}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 {% endfor %}
-                            {% else %}
-                                <div class="text-center py-5">
-                                    <i class="bi bi-question-circle text-muted mb-3" style="font-size: 3rem;"></i>
-                                    <h5 class="text-muted">No hay respuestas registradas</h5>
-                                    <p class="text-muted">Este estudiante no ha completado el formulario de aplicación.</p>
+                            </div>
+                        {% else %}
+                            <!-- Empty State -->
+                            <div class="text-center py-12">
+                                <div class="text-gray-400 text-6xl mb-4">
+                                    <i class="bi bi-question-circle"></i>
                                 </div>
-                            {% endif %}
-                        </div>
+                                <h5 class="text-xl font-semibold text-gray-600 mb-2">No hay respuestas registradas</h5>
+                                <p class="text-gray-500">Este estudiante no ha completado el formulario de aplicación.</p>
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
+        </div>
+
+    </div>
 </div>
 
 <style>
-.badge-pendiente {
-    background-color: #ffc107;
-    color: #212529;
-}
+    /* Glass Card */
+    .glass-card {
+        position: relative;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            0 4px 16px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-.badge-aprobada {
-    background-color: #28a745;
-    color: white;
-}
+    .glass-header {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
 
-.badge-rechazada {
-    background-color: #dc3545;
-    color: white;
-}
+    .glass-content {
+        padding: 2rem;
+    }
 
-.card {
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-}
+    /* Glass Badge */
+    .glass-badge {
+        display: inline-block;
+        padding: 0.375rem 0.75rem;
+        border-radius: 16px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
 
-.table td {
-    border-top: 1px solid #dee2e6;
-    padding: 0.5rem;
-}
+    .glass-badge-success {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+        color: #14532d;
+    }
 
-.table td:first-child {
-    width: 40%;
-    font-weight: 500;
-}
+    .glass-badge-warning {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(217, 119, 6, 0.2));
+        color: #78350f;
+    }
 
-.bg-light {
-    background-color: #f8f9fa !important;
-}
+    .glass-badge-danger {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.2));
+        color: #7f1d1d;
+    }
 
-.border {
-    border: 1px solid #dee2e6 !important;
-}
+    .glass-badge-secondary {
+        background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
+        color: #374151;
+    }
 </style>
 {% endblock %}

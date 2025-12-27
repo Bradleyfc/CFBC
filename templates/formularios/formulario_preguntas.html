@@ -671,6 +671,31 @@
   </div>
 </div>
 
+<!-- Modal de confirmación para guardar y agregar opciones -->
+<div id="saveModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-icon" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1)); border-color: rgba(59, 130, 246, 0.3);">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #2563eb;">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+      </div>
+      <h3 class="modal-title">Guardar y Agregar Opciones</h3>
+    </div>
+    <div class="modal-message" id="saveModalMessage">
+      ¿Deseas guardar esta pregunta y agregar opciones de respuesta?
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="modal-btn modal-btn-cancel" onclick="closeSaveModal()">
+        Cancelar
+      </button>
+      <button type="button" class="modal-btn" onclick="window.confirmSave()" style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: 1px solid rgba(59, 130, 246, 0.3); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);">
+        Guardar y Continuar
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
     // Variable global para almacenar la fila que se va a eliminar
     let rowToDelete = null;
@@ -904,8 +929,8 @@
             const textoInput = row.querySelector('input[name$="-texto"]');
             const textoPregunta = textoInput ? textoInput.value : 'esta pregunta';
 
-            // Confirmar que se quiere guardar la pregunta
-            if (confirm(`¿Deseas guardar "${textoPregunta}" y agregar opciones de respuesta?`)) {
+            // Mostrar modal de confirmación personalizado
+            showSaveModal(textoPregunta, function() {
                 // Primero guardar el formulario principal para guardar todas las preguntas
                 const mainForm = document.querySelector('form');
 
@@ -918,7 +943,7 @@
 
                 // Enviar el formulario principal
                 mainForm.submit();
-            }
+            });
         };
 
         // Función para eliminar una pregunta (usando delegación de eventos)
@@ -1181,6 +1206,67 @@
         rowToDelete = null;
     }
 
+    // Variable global para almacenar la función de callback del modal de guardar
+    let saveCallback = null;
+
+    // Funciones del modal de guardar
+    function showSaveModal(textoPregunta, callback) {
+        const modal = document.getElementById('saveModal');
+        const messageElement = document.getElementById('saveModalMessage');
+        
+        // Actualizar el mensaje con el texto de la pregunta
+        if (textoPregunta && textoPregunta.trim() !== '') {
+            messageElement.textContent = `¿Deseas guardar "${textoPregunta}" y agregar opciones de respuesta?`;
+        } else {
+            messageElement.textContent = '¿Deseas guardar esta pregunta y agregar opciones de respuesta?';
+        }
+        
+        // Almacenar el callback
+        saveCallback = callback;
+        
+        modal.classList.add('show');
+        
+        // Prevenir scroll del body
+        document.body.style.overflow = 'hidden';
+        
+        // Cerrar modal con Escape
+        document.addEventListener('keydown', handleSaveEscapeKey);
+        
+        // Cerrar modal al hacer clic fuera
+        modal.addEventListener('click', handleSaveOutsideClick);
+    }
+
+    function closeSaveModal() {
+        const modal = document.getElementById('saveModal');
+        if (!modal) {
+            return;
+        }
+        
+        // Remover la clase show para ocultar el modal
+        modal.classList.remove('show');
+        
+        // Restaurar scroll del body
+        document.body.style.overflow = '';
+        
+        // Remover event listeners de forma segura
+        try {
+            document.removeEventListener('keydown', handleSaveEscapeKey);
+            modal.removeEventListener('click', handleSaveOutsideClick);
+        } catch (e) {
+            // Silenciar errores de event listeners
+        }
+        
+        // Limpiar el callback
+        saveCallback = null;
+    }
+
+    function confirmSave() {
+        if (saveCallback && typeof saveCallback === 'function') {
+            saveCallback();
+        }
+        closeSaveModal();
+    }
+
     function confirmDelete() {
         if (rowToDelete) {
             // Si la pregunta ya existe en la base de datos, marcarla para eliminar
@@ -1220,9 +1306,24 @@
         }
     }
 
+    function handleSaveEscapeKey(event) {
+        if (event.key === 'Escape') {
+            closeSaveModal();
+        }
+    }
+
+    function handleSaveOutsideClick(event) {
+        if (event.target === event.currentTarget) {
+            closeSaveModal();
+        }
+    }
+
     // Hacer las funciones globales para que puedan ser llamadas desde los botones
     window.showDeleteModal = showDeleteModal;
     window.closeDeleteModal = closeDeleteModal;
     window.confirmDelete = confirmDelete;
+    window.showSaveModal = showSaveModal;
+    window.closeSaveModal = closeSaveModal;
+    window.confirmSave = confirmSave;
 </script>
 {% endblock %}
