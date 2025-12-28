@@ -1519,7 +1519,7 @@ class AddNotaView(LoginRequiredMixin, View):
                 'student': matricula.student,
                 'curso_academico': matricula.curso_academico
             }) # Pasa los valores iniciales para los campos de Calificaciones
-            formset = NotaIndividualFormSet() # Instancia un formset vacío
+            formset = NotaIndividualFormSet() # Instancia un formset vacío sin instance
         
         context = {
             'form': form,
@@ -1535,6 +1535,9 @@ class AddNotaView(LoginRequiredMixin, View):
         print(f"[POST] Matricula Student ID: {matricula.student.id}")
         print(f"[POST] Matricula Curso Academico ID: {matricula.curso_academico.id if matricula.curso_academico else 'None'}")
 
+        # Inicializar formset como None
+        formset = None
+        
         try:
             calificacion = Calificaciones.objects.get(
                 course=matricula.course,
@@ -1543,9 +1546,12 @@ class AddNotaView(LoginRequiredMixin, View):
             )
             print("[POST] Existing Calificacion found.")
             form = CalificacionesForm(request.POST, instance=calificacion)
+            formset = NotaIndividualFormSet(request.POST, instance=calificacion)
         except Calificaciones.DoesNotExist:
             print("[POST] Calificaciones.DoesNotExist raised. No existing Calificacion found. Creating new one.")
             form = CalificacionesForm(request.POST)
+            # Para nuevas calificaciones, no podemos pasar instance hasta que se guarde
+            formset = NotaIndividualFormSet(request.POST)
 
         if form.is_valid():
             calificacion = form.save(commit=False)
@@ -1555,11 +1561,10 @@ class AddNotaView(LoginRequiredMixin, View):
             calificacion.curso_academico = matricula.curso_academico
             calificacion.save() # <-- Guarda la instancia de Calificaciones aquí
 
-            # Ahora que calificacion tiene un PK, podemos inicializar el formset
-            formset = NotaIndividualFormSet(request.POST, instance=calificacion)
+            # Ahora que tenemos la calificación guardada, podemos asociar el formset
+            formset.instance = calificacion
 
             if formset.is_valid():
-                
                 formset.save()
                 messages.success(request, 'Notas guardadas correctamente.')
                 return redirect('principal:student_list_notas_by_course', course_id=matricula.course.id)
@@ -1568,11 +1573,26 @@ class AddNotaView(LoginRequiredMixin, View):
                 messages.error(request, 'Error al guardar las notas individuales.')
         else:
             print(f"[POST] CalificacionesForm errors: {form.errors}")
+            print(f"[POST] CalificacionesForm non_field_errors: {form.non_field_errors()}")
+            for field, errors in form.errors.items():
+                print(f"[POST] Field '{field}' errors: {errors}")
             messages.error(request, 'Error al guardar la calificación principal.')
+
+        # Asegurar que formset esté definido para el contexto
+        if formset is None:
+            try:
+                calificacion = Calificaciones.objects.get(
+                    course=matricula.course,
+                    student=matricula.student,
+                    curso_academico=matricula.curso_academico
+                )
+                formset = NotaIndividualFormSet(instance=calificacion)
+            except Calificaciones.DoesNotExist:
+                formset = NotaIndividualFormSet()
 
         context = {
             'form': form,
-            'formset': formset, # Asegúrate de pasar el formset al contexto incluso si hay errores
+            'formset': formset,
             'matricula': matricula
         }
         return render(request, 'add_nota.html', context)

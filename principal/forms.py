@@ -282,14 +282,29 @@ class CalificacionesForm(forms.ModelForm):
     """
     class Meta:
         model = Calificaciones
-        fields = '__all__'
+        fields = []  # No incluir campos editables por el usuario, solo se manejan las relaciones automáticamente
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # El formulario no necesita campos visibles ya que todo se maneja automáticamente
 
 
 # Formset para notas individuales
-NotaIndividualFormSet = modelformset_factory(
-    NotaIndividual,
+NotaIndividualFormSet = inlineformset_factory(
+    Calificaciones,  # Modelo padre
+    NotaIndividual,  # Modelo hijo
     fields=('valor',),
-    extra=0
+    extra=1,  # Mostrar al menos un formulario vacío
+    can_delete=True,  # Permitir eliminar notas
+    widgets={
+        'valor': forms.NumberInput(attrs={
+            'class': 'glass-input-compact',
+            'min': 0,
+            'max': 100,
+            'step': 0.01,
+            'placeholder': 'Ingrese la nota (0-100)'
+        })
+    }
 )
 
 

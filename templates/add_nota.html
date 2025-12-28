@@ -1,108 +1,1026 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
+<!-- Background Section with Gradient -->
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-30"
+        style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;">
+    </div>
 
-<div class="container mt-4">
-    <div class="card">
-        <div class="card-header bg-primary text-white">
-            <h2 class="mb-0 text-center">Agregar Calificación</h2>
-        </div>
-        <div class="card-body">
-            <p><strong>Estudiante:</strong> {{ matricula.student.first_name }} {{ matricula.student.last_name }}</p>
-            <p><strong>Curso:</strong> {{ matricula.course.name}}</p>
-            <form method="post" id="calificaciones-form">
-                {% csrf_token %}
-                {{ form.media }}
-                {{ form.as_p }}
-
-                <h3>Notas Individuales</h3>
-                <div id="formset-container">
-                    {{ formset.management_form }}
-                    {% for form_nota in formset %}
-                        <div class="nota-formset-row">
-                            <p><label for="{{ form_nota.valor.id_for_label }}">Nota:</label> {{ form_nota.valor }} {{ form_nota.id }} <span class="hidden-checkbox">{{ form_nota.DELETE }} <label for="{{ form_nota.DELETE.id_for_label }}">Eliminar</label></span> <button type="button" class="btn btn-danger btn-sm delete-nota-button" data-form-id="{{ form_nota.prefix }}">Eliminar</button></p>
-
-                            {% if form_nota.instance.pk %}
-                            {% endif %}
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        <!-- Breadcrumb and Header -->
+        <div class="mb-6">
+            <nav class="flex mb-4" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                    <li class="inline-flex items-center">
+                        <a href="{% url 'principal:student_list_notas_by_course' course_id=matricula.course.id %}" 
+                           class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+                            <i class="bi bi-journal-text mr-2"></i>
+                            Lista de Calificaciones
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <i class="bi bi-chevron-right text-gray-400"></i>
+                            <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Agregar Calificación</span>
                         </div>
-                    {% endfor %}
+                    </li>
+                </ol>
+            </nav>
+            
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">Agregar Calificación</h2>
+        </div>
+
+        <!-- Student and Course Info Card -->
+        <div class="glass-card mb-6">
+            <div class="glass-header">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <i class="bi bi-person-badge mr-2"></i>
+                    Información del Estudiante
+                </h3>
+            </div>
+            <div class="glass-content">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium text-gray-600">Estudiante:</span>
+                        <span class="text-gray-800 font-semibold">{{ matricula.student.first_name }} {{ matricula.student.last_name }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium text-gray-600">Curso:</span>
+                        <span class="text-gray-800 font-semibold">{{ matricula.course.name }}</span>
+                    </div>
                 </div>
-                <button type="button" id="add-nota-button" class="btn btn-info">
-                  <i class="bi bi-plus-circle"></i> Agregar Nota
-                </button>
-                <button type="submit" class="btn btn-success">
-                  <i class="bi bi-save"></i> Guardar Calificación
-                </button>
-                <a href="{% url 'principal:student_list_notas_by_course' course_id=matricula.course.id %}" class="btn btn-secondary">
-                  <i class="bi bi-x-circle"></i> Cancelar
-                </a>
-            </form>
+            </div>
+        </div>
+
+        <!-- Grades Form Card -->
+        <div class="glass-card">
+            <div class="glass-header">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <i class="bi bi-clipboard-plus mr-2"></i>
+                    Formulario de Calificaciones
+                </h3>
+            </div>
+            <div class="glass-content">
+                <form method="post" id="calificaciones-form">
+                    {% csrf_token %}
+                    {{ form.media }}
+                    
+                    <!-- Main Form Fields -->
+                    <div class="mb-8">
+                        {% if form.visible_fields %}
+                            {% for field in form %}
+                                {% if field.name != 'matricula' and field.name != 'course' and field.name != 'student' and field.name != 'curso_academico' %}
+                                    <div class="mb-4">
+                                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                            {{ field.label }}
+                                        </label>
+                                        {% if field.field.widget.input_type == 'select' %}
+                                            <select name="{{ field.name }}" id="{{ field.id_for_label }}" class="glass-select">
+                                                {% for choice in field.field.choices %}
+                                                    <option value="{{ choice.0 }}" {% if choice.0 == field.value %}selected{% endif %}>{{ choice.1 }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        {% elif field.field.widget.input_type == 'textarea' %}
+                                            <textarea name="{{ field.name }}" id="{{ field.id_for_label }}" class="glass-textarea" rows="3">{{ field.value|default:'' }}</textarea>
+                                        {% elif field.field.widget.input_type == 'number' %}
+                                            <input type="number" 
+                                                   name="{{ field.name }}" 
+                                                   id="{{ field.id_for_label }}" 
+                                                   value="{{ field.value|default:'' }}"
+                                                   step="0.1"
+                                                   min="0"
+                                                   max="100"
+                                                   class="glass-input"
+                                                   {% if field.field.required %}required{% endif %}>
+                                        {% else %}
+                                            <input type="{{ field.field.widget.input_type|default:'text' }}" 
+                                                   name="{{ field.name }}" 
+                                                   id="{{ field.id_for_label }}" 
+                                                   value="{{ field.value|default:'' }}"
+                                                   class="glass-input"
+                                                   {% if field.field.required %}required{% endif %}>
+                                        {% endif %}
+                                        {% if field.errors %}
+                                            <div class="mt-1 text-sm text-red-600">
+                                                {{ field.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <!-- Si no hay campos visibles, mostrar información -->
+                            <div class="glass-alert glass-alert-info">
+                                <i class="bi bi-info-circle mr-2"></i>
+                                La información del estudiante y curso se maneja automáticamente. Proceda a agregar las notas individuales.
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Individual Notes Section -->
+                    <div class="border-t border-gray-200 pt-6">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                            <i class="bi bi-list-ol mr-2"></i>
+                            Notas Individuales
+                        </h4>
+                        
+                        <div id="formset-container" class="space-y-4 mb-6">
+                            <!-- Debug: Mostrar management form -->
+                            <div style="display: none;">
+                                {{ formset.management_form }}
+                            </div>
+                            
+                            <!-- Debug: Verificar que el formset existe -->
+                            {% if not formset %}
+                                <div class="glass-alert glass-alert-info">
+                                    <i class="bi bi-exclamation-triangle mr-2"></i>
+                                    Error: El formset no está disponible.
+                                </div>
+                            {% endif %}
+                            
+                            {% for form_nota in formset %}
+                                <div class="nota-formset-row glass-note-card" data-form-id="{{ form_nota.prefix }}">
+                                    {% if form_nota.instance.pk %}
+                                        <!-- Nota existente -->
+                                        <div class="existing-note-container">
+                                            <!-- Modo solo lectura -->
+                                            <div class="existing-note-display">
+                                                <div class="flex items-center gap-4">
+                                                    <div class="flex-1">
+                                                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                                                            Nota {{ forloop.counter }}:
+                                                        </label>
+                                                        <div class="glass-readonly-field">
+                                                            {{ form_nota.instance.valor }}
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex items-end gap-2">
+                                                        <button type="button" 
+                                                                class="glass-button glass-button-info edit-nota-button" 
+                                                                data-form-id="{{ form_nota.prefix }}">
+                                                            <i class="bi bi-pencil mr-1"></i>
+                                                            Editar
+                                                        </button>
+                                                        <button type="button" 
+                                                                class="glass-button glass-button-danger delete-nota-button" 
+                                                                data-form-id="{{ form_nota.prefix }}">
+                                                            <i class="bi bi-trash mr-1"></i>
+                                                            Eliminar
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Modo edición -->
+                                            <div class="existing-note-edit" style="display: none;">
+                                                <div class="flex items-center gap-4">
+                                                    <div class="flex-1">
+                                                        <label for="{{ form_nota.valor.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                                            Nota {{ forloop.counter }}:
+                                                        </label>
+                                                        <input type="number" 
+                                                               name="{{ form_nota.valor.name }}" 
+                                                               id="{{ form_nota.valor.id_for_label }}"
+                                                               value="{{ form_nota.valor.value|default:form_nota.instance.valor }}"
+                                                               step="0.01" 
+                                                               min="0"
+                                                               max="100"
+                                                               class="glass-input-compact"
+                                                               placeholder="Ingrese la nota (0-100)">
+                                                    </div>
+                                                    <div class="flex items-end gap-2">
+                                                        <button type="button" 
+                                                                class="glass-button glass-button-success save-edit-button" 
+                                                                data-form-id="{{ form_nota.prefix }}">
+                                                            <i class="bi bi-check mr-1"></i>
+                                                            Guardar
+                                                        </button>
+                                                        <button type="button" 
+                                                                class="glass-button glass-button-secondary cancel-edit-button" 
+                                                                data-form-id="{{ form_nota.prefix }}">
+                                                            <i class="bi bi-x mr-1"></i>
+                                                            Cancelar
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <!-- Nueva nota - siempre editable -->
+                                        <div class="flex items-center gap-4">
+                                            <div class="flex-1">
+                                                <label for="{{ form_nota.valor.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                                    Nota {{ forloop.counter }}:
+                                                </label>
+                                                <input type="number" 
+                                                       name="{{ form_nota.valor.name }}" 
+                                                       id="{{ form_nota.valor.id_for_label }}"
+                                                       value="{{ form_nota.valor.value|default:'' }}"
+                                                       step="0.01" 
+                                                       min="0"
+                                                       max="100"
+                                                       class="glass-input-compact"
+                                                       placeholder="Ingrese la nota (0-100)">
+                                            </div>
+                                            <div class="flex items-end">
+                                                <button type="button" 
+                                                        class="glass-button glass-button-danger delete-nota-button" 
+                                                        data-form-id="{{ form_nota.prefix }}">
+                                                    <i class="bi bi-trash mr-1"></i>
+                                                    Eliminar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    {{ form_nota.id }}
+                                    <div class="hidden-checkbox">
+                                        {{ form_nota.DELETE }}
+                                        <label for="{{ form_nota.DELETE.id_for_label }}">Eliminar</label>
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <!-- Si no hay notas existentes, mostrar un campo inicial -->
+                                <div class="nota-formset-row glass-note-card">
+                                    <div class="flex items-center gap-4">
+                                        <div class="flex-1">
+                                            <label for="id_form-0-valor" class="block text-sm font-medium text-gray-700 mb-1">
+                                                Nota 1:
+                                            </label>
+                                            <input type="number" 
+                                                   name="form-0-valor" 
+                                                   id="id_form-0-valor"
+                                                   step="0.01" 
+                                                   min="0"
+                                                   max="100"
+                                                   class="glass-input-compact"
+                                                   placeholder="Ingrese la nota (0-100)">
+                                        </div>
+                                        <div class="flex items-end">
+                                            <button type="button" 
+                                                    class="glass-button glass-button-danger delete-nota-button" 
+                                                    data-form-id="form-0">
+                                                <i class="bi bi-trash mr-1"></i>
+                                                Eliminar
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" name="form-0-id" id="id_form-0-id" value="">
+                                    <div class="hidden-checkbox">
+                                        <input type="checkbox" name="form-0-DELETE" id="id_form-0-DELETE">
+                                        <label for="id_form-0-DELETE">Eliminar</label>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Add Note Button -->
+                        <div class="mb-6">
+                            <button type="button" id="add-nota-button" class="glass-button glass-button-info">
+                                <i class="bi bi-plus-circle mr-2"></i>
+                                Agregar Nota
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-3 justify-end pt-6 border-t border-gray-200">
+                        <a href="{% url 'principal:student_list_notas_by_course' course_id=matricula.course.id %}" 
+                           class="glass-button glass-button-secondary">
+                            <i class="bi bi-x-circle mr-2"></i>
+                            Cancelar
+                        </a>
+                        <button type="submit" class="glass-button glass-button-success">
+                            <i class="bi bi-save mr-2"></i>
+                            Guardar Calificación
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal de Confirmación para Eliminar Nota -->
+<div id="deleteNoteModal" class="delete-modal hidden">
+    <div class="delete-modal-overlay" onclick="hideDeleteNoteModal()"></div>
+    <div class="delete-modal-content">
+        <div class="delete-modal-header">
+            <div class="delete-modal-icon">
+                <i class="bi bi-exclamation-triangle text-red-600"></i>
+            </div>
+            <h3 class="delete-modal-title">Confirmar Eliminación</h3>
+        </div>
+        
+        <div class="delete-modal-body">
+            <p class="delete-modal-message">
+                ¿Está seguro de que desea eliminar esta nota?
+            </p>
+            <p class="delete-modal-warning">
+                Esta acción no se puede deshacer.
+            </p>
+        </div>
+        
+        <div class="delete-modal-footer">
+            <button type="button" class="delete-modal-btn delete-modal-btn-cancel" onclick="hideDeleteNoteModal()">
+                <i class="bi bi-x-circle mr-2"></i>
+                Cancelar
+            </button>
+            <button type="button" class="delete-modal-btn delete-modal-btn-confirm" onclick="confirmDeleteNote()">
+                <i class="bi bi-trash mr-2"></i>
+                Eliminar
+            </button>
         </div>
     </div>
 </div>
 
-{% endblock %}
-
-{% block extra_css %}
 <style>
+    /* Glass Card */
+    .glass-card {
+        position: relative;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            0 4px 16px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-header {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .glass-content {
+        padding: 2rem;
+    }
+
+    /* Glass Note Card */
+    .glass-note-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.4));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .glass-note-card:hover {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.5));
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Glass Input */
+    .glass-input, .glass-input-compact {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #374151;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+    }
+
+    .glass-input-compact {
+        padding: 0.5rem 0.75rem;
+    }
+
+    /* Glass Readonly Field */
+    .glass-readonly-field {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(229, 231, 235, 0.6), rgba(209, 213, 219, 0.4));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(156, 163, 175, 0.3);
+        color: #374151;
+        font-size: 0.875rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        min-height: 38px;
+    }
+
+    /* Ensure edit mode is visible */
+    .existing-note-edit {
+        width: 100%;
+    }
+
+    .existing-note-display {
+        width: 100%;
+    }
+
+    .glass-input:focus, .glass-input-compact:focus {
+        outline: none;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3));
+        border-color: rgba(59, 130, 246, 0.5);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Glass Select */
+    .glass-select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #374151;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+    }
+
+    .glass-select:focus {
+        outline: none;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3));
+        border-color: rgba(59, 130, 246, 0.5);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Glass Textarea */
+    .glass-textarea {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #374151;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        resize: vertical;
+    }
+
+    .glass-textarea:focus {
+        outline: none;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3));
+        border-color: rgba(59, 130, 246, 0.5);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Glass Button */
+    .glass-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        cursor: pointer;
+        min-width: 120px;
+    }
+
+    .glass-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .glass-button-secondary {
+        background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
+        color: #374151;
+    }
+
+    .glass-button-success {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+        color: #14532d;
+    }
+
+    .glass-button-danger {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.2));
+        color: #7f1d1d;
+        padding: 0.5rem 1rem;
+        min-width: auto;
+    }
+
+    .glass-button-info {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        color: #1e40af;
+    }
+
+    /* Glass Alert */
+    .glass-alert {
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        font-size: 0.875rem;
+    }
+
+    .glass-alert-info {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        color: #1e3a8a;
+    }
+
+    /* Delete Modal Styles */
+    .delete-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .delete-modal.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .delete-modal-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+
+    .delete-modal-content {
+        position: relative;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        max-width: 500px;
+        width: 90%;
+        margin: 10% auto;
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+    }
+
+    .delete-modal.show .delete-modal-content {
+        transform: scale(1);
+    }
+
+    .delete-modal-header {
+        padding: 2rem 2rem 1rem;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .delete-modal-icon {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 1rem;
+        background: linear-gradient(135deg, rgba(254, 226, 226, 0.8), rgba(252, 165, 165, 0.6));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .delete-modal-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #374151;
+        margin: 0;
+    }
+
+    .delete-modal-body {
+        padding: 1.5rem 2rem;
+        text-align: center;
+    }
+
+    .delete-modal-message {
+        font-size: 1rem;
+        color: #374151;
+        margin-bottom: 0.75rem;
+        font-weight: 500;
+    }
+
+    .delete-modal-warning {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .delete-modal-footer {
+        padding: 1rem 2rem 2rem;
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .delete-modal-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .delete-modal-btn-cancel {
+        background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
+        color: #374151;
+    }
+
+    .delete-modal-btn-cancel:hover {
+        background: linear-gradient(135deg, rgba(156, 163, 175, 0.4), rgba(107, 114, 128, 0.3));
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(156, 163, 175, 0.2);
+    }
+
+    .delete-modal-btn-confirm {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.2));
+        color: #7f1d1d;
+    }
+
+    .delete-modal-btn-confirm:hover {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.4), rgba(220, 38, 38, 0.3));
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(239, 68, 68, 0.2);
+    }
+
+    /* Hidden Elements */
     .hidden-checkbox {
-        display: none;
-    }
-    .hidden-checkbox + label {
-        display: none;
-    }
-    #add-nota-button {
         display: none !important;
     }
+
+    .hidden-checkbox + label {
+        display: none !important;
+    }
+
+    #add-nota-button {
+        display: inline-flex !important;
+    }
 </style>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const formsetContainer = document.getElementById('formset-container');
-
-        const totalForms = document.querySelector('#id_form-TOTAL_FORMS');
         const addNotaButton = document.getElementById('add-nota-button');
-        addNotaButton.style.display = 'none'; // Hide the button
+        let noteToDelete = null; // Variable para almacenar la nota que se va a eliminar
+        let originalValues = {}; // Para almacenar valores originales al editar
+        
+        // Función auxiliar para encontrar el input de una nota
+        function findNoteInput(formId, container) {
+            if (!container) return null;
+            
+            console.log('Looking for input in formId:', formId, 'container:', container);
+            
+            // Intentar múltiples selectores con el prefijo detectado
+            let input = container.querySelector('input[type="number"]');
+            if (!input) {
+                input = container.querySelector(`input[name="${formId}-valor"]`);
+            }
+            if (!input) {
+                input = document.getElementById(`id_${formId}-valor`);
+            }
+            if (!input) {
+                // Buscar cualquier input numérico en el contenedor
+                input = container.querySelector('input[step="0.01"]');
+            }
+            
+            console.log('Found input:', input);
+            return input;
+        }
+        
+        // Verificar que los elementos principales existan
+        if (!formsetContainer) {
+            console.error('Formset container not found');
+            return;
+        }
+        
+        console.log('Formset container found:', formsetContainer);
+        console.log('Formset container HTML:', formsetContainer.innerHTML.substring(0, 500) + '...');
+        
+        // Buscar el campo TOTAL_FORMS con múltiples selectores
+        let totalForms = document.querySelector('#id_notas-TOTAL_FORMS');
+        if (!totalForms) {
+            totalForms = document.querySelector('#id_form-TOTAL_FORMS');
+        }
+        if (!totalForms) {
+            totalForms = document.querySelector('input[name$="TOTAL_FORMS"]');
+        }
+        if (!totalForms) {
+            totalForms = document.querySelector('input[name*="TOTAL_FORMS"]');
+        }
+        
+        console.log('Total forms element:', totalForms);
+        
+        // Detectar el prefijo del formset
+        let formsetPrefix = 'form';
+        if (totalForms && totalForms.name) {
+            formsetPrefix = totalForms.name.replace('-TOTAL_FORMS', '');
+            console.log('Detected formset prefix:', formsetPrefix);
+        }
+        
+        if (!totalForms) {
+            console.error('Total forms input not found with any selector');
+            // Crear el campo manualmente si no existe
+            const managementForm = document.createElement('div');
+            managementForm.innerHTML = `
+                <input type="hidden" name="${formsetPrefix}-TOTAL_FORMS" value="1" id="id_${formsetPrefix}-TOTAL_FORMS">
+                <input type="hidden" name="${formsetPrefix}-INITIAL_FORMS" value="0" id="id_${formsetPrefix}-INITIAL_FORMS">
+                <input type="hidden" name="${formsetPrefix}-MIN_NUM_FORMS" value="0" id="id_${formsetPrefix}-MIN_NUM_FORMS">
+                <input type="hidden" name="${formsetPrefix}-MAX_NUM_FORMS" value="1000" id="id_${formsetPrefix}-MAX_NUM_FORMS">
+            `;
+            formsetContainer.appendChild(managementForm);
+            totalForms = document.querySelector(`#id_${formsetPrefix}-TOTAL_FORMS`);
+            console.log('Created management form manually:', totalForms);
+        }
+        
+        if (!addNotaButton) {
+            console.error('Add nota button not found');
+            // Continuar sin el botón si no existe
+        } else {
+            console.log('Add nota button found:', addNotaButton);
+        }
+        
+        // Asegurar que el total de formularios esté correcto
+        if (totalForms && (!totalForms.value || totalForms.value === '0')) {
+            totalForms.value = '1'; // Al menos un formulario inicial
+        }
 
         // Hide all elements with the class 'hidden-checkbox'
         document.querySelectorAll('.hidden-checkbox').forEach(function(element) {
             element.style.display = 'none';
         });
 
-        addNotaButton.addEventListener('click', function() {
-            const currentForms = formsetContainer.querySelectorAll('.nota-formset-row').length;
-            const newFormIndex = totalForms.value;
+        // Agregar event listener solo si el botón existe
+        if (addNotaButton && totalForms) {
+            addNotaButton.addEventListener('click', function() {
+                try {
+                    const newFormIndex = parseInt(totalForms.value);
 
-            const newFormHtml = `
-                <div class="nota-formset-row">
-                    <p><label for="id_form-${newFormIndex}-valor">Nota:</label> <input type="number" name="form-${newFormIndex}-valor" step="0.01" id="id_form-${newFormIndex}-valor"></p>
-                    <input type="hidden" name="form-${newFormIndex}-id" id="id_form-${newFormIndex}-id" value="">
-                    <span class="hidden-checkbox"><input type="checkbox" name="form-${newFormIndex}-DELETE" id="id_form-${newFormIndex}-DELETE"></span>
-                    <button type="button" class="btn btn-danger btn-sm delete-nota-button" data-form-id="form-${newFormIndex}">Eliminar</button>
-                </div>
-            `;
+                    const newFormHtml = `
+                        <div class="nota-formset-row glass-note-card">
+                            <div class="flex items-center gap-4">
+                                <div class="flex-1">
+                                    <label for="id_${formsetPrefix}-${newFormIndex}-valor" class="block text-sm font-medium text-gray-700 mb-1">Nota ${newFormIndex + 1}:</label>
+                                    <input type="number" 
+                                           name="${formsetPrefix}-${newFormIndex}-valor" 
+                                           step="0.01" 
+                                           min="0"
+                                           max="100"
+                                           id="id_${formsetPrefix}-${newFormIndex}-valor" 
+                                           class="glass-input-compact"
+                                           placeholder="Ingrese la nota (0-100)">
+                                </div>
+                                <div class="flex items-end">
+                                    <button type="button" class="glass-button glass-button-danger delete-nota-button" data-form-id="${formsetPrefix}-${newFormIndex}">
+                                        <i class="bi bi-trash mr-1"></i>
+                                        Eliminar
+                                    </button>
+                                </div>
+                            </div>
+                            <input type="hidden" name="${formsetPrefix}-${newFormIndex}-id" id="id_${formsetPrefix}-${newFormIndex}-id" value="">
+                            <div class="hidden-checkbox">
+                                <input type="checkbox" name="${formsetPrefix}-${newFormIndex}-DELETE" id="id_${formsetPrefix}-${newFormIndex}-DELETE">
+                                <label for="id_${formsetPrefix}-${newFormIndex}-DELETE">Eliminar</label>
+                            </div>
+                        </div>
+                    `;
 
-            // Update TOTAL_FORMS
-            totalForms.value = parseInt(totalForms.value) + 1;
+                    // Update TOTAL_FORMS
+                    totalForms.value = parseInt(totalForms.value) + 1;
 
-            formsetContainer.insertAdjacentHTML('beforeend', newFormHtml);
-        });
-
-        // Handle delete button clicks
-        formsetContainer.addEventListener('click', function(event) {
-            if (event.target.classList.contains('delete-nota-button')) {
-                const formId = event.target.dataset.formId;
-                const deleteCheckbox = document.getElementById(`id_${formId}-DELETE`);
-                const formRow = event.target.closest('.nota-formset-row');
-
-                if (deleteCheckbox) {
-                    deleteCheckbox.checked = true; // Check the actual DELETE checkbox
-                    formRow.style.display = 'none'; // Hide the row
+                    formsetContainer.insertAdjacentHTML('beforeend', newFormHtml);
+                } catch (error) {
+                    console.error('Error adding new note:', error);
                 }
+            });
+        }
+
+        // Event delegation para manejar todos los botones
+        formsetContainer.addEventListener('click', function(event) {
+            try {
+                console.log('Click detected on:', event.target);
+                
+                const button = event.target.closest('button');
+                if (!button) {
+                    console.log('No button found');
+                    return;
+                }
+
+                console.log('Button found:', button);
+                console.log('Button classes:', button.className);
+
+                const formId = button.dataset.formId;
+                const formRow = button.closest('.nota-formset-row');
+
+                console.log('Form ID:', formId);
+                console.log('Form Row:', formRow);
+
+                if (!formId || !formRow) {
+                    console.error('Missing formId or formRow');
+                    return;
+                }
+
+                if (button.classList.contains('delete-nota-button')) {
+                    console.log('Delete button clicked');
+                    // Manejar eliminación
+                    const deleteCheckbox = document.getElementById(`id_${formId}-DELETE`);
+                    
+                    noteToDelete = {
+                        formId: formId,
+                        formRow: formRow,
+                        deleteCheckbox: deleteCheckbox
+                    };
+                    
+                    showDeleteNoteModal();
+                    
+                } else if (button.classList.contains('edit-nota-button')) {
+                    console.log('Edit button clicked for form:', formId);
+                    
+                    // Buscar los elementos con más especificidad
+                    const displayDiv = formRow.querySelector('.existing-note-display');
+                    const editDiv = formRow.querySelector('.existing-note-edit');
+                    
+                    console.log('Display div found:', displayDiv);
+                    console.log('Edit div found:', editDiv);
+                    
+                    if (!displayDiv || !editDiv) {
+                        console.error('Could not find display or edit divs');
+                        return;
+                    }
+                    
+                    // Usar la función auxiliar para encontrar el input
+                    const input = findNoteInput(formId, editDiv);
+                    console.log('Input found:', input);
+                    
+                    if (!input) {
+                        console.error('Could not find input field with any method');
+                        console.log('Edit div HTML:', editDiv.innerHTML);
+                        return;
+                    }
+                    
+                    // Verificar que el input tenga un valor antes de acceder a él
+                    const currentValue = input.value || input.getAttribute('value') || '';
+                    console.log('Current input value:', currentValue);
+                    
+                    // Guardar valor original
+                    originalValues[formId] = currentValue;
+                    console.log('Original value saved:', originalValues[formId]);
+                    
+                    // Cambiar a modo edición
+                    console.log('Hiding display div...');
+                    displayDiv.style.display = 'none';
+                    console.log('Showing edit div...');
+                    editDiv.style.display = 'block';
+                    
+                    console.log('Focusing input...');
+                    setTimeout(() => {
+                        input.focus();
+                        input.select(); // Seleccionar todo el texto para facilitar edición
+                    }, 100);
+                    
+                    console.log('Edit mode activated');
+                    
+                } else if (button.classList.contains('save-edit-button')) {
+                    console.log('Save button clicked');
+                    // Guardar cambios
+                    const displayDiv = formRow.querySelector('.existing-note-display');
+                    const editDiv = formRow.querySelector('.existing-note-edit');
+                    const input = findNoteInput(formId, editDiv);
+                    const readonlyField = displayDiv ? displayDiv.querySelector('.glass-readonly-field') : null;
+                    
+                    if (!input || !readonlyField) {
+                        console.error('Could not find input or readonly field');
+                        return;
+                    }
+                    
+                    // Actualizar el valor mostrado
+                    readonlyField.textContent = input.value || '';
+                    
+                    // Volver a modo solo lectura
+                    editDiv.style.display = 'none';
+                    displayDiv.style.display = 'block';
+                    
+                    // Limpiar valor original
+                    delete originalValues[formId];
+                    
+                } else if (button.classList.contains('cancel-edit-button')) {
+                    console.log('Cancel button clicked');
+                    // Cancelar edición
+                    const displayDiv = formRow.querySelector('.existing-note-display');
+                    const editDiv = formRow.querySelector('.existing-note-edit');
+                    const input = findNoteInput(formId, editDiv);
+                    
+                    if (!input) {
+                        console.error('Could not find input field for cancel');
+                        return;
+                    }
+                    
+                    // Restaurar valor original
+                    if (originalValues[formId] !== undefined) {
+                        input.value = originalValues[formId];
+                    }
+                    
+                    // Volver a modo solo lectura
+                    editDiv.style.display = 'none';
+                    displayDiv.style.display = 'block';
+                    
+                    // Limpiar valor original
+                    delete originalValues[formId];
+                }
+            } catch (error) {
+                console.error('Error in click handler:', error);
             }
         });
+
+        // Agregar event listeners para cerrar modal con ESC
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                hideDeleteNoteModal();
+            }
+        });
+
+        // Funciones para manejar el modal de eliminación (dentro del scope)
+        window.showDeleteNoteModal = function() {
+            const modal = document.getElementById('deleteNoteModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('show');
+        }
+
+        window.hideDeleteNoteModal = function() {
+            const modal = document.getElementById('deleteNoteModal');
+            modal.classList.remove('show');
+            
+            // Pequeño delay antes de ocultar completamente
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+            
+            // Limpiar la variable
+            noteToDelete = null;
+        }
+
+        window.confirmDeleteNote = function() {
+            if (noteToDelete) {
+                if (noteToDelete.deleteCheckbox) {
+                    noteToDelete.deleteCheckbox.checked = true; // Marcar para eliminación
+                    noteToDelete.formRow.style.display = 'none'; // Ocultar la fila
+                }
+                
+                hideDeleteNoteModal();
+            }
+        }
     });
+
+    // Funciones globales para compatibilidad (deprecated)
+    function showDeleteNoteModal() {
+        if (window.showDeleteNoteModal) {
+            window.showDeleteNoteModal();
+        }
+    }
+
+    function hideDeleteNoteModal() {
+        if (window.hideDeleteNoteModal) {
+            window.hideDeleteNoteModal();
+        }
+    }
+
+    function confirmDeleteNote() {
+        if (window.confirmDeleteNote) {
+            window.confirmDeleteNote();
+        }
+    }
 </script>
 {% endblock %}
