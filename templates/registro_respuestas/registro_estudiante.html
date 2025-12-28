@@ -43,7 +43,18 @@
                 </ol>
             </nav>
             
-            <h2 class="text-3xl font-bold text-gray-800 mb-2">Respuestas Detalladas del Estudiante</h2>
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Respuestas Detalladas del Estudiante</h2>
+                    <p class="text-gray-600">{{ solicitud.estudiante.get_full_name|default:solicitud.estudiante.username }} - {{ solicitud.curso.name }}</p>
+                </div>
+                <div>
+                    <a href="#" onclick="checkRespuestasBeforeExport('estudiante', '{{ solicitud.pk }}')" class="glass-button glass-button-success">
+                        <i class="bi bi-file-earmark-excel mr-2"></i>
+                        Exportar Excel
+                    </a>
+                </div>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -184,28 +195,31 @@
                         {% if respuestas %}
                             <div class="space-y-6">
                                 {% for respuesta in respuestas %}
-                                    <div class="glass-card border border-gray-200">
+                                    <div class="glass-card border-l-4 border-blue-400">
                                         <div class="glass-content">
-                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                <div>
-                                                    <h6 class="text-blue-600 font-semibold mb-2 flex items-center">
-                                                        <i class="bi bi-question-circle mr-2"></i>
-                                                        Pregunta {{ forloop.counter }}
-                                                    </h6>
-                                                    <p class="font-semibold text-gray-800 mb-2">{{ respuesta.pregunta.texto }}</p>
-                                                    <div class="text-sm text-gray-500">
-                                                        Tipo: {{ respuesta.pregunta.get_tipo_display }}
-                                                        {% if respuesta.pregunta.requerida %}
-                                                            <span class="glass-badge glass-badge-warning ml-2">Requerida</span>
-                                                        {% endif %}
+                                            <div class="mb-4">
+                                                <div class="flex items-start justify-between mb-3">
+                                                    <div class="flex-1">
+                                                        <h6 class="text-blue-600 font-semibold mb-2 flex items-center">
+                                                            <i class="bi bi-question-circle mr-2"></i>
+                                                            Pregunta {{ forloop.counter }}
+                                                        </h6>
+                                                        <p class="font-semibold text-gray-800 mb-2">{{ respuesta.pregunta.texto }}</p>
+                                                        <div class="flex items-center gap-2 text-sm text-gray-500">
+                                                            <span>Tipo: {{ respuesta.pregunta.get_tipo_display }}</span>
+                                                            {% if respuesta.pregunta.requerida %}
+                                                                <span class="glass-badge glass-badge-warning">Requerida</span>
+                                                            {% endif %}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div>
-                                                    <h6 class="text-green-600 font-semibold mb-2 flex items-center">
+                                                
+                                                <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border-l-4 border-blue-400">
+                                                    <h6 class="text-blue-800 font-semibold mb-2 flex items-center">
                                                         <i class="bi bi-reply mr-2"></i>
                                                         Respuesta
                                                     </h6>
-                                                    <div class="bg-gradient-to-r from-gray-50 to-gray-100 p-4 rounded-lg">
+                                                    <div class="text-gray-700">
                                                         {% if respuesta.opciones_seleccionadas.all %}
                                                             {% if respuesta.pregunta.tipo == 'seleccion_multiple' %}
                                                                 <div class="flex flex-wrap gap-2">
@@ -222,7 +236,9 @@
                                                             {% else %}
                                                                 <!-- Para preguntas de escritura libre -->
                                                                 {% for opcion in respuesta.opciones_seleccionadas.all %}
-                                                                    <p class="text-gray-800">{{ opcion.texto }}</p>
+                                                                    <div class="bg-white p-3 rounded-lg border border-gray-200">
+                                                                        <p class="text-gray-800">{{ opcion.texto }}</p>
+                                                                    </div>
                                                                 {% endfor %}
                                                             {% endif %}
                                                         {% else %}
@@ -253,6 +269,101 @@
     </div>
 </div>
 
+<!-- Modal de Error - Sin Respuestas -->
+<div id="errorModal" class="error-modal hidden">
+  <div class="error-modal-overlay" onclick="hideErrorModal()"></div>
+  <div class="error-modal-content">
+    <div class="error-modal-header">
+      <div class="error-modal-icon">
+        <i class="bi bi-exclamation-circle text-orange-600"></i>
+      </div>
+      <h3 class="error-modal-title">Sin Datos para Exportar</h3>
+    </div>
+    
+    <div class="error-modal-body">
+      <p class="error-modal-message">
+        No se encontraron respuestas para este estudiante.
+      </p>
+      <p class="error-modal-warning">
+        Por favor, verifique que el estudiante haya completado el formulario de aplicación.
+      </p>
+    </div>
+    
+    <div class="error-modal-footer">
+      <button type="button" class="error-modal-btn error-modal-btn-ok" onclick="hideErrorModal()">
+        <i class="bi bi-check-circle mr-2"></i>
+        Entendido
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+    // Verificar si hay respuestas antes de exportar
+    function checkRespuestasBeforeExport(type, solicitudId = null) {
+        // Verificar si hay respuestas contando las cards de respuestas
+        const respuestasCards = document.querySelectorAll('.space-y-6 > .glass-card');
+        const hasRespuestas = respuestasCards.length > 0;
+        
+        if (hasRespuestas) {
+            // Si hay respuestas, proceder con la exportación
+            let exportUrl = '';
+            if (type === 'estudiante' && solicitudId) {
+                exportUrl = `/exportar-respuestas-excel-estudiante/${solicitudId}/`;
+            }
+            
+            // Obtener los parámetros actuales de la URL
+            const currentParams = window.location.search;
+            const finalUrl = exportUrl + currentParams;
+            
+            window.location.href = finalUrl;
+        } else {
+            // Si no hay respuestas, mostrar modal de error
+            showErrorModal();
+        }
+    }
+
+    // Mostrar modal de error
+    function showErrorModal() {
+        const modal = document.getElementById('errorModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('show');
+        
+        // Agregar event listeners para cerrar con ESC o click fuera
+        document.addEventListener('keydown', handleEscapeKey);
+        modal.addEventListener('click', handleOutsideClick);
+    }
+
+    // Ocultar modal de error
+    function hideErrorModal() {
+        const modal = document.getElementById('errorModal');
+        modal.classList.remove('show');
+        
+        // Pequeño delay antes de ocultar completamente
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+        
+        // Remover event listeners
+        document.removeEventListener('keydown', handleEscapeKey);
+        modal.removeEventListener('click', handleOutsideClick);
+    }
+
+    // Manejar tecla ESC
+    function handleEscapeKey(event) {
+        if (event.key === 'Escape') {
+            hideErrorModal();
+        }
+    }
+
+    // Manejar click fuera del modal
+    function handleOutsideClick(event) {
+        if (event.target === event.currentTarget) {
+            hideErrorModal();
+        }
+    }
+</script>
+
 <style>
     /* Glass Card */
     .glass-card {
@@ -278,6 +389,33 @@
 
     .glass-content {
         padding: 2rem;
+    }
+
+    /* Glass Button */
+    .glass-button {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.625rem 1.25rem;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .glass-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .glass-button-success {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+        color: #14532d;
     }
 
     /* Glass Badge */
@@ -312,6 +450,130 @@
     .glass-badge-secondary {
         background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
         color: #374151;
+    }
+
+    /* Error Modal Styles */
+    .error-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .error-modal.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .error-modal-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+
+    .error-modal-content {
+        position: relative;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        max-width: 500px;
+        width: 90%;
+        margin: 10% auto;
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+    }
+
+    .error-modal.show .error-modal-content {
+        transform: scale(1);
+    }
+
+    .error-modal-header {
+        padding: 2rem 2rem 1rem;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .error-modal-icon {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 1rem;
+        background: linear-gradient(135deg, rgba(251, 146, 60, 0.2), rgba(245, 101, 101, 0.1));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .error-modal-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #374151;
+        margin: 0;
+    }
+
+    .error-modal-body {
+        padding: 1.5rem 2rem;
+        text-align: center;
+    }
+
+    .error-modal-message {
+        font-size: 1rem;
+        color: #374151;
+        margin-bottom: 0.75rem;
+        font-weight: 500;
+    }
+
+    .error-modal-warning {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .error-modal-footer {
+        padding: 1rem 2rem 2rem;
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .error-modal-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .error-modal-btn-ok {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+        color: #14532d;
+    }
+
+    .error-modal-btn-ok:hover {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.4), rgba(22, 163, 74, 0.3));
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(34, 197, 94, 0.2);
     }
 </style>
 {% endblock %}

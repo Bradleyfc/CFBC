@@ -2740,3 +2740,206 @@ def validate_carnet(request):
                 'message': f"El carnet '{carnet}' ya está registrado." if exists else "Carnet disponible."
             })
     return JsonResponse({'exists': False, 'message': ''})
+
+@login_required
+def exportar_solicitud_excel(request, solicitud_id):
+    """
+    Vista para exportar los datos de una solicitud individual a Excel.
+    Incluye información del estudiante, solicitud y respuestas del formulario.
+    """
+    # Obtener la solicitud
+    solicitud = get_object_or_404(SolicitudInscripcion, pk=solicitud_id)
+    
+    # Verificar permisos - solo el profesor del curso puede exportar
+    if solicitud.curso.teacher != request.user:
+        messages.error(request, 'No tienes permisos para exportar esta solicitud.')
+        return redirect('principal:solicitudes_list')
+    
+    # Obtener las respuestas del estudiante
+    respuestas = RespuestaEstudiante.objects.filter(solicitud=solicitud).order_by('pregunta__orden')
+    
+    # Obtener información adicional del estudiante si existe
+    registro_estudiante = None
+    try:
+        registro_estudiante = Registro.objects.get(user=solicitud.estudiante)
+    except Registro.DoesNotExist:
+        pass
+    
+    # Crear el archivo Excel
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Solicitud de Inscripción"
+    
+    # Estilos
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+    subheader_font = Font(bold=True, color="000000")
+    subheader_fill = PatternFill(start_color="D9E2F3", end_color="D9E2F3", fill_type="solid")
+    border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    
+    # Título principal
+    ws.merge_cells('A1:D1')
+    ws['A1'] = f"SOLICITUD DE INSCRIPCIÓN - {solicitud.curso.name}"
+    ws['A1'].font = header_font
+    ws['A1'].fill = header_fill
+    ws['A1'].alignment = Alignment(horizontal='center', vertical='center')
+    ws['A1'].border = border
+    
+    row = 3
+    
+    # Información del Estudiante
+    ws.merge_cells(f'A{row}:D{row}')
+    ws[f'A{row}'] = "INFORMACIÓN DEL ESTUDIANTE"
+    ws[f'A{row}'].font = subheader_font
+    ws[f'A{row}'].fill = subheader_fill
+    ws[f'A{row}'].alignment = Alignment(horizontal='center')
+    ws[f'A{row}'].border = border
+    row += 1
+    
+    # Datos del estudiante
+    estudiante_data = [
+        ("Nombre Completo", solicitud.estudiante.get_full_name() or solicitud.estudiante.username),
+        ("Nombre de Usuario", solicitud.estudiante.username),
+        ("Correo Electrónico", solicitud.estudiante.email),
+    ]
+    
+    # Agregar datos adicionales si existe el registro
+    if registro_estudiante:
+        estudiante_data.extend([
+            ("Carnet", registro_estudiante.carnet or "No especificado"),
+            ("Nacionalidad", registro_estudiante.nacionalidad or "No especificada"),
+            ("Sexo", registro_estudiante.get_sexo_display() if registro_estudiante.sexo else "No especificado"),
+            ("Teléfono", registro_estudiante.telephone or "No especificado"),
+            ("Móvil", registro_estudiante.movil or "No especificado"),
+            ("Dirección", registro_estudiante.address or "No especificada"),
+            ("Municipio", registro_estudiante.location or "No especificado"),
+            ("Provincia", registro_estudiante.provincia or "No especificada"),
+            ("Grado Académico", registro_estudiante.get_grado_display() if registro_estudiante.grado else "No especificado"),
+            ("Ocupación", registro_estudiante.get_ocupacion_display() if registro_estudiante.ocupacion else "No especificada"),
+            ("Título", registro_estudiante.titulo or "No especificado"),
+        ])
+    
+    for campo, valor in estudiante_data:
+        ws[f'A{row}'] = campo
+        ws[f'B{row}'] = valor
+        ws[f'A{row}'].font = Font(bold=True)
+        ws[f'A{row}'].border = border
+        ws[f'B{row}'].border = border
+        row += 1
+    
+    row += 1
+    
+    # Información de la Solicitud
+    ws.merge_cells(f'A{row}:D{row}')
+    ws[f'A{row}'] = "INFORMACIÓN DE LA SOLICITUD"
+    ws[f'A{row}'].font = subheader_font
+    ws[f'A{row}'].fill = subheader_fill
+    ws[f'A{row}'].alignment = Alignment(horizontal='center')
+    ws[f'A{row}'].border = border
+    row += 1
+    
+    solicitud_data = [
+        ("Curso", solicitud.curso.name),
+        ("Profesor", solicitud.curso.teacher.get_full_name() or solicitud.curso.teacher.username),
+        ("Estado", solicitud.get_estado_display()),
+        ("Fecha de Solicitud", solicitud.fecha_solicitud.strftime('%d/%m/%Y %H:%M')),
+    ]
+    
+    if solicitud.fecha_revision:
+        solicitud_data.append(("Fecha de Revisión", solicitud.fecha_revision.strftime('%d/%m/%Y %H:%M')))
+    
+    if solicitud.revisado_por:
+        solicitud_data.append(("Revisado por", solicitud.revisado_por.get_full_name() or solicitud.revisado_por.username))
+    
+    for campo, valor in solicitud_data:
+        ws[f'A{row}'] = campo
+        ws[f'B{row}'] = valor
+        ws[f'A{row}'].font = Font(bold=True)
+        ws[f'A{row}'].border = border
+        ws[f'B{row}'].border = border
+        row += 1
+    
+    row += 1
+    
+    # Respuestas del Formulario
+    if respuestas:
+        ws.merge_cells(f'A{row}:D{row}')
+        ws[f'A{row}'] = f"RESPUESTAS DEL FORMULARIO: {solicitud.formulario.titulo}"
+        ws[f'A{row}'].font = subheader_font
+        ws[f'A{row}'].fill = subheader_fill
+        ws[f'A{row}'].alignment = Alignment(horizontal='center')
+        ws[f'A{row}'].border = border
+        row += 1
+        
+        for i, respuesta in enumerate(respuestas, 1):
+            # Pregunta
+            ws[f'A{row}'] = f"Pregunta {i}"
+            ws[f'B{row}'] = respuesta.pregunta.texto
+            ws[f'A{row}'].font = Font(bold=True)
+            ws[f'A{row}'].border = border
+            ws[f'B{row}'].border = border
+            row += 1
+            
+            # Tipo de pregunta
+            ws[f'A{row}'] = "Tipo"
+            ws[f'B{row}'] = respuesta.pregunta.get_tipo_display()
+            ws[f'A{row}'].font = Font(bold=True)
+            ws[f'A{row}'].border = border
+            ws[f'B{row}'].border = border
+            row += 1
+            
+            # Respuesta
+            ws[f'A{row}'] = "Respuesta"
+            opciones = respuesta.opciones_seleccionadas.all()
+            if opciones:
+                if respuesta.pregunta.tipo == 'escritura_libre':
+                    # Para escritura libre, mostrar el texto completo
+                    respuesta_texto = '\n'.join([opcion.texto for opcion in opciones])
+                else:
+                    # Para opciones múltiples o únicas, mostrar como lista
+                    respuesta_texto = ', '.join([opcion.texto for opcion in opciones])
+                ws[f'B{row}'] = respuesta_texto
+            else:
+                ws[f'B{row}'] = "Sin respuesta"
+            
+            ws[f'A{row}'].font = Font(bold=True)
+            ws[f'A{row}'].border = border
+            ws[f'B{row}'].border = border
+            ws[f'B{row}'].alignment = Alignment(wrap_text=True, vertical='top')
+            row += 2
+    else:
+        ws.merge_cells(f'A{row}:D{row}')
+        ws[f'A{row}'] = "NO HAY RESPUESTAS REGISTRADAS"
+        ws[f'A{row}'].font = subheader_font
+        ws[f'A{row}'].fill = PatternFill(start_color="FFE6E6", end_color="FFE6E6", fill_type="solid")
+        ws[f'A{row}'].alignment = Alignment(horizontal='center')
+        ws[f'A{row}'].border = border
+    
+    # Ajustar ancho de columnas
+    ws.column_dimensions['A'].width = 20
+    ws.column_dimensions['B'].width = 50
+    ws.column_dimensions['C'].width = 15
+    ws.column_dimensions['D'].width = 15
+    
+    # Preparar respuesta HTTP
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    
+    # Nombre del archivo
+    estudiante_nombre = solicitud.estudiante.get_full_name() or solicitud.estudiante.username
+    curso_nombre = solicitud.curso.name
+    filename = f'Solicitud_{estudiante_nombre}_{curso_nombre}_{solicitud.fecha_solicitud.strftime("%Y%m%d")}.xlsx'
+    filename = filename.replace(' ', '_').replace('/', '_').replace('\\', '_')
+    
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    # Guardar el archivo en la respuesta
+    wb.save(response)
+    
+    return response

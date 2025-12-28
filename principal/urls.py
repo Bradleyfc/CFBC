@@ -87,4 +87,7 @@ urlpatterns = [
     path('registro-respuestas/estudiante/<int:pk>/', RegistroRespuestasEstudianteView.as_view(), name='registro_respuestas_estudiante'),
     path('registro-respuestas/exportar-excel/', exportar_respuestas_excel, name='exportar_respuestas_excel'),
     path('registro-respuestas/exportar-excel/<int:curso_id>/', exportar_respuestas_excel, name='exportar_respuestas_excel_curso'),
+    
+    # Ruta para exportar solicitud individual
+    path('exportar-respuestas-excel-solicitud/<int:solicitud_id>/', views.exportar_solicitud_excel, name='exportar_solicitud_excel'),
 ]
