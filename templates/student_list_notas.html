@@ -68,27 +68,27 @@
             <div class="glass-content">
                 {% if student_data %}
                 <div class="overflow-x-auto">
-                    <table class="glass-table">
+                    <table class="glass-table" data-notas="{% if student_data.0.notas %}{{ student_data.0.notas|length }}{% else %}0{% endif %}">
                         <thead>
                             <tr>
-                                <th>Estudiante</th>
-                                <th>Curso</th>
+                                <th class="student-col">Estudiante</th>
+                                <th class="course-col">Curso</th>
                                 {% if student_data.0.notas %}
                                     {% for _ in student_data.0.notas %}
-                                        <th class="text-center">Nota {{ forloop.counter }}</th>
+                                        <th class="nota-col">Nota {{ forloop.counter }}</th>
                                     {% endfor %}
                                 {% endif %}
-                                <th class="text-center">Promedio</th>
-                                <th class="text-center">Acciones</th>
+                                <th class="promedio-col">Promedio</th>
+                                <th class="acciones-col">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for data in student_data %}
                             <tr>
-                                <td class="font-medium">{{ data.name }}</td>
-                                <td>{{ course.name }}</td>
+                                <td class="student-col">{{ data.name }}</td>
+                                <td class="course-col">{{ course.name }}</td>
                                 {% for nota in data.notas %}
-                                    <td class="text-center">
+                                    <td class="nota-col">
                                         {% if nota %}
                                             {% if nota >= 6 %}
                                                 <span class="glass-badge glass-badge-success">{{ nota }}</span>
@@ -100,7 +100,7 @@
                                         {% endif %}
                                     </td>
                                 {% endfor %}
-                                <td class="text-center">
+                                <td class="promedio-col">
                                     {% if data.average %}
                                         {% if data.average >= 6 %}
                                             <span class="glass-badge glass-badge-success font-bold">{{ data.average }}</span>
@@ -111,7 +111,7 @@
                                         <span class="glass-badge glass-badge-secondary font-bold">N/A</span>
                                     {% endif %}
                                 </td>
-                                <td class="text-center">
+                                <td class="acciones-col">
                                     <a href="{% url 'principal:add_nota' matricula_id=data.matricula_id %}" 
                                        class="glass-button glass-button-primary text-xs px-3 py-1">
                                         <i class="bi bi-plus-circle mr-1"></i>
@@ -260,6 +260,7 @@
         width: 100%;
         border-collapse: separate;
         border-spacing: 0;
+        table-layout: fixed; /* Forzar anchos fijos para mejor alineación */
     }
 
     .glass-table thead tr {
@@ -273,6 +274,168 @@
         font-weight: 600;
         color: #1e40af;
         border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+        vertical-align: middle; /* Alineación vertical */
+    }
+
+    /* Anchos específicos para cada columna */
+    .glass-table th:nth-child(1), .glass-table td:nth-child(1) { /* Estudiante */
+        width: 25%;
+        text-align: left;
+    }
+    
+    .glass-table th:nth-child(2), .glass-table td:nth-child(2) { /* Curso */
+        width: 20%;
+        text-align: left;
+    }
+    
+    .glass-table th:nth-child(n+3):nth-last-child(n+3), 
+    .glass-table td:nth-child(n+3):nth-last-child(n+3) { /* Notas (columnas del medio) */
+        width: 8%;
+        text-align: center;
+    }
+    
+    .glass-table th:nth-last-child(2), .glass-table td:nth-last-child(2) { /* Promedio */
+        width: 12%;
+        text-align: center;
+    }
+    
+    .glass-table th:nth-last-child(1), .glass-table td:nth-last-child(1) { /* Acciones */
+        width: 15%;
+        text-align: center;
+    }
+
+    /* Estilos específicos por clase para mayor control */
+    .student-col {
+        text-align: left !important;
+        font-weight: 500;
+    }
+    
+    .course-col {
+        text-align: left !important;
+    }
+    
+    .nota-col {
+        text-align: center !important;
+        min-width: 70px; /* Ancho mínimo para las notas */
+        width: 70px; /* Ancho fijo para notas */
+    }
+    
+    .promedio-col {
+        text-align: center !important;
+        font-weight: 600;
+        width: 100px; /* Ancho fijo para promedio */
+    }
+    
+    .acciones-col {
+        text-align: center !important;
+        width: 140px; /* Ancho fijo para acciones */
+    }
+
+    /* Cálculo dinámico de anchos basado en cantidad de notas */
+    /* 1-2 notas: Estudiante y Curso más anchos */
+    .glass-table[data-notas="1"] .student-col,
+    .glass-table[data-notas="2"] .student-col {
+        width: calc(50% - 155px) !important; /* 50% menos espacio fijo de otras columnas */
+    }
+    
+    .glass-table[data-notas="1"] .course-col,
+    .glass-table[data-notas="2"] .course-col {
+        width: calc(50% - 155px) !important;
+    }
+
+    /* 3-4 notas: Reducir un poco */
+    .glass-table[data-notas="3"] .student-col,
+    .glass-table[data-notas="4"] .student-col {
+        width: calc(40% - 170px) !important;
+    }
+    
+    .glass-table[data-notas="3"] .course-col,
+    .glass-table[data-notas="4"] .course-col {
+        width: calc(40% - 170px) !important;
+    }
+
+    /* 5-6 notas: Más compacto */
+    .glass-table[data-notas="5"] .student-col,
+    .glass-table[data-notas="6"] .student-col {
+        width: calc(35% - 185px) !important;
+    }
+    
+    .glass-table[data-notas="5"] .course-col,
+    .glass-table[data-notas="6"] .course-col {
+        width: calc(35% - 185px) !important;
+    }
+
+    /* 7-8 notas: Muy compacto */
+    .glass-table[data-notas="7"] .student-col,
+    .glass-table[data-notas="8"] .student-col {
+        width: calc(30% - 200px) !important;
+    }
+    
+    .glass-table[data-notas="7"] .course-col,
+    .glass-table[data-notas="8"] .course-col {
+        width: calc(30% - 200px) !important;
+    }
+
+    /* 9-10 notas: Máxima compresión */
+    .glass-table[data-notas="9"] .student-col,
+    .glass-table[data-notas="10"] .student-col {
+        width: calc(25% - 215px) !important;
+        min-width: 120px; /* Ancho mínimo para legibilidad */
+    }
+    
+    .glass-table[data-notas="9"] .course-col,
+    .glass-table[data-notas="10"] .course-col {
+        width: calc(25% - 215px) !important;
+        min-width: 100px; /* Ancho mínimo para legibilidad */
+    }
+    
+    /* Contenedor de tabla responsivo */
+    .overflow-x-auto {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch; /* Scroll suave en móviles */
+    }
+
+    /* Asegurar que la tabla mantenga su estructura */
+    .glass-table {
+        min-width: 800px; /* Ancho mínimo para evitar que se comprima demasiado */
+    }
+
+    /* Mejorar la visualización en pantallas pequeñas */
+    @media (max-width: 768px) {
+        .glass-table th,
+        .glass-table td {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8rem;
+        }
+        
+        /* En móviles, usar anchos más simples */
+        .student-col {
+            width: 25% !important;
+            min-width: 100px !important;
+        }
+        
+        .course-col {
+            width: 20% !important;
+            min-width: 80px !important;
+        }
+        
+        .nota-col {
+            width: 60px !important;
+            min-width: 60px !important;
+        }
+        
+        .promedio-col {
+            width: 80px !important;
+        }
+        
+        .acciones-col {
+            width: 120px !important;
+        }
+        
+        /* Hacer la tabla más compacta en móviles */
+        .glass-table {
+            min-width: 600px;
+        }
     }
 
     .glass-table tbody tr {
@@ -292,6 +455,9 @@
         padding: 0.875rem 1rem;
         color: #374151;
         font-size: 0.875rem;
+        vertical-align: middle; /* Alineación vertical */
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     /* Glass Badge */
@@ -376,4 +542,15 @@
         border-color: rgba(59, 130, 246, 0.5);
     }
 </style>
+
+<script>
+// Debug: Mostrar información sobre el ajuste dinámico de columnas
+document.addEventListener('DOMContentLoaded', function() {
+    const table = document.querySelector('.glass-table');
+    if (table) {
+        const notasCount = table.getAttribute('data-notas');
+        console.log(`Tabla configurada para ${notasCount} notas - Anchos de columnas ajustados dinámicamente`);
+    }
+});
+</script>
 {% endblock %}

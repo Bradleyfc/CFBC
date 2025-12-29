@@ -142,90 +142,35 @@
                             {% endif %}
                             
                             {% for form_nota in formset %}
-                                <div class="nota-formset-row glass-note-card" data-form-id="{{ form_nota.prefix }}">
-                                    {% if form_nota.instance.pk %}
-                                        <!-- Nota existente -->
-                                        <div class="existing-note-container">
-                                            <!-- Modo solo lectura -->
-                                            <div class="existing-note-display">
-                                                <div class="flex items-center gap-4">
-                                                    <div class="flex-1">
-                                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                                            Nota {{ forloop.counter }}:
-                                                        </label>
-                                                        <div class="glass-readonly-field">
-                                                            {{ form_nota.instance.valor }}
-                                                        </div>
-                                                    </div>
-                                                    <div class="flex items-end gap-2">
-                                                        <button type="button" 
-                                                                class="glass-button glass-button-info edit-nota-button" 
-                                                                data-form-id="{{ form_nota.prefix }}">
-                                                            <i class="bi bi-pencil mr-1"></i>
-                                                            Editar
-                                                        </button>
-                                                        <button type="button" 
-                                                                class="glass-button glass-button-danger delete-nota-button" 
-                                                                data-form-id="{{ form_nota.prefix }}">
-                                                            <i class="bi bi-trash mr-1"></i>
-                                                            Eliminar
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            
-                                            <!-- Modo edición -->
-                                            <div class="existing-note-edit" style="display: none;">
-                                                <div class="flex items-center gap-4">
-                                                    <div class="flex-1">
-                                                        <label for="{{ form_nota.valor.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                                                            Nota {{ forloop.counter }}:
-                                                        </label>
-                                                        <input type="number" 
-                                                               name="{{ form_nota.valor.name }}" 
-                                                               id="{{ form_nota.valor.id_for_label }}"
-                                                               value="{{ form_nota.valor.value|default:form_nota.instance.valor }}"
-                                                               step="0.01" 
-                                                               min="0"
-                                                               max="100"
-                                                               class="glass-input-compact"
-                                                               placeholder="Ingrese la nota (0-100)">
-                                                    </div>
-                                                    <div class="flex items-end gap-2">
-                                                        <button type="button" 
-                                                                class="glass-button glass-button-success save-edit-button" 
-                                                                data-form-id="{{ form_nota.prefix }}">
-                                                            <i class="bi bi-check mr-1"></i>
-                                                            Guardar
-                                                        </button>
-                                                        <button type="button" 
-                                                                class="glass-button glass-button-secondary cancel-edit-button" 
-                                                                data-form-id="{{ form_nota.prefix }}">
-                                                            <i class="bi bi-x mr-1"></i>
-                                                            Cancelar
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    {% else %}
-                                        <!-- Nueva nota - siempre editable -->
+                        <div class="nota-formset-row glass-note-card" data-form-id="{{ form_nota.prefix }}">
+                            {% if form_nota.instance.pk %}
+                                <!-- Nota existente -->
+                                <div class="existing-note-container">
+                                    <!-- Campo oculto para el valor (SIEMPRE presente y habilitado) -->
+                                    <input type="hidden" 
+                                           name="{{ form_nota.prefix }}-valor" 
+                                           id="{{ form_nota.valor.id_for_label }}_hidden"
+                                           value="{{ form_nota.instance.valor|stringformat:'g' }}"
+                                           class="hidden-valor-field">
+                                    
+                                    <!-- Modo solo lectura -->
+                                    <div class="existing-note-display">
                                         <div class="flex items-center gap-4">
                                             <div class="flex-1">
-                                                <label for="{{ form_nota.valor.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">
                                                     Nota {{ forloop.counter }}:
                                                 </label>
-                                                <input type="number" 
-                                                       name="{{ form_nota.valor.name }}" 
-                                                       id="{{ form_nota.valor.id_for_label }}"
-                                                       value="{{ form_nota.valor.value|default:'' }}"
-                                                       step="0.01" 
-                                                       min="0"
-                                                       max="100"
-                                                       class="glass-input-compact"
-                                                       placeholder="Ingrese la nota (0-100)">
+                                                <div class="glass-readonly-field">
+                                                    {{ form_nota.instance.valor }}
+                                                </div>
                                             </div>
-                                            <div class="flex items-end">
+                                            <div class="flex items-end gap-2">
+                                                <button type="button" 
+                                                        class="glass-button glass-button-info edit-nota-button" 
+                                                        data-form-id="{{ form_nota.prefix }}">
+                                                    <i class="bi bi-pencil mr-1"></i>
+                                                    Editar
+                                                </button>
                                                 <button type="button" 
                                                         class="glass-button glass-button-danger delete-nota-button" 
                                                         data-form-id="{{ form_nota.prefix }}">
@@ -234,47 +179,108 @@
                                                 </button>
                                             </div>
                                         </div>
-                                    {% endif %}
+                                    </div>
                                     
-                                    {{ form_nota.id }}
-                                    <div class="hidden-checkbox">
-                                        {{ form_nota.DELETE }}
-                                        <label for="{{ form_nota.DELETE.id_for_label }}">Eliminar</label>
+                                    <!-- Modo edición (campo visible pero inicialmente oculto) -->
+                                    <div class="existing-note-edit" style="display: none;">
+                                        <div class="flex items-center gap-4">
+                                            <div class="flex-1">
+                                                <label for="{{ form_nota.valor.id_for_label }}_edit" class="block text-sm font-medium text-gray-700 mb-1">
+                                                    Nota {{ forloop.counter }}:
+                                                </label>
+                                                <input type="number" 
+                                                       id="{{ form_nota.valor.id_for_label }}_edit"
+                                                       value="{{ form_nota.instance.valor|stringformat:'g' }}"
+                                                       step="0.01" 
+                                                       min="0"
+                                                       max="100"
+                                                       class="glass-input-compact edit-valor-field"
+                                                       placeholder="Ingrese la nota (0-100)">
+                                            </div>
+                                            <div class="flex items-end gap-2">
+                                                <button type="button" 
+                                                        class="glass-button glass-button-success save-edit-button" 
+                                                        data-form-id="{{ form_nota.prefix }}">
+                                                    <i class="bi bi-check mr-1"></i>
+                                                    Guardar
+                                                </button>
+                                                <button type="button" 
+                                                        class="glass-button glass-button-secondary cancel-edit-button" 
+                                                        data-form-id="{{ form_nota.prefix }}">
+                                                    <i class="bi bi-x mr-1"></i>
+                                                    Cancelar
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            {% empty %}
-                                <!-- Si no hay notas existentes, mostrar un campo inicial -->
-                                <div class="nota-formset-row glass-note-card">
-                                    <div class="flex items-center gap-4">
-                                        <div class="flex-1">
-                                            <label for="id_form-0-valor" class="block text-sm font-medium text-gray-700 mb-1">
-                                                Nota 1:
-                                            </label>
-                                            <input type="number" 
-                                                   name="form-0-valor" 
-                                                   id="id_form-0-valor"
-                                                   step="0.01" 
-                                                   min="0"
-                                                   max="100"
-                                                   class="glass-input-compact"
-                                                   placeholder="Ingrese la nota (0-100)">
-                                        </div>
-                                        <div class="flex items-end">
-                                            <button type="button" 
-                                                    class="glass-button glass-button-danger delete-nota-button" 
-                                                    data-form-id="form-0">
-                                                <i class="bi bi-trash mr-1"></i>
-                                                Eliminar
-                                            </button>
-                                        </div>
+                            {% else %}
+                                <!-- Nueva nota - siempre editable -->
+                                <div class="flex items-center gap-4">
+                                    <div class="flex-1">
+                                        <label for="{{ form_nota.valor.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                            Nota {{ forloop.counter }}:
+                                        </label>
+                                        <input type="number" 
+                                               name="{{ form_nota.valor.name }}" 
+                                               id="{{ form_nota.valor.id_for_label }}"
+                                               value="{{ form_nota.valor.value|default:'' }}"
+                                               step="0.01" 
+                                               min="0"
+                                               max="100"
+                                               class="glass-input-compact"
+                                               placeholder="Ingrese la nota (0-100)">
                                     </div>
-                                    <input type="hidden" name="form-0-id" id="id_form-0-id" value="">
-                                    <div class="hidden-checkbox">
-                                        <input type="checkbox" name="form-0-DELETE" id="id_form-0-DELETE">
-                                        <label for="id_form-0-DELETE">Eliminar</label>
+                                    <div class="flex items-end">
+                                        <button type="button" 
+                                                class="glass-button glass-button-danger delete-nota-button" 
+                                                data-form-id="{{ form_nota.prefix }}">
+                                            <i class="bi bi-trash mr-1"></i>
+                                            Eliminar
+                                        </button>
                                     </div>
                                 </div>
-                            {% endfor %}
+                            {% endif %}
+                            
+                            {{ form_nota.id }}
+                            <div class="hidden-checkbox">
+                                {{ form_nota.DELETE }}
+                                <label for="{{ form_nota.DELETE.id_for_label }}">Eliminar</label>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <!-- Si no hay notas existentes, mostrar un campo inicial -->
+                        <div class="nota-formset-row glass-note-card" id="initial-form">
+                            <div class="flex items-center gap-4">
+                                <div class="flex-1">
+                                    <label for="id_notas-0-valor" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Nota 1:
+                                    </label>
+                                    <input type="number" 
+                                           name="notas-0-valor" 
+                                           id="id_notas-0-valor"
+                                           step="0.01" 
+                                           min="0"
+                                           max="100"
+                                           class="glass-input-compact"
+                                           placeholder="Ingrese la nota (0-100)">
+                                </div>
+                                <div class="flex items-end">
+                                    <button type="button" 
+                                            class="glass-button glass-button-danger delete-nota-button" 
+                                            data-form-id="notas-0">
+                                        <i class="bi bi-trash mr-1"></i>
+                                        Eliminar
+                                    </button>
+                                </div>
+                            </div>
+                            <input type="hidden" name="notas-0-id" id="id_notas-0-id" value="">
+                            <div class="hidden-checkbox">
+                                <input type="checkbox" name="notas-0-DELETE" id="id_notas-0-DELETE">
+                                <label for="id_notas-0-DELETE">Eliminar</label>
+                            </div>
+                        </div>
+                    {% endfor %}
                         </div>
 
                         <!-- Add Note Button -->
@@ -745,7 +751,7 @@
         console.log('Total forms element:', totalForms);
         
         // Detectar el prefijo del formset
-        let formsetPrefix = 'form';
+        let formsetPrefix = 'notas';  // Usar 'notas' como prefijo por defecto
         if (totalForms && totalForms.name) {
             formsetPrefix = totalForms.name.replace('-TOTAL_FORMS', '');
             console.log('Detected formset prefix:', formsetPrefix);
@@ -773,9 +779,52 @@
             console.log('Add nota button found:', addNotaButton);
         }
         
-        // Asegurar que el total de formularios esté correcto
-        if (totalForms && (!totalForms.value || totalForms.value === '0')) {
-            totalForms.value = '1'; // Al menos un formulario inicial
+        // Función para obtener el siguiente índice disponible
+        function getNextIndex() {
+            let maxIndex = -1;
+            // Buscar en todos los inputs de valor, tanto visibles como ocultos
+            const inputs = document.querySelectorAll('input[name*="notas-"][name*="-valor"], input[name*="notas-"][name*="-id"]');
+            inputs.forEach(input => {
+                const match = input.name.match(/notas-(\d+)-/);
+                if (match) {
+                    const index = parseInt(match[1]);
+                    if (index > maxIndex) {
+                        maxIndex = index;
+                    }
+                }
+            });
+            return maxIndex + 1;
+        }
+        
+        // Función para contar todos los formularios (visibles y con datos)
+        function countAllForms() {
+            let maxIndex = -1;
+            // Buscar todos los formularios que tienen al menos un campo
+            const inputs = document.querySelectorAll('input[name*="notas-"][name*="-"]');
+            const indices = new Set();
+            
+            inputs.forEach(input => {
+                const match = input.name.match(/notas-(\d+)-/);
+                if (match) {
+                    const index = parseInt(match[1]);
+                    indices.add(index);
+                    if (index > maxIndex) {
+                        maxIndex = index;
+                    }
+                }
+            });
+            
+            // TOTAL_FORMS debe ser el índice máximo + 1
+            return maxIndex + 1;
+        }
+        
+        // Función para actualizar TOTAL_FORMS basado en los campos existentes
+        function updateTotalForms() {
+            const totalCount = countAllForms();
+            if (totalForms) {
+                totalForms.value = totalCount;
+                console.log(`Updated TOTAL_FORMS to: ${totalCount}`);
+            }
         }
 
         // Hide all elements with the class 'hidden-checkbox'
@@ -783,45 +832,144 @@
             element.style.display = 'none';
         });
 
+        // Actualizar TOTAL_FORMS al cargar la página
+        updateTotalForms();
+        
+        // Agregar logging al envío del formulario
+        const form = document.getElementById('calificaciones-form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                console.log('Form being submitted');
+                
+                // Log all form data before submission
+                const formData = new FormData(form);
+                console.log('Form data being sent:');
+                for (let [key, value] of formData.entries()) {
+                    console.log(`${key}: ${value}`);
+                }
+                
+                // Verificar específicamente los campos de notas
+                const notasFields = [];
+                for (let [key, value] of formData.entries()) {
+                    if (key.startsWith('notas-')) {
+                        notasFields.push({key, value});
+                    }
+                }
+                console.log('Notas fields found:', notasFields);
+            });
+        }
+        
+        // Debug function global
+        window.debugForm = function() {
+            console.log('=== DEBUG FORM STATE ===');
+            
+            try {
+                // Mostrar todos los inputs de notas (incluyendo ocultos)
+                const notasInputs = document.querySelectorAll('input[name*="notas-"][name*="-valor"]');
+                console.log(`Found ${notasInputs.length} nota inputs:`);
+                notasInputs.forEach((input, index) => {
+                    const isHidden = input.type === 'hidden';
+                    const isDisabled = input.disabled;
+                    const isVisible = input.offsetParent !== null;
+                    console.log(`  ${index + 1}. ${input.name} = "${input.value}" (type: ${input.type}, disabled: ${isDisabled}, visible: ${isVisible})`);
+                });
+                
+                // Mostrar también campos ocultos específicos
+                const hiddenValorFields = document.querySelectorAll('.hidden-valor-field');
+                console.log(`Found ${hiddenValorFields.length} hidden valor fields:`);
+                hiddenValorFields.forEach((field, index) => {
+                    console.log(`  ${index + 1}. name="${field.name}" value="${field.value}" (disabled: ${field.disabled})`);
+                });
+                
+                // Mostrar checkboxes de eliminación
+                const deleteCheckboxes = document.querySelectorAll('input[name*="notas-"][name*="-DELETE"]');
+                console.log(`Found ${deleteCheckboxes.length} delete checkboxes:`);
+                deleteCheckboxes.forEach((checkbox, index) => {
+                    console.log(`  ${index + 1}. ${checkbox.name} = ${checkbox.checked}`);
+                });
+                
+                // Mostrar TOTAL_FORMS
+                const totalFormsField = document.querySelector('input[name*="TOTAL_FORMS"]');
+                if (totalFormsField) {
+                    console.log(`TOTAL_FORMS: ${totalFormsField.value}`);
+                } else {
+                    console.log('TOTAL_FORMS field not found!');
+                }
+                
+                // Mostrar FormData que se enviaría
+                const form = document.getElementById('calificaciones-form');
+                if (form) {
+                    const formData = new FormData(form);
+                    console.log('FormData that would be sent:');
+                    const notasData = [];
+                    for (let [key, value] of formData.entries()) {
+                        if (key.startsWith('notas-')) {
+                            notasData.push(`${key}: ${value}`);
+                        }
+                    }
+                    notasData.sort(); // Ordenar para mejor legibilidad
+                    notasData.forEach(item => console.log(`  ${item}`));
+                }
+                
+                console.log('=== END DEBUG ===');
+            } catch (error) {
+                console.error('Debug error:', error);
+                alert('Debug error: ' + error.message);
+            }
+        }
+        
+        // Debug button temporal - versión simplificada
+        const debugButton = document.getElementById('debug-button');
+        if (debugButton) {
+            debugButton.addEventListener('click', function() {
+                window.debugForm();
+            });
+        } else {
+            console.log('Debug button not found');
+        }
+
         // Agregar event listener solo si el botón existe
         if (addNotaButton && totalForms) {
             addNotaButton.addEventListener('click', function() {
                 try {
-                    const newFormIndex = parseInt(totalForms.value);
+                    // Obtener el siguiente índice disponible
+                    const newFormIndex = getNextIndex();
+                    console.log(`Adding new form with index: ${newFormIndex}`);
 
                     const newFormHtml = `
-                        <div class="nota-formset-row glass-note-card">
+                        <div class="nota-formset-row glass-note-card" id="form-${newFormIndex}">
                             <div class="flex items-center gap-4">
                                 <div class="flex-1">
-                                    <label for="id_${formsetPrefix}-${newFormIndex}-valor" class="block text-sm font-medium text-gray-700 mb-1">Nota ${newFormIndex + 1}:</label>
+                                    <label for="id_notas-${newFormIndex}-valor" class="block text-sm font-medium text-gray-700 mb-1">Nota ${newFormIndex + 1}:</label>
                                     <input type="number" 
-                                           name="${formsetPrefix}-${newFormIndex}-valor" 
+                                           name="notas-${newFormIndex}-valor" 
                                            step="0.01" 
                                            min="0"
                                            max="100"
-                                           id="id_${formsetPrefix}-${newFormIndex}-valor" 
+                                           id="id_notas-${newFormIndex}-valor" 
                                            class="glass-input-compact"
                                            placeholder="Ingrese la nota (0-100)">
                                 </div>
                                 <div class="flex items-end">
-                                    <button type="button" class="glass-button glass-button-danger delete-nota-button" data-form-id="${formsetPrefix}-${newFormIndex}">
+                                    <button type="button" class="glass-button glass-button-danger delete-nota-button" data-form-id="notas-${newFormIndex}">
                                         <i class="bi bi-trash mr-1"></i>
                                         Eliminar
                                     </button>
                                 </div>
                             </div>
-                            <input type="hidden" name="${formsetPrefix}-${newFormIndex}-id" id="id_${formsetPrefix}-${newFormIndex}-id" value="">
+                            <input type="hidden" name="notas-${newFormIndex}-id" id="id_notas-${newFormIndex}-id" value="">
                             <div class="hidden-checkbox">
-                                <input type="checkbox" name="${formsetPrefix}-${newFormIndex}-DELETE" id="id_${formsetPrefix}-${newFormIndex}-DELETE">
-                                <label for="id_${formsetPrefix}-${newFormIndex}-DELETE">Eliminar</label>
+                                <input type="checkbox" name="notas-${newFormIndex}-DELETE" id="id_notas-${newFormIndex}-DELETE">
+                                <label for="id_notas-${newFormIndex}-DELETE">Eliminar</label>
                             </div>
                         </div>
                     `;
 
-                    // Update TOTAL_FORMS
-                    totalForms.value = parseInt(totalForms.value) + 1;
-
                     formsetContainer.insertAdjacentHTML('beforeend', newFormHtml);
+                    
+                    // Actualizar TOTAL_FORMS
+                    updateTotalForms();
+                    
                 } catch (error) {
                     console.error('Error adding new note:', error);
                 }
@@ -856,12 +1004,14 @@
                 if (button.classList.contains('delete-nota-button')) {
                     console.log('Delete button clicked');
                     // Manejar eliminación
-                    const deleteCheckbox = document.getElementById(`id_${formId}-DELETE`);
+                    const deleteCheckbox = formRow.querySelector('input[type="checkbox"][name*="DELETE"]');
+                    const hiddenField = formRow.querySelector('.hidden-valor-field');
                     
                     noteToDelete = {
                         formId: formId,
                         formRow: formRow,
-                        deleteCheckbox: deleteCheckbox
+                        deleteCheckbox: deleteCheckbox,
+                        hiddenField: hiddenField
                     };
                     
                     showDeleteNoteModal();
@@ -872,31 +1022,24 @@
                     // Buscar los elementos con más especificidad
                     const displayDiv = formRow.querySelector('.existing-note-display');
                     const editDiv = formRow.querySelector('.existing-note-edit');
+                    const hiddenField = formRow.querySelector('.hidden-valor-field');
+                    const editField = formRow.querySelector('.edit-valor-field');
                     
                     console.log('Display div found:', displayDiv);
                     console.log('Edit div found:', editDiv);
+                    console.log('Hidden field found:', hiddenField);
+                    console.log('Edit field found:', editField);
                     
-                    if (!displayDiv || !editDiv) {
-                        console.error('Could not find display or edit divs');
+                    if (!displayDiv || !editDiv || !hiddenField || !editField) {
+                        console.error('Could not find required elements');
                         return;
                     }
                     
-                    // Usar la función auxiliar para encontrar el input
-                    const input = findNoteInput(formId, editDiv);
-                    console.log('Input found:', input);
-                    
-                    if (!input) {
-                        console.error('Could not find input field with any method');
-                        console.log('Edit div HTML:', editDiv.innerHTML);
-                        return;
-                    }
-                    
-                    // Verificar que el input tenga un valor antes de acceder a él
-                    const currentValue = input.value || input.getAttribute('value') || '';
-                    console.log('Current input value:', currentValue);
+                    // Copiar valor del campo oculto al campo de edición
+                    editField.value = hiddenField.value;
                     
                     // Guardar valor original
-                    originalValues[formId] = currentValue;
+                    originalValues[formId] = hiddenField.value;
                     console.log('Original value saved:', originalValues[formId]);
                     
                     // Cambiar a modo edición
@@ -904,11 +1047,15 @@
                     displayDiv.style.display = 'none';
                     console.log('Showing edit div...');
                     editDiv.style.display = 'block';
+                    editField.style.display = 'block';
+                    
+                    // Deshabilitar el campo oculto temporalmente
+                    hiddenField.disabled = true;
                     
                     console.log('Focusing input...');
                     setTimeout(() => {
-                        input.focus();
-                        input.select(); // Seleccionar todo el texto para facilitar edición
+                        editField.focus();
+                        editField.select(); // Seleccionar todo el texto para facilitar edición
                     }, 100);
                     
                     console.log('Edit mode activated');
@@ -918,19 +1065,32 @@
                     // Guardar cambios
                     const displayDiv = formRow.querySelector('.existing-note-display');
                     const editDiv = formRow.querySelector('.existing-note-edit');
-                    const input = findNoteInput(formId, editDiv);
+                    const hiddenField = formRow.querySelector('.hidden-valor-field');
+                    const editField = formRow.querySelector('.edit-valor-field');
                     const readonlyField = displayDiv ? displayDiv.querySelector('.glass-readonly-field') : null;
                     
-                    if (!input || !readonlyField) {
-                        console.error('Could not find input or readonly field');
+                    if (!hiddenField || !editField || !readonlyField) {
+                        console.error('Could not find required fields');
                         return;
                     }
                     
-                    // Actualizar el valor mostrado
-                    readonlyField.textContent = input.value || '';
+                    // Validar el valor antes de guardarlo
+                    const newValue = parseFloat(editField.value);
+                    if (isNaN(newValue) || newValue < 0 || newValue > 100) {
+                        alert('Por favor ingrese un valor válido entre 0 y 100');
+                        return;
+                    }
+                    
+                    // Actualizar los valores
+                    hiddenField.value = editField.value;
+                    hiddenField.disabled = false; // Asegurar que esté habilitado
+                    readonlyField.textContent = editField.value;
+                    
+                    console.log(`Updated hidden field ${hiddenField.name} to value: ${hiddenField.value}`);
                     
                     // Volver a modo solo lectura
                     editDiv.style.display = 'none';
+                    editField.style.display = 'none';
                     displayDiv.style.display = 'block';
                     
                     // Limpiar valor original
@@ -941,20 +1101,25 @@
                     // Cancelar edición
                     const displayDiv = formRow.querySelector('.existing-note-display');
                     const editDiv = formRow.querySelector('.existing-note-edit');
-                    const input = findNoteInput(formId, editDiv);
+                    const hiddenField = formRow.querySelector('.hidden-valor-field');
+                    const editField = formRow.querySelector('.edit-valor-field');
                     
-                    if (!input) {
-                        console.error('Could not find input field for cancel');
+                    if (!hiddenField || !editField) {
+                        console.error('Could not find required fields for cancel');
                         return;
                     }
                     
                     // Restaurar valor original
                     if (originalValues[formId] !== undefined) {
-                        input.value = originalValues[formId];
+                        editField.value = originalValues[formId];
                     }
+                    
+                    // Rehabilitar el campo oculto
+                    hiddenField.disabled = false;
                     
                     // Volver a modo solo lectura
                     editDiv.style.display = 'none';
+                    editField.style.display = 'none';
                     displayDiv.style.display = 'block';
                     
                     // Limpiar valor original
@@ -995,9 +1160,25 @@
         window.confirmDeleteNote = function() {
             if (noteToDelete) {
                 if (noteToDelete.deleteCheckbox) {
-                    noteToDelete.deleteCheckbox.checked = true; // Marcar para eliminación
-                    noteToDelete.formRow.style.display = 'none'; // Ocultar la fila
+                    // Nota existente - marcar para eliminación
+                    noteToDelete.deleteCheckbox.checked = true;
+                    noteToDelete.formRow.style.display = 'none';
+                    
+                    // CRÍTICO: NO deshabilitar el campo oculto - necesitamos que se envíe
+                    // El campo valor debe permanecer habilitado para que Django pueda identificar la nota
+                    if (noteToDelete.hiddenField) {
+                        noteToDelete.hiddenField.disabled = false; // Asegurar que esté habilitado
+                    }
+                    
+                    console.log(`Marked existing note for deletion: ${noteToDelete.formId}`);
+                } else {
+                    // Nota nueva - simplemente remover del DOM
+                    noteToDelete.formRow.remove();
+                    console.log(`Removed new note from DOM: ${noteToDelete.formId}`);
                 }
+                
+                // Actualizar TOTAL_FORMS después de eliminar
+                updateTotalForms();
                 
                 hideDeleteNoteModal();
             }

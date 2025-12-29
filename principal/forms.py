@@ -294,8 +294,10 @@ NotaIndividualFormSet = inlineformset_factory(
     Calificaciones,  # Modelo padre
     NotaIndividual,  # Modelo hijo
     fields=('valor',),
-    extra=1,  # Mostrar al menos un formulario vacío
+    extra=0,  # No mostrar formularios vacíos automáticamente
     can_delete=True,  # Permitir eliminar notas
+    max_num=10,  # Máximo 10 notas por estudiante
+    validate_max=True,  # Validar el máximo
     widgets={
         'valor': forms.NumberInput(attrs={
             'class': 'glass-input-compact',
@@ -306,6 +308,32 @@ NotaIndividualFormSet = inlineformset_factory(
         })
     }
 )
+
+# Crear una clase personalizada para tener mejor control
+class NotaIndividualFormSetCustom(NotaIndividualFormSet):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.prefix = 'notas'  # Asegurar que use el prefijo 'notas'
+
+# Agregar validación personalizada al formset
+def validate_nota_individual_formset(formset):
+    """Validación personalizada para el formset de notas individuales"""
+    if not formset.is_valid():
+        return False
+    
+    # Verificar que al menos haya una nota válida
+    valid_forms = 0
+    for form in formset:
+        if form.cleaned_data and not form.cleaned_data.get('DELETE', False):
+            valor = form.cleaned_data.get('valor')
+            if valor is not None:
+                valid_forms += 1
+    
+    if valid_forms == 0:
+        formset._non_form_errors = formset.error_class(['Debe ingresar al menos una nota válida.'])
+        return False
+    
+    return True
 
 
 class FormularioAplicacionForm(forms.ModelForm):
