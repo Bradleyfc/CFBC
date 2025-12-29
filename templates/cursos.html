@@ -143,15 +143,15 @@
                 {% tiene_solicitud_pendiente user.id course.id as tiene_solicitud_pendiente %}
                 {% tiene_solicitud_rechazada user.id course.id as tiene_solicitud_rechazada %}
                 {% if tiene_solicitud_pendiente %}
-                <span class="glass-tag-mini glass-tag-warning text-sm ml-2">
+                <span class="glass-tag-mini glass-tag-warning text-sm">
                   Pendiente
                 </span>
                 {% elif tiene_solicitud_rechazada %}
-                <span class="glass-tag-mini glass-tag-danger text-sm ml-2">
+                <span class="glass-tag-mini glass-tag-danger text-sm">
                   Denegado
                 </span>
                 {% elif course.is_enrolled %}
-                <span class="glass-tag-mini glass-tag-success text-sm ml-2">
+                <span class="glass-tag-mini glass-tag-success text-sm">
                   Inscrito
                 </span>
                 {% endif %}
@@ -240,11 +240,6 @@
                 {% tiene_solicitud_pendiente user.id course.id as tiene_solicitud_pendiente %}
                 {% tiene_solicitud_rechazada user.id course.id as tiene_solicitud_rechazada %}
                 
-                {% if tiene_solicitud_rechazada %}
-                <div class="glass-status glass-status-error p-1">
-                  <span class="text-red-900 font-medium text-xs">Denegada</span>
-                </div>
-                {% endif %}
                 {% else %}
                 <!-- Espacio reservado para mantener altura consistente en vista de secretaria -->
                 <div class="min-h-[1.2rem]"></div>

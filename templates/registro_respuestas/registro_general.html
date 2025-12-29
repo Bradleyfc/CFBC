@@ -32,79 +32,24 @@
             </div>
         </div>
 
-        <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <div class="glass-card">
-                <div class="glass-content">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <div class="text-3xl font-bold text-blue-600">{{ total_solicitudes|default:0 }}</div>
-                            <div class="text-sm text-gray-600">Total Solicitudes</div>
-                        </div>
-                        <div class="text-blue-500 text-3xl">
-                            <i class="bi bi-clipboard-data"></i>
-                        </div>
-                    </div>
+        <!-- Filters and Statistics Row -->
+        <div class="flex flex-col lg:flex-row gap-4 mb-6 lg:items-stretch">
+            <!-- Filters Card -->
+            <div class="glass-card flex-[1.5] flex flex-col">
+                <div class="glass-header py-3">
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                        <i class="bi bi-funnel mr-2"></i>
+                        Filtrar respuestas
+                    </h3>
                 </div>
-            </div>
-            <div class="glass-card">
-                <div class="glass-content">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <div class="text-3xl font-bold text-yellow-600">{{ solicitudes_pendientes|default:0 }}</div>
-                            <div class="text-sm text-gray-600">Pendientes</div>
-                        </div>
-                        <div class="text-yellow-500 text-3xl">
-                            <i class="bi bi-clock"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="glass-card">
-                <div class="glass-content">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <div class="text-3xl font-bold text-green-600">{{ solicitudes_aprobadas|default:0 }}</div>
-                            <div class="text-sm text-gray-600">Aprobadas</div>
-                        </div>
-                        <div class="text-green-500 text-3xl">
-                            <i class="bi bi-check-circle"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="glass-card">
-                <div class="glass-content">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <div class="text-3xl font-bold text-red-600">{{ solicitudes_rechazadas|default:0 }}</div>
-                            <div class="text-sm text-gray-600">Rechazadas</div>
-                        </div>
-                        <div class="text-red-500 text-3xl">
-                            <i class="bi bi-x-circle"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Filters Card -->
-        <div class="glass-card mb-6">
-            <div class="glass-header">
-                <h3 class="text-xl font-bold text-gray-800 flex items-center">
-                    <i class="bi bi-funnel mr-2"></i>
-                    Filtros
-                </h3>
-            </div>
-            <div class="glass-content">
-                <form method="get">
-                    <div class="flex flex-wrap gap-3 mb-4 items-end">
-                        <div class="flex-1 min-w-64">
+                <div class="glass-content py-4 flex-1 flex flex-col justify-center">
+                    <form method="get">
+                        <div class="mb-3">
                             <label for="search" class="block text-xs font-medium text-gray-600 mb-1">Buscar curso o profesor:</label>
                             <input type="text" class="glass-input-compact" id="search" name="search" value="{{ request.GET.search }}"
                                 placeholder="Nombre del curso o profesor">
                         </div>
-                        <div class="flex-1 min-w-48">
+                        <div class="mb-3">
                             <label for="estado" class="block text-xs font-medium text-gray-600 mb-1">Estado de solicitudes:</label>
                             <select class="glass-select-compact" id="estado" name="estado">
                                 <option value="">Todos los estados</option>
@@ -115,20 +60,52 @@
                                 {% endfor %}
                             </select>
                         </div>
-                    </div>
 
-                    <!-- Action Buttons -->
-                    <div class="flex flex-wrap gap-2 justify-end">
-                        <button type="submit" class="glass-button glass-button-primary">
-                            <i class="bi bi-funnel mr-2"></i>
-                            Aplicar Filtros
-                        </button>
-                        <a href="{% url 'principal:registro_respuestas_general' %}" class="glass-button glass-button-secondary">
-                            <i class="bi bi-arrow-clockwise mr-2"></i>
-                            Limpiar Filtros
-                        </a>
-                    </div>
-                </form>
+                        <!-- Action Buttons -->
+                        <div class="flex gap-2 justify-start">
+                            <button type="submit" class="glass-button glass-button-primary">
+                                <i class="bi bi-funnel mr-1"></i>
+                                Filtrar
+                            </button>
+                            <a href="{% url 'principal:registro_respuestas_general' %}" class="glass-button glass-button-secondary">
+                                <i class="bi bi-arrow-clockwise mr-1"></i>
+                                Limpiar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Statistics Card 1 -->
+            <div class="glass-card flex-1 flex flex-col min-h-32">
+                <div class="glass-content flex-1 flex flex-col justify-center items-center text-center py-4">
+                    <div class="text-4xl font-bold text-blue-600 mb-2">{{ total_solicitudes|default:0 }}</div>
+                    <div class="text-sm text-gray-600">Total Solicitudes</div>
+                </div>
+            </div>
+
+            <!-- Statistics Card 2 -->
+            <div class="glass-card flex-1 flex flex-col min-h-32">
+                <div class="glass-content flex-1 flex flex-col justify-center items-center text-center py-4">
+                    <div class="text-4xl font-bold text-yellow-600 mb-2">{{ solicitudes_pendientes|default:0 }}</div>
+                    <div class="text-sm text-gray-600">Pendientes</div>
+                </div>
+            </div>
+
+            <!-- Statistics Card 3 -->
+            <div class="glass-card flex-1 flex flex-col min-h-32">
+                <div class="glass-content flex-1 flex flex-col justify-center items-center text-center py-4">
+                    <div class="text-4xl font-bold text-green-600 mb-2">{{ solicitudes_aprobadas|default:0 }}</div>
+                    <div class="text-sm text-gray-600">Aprobadas</div>
+                </div>
+            </div>
+
+            <!-- Statistics Card 4 -->
+            <div class="glass-card flex-1 flex flex-col min-h-32">
+                <div class="glass-content flex-1 flex flex-col justify-center items-center text-center py-4">
+                    <div class="text-4xl font-bold text-red-600 mb-2">{{ solicitudes_rechazadas|default:0 }}</div>
+                    <div class="text-sm text-gray-600">Rechazadas</div>
+                </div>
             </div>
         </div>
 
@@ -551,7 +528,7 @@
             if (type === 'general') {
                 exportUrl = '{% url "principal:exportar_respuestas_excel" %}';
             } else if (type === 'curso' && cursoId) {
-                exportUrl = `/exportar-respuestas-excel-curso/${cursoId}/`;
+                exportUrl = `/registro-respuestas/exportar-excel/${cursoId}/`;
             }
             
             // Obtener los parámetros actuales de la URL

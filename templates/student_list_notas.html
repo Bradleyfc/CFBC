@@ -12,6 +12,14 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         <!-- Header -->
         <div class="mb-6">
+            <!-- Back Button -->
+            <div class="mb-4">
+                <a href="{% url 'principal:courses' %}" class="glass-button glass-button-secondary">
+                    <i class="bi bi-arrow-left mr-2"></i>
+                    Volver a Cursos
+                </a>
+            </div>
+            
             <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">Calificaciones</h2>
             <p class="text-center text-gray-600">Gestión de notas del curso: <strong>{{ course.name }}</strong></p>
         </div>

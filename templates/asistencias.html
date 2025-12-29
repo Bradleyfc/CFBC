@@ -13,59 +13,70 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         <!-- Header -->
         <div class="mb-6">
+            <!-- Back Button -->
+            <div class="mb-4">
+                <a href="{% url 'principal:courses' %}" class="glass-button glass-button-secondary">
+                    <i class="bi bi-arrow-left mr-2"></i>
+                    Volver a Cursos
+                </a>
+            </div>
+            
             <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">Asistencias para el curso: {{ course.name }}</h2>
             <p class="text-center text-gray-600"><strong>Curso académico:</strong> {{ curso_academico.nombre }}</p>
         </div>
 
-        <!-- Filters Card -->
-        <div class="glass-card mb-6">
-            <div class="glass-header">
-                <h3 class="text-xl font-bold text-gray-800 flex items-center">
-                    <i class="bi bi-funnel mr-2"></i>
-                    Filtrar asistencias
-                </h3>
-            </div>
-            <div class="glass-content">
-                <form method="GET">
-                    <div class="flex flex-wrap gap-3 mb-4 items-end">
-                        <div class="flex-1 min-w-48">
+        <!-- Filters and Statistics Row -->
+        <div class="flex flex-col lg:flex-row gap-6 mb-6 lg:items-stretch">
+            <!-- Filters Card -->
+            <div class="glass-card flex-1 flex flex-col">
+                <div class="glass-header py-3">
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                        <i class="bi bi-funnel mr-2"></i>
+                        Filtrar asistencias
+                    </h3>
+                </div>
+                <div class="glass-content py-4 flex-1 flex flex-col justify-center">
+                    <form method="GET">
+                        <div class="mb-3">
                             <label for="fecha" class="block text-xs font-medium text-gray-600 mb-1">Fecha:</label>
                             <input type="date" name="fecha" id="fecha" class="glass-input-compact" value="{{ request.GET.fecha }}">
                         </div>
-                    </div>
 
-                    <!-- Action Buttons -->
-                    <div class="flex flex-wrap gap-2 justify-end">
-                        <button type="submit" class="glass-button glass-button-primary">
-                            <i class="bi bi-funnel mr-2"></i>
-                            Filtrar
-                        </button>
-                        <a href="{% url 'principal:asistencias' course.id %}" class="glass-button glass-button-secondary">
-                            <i class="bi bi-arrow-clockwise mr-2"></i>
-                            Limpiar filtros
-                        </a>
-                    </div>
-                </form>
+                        <!-- Action Buttons -->
+                        <div class="flex gap-2">
+                            <button type="submit" class="glass-button glass-button-primary flex-1">
+                                <i class="bi bi-funnel mr-1"></i>
+                                Filtrar
+                            </button>
+                            <a href="{% url 'principal:asistencias' course.id %}" class="glass-button glass-button-secondary flex-1">
+                                <i class="bi bi-arrow-clockwise mr-1"></i>
+                                Limpiar
+                            </a>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </div>
 
-        <!-- Statistics Cards -->
-        <div class="flex flex-col md:flex-row gap-6 mb-6">
-            <div class="glass-card flex-1">
-                <div class="glass-content text-center">
-                    <div class="text-3xl font-bold text-blue-600">{{ cantidad_total_clases }}</div>
+            <!-- Statistics Card 1 -->
+            <div class="glass-card flex-1 flex flex-col min-h-32">
+                <div class="glass-content flex-1 flex flex-col justify-center items-center text-center py-4">
+                    <div class="text-4xl font-bold text-blue-600 mb-2">{{ cantidad_total_clases }}</div>
                     <div class="text-sm text-gray-600">Cantidad de Clases del Curso</div>
                 </div>
             </div>
-            <div class="glass-card flex-1">
-                <div class="glass-content text-center">
-                    <div class="text-3xl font-bold text-green-600">{{ asistencias_registradas }}</div>
+
+            <!-- Statistics Card 2 -->
+            <div class="glass-card flex-1 flex flex-col min-h-32">
+                <div class="glass-content flex-1 flex flex-col justify-center items-center text-center py-4">
+                    <div class="text-4xl font-bold text-green-600 mb-2">{{ asistencias_registradas }}</div>
                     <div class="text-sm text-gray-600">Asistencias Registradas</div>
                 </div>
             </div>
-            <div class="glass-card flex-1">
-                <div class="glass-content text-center">
-                    <div class="text-3xl font-bold text-yellow-600">{{ clases_restantes }}</div>
+
+            <!-- Statistics Card 3 -->
+            <div class="glass-card flex-1 flex flex-col min-h-32">
+                <div class="glass-content flex-1 flex flex-col justify-center items-center text-center py-4">
+                    <div class="text-4xl font-bold text-yellow-600 mb-2">{{ clases_restantes }}</div>
                     <div class="text-sm text-gray-600">Asistencias Restantes</div>
                 </div>
             </div>
@@ -84,9 +95,9 @@
                             <i class="bi bi-plus-circle mr-2"></i>
                             Agregar asistencia
                         </a>
-                        <a href="{% url 'principal:undo_last_asistencia' course_id=course.id %}" 
+                        <a href="#" 
                            class="glass-button glass-button-danger" 
-                           onclick="return confirm('¿Estás seguro de que quieres deshacer la última asistencia guardada para este curso? Esto eliminará todas las asistencias de la fecha más reciente.');">
+                           onclick="showUndoModal(); return false;">
                             <i class="bi bi-arrow-counterclockwise mr-2"></i>
                             Deshacer Última
                         </a>
@@ -99,19 +110,19 @@
                     <table class="glass-table">
                         <thead>
                             <tr>
-                                <th>Estudiante</th>
+                                <th class="min-w-48">Estudiante</th>
                                 {% regroup asistencias by date as asistencias_por_fecha %}
                                 {% for fecha in asistencias_por_fecha %}
-                                    <th>{{ fecha.grouper|date:"d/m/Y" }}</th>
+                                    <th class="w-32 text-center">{{ fecha.grouper|date:"d/m/Y" }}</th>
                                 {% endfor %}
                             </tr>
                         </thead>
                         <tbody>
                             {% for matricula in matriculas %}
                             <tr>
-                                <td class="font-medium">{{ matricula.student.get_full_name|default:matricula.student.username }}</td>
+                                <td class="font-medium min-w-48">{{ matricula.student.get_full_name|default:matricula.student.username }}</td>
                                 {% for fecha in asistencias_por_fecha %}
-                                    <td class="text-center">
+                                    <td class="text-center w-32">
                                         {% with asistencia=asistencias|filter_asistencia:matricula.student.id|filter_by_date:fecha.grouper %}
                                             {% if asistencia %}
                                                 {% if asistencia.presente %}
@@ -203,6 +214,39 @@
             </div>
         </div>
 
+    </div>
+</div>
+
+<!-- Modal de Confirmación para Deshacer Última Asistencia -->
+<div id="undoModal" class="undo-modal hidden">
+    <div class="undo-modal-overlay" onclick="hideUndoModal()"></div>
+    <div class="undo-modal-content">
+        <div class="undo-modal-header">
+            <div class="undo-modal-icon">
+                <i class="bi bi-exclamation-triangle text-orange-600"></i>
+            </div>
+            <h3 class="undo-modal-title">Deshacer Último Registro</h3>
+        </div>
+        
+        <div class="undo-modal-body">
+            <p class="undo-modal-message">
+                ¿Está seguro de que desea deshacer la última asistencia registrada?
+            </p>
+            <p class="undo-modal-warning">
+                Esta acción eliminará <strong>únicamente el último registro de asistencia</strong> que se haya guardado y no se puede deshacer.
+            </p>
+        </div>
+        
+        <div class="undo-modal-footer">
+            <button type="button" class="undo-modal-btn undo-modal-btn-cancel" onclick="hideUndoModal()">
+                <i class="bi bi-x-circle mr-2"></i>
+                Cancelar
+            </button>
+            <button type="button" class="undo-modal-btn undo-modal-btn-confirm" onclick="confirmUndo()">
+                <i class="bi bi-arrow-counterclockwise mr-2"></i>
+                Deshacer Último
+            </button>
+        </div>
     </div>
 </div>
 
@@ -301,6 +345,7 @@
         width: 100%;
         border-collapse: separate;
         border-spacing: 0;
+        table-layout: fixed;
     }
 
     .glass-table thead tr {
@@ -314,6 +359,11 @@
         font-weight: 600;
         color: #1e40af;
         border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+        vertical-align: middle;
+    }
+
+    .glass-table th.text-center {
+        text-align: center;
     }
 
     .glass-table tbody tr {
@@ -333,6 +383,7 @@
         padding: 0.875rem 1rem;
         color: #374151;
         font-size: 0.875rem;
+        vertical-align: middle;
     }
 
     /* Glass Badge */
@@ -385,5 +436,184 @@
         background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
         color: #1e3a8a;
     }
+
+    /* Undo Modal Styles */
+    .undo-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .undo-modal.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .undo-modal-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+
+    .undo-modal-content {
+        position: relative;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        max-width: 500px;
+        width: 90%;
+        margin: 5% auto;
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+    }
+
+    .undo-modal.show .undo-modal-content {
+        transform: scale(1);
+    }
+
+    .undo-modal-header {
+        padding: 2rem 2rem 1rem;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .undo-modal-icon {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 1rem;
+        background: linear-gradient(135deg, rgba(251, 146, 60, 0.2), rgba(245, 101, 101, 0.1));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .undo-modal-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #374151;
+        margin: 0;
+    }
+
+    .undo-modal-body {
+        padding: 1.5rem 2rem;
+        text-align: center;
+    }
+
+    .undo-modal-message {
+        font-size: 1rem;
+        color: #374151;
+        margin-bottom: 0.75rem;
+        font-weight: 500;
+    }
+
+    .undo-modal-warning {
+        font-size: 0.875rem;
+        color: #dc2626;
+        margin: 0;
+        line-height: 1.5;
+        background: linear-gradient(135deg, rgba(254, 226, 226, 0.8), rgba(252, 165, 165, 0.4));
+        padding: 0.75rem;
+        border-radius: 8px;
+        border-left: 4px solid #dc2626;
+    }
+
+    .undo-modal-footer {
+        padding: 1rem 2rem 2rem;
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .undo-modal-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .undo-modal-btn-cancel {
+        background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
+        color: #374151;
+    }
+
+    .undo-modal-btn-cancel:hover {
+        background: linear-gradient(135deg, rgba(156, 163, 175, 0.4), rgba(107, 114, 128, 0.3));
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(156, 163, 175, 0.2);
+    }
+
+    .undo-modal-btn-confirm {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.2));
+        color: #7f1d1d;
+    }
+
+    .undo-modal-btn-confirm:hover {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.4), rgba(220, 38, 38, 0.3));
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(239, 68, 68, 0.2);
+    }
 </style>
+
+<script>
+    // Funciones para manejar el modal de deshacer asistencia
+    function showUndoModal() {
+        const modal = document.getElementById('undoModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('show');
+    }
+
+    function hideUndoModal() {
+        const modal = document.getElementById('undoModal');
+        modal.classList.remove('show');
+        
+        // Pequeño delay antes de ocultar completamente
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+
+    function confirmUndo() {
+        // Redirigir a la URL de deshacer asistencia
+        window.location.href = "{% url 'principal:undo_last_asistencia' course_id=course.id %}";
+    }
+
+    // Cerrar modal con tecla ESC
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            hideUndoModal();
+        }
+    });
+
+    // Cerrar modal haciendo clic fuera
+    document.addEventListener('click', function(event) {
+        const modal = document.getElementById('undoModal');
+        if (event.target === modal) {
+            hideUndoModal();
+        }
+    });
+</script>
+
 {% endblock %}

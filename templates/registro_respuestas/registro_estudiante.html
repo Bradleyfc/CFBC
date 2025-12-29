@@ -57,6 +57,9 @@
             </div>
         </div>
 
+        <!-- Content with narrower width -->
+        <div class="max-w-4xl mx-auto">
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Student Information -->
             <div class="lg:col-span-1 space-y-6">
@@ -193,58 +196,56 @@
                     </div>
                     <div class="glass-content">
                         {% if respuestas %}
-                            <div class="space-y-6">
+                            <div class="space-y-4">
                                 {% for respuesta in respuestas %}
-                                    <div class="glass-card border-l-4 border-blue-400">
-                                        <div class="glass-content">
-                                            <div class="mb-4">
-                                                <div class="flex items-start justify-between mb-3">
-                                                    <div class="flex-1">
-                                                        <h6 class="text-blue-600 font-semibold mb-2 flex items-center">
-                                                            <i class="bi bi-question-circle mr-2"></i>
-                                                            Pregunta {{ forloop.counter }}
-                                                        </h6>
-                                                        <p class="font-semibold text-gray-800 mb-2">{{ respuesta.pregunta.texto }}</p>
-                                                        <div class="flex items-center gap-2 text-sm text-gray-500">
-                                                            <span>Tipo: {{ respuesta.pregunta.get_tipo_display }}</span>
-                                                            {% if respuesta.pregunta.requerida %}
-                                                                <span class="glass-badge glass-badge-warning">Requerida</span>
-                                                            {% endif %}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                
-                                                <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border-l-4 border-blue-400">
-                                                    <h6 class="text-blue-800 font-semibold mb-2 flex items-center">
-                                                        <i class="bi bi-reply mr-2"></i>
-                                                        Respuesta
+                                    <div class="glass-note-card border-l-4 border-blue-400">
+                                        <div class="mb-4">
+                                            <div class="flex items-start justify-between mb-3">
+                                                <div class="flex-1">
+                                                    <h6 class="text-blue-600 font-semibold mb-2 flex items-center">
+                                                        <i class="bi bi-question-circle mr-2"></i>
+                                                        Pregunta {{ forloop.counter }}
                                                     </h6>
-                                                    <div class="text-gray-700">
-                                                        {% if respuesta.opciones_seleccionadas.all %}
-                                                            {% if respuesta.pregunta.tipo == 'seleccion_multiple' %}
-                                                                <div class="flex flex-wrap gap-2">
-                                                                    {% for opcion in respuesta.opciones_seleccionadas.all %}
-                                                                        <span class="glass-badge glass-badge-secondary">{{ opcion.texto }}</span>
-                                                                    {% endfor %}
-                                                                </div>
-                                                            {% elif respuesta.pregunta.tipo == 'seleccion_unica' %}
-                                                                <div class="flex flex-wrap gap-2">
-                                                                    {% for opcion in respuesta.opciones_seleccionadas.all %}
-                                                                        <span class="glass-badge glass-badge-success">{{ opcion.texto }}</span>
-                                                                    {% endfor %}
-                                                                </div>
-                                                            {% else %}
-                                                                <!-- Para preguntas de escritura libre -->
-                                                                {% for opcion in respuesta.opciones_seleccionadas.all %}
-                                                                    <div class="bg-white p-3 rounded-lg border border-gray-200">
-                                                                        <p class="text-gray-800">{{ opcion.texto }}</p>
-                                                                    </div>
-                                                                {% endfor %}
-                                                            {% endif %}
-                                                        {% else %}
-                                                            <span class="text-gray-500 italic">Sin respuesta</span>
+                                                    <p class="font-semibold text-gray-800 mb-2">{{ respuesta.pregunta.texto }}</p>
+                                                    <div class="flex items-center gap-2 text-sm text-gray-500">
+                                                        <span>Tipo: {{ respuesta.pregunta.get_tipo_display }}</span>
+                                                        {% if respuesta.pregunta.requerida %}
+                                                            <span class="glass-badge glass-badge-warning">Requerida</span>
                                                         {% endif %}
                                                     </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border-l-4 border-blue-400">
+                                                <h6 class="text-blue-800 font-semibold mb-2 flex items-center">
+                                                    <i class="bi bi-reply mr-2"></i>
+                                                    Respuesta
+                                                </h6>
+                                                <div class="text-gray-700">
+                                                    {% if respuesta.opciones_seleccionadas.all %}
+                                                        {% if respuesta.pregunta.tipo == 'seleccion_multiple' %}
+                                                            <div class="flex flex-wrap gap-2">
+                                                                {% for opcion in respuesta.opciones_seleccionadas.all %}
+                                                                    <span class="glass-badge glass-badge-secondary">{{ opcion.texto }}</span>
+                                                                {% endfor %}
+                                                            </div>
+                                                        {% elif respuesta.pregunta.tipo == 'seleccion_unica' %}
+                                                            <div class="flex flex-wrap gap-2">
+                                                                {% for opcion in respuesta.opciones_seleccionadas.all %}
+                                                                    <span class="glass-badge glass-badge-success">{{ opcion.texto }}</span>
+                                                                {% endfor %}
+                                                            </div>
+                                                        {% else %}
+                                                            <!-- Para preguntas de escritura libre -->
+                                                            {% for opcion in respuesta.opciones_seleccionadas.all %}
+                                                                <div class="bg-white p-3 rounded-lg border border-gray-200">
+                                                                    <p class="text-gray-800">{{ opcion.texto }}</p>
+                                                                </div>
+                                                            {% endfor %}
+                                                        {% endif %}
+                                                    {% else %}
+                                                        <span class="text-gray-500 italic">Sin respuesta</span>
+                                                    {% endif %}
                                                 </div>
                                             </div>
                                         </div>
@@ -264,6 +265,8 @@
                     </div>
                 </div>
             </div>
+        </div>
+
         </div>
 
     </div>
@@ -302,14 +305,14 @@
     // Verificar si hay respuestas antes de exportar
     function checkRespuestasBeforeExport(type, solicitudId = null) {
         // Verificar si hay respuestas contando las cards de respuestas
-        const respuestasCards = document.querySelectorAll('.space-y-6 > .glass-card');
+        const respuestasCards = document.querySelectorAll('.space-y-4 > .glass-note-card');
         const hasRespuestas = respuestasCards.length > 0;
         
         if (hasRespuestas) {
             // Si hay respuestas, proceder con la exportación
             let exportUrl = '';
             if (type === 'estudiante' && solicitudId) {
-                exportUrl = `/exportar-respuestas-excel-estudiante/${solicitudId}/`;
+                exportUrl = `/exportar-respuestas-excel-solicitud/${solicitudId}/`;
             }
             
             // Obtener los parámetros actuales de la URL
@@ -430,6 +433,23 @@
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Glass Note Card */
+    .glass-note-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.4));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .glass-note-card:hover {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.5));
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
     .glass-badge-success {

@@ -1094,7 +1094,21 @@ class StudentCourseAttendanceView(BaseContextMixin, ListView):
         course_id = self.kwargs['course_id']
         context['student'] = User.objects.get(id=student_id)
         context['course'] = Curso.objects.get(id=course_id)
-        context['student'] = User.objects.get(id=student_id)
+        
+        # Calculate attendance statistics
+        asistencias = context['asistencias']
+        total_classes = asistencias.count()
+        present_count = asistencias.filter(presente=True).count()
+        
+        context['total_classes'] = total_classes
+        context['present_count'] = present_count
+        
+        # Calculate attendance percentage
+        if total_classes > 0:
+            context['attendance_percentage'] = round((present_count / total_classes) * 100, 1)
+        else:
+            context['attendance_percentage'] = 0
+            
         return context
 
 
@@ -1782,14 +1796,20 @@ def add_asistencias(request, course_id):
 def undo_last_asistencia(request, course_id):
     course = get_object_or_404(Curso, id=course_id)
 
-    # Encontrar la fecha más reciente para la que se registró asistencia en este curso
-    latest_attendance_date_obj = Asistencia.objects.filter(course=course).aggregate(Max('date'))
-    latest_attendance_date = latest_attendance_date_obj['date__max']
+    # Encontrar el registro de asistencia más reciente para este curso
+    # Ordenar por fecha y luego por ID para obtener el último registro creado
+    latest_attendance = Asistencia.objects.filter(course=course).order_by('-date', '-id').first()
 
-    if latest_attendance_date:
-        # Eliminar todos los registros de asistencia para este curso en la fecha más reciente
-        Asistencia.objects.filter(course=course, date=latest_attendance_date).delete()
-        messages.success(request, f"La asistencia del {latest_attendance_date.strftime('%d-%m-%Y')} ha sido deshecha correctamente.")
+    if latest_attendance:
+        # Obtener información del registro antes de eliminarlo
+        student_name = latest_attendance.student.get_full_name() or latest_attendance.student.username
+        attendance_date = latest_attendance.date.strftime('%d-%m-%Y')
+        status = "Presente" if latest_attendance.presente else "Ausente"
+        
+        # Eliminar únicamente este registro específico
+        latest_attendance.delete()
+        
+        messages.success(request, f"Se deshizo la última asistencia: {student_name} - {status} ({attendance_date})")
     else:
         messages.info(request, "No hay asistencias registradas para deshacer en este curso.")
 
@@ -2767,13 +2787,13 @@ def exportar_solicitud_excel(request, solicitud_id):
     Vista para exportar los datos de una solicitud individual a Excel.
     Incluye información del estudiante, solicitud y respuestas del formulario.
     """
-    # Obtener la solicitud
-    solicitud = get_object_or_404(SolicitudInscripcion, pk=solicitud_id)
-    
-    # Verificar permisos - solo el profesor del curso puede exportar
-    if solicitud.curso.teacher != request.user:
+    # Verificar permisos - solo profesores y secretarias pueden exportar
+    if not request.user.groups.filter(name__in=['Profesores', 'Secretaria']).exists():
         messages.error(request, 'No tienes permisos para exportar esta solicitud.')
         return redirect('principal:solicitudes_list')
+    
+    # Obtener la solicitud
+    solicitud = get_object_or_404(SolicitudInscripcion, pk=solicitud_id)
     
     # Obtener las respuestas del estudiante
     respuestas = RespuestaEstudiante.objects.filter(solicitud=solicitud).order_by('pregunta__orden')

@@ -46,51 +46,24 @@
             </div>
         </div>
 
-        <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <div class="glass-card">
-                <div class="glass-content text-center">
-                    <div class="text-3xl font-bold text-blue-600">{{ total_solicitudes_curso }}</div>
-                    <div class="text-sm text-gray-600">Total Solicitudes</div>
+        <!-- Filters and Statistics Row -->
+        <div class="flex flex-col lg:flex-row gap-4 mb-6 lg:items-stretch">
+            <!-- Filters Card -->
+            <div class="glass-card flex-[1.5] flex flex-col">
+                <div class="glass-header py-3">
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                        <i class="bi bi-funnel mr-2"></i>
+                        Filtrar asistencias
+                    </h3>
                 </div>
-            </div>
-            <div class="glass-card">
-                <div class="glass-content text-center">
-                    <div class="text-3xl font-bold text-yellow-600">{{ solicitudes_pendientes_curso }}</div>
-                    <div class="text-sm text-gray-600">Pendientes</div>
-                </div>
-            </div>
-            <div class="glass-card">
-                <div class="glass-content text-center">
-                    <div class="text-3xl font-bold text-green-600">{{ solicitudes_aprobadas_curso }}</div>
-                    <div class="text-sm text-gray-600">Aprobadas</div>
-                </div>
-            </div>
-            <div class="glass-card">
-                <div class="glass-content text-center">
-                    <div class="text-3xl font-bold text-red-600">{{ solicitudes_rechazadas_curso }}</div>
-                    <div class="text-sm text-gray-600">Rechazadas</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Filters Card -->
-        <div class="glass-card mb-6">
-            <div class="glass-header">
-                <h3 class="text-xl font-bold text-gray-800 flex items-center">
-                    <i class="bi bi-funnel mr-2"></i>
-                    Filtros
-                </h3>
-            </div>
-            <div class="glass-content">
-                <form method="get">
-                    <div class="flex flex-wrap gap-3 mb-4 items-end">
-                        <div class="flex-1 min-w-64">
+                <div class="glass-content py-4 flex-1 flex flex-col justify-center">
+                    <form method="GET">
+                        <div class="mb-3">
                             <label for="search" class="block text-xs font-medium text-gray-600 mb-1">Buscar estudiante:</label>
                             <input type="text" class="glass-input-compact" id="search" name="search" 
                                    value="{{ request.GET.search }}" placeholder="Nombre o usuario del estudiante">
                         </div>
-                        <div class="flex-1 min-w-48">
+                        <div class="mb-3">
                             <label for="estado" class="block text-xs font-medium text-gray-600 mb-1">Estado de solicitud:</label>
                             <select class="glass-select-compact" id="estado" name="estado">
                                 <option value="">Todos los estados</option>
@@ -101,97 +74,132 @@
                                 {% endfor %}
                             </select>
                         </div>
-                    </div>
 
-                    <!-- Action Buttons -->
-                    <div class="flex flex-wrap gap-2 justify-end">
-                        <button type="submit" class="glass-button glass-button-primary">
-                            <i class="bi bi-funnel mr-2"></i>
-                            Aplicar Filtros
-                        </button>
-                        <a href="{% url 'principal:registro_respuestas_curso' curso.pk %}" class="glass-button glass-button-secondary">
-                            <i class="bi bi-arrow-clockwise mr-2"></i>
-                            Limpiar Filtros
-                        </a>
-                    </div>
-                </form>
+                        <!-- Action Buttons -->
+                        <div class="flex gap-2 justify-start">
+                            <button type="submit" class="glass-button glass-button-primary">
+                                <i class="bi bi-funnel mr-1"></i>
+                                Filtrar
+                            </button>
+                            <a href="{% url 'principal:registro_respuestas_curso' curso.pk %}" class="glass-button glass-button-secondary">
+                                <i class="bi bi-arrow-clockwise mr-1"></i>
+                                Limpiar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Statistics Card 1 -->
+            <div class="glass-card flex-1 flex flex-col min-h-32">
+                <div class="glass-content flex-1 flex flex-col justify-center items-center text-center py-4">
+                    <div class="text-4xl font-bold text-blue-600 mb-2">{{ total_solicitudes_curso }}</div>
+                    <div class="text-sm text-gray-600">Total Solicitudes</div>
+                </div>
+            </div>
+
+            <!-- Statistics Card 2 -->
+            <div class="glass-card flex-1 flex flex-col min-h-32">
+                <div class="glass-content flex-1 flex flex-col justify-center items-center text-center py-4">
+                    <div class="text-4xl font-bold text-yellow-600 mb-2">{{ solicitudes_pendientes_curso }}</div>
+                    <div class="text-sm text-gray-600">Pendientes</div>
+                </div>
+            </div>
+
+            <!-- Statistics Card 3 -->
+            <div class="glass-card flex-1 flex flex-col min-h-32">
+                <div class="glass-content flex-1 flex flex-col justify-center items-center text-center py-4">
+                    <div class="text-4xl font-bold text-green-600 mb-2">{{ solicitudes_aprobadas_curso }}</div>
+                    <div class="text-sm text-gray-600">Aprobadas</div>
+                </div>
+            </div>
+
+            <!-- Statistics Card 4 -->
+            <div class="glass-card flex-1 flex flex-col min-h-32">
+                <div class="glass-content flex-1 flex flex-col justify-center items-center text-center py-4">
+                    <div class="text-4xl font-bold text-red-600 mb-2">{{ solicitudes_rechazadas_curso }}</div>
+                    <div class="text-sm text-gray-600">Rechazadas</div>
+                </div>
             </div>
         </div>
 
-        <!-- Solicitudes Cards -->
-        <div class="glass-card mb-6">
-            <div class="glass-header">
-                <h3 class="text-xl font-bold text-gray-800 flex items-center">
-                    <i class="bi bi-clipboard-data mr-2"></i>
-                    Solicitudes y Respuestas de Estudiantes
-                </h3>
-            </div>
-            <div class="glass-content">
-                {% if solicitudes %}
-                    <div class="space-y-6">
-                        {% for solicitud in solicitudes %}
-                            <div class="glass-card border-l-4 {% if solicitud.estado == 'pendiente' %}border-yellow-400{% elif solicitud.estado == 'aprobada' %}border-green-400{% elif solicitud.estado == 'rechazada' %}border-red-400{% endif %}">
-                                <div class="glass-header">
-                                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                                        <div class="flex items-center">
-                                            <i class="bi bi-person text-blue-600 mr-3 text-xl"></i>
-                                            <div>
-                                                <h6 class="font-semibold text-gray-800">
-                                                    {{ solicitud.estudiante.get_full_name|default:solicitud.estudiante.username }}
-                                                </h6>
-                                                <div class="text-sm text-gray-500">{{ solicitud.estudiante.email }}</div>
+        <!-- Solicitudes Cards with narrower width -->
+        <div class="max-w-4xl mx-auto">
+            <div class="glass-card mb-6">
+                <div class="glass-header">
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                        <i class="bi bi-clipboard-data mr-2"></i>
+                        Solicitudes y Respuestas de Estudiantes
+                    </h3>
+                </div>
+                <div class="glass-content">
+                    {% if solicitudes %}
+                        <div class="space-y-6">
+                            {% for solicitud in solicitudes %}
+                                <div class="glass-card border-l-4 {% if solicitud.estado == 'pendiente' %}border-yellow-400{% elif solicitud.estado == 'aprobada' %}border-green-400{% elif solicitud.estado == 'rechazada' %}border-red-400{% endif %}">
+                                    <div class="glass-header">
+                                        <div class="flex items-center justify-between gap-4">
+                                            <!-- Student Info -->
+                                            <div class="flex items-center">
+                                                <i class="bi bi-person text-blue-600 mr-3 text-xl"></i>
+                                                <div class="flex items-center gap-2">
+                                                    <h6 class="font-semibold text-gray-800">
+                                                        {{ solicitud.estudiante.get_full_name|default:solicitud.estudiante.username }}
+                                                    </h6>
+                                                    <span class="text-sm text-gray-500">{{ solicitud.estudiante.email }}</span>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div class="flex items-center gap-4">
-                                            <span class="glass-badge {% if solicitud.estado == 'pendiente' %}glass-badge-warning{% elif solicitud.estado == 'aprobada' %}glass-badge-success{% elif solicitud.estado == 'rechazada' %}glass-badge-danger{% endif %}">
-                                                {{ solicitud.get_estado_display }}
-                                            </span>
-                                            <div class="text-right">
+                                            
+                                            <!-- Status, Date and Action -->
+                                            <div class="flex items-center gap-4">
+                                                <span class="glass-badge {% if solicitud.estado == 'pendiente' %}glass-badge-warning{% elif solicitud.estado == 'aprobada' %}glass-badge-success{% elif solicitud.estado == 'rechazada' %}glass-badge-danger{% endif %}">
+                                                    {{ solicitud.get_estado_display }}
+                                                </span>
                                                 <div class="text-sm text-gray-500">
                                                     {{ solicitud.fecha_solicitud|date:"d/m/Y H:i" }}
                                                 </div>
                                                 <a href="{% url 'principal:registro_respuestas_estudiante' solicitud.pk %}" 
-                                                   class="glass-button glass-button-primary text-xs px-3 py-1 mt-1">
+                                                   class="glass-button glass-button-primary text-xs px-3 py-1">
                                                     <i class="bi bi-eye mr-1"></i>
                                                     Ver Detalle
                                                 </a>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="glass-content">
-                                    {% if solicitud.respuestas.all %}
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {% for respuesta in solicitud.respuestas.all %}
-                                                <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border-l-4 border-blue-400">
-                                                    <h6 class="text-blue-800 font-semibold mb-2">{{ respuesta.pregunta.texto }}</h6>
-                                                    <div class="text-gray-700">
-                                                        {% for opcion in respuesta.opciones_seleccionadas.all %}
-                                                            <span class="glass-badge glass-badge-secondary mr-1 mb-1 inline-block">{{ opcion.texto }}</span>
-                                                        {% empty %}
-                                                            <span class="text-gray-500 italic">Sin respuesta</span>
-                                                        {% endfor %}
+                                    <div class="glass-content">
+                                        {% if solicitud.respuestas.all %}
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {% for respuesta in solicitud.respuestas.all %}
+                                                    <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border-l-4 border-blue-400">
+                                                        <h6 class="text-blue-800 font-semibold mb-2">{{ respuesta.pregunta.texto }}</h6>
+                                                        <div class="text-gray-700">
+                                                            {% for opcion in respuesta.opciones_seleccionadas.all %}
+                                                                <span class="glass-badge glass-badge-secondary mr-1 mb-1 inline-block">{{ opcion.texto }}</span>
+                                                            {% empty %}
+                                                                <span class="text-gray-500 italic">Sin respuesta</span>
+                                                            {% endfor %}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            {% endfor %}
-                                        </div>
-                                    {% else %}
-                                        <p class="text-gray-500 italic">No hay respuestas registradas para esta solicitud.</p>
-                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <p class="text-gray-500 italic">No hay respuestas registradas para esta solicitud.</p>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <!-- Empty State -->
-                    <div class="text-center py-12">
-                        <div class="text-gray-400 text-6xl mb-4">
-                            <i class="bi bi-inbox"></i>
+                            {% endfor %}
                         </div>
-                        <h5 class="text-xl font-semibold text-gray-600 mb-2">No hay solicitudes para este curso</h5>
-                        <p class="text-gray-500">Las solicitudes de estudiantes aparecerán aquí cuando se registren.</p>
-                    </div>
-                {% endif %}
+                    {% else %}
+                        <!-- Empty State -->
+                        <div class="text-center py-12">
+                            <div class="text-gray-400 text-6xl mb-4">
+                                <i class="bi bi-inbox"></i>
+                            </div>
+                            <h5 class="text-xl font-semibold text-gray-600 mb-2">No hay solicitudes para este curso</h5>
+                            <p class="text-gray-500">Las solicitudes de estudiantes aparecerán aquí cuando se registren.</p>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
 
@@ -483,7 +491,7 @@
             // Si hay solicitudes, proceder con la exportación
             let exportUrl = '';
             if (type === 'curso' && cursoId) {
-                exportUrl = `/exportar-respuestas-excel-curso/${cursoId}/`;
+                exportUrl = `/registro-respuestas/exportar-excel/${cursoId}/`;
             }
             
             // Obtener los parámetros actuales de la URL
