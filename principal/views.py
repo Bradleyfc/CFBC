@@ -1664,7 +1664,7 @@ class AddNotaView(LoginRequiredMixin, View):
                         # Crear o actualizar nota
                         try:
                             valor_decimal = float(nota_data['valor'])
-                            if 0 <= valor_decimal <= 100:
+                            if 0 <= valor_decimal <= 10:
                                 if nota_data['id']:
                                     # Actualizar nota existente
                                     try:

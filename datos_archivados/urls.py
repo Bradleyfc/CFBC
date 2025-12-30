@@ -36,7 +36,4 @@ urlpatterns = [
     # Búsqueda AJAX
     path('buscar-ajax/', views.buscar_datos_ajax, name='buscar_datos_ajax'),
     path('tablas/<str:tabla>/buscar-ajax/', views.buscar_en_tabla_ajax, name='buscar_en_tabla_ajax'),
-    
-    # Debug
-    path('debug/', views.debug_permisos, name='debug_permisos'),
 ]

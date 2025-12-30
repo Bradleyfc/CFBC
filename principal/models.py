@@ -265,8 +265,8 @@ class NotaIndividual(models.Model):
 
     def clean(self):
         from django.core.exceptions import ValidationError
-        if self.valor is not None and (self.valor < 0 or self.valor > 100):
-            raise ValidationError('El valor de la nota debe estar entre 0 y 100.')
+        if self.valor is not None and (self.valor < 0 or self.valor > 10):
+            raise ValidationError('El valor de la nota debe estar entre 0 y 10.')
 
     def __str__(self):
         return f"Nota {self.valor} para {self.calificacion.student.username} en {self.calificacion.course.name}"

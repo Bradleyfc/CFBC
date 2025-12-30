@@ -302,9 +302,9 @@ NotaIndividualFormSet = inlineformset_factory(
         'valor': forms.NumberInput(attrs={
             'class': 'glass-input-compact',
             'min': 0,
-            'max': 100,
-            'step': 0.01,
-            'placeholder': 'Ingrese la nota (0-100)'
+            'max': 10,
+            'step': 0.1,
+            'placeholder': 'Ingrese la nota (0-10)'
         })
     }
 )

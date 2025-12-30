@@ -92,7 +92,7 @@
                                                    value="{{ field.value|default:'' }}"
                                                    step="0.1"
                                                    min="0"
-                                                   max="100"
+                                                   max="10"
                                                    class="glass-input"
                                                    {% if field.field.required %}required{% endif %}>
                                         {% else %}
@@ -191,11 +191,11 @@
                                                 <input type="number" 
                                                        id="{{ form_nota.valor.id_for_label }}_edit"
                                                        value="{{ form_nota.instance.valor|stringformat:'g' }}"
-                                                       step="0.01" 
+                                                       step="0.1" 
                                                        min="0"
-                                                       max="100"
+                                                       max="10"
                                                        class="glass-input-compact edit-valor-field"
-                                                       placeholder="Ingrese la nota (0-100)">
+                                                       placeholder="Ingrese la nota (0-10)">
                                             </div>
                                             <div class="flex items-end gap-2">
                                                 <button type="button" 
@@ -225,11 +225,11 @@
                                                name="{{ form_nota.valor.name }}" 
                                                id="{{ form_nota.valor.id_for_label }}"
                                                value="{{ form_nota.valor.value|default:'' }}"
-                                               step="0.01" 
+                                               step="0.1" 
                                                min="0"
-                                               max="100"
+                                               max="10"
                                                class="glass-input-compact"
-                                               placeholder="Ingrese la nota (0-100)">
+                                               placeholder="Ingrese la nota (0-10)">
                                     </div>
                                     <div class="flex items-end">
                                         <button type="button" 
@@ -259,11 +259,11 @@
                                     <input type="number" 
                                            name="notas-0-valor" 
                                            id="id_notas-0-valor"
-                                           step="0.01" 
+                                           step="0.1" 
                                            min="0"
-                                           max="100"
+                                           max="10"
                                            class="glass-input-compact"
-                                           placeholder="Ingrese la nota (0-100)">
+                                           placeholder="Ingrese la nota (0-10)">
                                 </div>
                                 <div class="flex items-end">
                                     <button type="button" 
@@ -943,12 +943,12 @@
                                     <label for="id_notas-${newFormIndex}-valor" class="block text-sm font-medium text-gray-700 mb-1">Nota ${newFormIndex + 1}:</label>
                                     <input type="number" 
                                            name="notas-${newFormIndex}-valor" 
-                                           step="0.01" 
+                                           step="0.1" 
                                            min="0"
-                                           max="100"
+                                           max="10"
                                            id="id_notas-${newFormIndex}-valor" 
                                            class="glass-input-compact"
-                                           placeholder="Ingrese la nota (0-100)">
+                                           placeholder="Ingrese la nota (0-10)">
                                 </div>
                                 <div class="flex items-end">
                                     <button type="button" class="glass-button glass-button-danger delete-nota-button" data-form-id="notas-${newFormIndex}">
@@ -1076,8 +1076,8 @@
                     
                     // Validar el valor antes de guardarlo
                     const newValue = parseFloat(editField.value);
-                    if (isNaN(newValue) || newValue < 0 || newValue > 100) {
-                        alert('Por favor ingrese un valor válido entre 0 y 100');
+                    if (isNaN(newValue) || newValue < 0 || newValue > 10) {
+                        alert('Por favor ingrese un valor válido entre 0 y 10');
                         return;
                     }
                     

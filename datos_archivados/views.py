@@ -1696,44 +1696,6 @@ def buscar_en_tabla_ajax(request, tabla):
         })
 
 @login_required
-def debug_permisos(request):
-    """Vista para diagnosticar permisos del usuario"""
-    user = request.user
-    
-    # Información del usuario
-    info = f"""
-    <h2>Información de Debug - Usuario: {user.username}</h2>
-    <p><strong>Autenticado:</strong> {user.is_authenticated}</p>
-    <p><strong>Es superusuario:</strong> {user.is_superuser}</p>
-    <p><strong>Es staff:</strong> {user.is_staff}</p>
-    <p><strong>Grupos del usuario:</strong></p>
-    <ul>
-    """
-    
-    for grupo in user.groups.all():
-        info += f"<li>{grupo.name}</li>"
-    
-    info += "</ul>"
-    
-    # Verificar específicamente el grupo Secretaria
-    es_secretaria_check = user.groups.filter(name='Secretaria').exists()
-    info += f"<p><strong>¿Es Secretaria?:</strong> {es_secretaria_check}</p>"
-    
-    # Información adicional
-    info += f"""
-    <p><strong>ID del usuario:</strong> {user.id}</p>
-    <p><strong>Email:</strong> {user.email}</p>
-    <p><strong>Nombre completo:</strong> {user.get_full_name()}</p>
-    
-    <hr>
-    <h3>URLs de prueba:</h3>
-    <p><a href="/datos-archivados/">Dashboard Datos Archivados</a></p>
-    <p><a href="/datos-archivados/migracion/configurar/">Configurar Migración</a></p>
-    <p><a href="/admin/">Admin Django</a></p>
-    """
-    
-    return HttpResponse(info)
-
 
 def agregar_campos_faltantes_a_modelo(modelo, campos_necesarios, logger):
     """

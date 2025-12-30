@@ -37,10 +37,14 @@
             <!-- Average Score -->
             <div class="glass-card flex-1 flex flex-col min-h-32">
                 <div class="glass-content flex-1 flex flex-col justify-center items-center text-center py-4">
-                    {% if average_score >= 6 %}
-                        <div class="text-4xl font-bold text-green-600 mb-2">{{ average_score|floatformat:2 }}</div>
+                    {% if average_score is not None %}
+                        {% if average_score >= 6 %}
+                            <div class="text-4xl font-bold text-green-600 mb-2">{{ average_score|floatformat:1 }}</div>
+                        {% else %}
+                            <div class="text-4xl font-bold text-red-600 mb-2">{{ average_score|floatformat:1 }}</div>
+                        {% endif %}
                     {% else %}
-                        <div class="text-4xl font-bold text-red-600 mb-2">{{ average_score|floatformat:2 }}</div>
+                        <div class="text-4xl font-bold text-gray-400 mb-2">N/A</div>
                     {% endif %}
                     <div class="text-sm text-gray-600">Promedio General</div>
                 </div>
@@ -49,12 +53,17 @@
             <!-- Status -->
             <div class="glass-card flex-1 flex flex-col min-h-32">
                 <div class="glass-content flex-1 flex flex-col justify-center items-center text-center py-4">
-                    {% if average_score >= 6 %}
-                        <div class="text-4xl font-bold text-green-600 mb-2">✓</div>
-                        <div class="text-sm text-gray-600">Aprobado</div>
+                    {% if average_score is not None %}
+                        {% if average_score >= 6 %}
+                            <div class="text-4xl font-bold text-green-600 mb-2">✓</div>
+                            <div class="text-sm text-gray-600">Aprobado</div>
+                        {% else %}
+                            <div class="text-4xl font-bold text-red-600 mb-2">✗</div>
+                            <div class="text-sm text-gray-600">Reprobado</div>
+                        {% endif %}
                     {% else %}
-                        <div class="text-4xl font-bold text-red-600 mb-2">✗</div>
-                        <div class="text-sm text-gray-600">Reprobado</div>
+                        <div class="text-4xl font-bold text-gray-400 mb-2">?</div>
+                        <div class="text-sm text-gray-600">Sin Calificar</div>
                     {% endif %}
                 </div>
             </div>
@@ -74,27 +83,35 @@
                     <table class="glass-table">
                         <thead>
                             <tr>
-                                <th class="text-center">Nota</th>
-                                <th class="text-center">Fecha</th>
-                                <th class="text-center">Estado</th>
+                                <th class="nota-col">Nota</th>
+                                <th class="fecha-col">Fecha</th>
+                                <th class="estado-col">Estado</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for nota in all_notes %}
                             <tr>
-                                <td class="text-center font-medium">
-                                    {% if nota.valor >= 6 %}
-                                        <span class="glass-badge glass-badge-success">{{ nota.valor|floatformat:2 }}</span>
+                                <td class="nota-col">
+                                    {% if nota.valor is not None %}
+                                        {% if nota.valor >= 6 %}
+                                            <span class="glass-badge glass-badge-success">{{ nota.valor|floatformat:1 }}</span>
+                                        {% else %}
+                                            <span class="glass-badge glass-badge-danger">{{ nota.valor|floatformat:1 }}</span>
+                                        {% endif %}
                                     {% else %}
-                                        <span class="glass-badge glass-badge-danger">{{ nota.valor|floatformat:2 }}</span>
+                                        <span class="glass-badge glass-badge-secondary">N/A</span>
                                     {% endif %}
                                 </td>
-                                <td class="text-center">{{ nota.fecha_creacion|date:"d/m/Y" }}</td>
-                                <td class="text-center">
-                                    {% if nota.valor >= 6 %}
-                                        <span class="glass-badge glass-badge-success">Aprobado</span>
+                                <td class="fecha-col">{{ nota.fecha_creacion|date:"d/m/Y" }}</td>
+                                <td class="estado-col">
+                                    {% if nota.valor is not None %}
+                                        {% if nota.valor >= 6 %}
+                                            <span class="glass-badge glass-badge-success">Aprobado</span>
+                                        {% else %}
+                                            <span class="glass-badge glass-badge-danger">Reprobado</span>
+                                        {% endif %}
                                     {% else %}
-                                        <span class="glass-badge glass-badge-danger">Reprobado</span>
+                                        <span class="glass-badge glass-badge-secondary">Sin Calificar</span>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -173,6 +190,7 @@
         width: 100%;
         border-collapse: separate;
         border-spacing: 0;
+        table-layout: fixed; /* Forzar anchos fijos para mejor alineación */
     }
 
     .glass-table thead tr {
@@ -186,6 +204,72 @@
         font-weight: 600;
         color: #1e40af;
         border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+        vertical-align: middle; /* Alineación vertical */
+    }
+
+    /* Anchos específicos para cada columna */
+    .glass-table th:nth-child(1), .glass-table td:nth-child(1) { /* Nota */
+        width: 30%;
+        text-align: center;
+    }
+    
+    .glass-table th:nth-child(2), .glass-table td:nth-child(2) { /* Fecha */
+        width: 35%;
+        text-align: center;
+    }
+    
+    .glass-table th:nth-child(3), .glass-table td:nth-child(3) { /* Estado */
+        width: 35%;
+        text-align: center;
+    }
+
+    /* Estilos específicos por clase para mayor control */
+    .nota-col {
+        width: 30% !important;
+        text-align: center !important;
+        font-weight: 500;
+    }
+    
+    .fecha-col {
+        width: 35% !important;
+        text-align: center !important;
+    }
+    
+    .estado-col {
+        width: 35% !important;
+        text-align: center !important;
+    }
+
+    /* Responsividad para la tabla de estudiante */
+    @media (max-width: 768px) {
+        .glass-table th,
+        .glass-table td {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8rem;
+        }
+        
+        .nota-col {
+            width: 25% !important;
+        }
+        
+        .fecha-col {
+            width: 35% !important;
+        }
+        
+        .estado-col {
+            width: 40% !important;
+        }
+    }
+
+    /* Contenedor de tabla responsivo */
+    .overflow-x-auto {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch; /* Scroll suave en móviles */
+    }
+
+    /* Asegurar que la tabla mantenga su estructura */
+    .glass-table {
+        min-width: 500px; /* Ancho mínimo para evitar que se comprima demasiado */
     }
 
     .glass-table tbody tr {
@@ -205,6 +289,9 @@
         padding: 0.875rem 1rem;
         color: #374151;
         font-size: 0.875rem;
+        vertical-align: middle; /* Alineación vertical */
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     /* Glass Badge */
