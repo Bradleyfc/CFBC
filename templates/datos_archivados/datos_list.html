@@ -9,7 +9,7 @@
             <div class="card">
                 <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
                     <h3 class="card-title mb-0">
-                        <i class="bi bi-table"></i>
+                        <span class="fa material-icons">table_view</span></i>
                         Datos de: <span class="badge bg-light text-dark">{{ tabla_actual }}</span>
                     </h3>
                 </div>
@@ -31,7 +31,7 @@
                                     <div class="row g-3 align-items-end">
                                         <div class="col-md-12">
                                             <label for="searchInput" class="form-label">
-                                                <i class="bi bi-search"></i> Búsqueda en tiempo real
+                                                <span class="fa material-icons">search</span></i> Búsqueda en tiempo real
                                             </label>
                                             <div class="input-group">
                                                 <input type="text" 
@@ -40,7 +40,7 @@
                                                        placeholder="Buscar por nombre, email, username..."
                                                        autocomplete="off">
                                                 <button class="btn btn-outline-secondary" type="button" id="clearSearch" title="Limpiar búsqueda">
-                                                    <i class="bi bi-x-circle"></i>
+                                                    <span class="fa material-icons">cancel</span></i>
                                                 </button>
                                             </div>
                                         </div>
@@ -54,17 +54,17 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <a href="{% url 'datos_archivados:tablas_list' %}" class="btn btn-primary">
-                                <i class="bi bi-arrow-left"></i> Volver a Tablas
+                                <span class="fa material-icons">arrow_back</span></i> Volver a Tablas
                             </a>
                             {% if tabla_actual %}
                             <a href="{% url 'datos_archivados:exportar_tabla_excel' tabla_actual %}" class="btn btn-success ms-2">
-                                <i class="bi bi-file-earmark-excel"></i> Exportar a Excel
+                                <span class="fa material-icons">table_chart</span></i> Exportar a Excel
                             </a>
                             {% endif %}
                         </div>
                         <div class="col-md-6 text-end">
                             <span class="badge bg-info fs-6" id="resultCount">
-                                <i class="bi bi-database"></i> {{ total_registros }} registros
+                                <span class="fa material-icons">storage</span></i> {{ total_registros }} registros
                             </span>
                         </div>
                     </div>
@@ -94,7 +94,7 @@
                                         <a href="{% url 'datos_archivados:dato_detail' dato.pk %}" 
                                            class="btn btn-sm btn-info" 
                                            title="Ver detalles completos">
-                                            <i class="bi bi-eye"></i> Ver Detalles
+                                            <span class="fa material-icons">visibility</span></i> Ver Detalles
                                         </a>
                                     </td>
                                 </tr>
@@ -104,7 +104,7 @@
                     </div>
                     {% else %}
                     <div class="alert alert-info">
-                        <h5><i class="bi bi-info-circle"></i> No hay datos archivados</h5>
+                        <h5><span class="fa material-icons">info</span></i> No hay datos archivados</h5>
                         <p>Aún no se han migrado datos desde la base de datos MariaDB.</p>
                     </div>
                     {% endif %}
@@ -149,9 +149,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Actualizar contador
         if (resultCount) {
             if (query === '') {
-                resultCount.innerHTML = `<i class="bi bi-database"></i> ${totalRows} registros`;
+                resultCount.innerHTML = `<span class="fa material-icons">storage</span></i> ${totalRows} registros`;
             } else {
-                resultCount.innerHTML = `<i class="bi bi-database"></i> ${visibleCount} de ${totalRows} registros`;
+                resultCount.innerHTML = `<span class="fa material-icons">storage</span></i> ${visibleCount} de ${totalRows} registros`;
             }
         }
     }

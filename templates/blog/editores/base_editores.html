@@ -35,32 +35,32 @@
     <!-- Sidebar de navegación -->
     <div class="col-md-3">
         <div class="sidebar-editores">
-            <h5><i class="fas fa-edit"></i> Panel de Editores</h5>
+            <h5><span class="fas material-icons">help</span></i> Panel de Editores</h5>
             <hr>
             <nav class="nav nav-editores flex-column">
                 <a class="nav-link {% if request.resolver_match.url_name == 'panel_editores' %}active{% endif %}" 
                    href="{% url 'blog:panel_editores' %}">
-                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                    <span class="fas material-icons">home</span></i> Dashboard
                 </a>
                 <a class="nav-link {% if request.resolver_match.url_name == 'mis_noticias' %}active{% endif %}" 
                    href="{% url 'blog:mis_noticias' %}">
-                    <i class="fas fa-newspaper"></i> Mis Noticias
+                    <span class="fas material-icons">help</span></i> Mis Noticias
                 </a>
                 <a class="nav-link {% if request.resolver_match.url_name == 'crear_noticia' %}active{% endif %}" 
                    href="{% url 'blog:crear_noticia' %}">
-                    <i class="fas fa-plus"></i> Nueva Noticia
+                    <span class="fas material-icons">add</span></i> Nueva Noticia
                 </a>
                 <a class="nav-link {% if request.resolver_match.url_name == 'gestionar_categorias' %}active{% endif %}" 
                    href="{% url 'blog:gestionar_categorias' %}">
-                    <i class="fas fa-tags"></i> Categorías
+                    <span class="fas material-icons">help</span></i> Categorías
                 </a>
                 <hr>
                 <a class="nav-link" href="{% url 'blog:lista_noticias' %}">
-                    <i class="fas fa-eye"></i> Ver Noticias Públicas
+                    <span class="fas material-icons">visibility</span></i> Ver Noticias Públicas
                 </a>
                 {% if user.is_staff %}
                 <a class="nav-link" href="{% url 'admin:index' %}">
-                    <i class="fas fa-cog"></i> Admin Django
+                    <span class="fas material-icons">settings</span></i> Admin Django
                 </a>
                 {% endif %}
             </nav>

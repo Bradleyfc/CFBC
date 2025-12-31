@@ -1,0 +1,90 @@
+# ===== DEPENDENCIAS OPCIONALES PARA FUNCIONALIDADES AVANZADAS =====
+
+# ===== ALMACENAMIENTO EN LA NUBE =====
+# Para usar AWS S3, Google Cloud Storage, etc.
+django-storages[boto3]==1.14.4
+boto3==1.35.84
+botocore==1.35.84
+google-cloud-storage==2.18.0
+
+# ===== PROCESAMIENTO AVANZADO DE DOCUMENTOS =====
+# Para generar thumbnails de documentos
+pdf2image==1.17.0
+Wand==0.6.13  # Requiere ImageMagick instalado
+
+# Para extraer texto de documentos
+PyPDF2==3.0.1
+pdfplumber==0.11.4
+python-docx2txt==0.8
+textract==1.6.5
+
+# Para convertir documentos
+pandoc==2.4
+pypandoc==1.14
+
+# ===== COMPRESIÓN Y ARCHIVOS =====
+# Soporte completo para archivos comprimidos
+py7zr==0.22.0
+rarfile==4.2
+patool==2.4.0
+
+# ===== SEGURIDAD AVANZADA =====
+# Para escaneo de virus (requiere ClamAV)
+pyclamd==0.5.0
+
+# Para firmas digitales
+cryptography==46.0.3
+pyOpenSSL==24.3.0
+
+# ===== MONITOREO Y LOGGING =====
+# Para logging avanzado
+structlog==24.4.0
+django-structlog==8.1.0
+
+# Para métricas y monitoreo
+django-prometheus==2.3.1
+prometheus-client==0.21.1
+
+# ===== DESARROLLO Y TESTING =====
+# Para testing
+factory-boy==3.3.1
+faker==33.1.0
+pytest-django==4.9.0
+pytest-cov==6.0.0
+
+# Para debugging
+django-debug-toolbar==4.4.6
+django-extensions==3.2.3
+
+# ===== PERFORMANCE =====
+# Para caching avanzado
+django-redis==5.4.0
+redis==5.2.1
+django-cachalot==2.6.3
+
+# Para compresión de archivos estáticos
+django-compressor==4.5.1
+rcssmin==1.1.2
+rjsmin==1.2.2
+
+# ===== NOTIFICACIONES AVANZADAS =====
+# Para notificaciones push
+django-push-notifications==3.1.0
+
+# Para emails avanzados
+django-anymail==12.0
+premailer==3.10.0
+
+# ===== APIS Y INTEGRACIONES =====
+# Para APIs REST avanzadas
+django-filter==24.3
+django-cors-headers==4.6.0
+drf-spectacular==0.28.0
+
+# Para webhooks
+django-webhook==1.2.0
+
+# ===== INTERNACIONALIZACIÓN =====
+# Para traducciones avanzadas
+django-rosetta==0.10.1
+polib==1.2.0

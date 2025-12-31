@@ -17,7 +17,7 @@
         <div class="glass-card mb-6">
             <div class="glass-header">
                 <h3 class="text-xl font-bold text-gray-800 flex items-center">
-                    <i class="bi bi-funnel mr-2"></i>
+                    <span class="fa material-icons mr-2">filter_list</span></i>
                     Filtros
                 </h3>
             </div>
@@ -60,23 +60,23 @@
                     <!-- Action Buttons -->
                     <div class="flex flex-wrap gap-2 justify-end">
                         <button type="submit" class="glass-button glass-button-primary">
-                            <i class="bi bi-funnel mr-2"></i>
+                            <span class="fa material-icons mr-2">filter_list</span></i>
                             Aplicar Filtros
                         </button>
                         <a href="{% url 'principal:asistencias_list' %}" class="glass-button glass-button-secondary">
-                            <i class="bi bi-arrow-clockwise mr-2"></i>
+                            <span class="fa material-icons mr-2">refresh</span></i>
                             Limpiar Filtros
                         </a>
                         <a href="{% url 'principal:profile' %}" class="glass-button glass-button-secondary">
-                            <i class="bi bi-arrow-left mr-2"></i>
+                            <span class="fa material-icons mr-2">arrow_back</span></i>
                             Volver
                         </a>
                         <a href="#" onclick="checkAsistenciasBeforeExport('pdf')" class="glass-button glass-button-danger">
-                            <i class="bi bi-file-earmark-pdf mr-2"></i>
+                            <span class="fa material-icons mr-2">article</span></i>
                             Exportar PDF
                         </a>
                         <a href="#" onclick="checkAsistenciasBeforeExport('excel')" class="glass-button glass-button-success">
-                            <i class="bi bi-file-earmark-excel mr-2"></i>
+                            <span class="fa material-icons mr-2">table_chart</span></i>
                             Exportar Excel
                         </a>
                     </div>
@@ -90,7 +90,7 @@
         <div class="glass-card mb-6">
             <div class="glass-header">
                 <h3 class="text-xl font-bold text-gray-800 flex items-center">
-                    <i class="bi bi-bar-chart mr-2"></i>
+                    <span class="fa material-icons mr-2">trending_up</span></i>
                     Resumen de Asistencias
                 </h3>
             </div>
@@ -197,7 +197,7 @@
         {% else %}
         <!-- Empty State -->
         <div class="glass-alert glass-alert-info">
-            <i class="bi bi-info-circle mr-2"></i>
+            <span class="fa material-icons mr-2">info</span></i>
             No se encontraron asistencias con los filtros seleccionados.
         </div>
         {% endif %}
@@ -211,7 +211,7 @@
   <div class="error-modal-content">
     <div class="error-modal-header">
       <div class="error-modal-icon">
-        <i class="bi bi-exclamation-circle text-orange-600"></i>
+        <span class="fa material-icons text-orange-600">error</span></i>
       </div>
       <h3 class="error-modal-title">Sin Datos para Exportar</h3>
     </div>
@@ -227,7 +227,7 @@
     
     <div class="error-modal-footer">
       <button type="button" class="error-modal-btn error-modal-btn-ok" onclick="hideErrorModal()">
-        <i class="bi bi-check-circle mr-2"></i>
+        <span class="fa material-icons mr-2">check_circle</span></i>
         Entendido
       </button>
     </div>

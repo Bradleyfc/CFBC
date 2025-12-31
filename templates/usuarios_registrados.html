@@ -17,7 +17,7 @@
         <div class="glass-card mb-6">
             <div class="glass-header">
                 <h3 class="text-xl font-bold text-gray-800 flex items-center">
-                    <i class="bi bi-funnel mr-2"></i>
+                    <span class="icon material-icons mr-2">help</span>
                     Filtros
                 </h3>
             </div>
@@ -33,19 +33,19 @@
                     <!-- Action Buttons -->
                     <div class="flex flex-wrap gap-2 justify-end">
                         <button type="submit" class="glass-button glass-button-primary">
-                            <i class="bi bi-funnel mr-2"></i>
+                            <span class="icon material-icons mr-2">help</span>
                             Aplicar Filtros
                         </button>
                         <a href="{% url 'principal:usuarios_registrados' %}" class="glass-button glass-button-secondary">
-                            <i class="bi bi-arrow-clockwise mr-2"></i>
+                            <span class="icon material-icons mr-2">arrow_forward</span>
                             Limpiar Filtros
                         </a>
                         <a href="{% url 'principal:profile' %}" class="glass-button glass-button-secondary">
-                            <i class="bi bi-arrow-left mr-2"></i>
+                            <span class="icon material-icons mr-2">arrow_back</span>
                             Volver
                         </a>
                         <a href="#" onclick="checkUsuariosBeforeExport('excel')" class="glass-button glass-button-success">
-                            <i class="bi bi-file-earmark-excel mr-2"></i>
+                            <span class="icon material-icons mr-2">description</span>
                             Exportar Excel
                         </a>
                     </div>
@@ -145,11 +145,11 @@
                                 {% if registro.image and registro.image.name %}
                                     <img src="{{ registro.image.url }}" alt="Imagen de perfil" class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                                     <div class="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center border-2 border-white shadow-md" style="display: none;">
-                                        <i class="bi bi-person-fill text-gray-600 text-lg"></i>
+                                        <span class="icon material-icons text-gray-600 text-lg">person</span>
                                     </div>
                                 {% else %}
                                     <div class="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center border-2 border-white shadow-md">
-                                        <i class="bi bi-person-fill text-gray-600 text-lg"></i>
+                                        <span class="icon material-icons text-gray-600 text-lg">person</span>
                                     </div>
                                 {% endif %}
                             </td>
@@ -161,7 +161,7 @@
                             <td class="resizable-td" data-column="carnet-doc">
                                 {% if registro.foto_carnet %}
                                     <a href="{{ registro.foto_carnet.url }}" class="glass-badge glass-badge-success text-xs" download>
-                                        <i class="bi bi-download mr-1"></i>Descargar
+                                        <span class="icon material-icons mr-1">cloud_download</span>Descargar
                                     </a>
                                 {% else %}
                                     <span class="glass-badge glass-badge-secondary text-xs">No disponible</span>
@@ -185,7 +185,7 @@
                             <td class="resizable-td" data-column="titulo-doc">
                                 {% if registro.foto_titulo %}
                                     <a href="{{ registro.foto_titulo.url }}" class="glass-badge glass-badge-success text-xs" download>
-                                        <i class="bi bi-download mr-1"></i>Descargar
+                                        <span class="icon material-icons mr-1">cloud_download</span>Descargar
                                     </a>
                                 {% else %}
                                     <span class="glass-badge glass-badge-secondary text-xs">No disponible</span>
@@ -242,7 +242,7 @@
         {% else %}
         <!-- Empty State -->
         <div class="glass-alert glass-alert-info">
-            <i class="bi bi-info-circle mr-2"></i>
+            <span class="icon material-icons mr-2">info</span>
             No hay usuarios registrados que coincidan con los filtros.
         </div>
         {% endif %}
@@ -256,7 +256,7 @@
   <div class="error-modal-content">
     <div class="error-modal-header">
       <div class="error-modal-icon">
-        <i class="bi bi-exclamation-circle text-orange-600"></i>
+        <span class="fa material-icons text-orange-600">error</span></i>
       </div>
       <h3 class="error-modal-title">Sin Datos para Exportar</h3>
     </div>
@@ -272,7 +272,7 @@
     
     <div class="error-modal-footer">
       <button type="button" class="error-modal-btn error-modal-btn-ok" onclick="hideErrorModal()">
-        <i class="bi bi-check-circle mr-2"></i>
+        <span class="fa material-icons mr-2">check_circle</span></i>
         Entendido
       </button>
     </div>

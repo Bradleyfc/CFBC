@@ -6,28 +6,28 @@
         <div class="flex flex-col space-y-3">
             <a href="{% url 'admin:index' %}" class="glass-link glass-link-warning">
                 <div class="glass-link-icon glass-icon-warning">
-                    <i class="bi bi-gear"></i>
+                    <span class="fa material-icons">settings</span></i>
                 </div>
                 <span class="glass-link-text">Administrador de Django</span>
             </a>
 
             <a href="{% url 'datos_archivados:dashboard' %}" class="glass-link glass-link-danger">
                 <div class="glass-link-icon glass-icon-danger">
-                    <i class="bi bi-hdd-stack"></i>
+                    <span class="fa material-icons">dns</span></i>
                 </div>
                 <span class="glass-link-text">Dashboard Datos Archivados</span>
             </a>
 
             <a href="{% url 'datos_archivados:configurar_migracion' %}" class="glass-link glass-link-warning">
                 <div class="glass-link-icon glass-icon-warning">
-                    <i class="bi bi-gear"></i>
+                    <span class="fa material-icons">settings</span></i>
                 </div>
                 <span class="glass-link-text">Configurar Migración</span>
             </a>
 
             <a href="{% url 'datos_archivados:tablas_list' %}" class="glass-link glass-link-outline">
                 <div class="glass-link-icon glass-icon-outline">
-                    <i class="bi bi-search"></i>
+                    <span class="fa material-icons">search</span></i>
                 </div>
                 <span class="glass-link-text">Ver Datos Archivados</span>
             </a>

@@ -1,0 +1,240 @@
+/* ===== SISTEMA DE ICONOS GOOGLE MATERIAL ICONS OFFLINE ===== */
+/* Sistema completo con Google Material Icons para funcionamiento 100% offline */
+
+.material-icons {
+    font-family: 'Material Icons';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+    vertical-align: middle;
+}
+
+/* Tamaños Material Icons */
+.material-icons.md-18 { font-size: 18px; }
+.material-icons.md-24 { font-size: 24px; }
+.material-icons.md-36 { font-size: 36px; }
+.material-icons.md-48 { font-size: 48px; }
+
+/* Clases de compatibilidad para tamaños existentes */
+.icon-xs { font-size: 16px; }
+.icon-sm { font-size: 18px; }
+.icon-lg { font-size: 20px; }
+.icon-xl { font-size: 24px; }
+.icon-2xl { font-size: 32px; }
+.icon-3xl { font-size: 48px; }
+.icon-4xl { font-size: 64px; }
+.icon-5xl { font-size: 80px; }
+.icon-6xl { font-size: 96px; }
+
+/* ===== CLASES DE UTILIDAD ===== */
+.material-icons.inline {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.material-icons.block {
+    display: block;
+    margin: 0 auto;
+}
+
+/* ===== ANIMACIONES PARA ICONOS ===== */
+.material-icons.spin {
+    animation: material-spin 2s infinite linear;
+}
+
+@keyframes material-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.material-icons.pulse {
+    animation: material-pulse 2s infinite;
+}
+
+@keyframes material-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* ===== COLORES CONTEXTUALES ===== */
+.text-primary { color: #3b82f6; }
+.text-success { color: #10b981; }
+.text-danger { color: #ef4444; }
+.text-warning { color: #f59e0b; }
+.text-info { color: #06b6d4; }
+.text-muted { color: #6b7280; }
+
+/* ===== CLASES DE COMPATIBILIDAD PARA ICONOS EXISTENTES ===== */
+/* Estas clases permiten que los iconos existentes funcionen sin cambiar el HTML */
+.fa, .icon, .bi {
+    font-family: 'Material Icons';
+    font-weight: normal;
+    font-style: normal;
+    font-size: inherit;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+    vertical-align: middle;
+}
+
+/* Mapeo de iconos Font Awesome a Material Icons */
+.fa-folder:before, .icon-folder:before { content: 'folder'; }
+.fa-folder-open:before, .icon-folder-open:before { content: 'folder_open'; }
+.fa-folder-plus:before, .icon-folder-plus:before { content: 'create_new_folder'; }
+.fa-file:before, .icon-file:before { content: 'description'; }
+.fa-file-text:before, .icon-file-text:before { content: 'article'; }
+.fa-file-excel:before, .icon-file-excel:before { content: 'table_chart'; }
+.fa-users:before, .icon-users:before { content: 'group'; }
+.fa-user:before, .icon-user:before { content: 'person'; }
+.fa-chart-line:before, .icon-chart-line:before { content: 'trending_up'; }
+.fa-upload:before, .icon-upload:before { content: 'cloud_upload'; }
+.fa-download:before, .icon-download:before { content: 'cloud_download'; }
+.fa-eye:before, .icon-eye:before { content: 'visibility'; }
+.fa-trash:before, .icon-trash:before { content: 'delete'; }
+.fa-times:before, .icon-times:before, .fa-times-circle:before, .icon-times-circle:before { content: 'close'; }
+.fa-exclamation-triangle:before, .icon-exclamation-triangle:before { content: 'warning'; }
+.fa-exclamation-circle:before, .icon-exclamation-circle:before { content: 'error'; }
+.fa-info-circle:before, .icon-info-circle:before { content: 'info'; }
+.fa-check-circle:before, .icon-check-circle:before { content: 'check_circle'; }
+.fa-plus-circle:before, .icon-plus-circle:before { content: 'add_circle'; }
+.fa-clipboard:before, .icon-clipboard:before { content: 'assignment'; }
+.fa-search:before, .icon-search:before { content: 'search'; }
+.fa-filter:before, .icon-filter:before { content: 'filter_list'; }
+.fa-arrow-left:before, .icon-arrow-left:before { content: 'arrow_back'; }
+.fa-sync:before, .icon-sync:before { content: 'refresh'; }
+.fa-home:before, .icon-home:before { content: 'home'; }
+.fa-calendar:before, .icon-calendar:before { content: 'event'; }
+.fa-clock:before, .icon-clock:before { content: 'schedule'; }
+.fa-map-marker:before, .icon-map-marker:before { content: 'location_on'; }
+.fa-phone:before, .icon-phone:before { content: 'phone'; }
+.fa-envelope:before, .icon-envelope:before { content: 'email'; }
+.fa-facebook:before, .icon-facebook:before { content: 'facebook'; }
+.fa-twitter:before, .icon-twitter:before { content: 'twitter'; }
+.fa-instagram:before, .icon-instagram:before { content: 'instagram'; }
+.fa-linkedin:before, .icon-linkedin:before { content: 'linkedin'; }
+.fa-sign-in:before, .icon-sign-in:before { content: 'login'; }
+.fa-th:before, .icon-th:before { content: 'grid_view'; }
+.fa-inbox:before, .icon-inbox:before { content: 'inbox'; }
+.fa-paper-plane:before, .icon-paper-plane:before { content: 'send'; }
+.fa-shield:before, .icon-shield:before { content: 'security'; }
+.fa-key:before, .icon-key:before { content: 'vpn_key'; }
+.fa-server:before, .icon-server:before { content: 'dns'; }
+.fa-arrow-right:before, .icon-arrow-right:before { content: 'arrow_forward'; }
+.fa-sign-out:before, .icon-sign-out:before { content: 'logout'; }
+.fa-table:before, .icon-table:before { content: 'table_view'; }
+.fa-database:before, .icon-database:before { content: 'storage'; }
+.fa-arrow-up:before, .icon-arrow-up:before { content: 'keyboard_arrow_up'; }
+.fa-arrow-down:before, .icon-arrow-down:before { content: 'keyboard_arrow_down'; }
+.fa-plus:before, .icon-plus:before { content: 'add'; }
+.fa-minus:before, .icon-minus:before { content: 'remove'; }
+.fa-ellipsis-h:before, .icon-ellipsis-h:before { content: 'more_horiz'; }
+.fa-eye-slash:before, .icon-eye-slash:before { content: 'visibility_off'; }
+.fa-book:before, .icon-book:before { content: 'book'; }
+.fa-play-circle:before, .icon-play-circle:before { content: 'play_circle'; }
+.fa-play:before, .icon-play:before { content: 'play_arrow'; }
+.fa-circle:before, .icon-circle:before { content: 'circle'; }
+.fa-tachometer:before, .icon-tachometer:before { content: 'speed'; }
+.fa-archive:before, .icon-archive:before { content: 'archive'; }
+.fa-code:before, .icon-code:before { content: 'code'; }
+.fa-bolt:before, .icon-bolt:before { content: 'flash_on'; }
+.fa-arrows-v:before, .icon-arrows-v:before { content: 'swap_vert'; }
+.fa-check-square:before, .icon-check-square:before { content: 'check_box'; }
+.fa-sitemap:before, .icon-sitemap:before { content: 'account_tree'; }
+.fa-check:before, .icon-check:before { content: 'check'; }
+
+/* Mapeo de iconos Bootstrap a Material Icons */
+.bi-journal-text:before { content: 'article'; }
+.bi-person-badge:before { content: 'badge'; }
+.bi-clipboard-plus:before { content: 'assignment_add'; }
+.bi-list-ol:before { content: 'format_list_numbered'; }
+.bi-save:before { content: 'save'; }
+.bi-x:before { content: 'close'; }
+.bi-arrow-counterclockwise:before { content: 'undo'; }
+.bi-bar-chart:before { content: 'bar_chart'; }
+.bi-file-earmark-pdf:before { content: 'picture_as_pdf'; }
+.bi-clock-history:before { content: 'history'; }
+.bi-file-earmark-x:before { content: 'description'; }
+.bi-chevron-left:before { content: 'chevron_left'; }
+.bi-grid-3x3-gap:before { content: 'grid_view'; }
+.bi-list:before { content: 'list'; }
+.bi-check-circle-fill:before { content: 'check_circle'; }
+.bi-geo-alt-fill:before { content: 'location_on'; }
+.bi-telephone-fill:before { content: 'phone'; }
+.bi-envelope-fill:before { content: 'email'; }
+.bi-box-arrow-in-right:before { content: 'login'; }
+.bi-person-plus:before { content: 'person_add'; }
+.bi-house:before { content: 'home'; }
+.bi-question-circle:before { content: 'help'; }
+.bi-reply:before { content: 'reply'; }
+.bi-inbox:before { content: 'inbox'; }
+.bi-exclamation-triangle-fill:before { content: 'warning'; }
+.bi-send:before { content: 'send'; }
+.bi-shield-lock:before { content: 'lock'; }
+.bi-shield-check:before { content: 'verified_user'; }
+.bi-key:before { content: 'vpn_key'; }
+.bi-hdd-stack:before { content: 'storage'; }
+.bi-chevron-right:before { content: 'chevron_right'; }
+.bi-clipboard-check:before { content: 'assignment_turned_in'; }
+.bi-box-arrow-right:before { content: 'logout'; }
+.bi-table:before { content: 'table_view'; }
+.bi-database:before { content: 'storage'; }
+.bi-list-ul:before { content: 'list'; }
+.bi-calendar-event:before { content: 'event'; }
+.bi-play-circle:before { content: 'play_circle'; }
+.bi-file-earmark-plus:before { content: 'note_add'; }
+.bi-dot:before { content: 'fiber_manual_record'; }
+.bi-play-fill:before { content: 'play_arrow'; }
+.bi-gear-fill:before { content: 'settings'; }
+.bi-speedometer2:before { content: 'speed'; }
+.bi-archive:before { content: 'archive'; }
+.bi-activity:before { content: 'trending_up'; }
+.bi-code-square:before { content: 'code'; }
+.bi-lightning:before { content: 'flash_on'; }
+.bi-lightning-fill:before { content: 'flash_on'; }
+.bi-house-door:before { content: 'home'; }
+.bi-arrow-down-up:before { content: 'swap_vert'; }
+.bi-check-square:before { content: 'check_box'; }
+.bi-diagram-3:before { content: 'account_tree'; }
+.bi-calendar-check:before { content: 'event_available'; }
+.bi-book:before { content: 'book'; }
+.bi-folder2-open:before { content: 'folder_open'; }
+.bi-people:before { content: 'group'; }
+.bi-person:before { content: 'person'; }
+.bi-person-fill:before { content: 'person'; }
+.bi-funnel-fill:before { content: 'filter_list'; }
+.bi-arrow-up-circle:before { content: 'keyboard_arrow_up'; }
+.bi-arrow-down-circle:before { content: 'keyboard_arrow_down'; }
+.bi-three-dots:before { content: 'more_horiz'; }
+.bi-pencil-square:before { content: 'edit'; }
+.bi-trash3:before { content: 'delete'; }
+.bi-check2:before { content: 'check'; }
+.bi-x-circle-fill:before { content: 'cancel'; }
+.bi-info-circle-fill:before { content: 'info'; }
+.bi-exclamation-circle-fill:before { content: 'error'; }
+.bi-gear:before { content: 'settings'; }
+.bi-cog:before { content: 'settings'; }
+.bi-star:before { content: 'star'; }
+.bi-heart:before { content: 'favorite'; }
+.bi-camera:before { content: 'camera_alt'; }
+.bi-academic-cap:before { content: 'school'; }
+.bi-identification:before { content: 'badge'; }
+.bi-pencil:before { content: 'edit'; }
+.bi-edit:before { content: 'edit'; }

@@ -16,7 +16,7 @@
         <div class="glass-card mb-6">
             <div class="glass-header">
                 <h3 class="text-xl font-bold text-gray-800 flex items-center">
-                    <i class="bi bi-search mr-2"></i>
+                    <span class="fa material-icons mr-2">search</span></i>
                     Buscar en Datos Archivados
                 </h3>
             </div>
@@ -34,7 +34,7 @@
                                        placeholder="Ingrese término de búsqueda..."
                                        autocomplete="off">
                                 <button class="glass-button glass-button-secondary rounded-l-none border-l-0" type="button" id="clearSearch" title="Limpiar búsqueda">
-                                    <i class="bi bi-x-circle"></i>
+                                    <span class="fa material-icons">cancel</span></i>
                                 </button>
                             </div>
                         </div>
@@ -57,15 +57,15 @@
                     <!-- Action Buttons -->
                     <div class="flex flex-wrap gap-2 justify-end">
                         <button type="submit" class="glass-button glass-button-primary">
-                            <i class="bi bi-search mr-2"></i>
+                            <span class="fa material-icons mr-2">search</span></i>
                             Buscar
                         </button>
                         <button type="button" class="glass-button glass-button-success" id="btnBusquedaRapida">
-                            <i class="bi bi-lightning mr-2"></i>
+                            <span class="bi material-icons mr-2">flash_on</span></i>
                             Búsqueda Rápida
                         </button>
                         <a href="{% url 'datos_archivados:dashboard' %}" class="glass-button glass-button-secondary group hover:scale-105 transition-all duration-200">
-                            <i class="bi bi-house-door mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                            <span class="bi material-icons mr-2 group-hover:scale-110 transition-transform duration-200">home</span></i>
                             <span class="font-medium">Ir al Dashboard</span>
                         </a>
                     </div>
@@ -78,11 +78,11 @@
             <div class="glass-header">
                 <div class="flex justify-between items-center">
                     <h3 class="text-xl font-bold text-gray-800 flex items-center">
-                        <i class="bi bi-lightning-fill mr-2"></i>
+                        <span class="bi material-icons mr-2">flash_on</span></i>
                         Resultados de Búsqueda Rápida
                     </h3>
                     <button type="button" class="glass-button glass-button-secondary" id="closeQuickSearch">
-                        <i class="bi bi-x"></i>
+                        <span class="fa material-icons">close</span></i>
                     </button>
                 </div>
             </div>
@@ -97,33 +97,33 @@
                 <div class="flex flex-wrap gap-3 justify-between items-center">
                     <div class="flex flex-wrap gap-2">
                         <button type="button" class="glass-button glass-button-success" id="btnCombinar">
-                            <i class="bi bi-arrow-down-up mr-2"></i>
+                            <span class="bi material-icons mr-2">swap_vert</span></i>
                             Combinar Datos
                         </button>
                         <button type="button" class="glass-button glass-button-info" id="btnModoSeleccion">
-                            <i class="bi bi-check-square mr-2"></i>
+                            <span class="bi material-icons mr-2">check_box</span></i>
                             Seleccionar Tablas
                         </button>
                         <button type="button" class="glass-button glass-button-danger opacity-50 hidden" id="btnEliminar">
-                            <i class="bi bi-trash mr-2"></i>
+                            <span class="fa material-icons mr-2">delete</span></i>
                             Eliminar Seleccionadas (<span id="contadorSeleccionadas">0</span>)
                         </button>
                     </div>
                     <div class="flex items-center gap-2">
                         {% if is_filtered %}
                             <span class="glass-badge glass-badge-warning">
-                                <i class="bi bi-funnel mr-1"></i>
+                                <span class="fa material-icons mr-1">filter_list</span></i>
                                 Filtrado: {{ total_tablas }} tablas | {{ total_registros_filtrados }} registros
                             </span>
                             <a href="{% url 'datos_archivados:tablas_list' %}" class="glass-button glass-button-secondary">
-                                <i class="bi bi-x-circle mr-1"></i>
+                                <span class="fa material-icons mr-1">cancel</span></i>
                                 Limpiar filtros
                             </a>
                         {% else %}
                             <span class="glass-badge glass-badge-info">
-                                <i class="bi bi-table mr-1"></i>
+                                <span class="fa material-icons mr-1">table_view</span></i>
                                 {{ total_tablas }} tablas | 
-                                <i class="bi bi-database ml-2 mr-1"></i>
+                                <span class="fa material-icons ml-2 mr-1">storage</span></i>
                                 {{ total_registros }} registros totales
                             </span>
                         {% endif %}
@@ -135,7 +135,7 @@
         <!-- Filter Info -->
         {% if is_filtered %}
         <div class="glass-alert glass-alert-info mb-6">
-            <i class="bi bi-info-circle mr-2"></i>
+            <span class="fa material-icons mr-2">info</span></i>
             <strong>Filtros activos:</strong> 
             Búsqueda "{{ search_query }}" en 
             {% if search_type == 'tabla' %}nombres de tablas
@@ -148,7 +148,7 @@
         {% if tablas_stats %}
         <!-- Success Message -->
         <div class="glass-alert glass-alert-success mb-6">
-            <i class="bi bi-check-circle mr-2"></i>
+            <span class="fa material-icons mr-2">check_circle</span></i>
             Se encontraron <strong>{{ total_tablas }}</strong> tablas con datos archivados
         </div>
         
@@ -159,7 +159,7 @@
                 <div class="glass-content">
                     <div class="flex justify-between items-start mb-4">
                         <h4 class="text-lg font-bold text-gray-800 flex items-center flex-1">
-                            <i class="bi bi-table text-blue-600 mr-2"></i>
+                            <span class="fa material-icons text-blue-600 mr-2">table_view</span></i>
                             {{ tabla.tabla_origen }}
                         </h4>
                         <div class="checkbox-seleccion hidden">
@@ -172,12 +172,12 @@
                     
                     <div class="space-y-3 mb-4">
                         <div class="flex items-center">
-                            <i class="bi bi-database text-blue-500 mr-2"></i>
+                            <span class="fa material-icons text-blue-500 mr-2">storage</span></i>
                             <span class="text-sm text-gray-600 mr-2">Registros:</span>
                             <span class="glass-badge glass-badge-info">{{ tabla.total_registros }}</span>
                         </div>
                         <div class="flex items-center">
-                            <i class="bi bi-clock text-gray-500 mr-2"></i>
+                            <span class="fa material-icons text-gray-500 mr-2">schedule</span></i>
                             <span class="text-sm text-gray-600">Última migración:</span>
                         </div>
                         <div class="text-xs text-gray-500 ml-6">
@@ -187,7 +187,7 @@
                     
                     <a href="{% url 'datos_archivados:datos_list' tabla.tabla_origen %}" 
                        class="glass-button glass-button-success w-full btn-ver-registros">
-                        <i class="bi bi-eye mr-2"></i>
+                        <span class="fa material-icons mr-2">visibility</span></i>
                         Ver Registros
                     </a>
                 </div>
@@ -198,18 +198,18 @@
         <!-- Empty State -->
         <div class="glass-alert glass-alert-info">
             <div class="text-center">
-                <i class="bi bi-info-circle text-4xl text-blue-500 mb-4"></i>
+                <span class="fa material-icons text-4xl text-blue-500 mb-4">info</span></i>
                 <h4 class="text-xl font-bold text-gray-800 mb-2">No hay datos archivados</h4>
                 <p class="text-gray-600 mb-4">Aún no se han migrado datos desde la base de datos MariaDB.</p>
                 <div class="text-left max-w-md mx-auto">
                     <p class="font-semibold text-gray-700 mb-2">Para migrar datos:</p>
                     <ol class="list-decimal list-inside space-y-1 text-sm text-gray-600">
                         <li>Vaya al <a href="{% url 'datos_archivados:dashboard' %}" class="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105">
-                            <i class="bi bi-house-door mr-2"></i>
+                            <span class="bi material-icons mr-2">home</span></i>
                             Dashboard
                         </a></li>
                         <li>Haga clic en <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-200 text-black text-xs font-bold">
-                            <i class="bi bi-gear mr-2"></i>
+                            <span class="fa material-icons mr-2">settings</span></i>
                             Configurar Migración
                         </span></li>
                         <li>Ingrese los datos de conexión de su base de datos MariaDB</li>
@@ -227,17 +227,17 @@
   <div class="modal-content">
     <div class="modal-header-danger">
       <h3 class="modal-title">
-        <i class="bi bi-exclamation-circle mr-2"></i>
+        <span class="fa material-icons mr-2">error</span></i>
         Sin Datos para Combinar
       </h3>
       <button type="button" class="modal-close-btn" id="closeErrorModalCombinar">
-        <i class="bi bi-x"></i>
+        <span class="fa material-icons">close</span></i>
       </button>
     </div>
     
     <div class="modal-body">
       <div class="glass-alert glass-alert-warning mb-4">
-        <i class="bi bi-info-circle-fill mr-2"></i>
+        <span class="fa material-icons mr-2">info</span></i>
         <div>
           <p class="font-semibold mb-2">No se encontraron datos archivados para combinar.</p>
           <p class="text-sm">Para poder combinar datos, primero debe migrar información desde la base de datos MariaDB.</p>
@@ -248,11 +248,11 @@
         <p class="font-semibold text-gray-700 mb-2">Para migrar datos:</p>
         <ol class="list-decimal list-inside space-y-1 text-sm text-gray-600">
           <li>Vaya al <a href="{% url 'datos_archivados:dashboard' %}" class="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105">
-            <i class="bi bi-house-door mr-2"></i>
+            <span class="bi material-icons mr-2">home</span></i>
             Dashboard
           </a></li>
           <li>Haga clic en <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-200 text-black text-xs font-bold">
-            <i class="bi bi-gear mr-2"></i>
+            <span class="fa material-icons mr-2">settings</span></i>
             Configurar Migración
           </span></li>
           <li>Ingrese los datos de conexión de su base de datos MariaDB</li>
@@ -264,11 +264,11 @@
     
     <div class="modal-footer">
       <a href="{% url 'datos_archivados:dashboard' %}" class="glass-button glass-button-primary group hover:scale-105 transition-all duration-200">
-        <i class="bi bi-house-door mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+        <span class="bi material-icons mr-2 group-hover:scale-110 transition-transform duration-200">home</span></i>
         <span class="font-medium">Ir al Dashboard</span>
       </a>
       <button type="button" class="glass-button glass-button-success" onclick="hideErrorModalCombinar()">
-        <i class="bi bi-check-circle mr-2"></i>
+        <span class="fa material-icons mr-2">check_circle</span></i>
         Entendido
       </button>
     </div>
@@ -280,16 +280,16 @@
     <div class="modal-content-large">
         <div class="modal-header-success">
             <h3 class="modal-title">
-                <i class="bi bi-arrow-down-up mr-2"></i>
+                <span class="bi material-icons mr-2">swap_vert</span></i>
                 Combinar Datos Archivados
             </h3>
             <button type="button" class="modal-close-btn" id="closeModalCombinacion">
-                <i class="bi bi-x"></i>
+                <span class="fa material-icons">close</span></i>
             </button>
         </div>
         <div class="modal-body">
             <div class="glass-alert glass-alert-info mb-4">
-                <i class="bi bi-info-circle-fill mr-2"></i>
+                <span class="fa material-icons mr-2">info</span></i>
                 <div>
                     <strong>¿Qué hace esta función?</strong>
                     <p class="mt-2 mb-2">Esta función combinará <strong>TODA</strong> la información de las tablas archivadas con las tablas activas de su base de datos:</p>
@@ -303,7 +303,7 @@
             
             <div class="mb-4">
                 <h4 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                    <i class="bi bi-diagram-3 mr-2"></i>
+                    <span class="bi material-icons mr-2">account_tree</span></i>
                     Proceso de Combinación:
                 </h4>
                 <div class="space-y-3">
@@ -353,7 +353,7 @@
             </div>
             
             <div class="glass-alert glass-alert-warning mb-4">
-                <i class="bi bi-exclamation-triangle-fill mr-2"></i>
+                <span class="fa material-icons mr-2">warning</span></i>
                 <div>
                     <strong>Importante:</strong>
                     <ul class="mt-2 mb-0 list-disc list-inside space-y-1 text-sm">
@@ -381,11 +381,11 @@
         </div>
         <div class="modal-footer">
             <button type="button" class="glass-button glass-button-secondary" id="btnCancelarCombinacion">
-                <i class="bi bi-x-circle mr-2"></i>
+                <span class="fa material-icons mr-2">cancel</span></i>
                 Cancelar
             </button>
             <button type="button" class="glass-button glass-button-success" id="btnConfirmarCombinacion">
-                <i class="bi bi-arrow-down-up mr-2"></i>
+                <span class="bi material-icons mr-2">swap_vert</span></i>
                 Sí, Combinar Datos
             </button>
         </div>
@@ -397,16 +397,16 @@
     <div class="modal-content">
         <div class="modal-header-danger">
             <h3 class="modal-title">
-                <i class="bi bi-exclamation-circle mr-2"></i>
+                <span class="fa material-icons mr-2">error</span></i>
                 Sin Datos Disponibles
             </h3>
             <button type="button" class="modal-close-btn" id="closeErrorModal">
-                <i class="bi bi-x"></i>
+                <span class="fa material-icons">close</span></i>
             </button>
         </div>
         <div class="modal-body">
             <div class="glass-alert glass-alert-warning mb-4">
-                <i class="bi bi-info-circle-fill mr-2"></i>
+                <span class="fa material-icons mr-2">info</span></i>
                 <div id="errorMessage">
                     <!-- Mensaje dinámico -->
                 </div>
@@ -414,11 +414,11 @@
         </div>
         <div class="modal-footer">
             <a href="{% url 'datos_archivados:dashboard' %}" class="glass-button glass-button-primary group hover:scale-105 transition-all duration-200">
-                <i class="bi bi-house-door mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                <span class="bi material-icons mr-2 group-hover:scale-110 transition-transform duration-200">home</span></i>
                 <span class="font-medium">Ir al Dashboard</span>
             </a>
             <button type="button" class="glass-button glass-button-secondary" id="btnCerrarError">
-                <i class="bi bi-check-circle mr-2"></i>
+                <span class="fa material-icons mr-2">check_circle</span></i>
                 Entendido
             </button>
         </div>
@@ -428,16 +428,16 @@
     <div class="modal-content">
         <div class="modal-header-danger">
             <h3 class="modal-title">
-                <i class="bi bi-exclamation-triangle mr-2"></i>
+                <span class="fa material-icons mr-2">warning</span></i>
                 Confirmar Eliminación
             </h3>
             <button type="button" class="modal-close-btn" id="closeModalEliminacion">
-                <i class="bi bi-x"></i>
+                <span class="fa material-icons">close</span></i>
             </button>
         </div>
         <div class="modal-body">
             <div class="glass-alert glass-alert-warning mb-4">
-                <i class="bi bi-exclamation-triangle-fill mr-2"></i>
+                <span class="fa material-icons mr-2">warning</span></i>
                 <strong>¡ADVERTENCIA!</strong> Esta acción no se puede deshacer.
             </div>
             <p class="mb-3">Está a punto de eliminar <strong id="cantidadTablas">0</strong> tabla(s) y todos sus registros.</p>
@@ -446,17 +446,17 @@
                 <ul id="listaTablas" class="mt-2 space-y-1"></ul>
             </div>
             <p class="text-red-600 mb-0 flex items-center">
-                <i class="bi bi-info-circle mr-2"></i>
+                <span class="fa material-icons mr-2">info</span></i>
                 Se eliminarán permanentemente todos los datos de estas tablas.
             </p>
         </div>
         <div class="modal-footer">
             <button type="button" class="glass-button glass-button-secondary" id="btnCancelarEliminacion">
-                <i class="bi bi-x-circle mr-2"></i>
+                <span class="fa material-icons mr-2">cancel</span></i>
                 Cancelar
             </button>
             <button type="button" class="glass-button glass-button-danger" id="btnConfirmarEliminacion">
-                <i class="bi bi-trash mr-2"></i>
+                <span class="fa material-icons mr-2">delete</span></i>
                 Sí, Eliminar
             </button>
         </div>
@@ -1043,7 +1043,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.error) {
                     quickSearchContent.innerHTML = `
                         <div class="glass-alert glass-alert-warning">
-                            <i class="bi bi-exclamation-triangle mr-2"></i>
+                            <span class="fa material-icons mr-2">warning</span></i>
                             ${data.error}
                         </div>
                     `;
@@ -1053,7 +1053,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.results.length === 0) {
                     quickSearchContent.innerHTML = `
                         <div class="glass-alert glass-alert-warning">
-                            <i class="bi bi-search mr-2"></i>
+                            <span class="fa material-icons mr-2">search</span></i>
                             No se encontraron resultados para "${query}"
                         </div>
                     `;
@@ -1064,7 +1064,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 let html = `
                     <div class="mb-4">
                         <div class="glass-badge glass-badge-success">
-                            <i class="bi bi-search mr-1"></i>
+                            <span class="fa material-icons mr-1">search</span></i>
                             Encontrados ${data.total} registros en ${data.results.length} tabla(s)
                         </div>
                     </div>
@@ -1076,7 +1076,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="p-4">
                                 <div class="flex justify-between items-center mb-3">
                                     <h4 class="text-lg font-semibold text-gray-800 flex items-center">
-                                        <i class="bi bi-table text-green-600 mr-2"></i>
+                                        <span class="fa material-icons text-green-600 mr-2">table_view</span></i>
                                         ${tabla.tabla}
                                     </h4>
                                     <span class="glass-badge glass-badge-success">${tabla.total_registros} registros</span>
@@ -1107,7 +1107,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="text-right">
                                     <a href="/datos-archivados/tablas/${tabla.tabla}/" 
                                        class="glass-button glass-button-success">
-                                        <i class="bi bi-eye mr-2"></i>
+                                        <span class="fa material-icons mr-2">visibility</span></i>
                                         Ver todos los registros
                                     </a>
                                 </div>
@@ -1121,7 +1121,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 quickSearchContent.innerHTML = `
                     <div class="glass-alert glass-alert-warning">
-                        <i class="bi bi-exclamation-triangle mr-2"></i>
+                        <span class="fa material-icons mr-2">warning</span></i>
                         Error en la búsqueda: ${error.message}
                     </div>
                 `;
@@ -1192,7 +1192,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (modoSeleccion) {
             // Activar modo selección
-            btnModoSeleccion.innerHTML = '<i class="bi bi-x-circle mr-2"></i>Cancelar Selección';
+            btnModoSeleccion.innerHTML = '<span class="fa material-icons mr-2">cancel</span></i>Cancelar Selección';
             btnModoSeleccion.classList.remove('glass-button-info');
             btnModoSeleccion.classList.add('glass-button-secondary');
             btnEliminar.classList.remove('hidden');
@@ -1214,7 +1214,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         } else {
             // Desactivar modo selección
-            btnModoSeleccion.innerHTML = '<i class="bi bi-check-square mr-2"></i>Seleccionar Tablas';
+            btnModoSeleccion.innerHTML = '<span class="bi material-icons mr-2">check_box</span></i>Seleccionar Tablas';
             btnModoSeleccion.classList.remove('glass-button-secondary');
             btnModoSeleccion.classList.add('glass-button-info');
             btnEliminar.classList.add('hidden');
@@ -1303,7 +1303,7 @@ document.addEventListener('DOMContentLoaded', function() {
         listaTablas.innerHTML = '';
         seleccionadas.forEach(tabla => {
             const li = document.createElement('li');
-            li.innerHTML = `<i class="bi bi-table text-red-600 mr-2"></i><strong>${tabla}</strong>`;
+            li.innerHTML = `<span class="fa material-icons text-red-600 mr-2">table_view</span></i><strong>${tabla}</strong>`;
             li.className = 'flex items-center';
             listaTablas.appendChild(li);
         });
@@ -1398,7 +1398,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // La combinación se inició correctamente, el progreso se monitoreará via AJAX
                 progressMessage.innerHTML = `
                     <div class="glass-alert glass-alert-info mt-4">
-                        <i class="bi bi-info-circle-fill mr-2"></i>
+                        <span class="fa material-icons mr-2">info</span></i>
                         <strong>Combinación iniciada:</strong> Monitoreando progreso en tiempo real...
                     </div>
                 `;
@@ -1407,26 +1407,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 clearInterval(intervalId);
                 progressMessage.innerHTML = `
                     <div class="glass-alert glass-alert-warning mt-4">
-                        <i class="bi bi-exclamation-triangle-fill mr-2"></i>
+                        <span class="fa material-icons mr-2">warning</span></i>
                         <strong>Error:</strong> ${data.error || 'Error desconocido'}
                     </div>
                 `;
                 btnConfirmarCombinacion.disabled = false;
                 btnCancelarCombinacion.disabled = false;
-                btnConfirmarCombinacion.innerHTML = '<i class="bi bi-arrow-down-up mr-2"></i>Reintentar';
+                btnConfirmarCombinacion.innerHTML = '<span class="bi material-icons mr-2">swap_vert</span></i>Reintentar';
             }
         })
         .catch(error => {
             clearInterval(intervalId);
             progressMessage.innerHTML = `
                 <div class="glass-alert glass-alert-warning mt-4">
-                    <i class="bi bi-exclamation-triangle-fill mr-2"></i>
+                    <span class="fa material-icons mr-2">warning</span></i>
                     <strong>Error de conexión:</strong> ${error.message}
                 </div>
             `;
             btnConfirmarCombinacion.disabled = false;
             btnCancelarCombinacion.disabled = false;
-            btnConfirmarCombinacion.innerHTML = '<i class="bi bi-arrow-down-up mr-2"></i>Reintentar';
+            btnConfirmarCombinacion.innerHTML = '<span class="bi material-icons mr-2">swap_vert</span></i>Reintentar';
         });
         
         // Función para verificar estado de combinación
@@ -1446,7 +1446,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Actualizar mensaje de estado
                         progressMessage.innerHTML = `
                             <div class="glass-alert glass-alert-info mt-4">
-                                <i class="bi bi-gear mr-2"></i>
+                                <span class="fa material-icons mr-2">settings</span></i>
                                 <div>
                                     <strong>Estado:</strong> ${data.estado}<br>
                                     <small>Paso ${data.pasos_completados}/${data.pasos_totales}</small>
@@ -1467,7 +1467,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         progressMessage.innerHTML = `
                             <div class="glass-alert glass-alert-success mt-4">
-                                <i class="bi bi-check-circle-fill mr-2"></i>
+                                <span class="fa material-icons mr-2">check_circle</span></i>
                                 <div>
                                     <strong>¡Combinación completada exitosamente!</strong>
                                     <ul class="mt-2 mb-0 list-disc list-inside space-y-1 text-sm">
@@ -1489,13 +1489,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         clearInterval(intervalId);
                         progressMessage.innerHTML = `
                             <div class="glass-alert glass-alert-warning mt-4">
-                                <i class="bi bi-exclamation-triangle-fill mr-2"></i>
+                                <span class="fa material-icons mr-2">warning</span></i>
                                 <strong>Error en la combinación:</strong> ${data.mensaje || 'Error desconocido'}
                             </div>
                         `;
                         btnConfirmarCombinacion.disabled = false;
                         btnCancelarCombinacion.disabled = false;
-                        btnConfirmarCombinacion.innerHTML = '<i class="bi bi-arrow-down-up mr-2"></i>Reintentar';
+                        btnConfirmarCombinacion.innerHTML = '<span class="bi material-icons mr-2">swap_vert</span></i>Reintentar';
                     }
                 })
                 .catch(error => {
@@ -1526,7 +1526,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Actualizar contenido del modal
         const modalTitle = modal.querySelector('.modal-title');
-        modalTitle.innerHTML = `<i class="bi bi-exclamation-circle mr-2"></i>${titulo}`;
+        modalTitle.innerHTML = `<span class="fa material-icons mr-2">error</span></i>${titulo}`;
         
         errorMessage.innerHTML = `
             <div>

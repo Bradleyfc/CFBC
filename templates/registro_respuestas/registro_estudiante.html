@@ -19,13 +19,13 @@
                     <li class="inline-flex items-center">
                         <a href="{% url 'principal:registro_respuestas_general' %}" 
                            class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
-                            <i class="bi bi-house mr-2"></i>
+                            <span class="fa material-icons mr-2">home</span></i>
                             Registro General
                         </a>
                     </li>
                     <li>
                         <div class="flex items-center">
-                            <i class="bi bi-chevron-right text-gray-400"></i>
+                            <span class="fa material-icons text-gray-400">arrow_back</span></i>
                             <a href="{% url 'principal:registro_respuestas_curso' solicitud.curso.pk %}" 
                                class="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2">
                                 {{ solicitud.curso.name }}
@@ -34,7 +34,7 @@
                     </li>
                     <li>
                         <div class="flex items-center">
-                            <i class="bi bi-chevron-right text-gray-400"></i>
+                            <span class="fa material-icons text-gray-400">arrow_back</span></i>
                             <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">
                                 {{ solicitud.estudiante.get_full_name|default:solicitud.estudiante.username }}
                             </span>
@@ -50,7 +50,7 @@
                 </div>
                 <div>
                     <a href="#" onclick="checkRespuestasBeforeExport('estudiante', '{{ solicitud.pk }}')" class="glass-button glass-button-success">
-                        <i class="bi bi-file-earmark-excel mr-2"></i>
+                        <span class="fa material-icons mr-2">table_chart</span></i>
                         Exportar Excel
                     </a>
                 </div>
@@ -67,7 +67,7 @@
                 <div class="glass-card">
                     <div class="glass-header">
                         <h3 class="text-xl font-bold text-gray-800 flex items-center">
-                            <i class="bi bi-person mr-2"></i>
+                            <span class="fa material-icons mr-2">person</span></i>
                             Información del Estudiante
                         </h3>
                     </div>
@@ -144,7 +144,7 @@
                 <div class="glass-card">
                     <div class="glass-header">
                         <h3 class="text-xl font-bold text-gray-800 flex items-center">
-                            <i class="bi bi-clipboard-data mr-2"></i>
+                            <span class="fa material-icons mr-2">assignment</span></i>
                             Información de la Solicitud
                         </h3>
                     </div>
@@ -190,7 +190,7 @@
                 <div class="glass-card">
                     <div class="glass-header">
                         <h3 class="text-xl font-bold text-gray-800 flex items-center">
-                            <i class="bi bi-question-circle mr-2"></i>
+                            <span class="fa material-icons mr-2">info</span></i>
                             Respuestas del Formulario de Aplicación
                         </h3>
                     </div>
@@ -203,7 +203,7 @@
                                             <div class="flex items-start justify-between mb-3">
                                                 <div class="flex-1">
                                                     <h6 class="text-blue-600 font-semibold mb-2 flex items-center">
-                                                        <i class="bi bi-question-circle mr-2"></i>
+                                                        <span class="fa material-icons mr-2">info</span></i>
                                                         Pregunta {{ forloop.counter }}
                                                     </h6>
                                                     <p class="font-semibold text-gray-800 mb-2">{{ respuesta.pregunta.texto }}</p>
@@ -218,7 +218,7 @@
                                             
                                             <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border-l-4 border-blue-400">
                                                 <h6 class="text-blue-800 font-semibold mb-2 flex items-center">
-                                                    <i class="bi bi-reply mr-2"></i>
+                                                    <span class="fa material-icons mr-2">arrow_back</span></i>
                                                     Respuesta
                                                 </h6>
                                                 <div class="text-gray-700">
@@ -256,7 +256,7 @@
                             <!-- Empty State -->
                             <div class="text-center py-12">
                                 <div class="text-gray-400 text-6xl mb-4">
-                                    <i class="bi bi-question-circle"></i>
+                                    <span class="fa material-icons">info</span></i>
                                 </div>
                                 <h5 class="text-xl font-semibold text-gray-600 mb-2">No hay respuestas registradas</h5>
                                 <p class="text-gray-500">Este estudiante no ha completado el formulario de aplicación.</p>
@@ -278,7 +278,7 @@
   <div class="error-modal-content">
     <div class="error-modal-header">
       <div class="error-modal-icon">
-        <i class="bi bi-exclamation-circle text-orange-600"></i>
+        <span class="fa material-icons text-orange-600">error</span></i>
       </div>
       <h3 class="error-modal-title">Sin Datos para Exportar</h3>
     </div>
@@ -294,7 +294,7 @@
     
     <div class="error-modal-footer">
       <button type="button" class="error-modal-btn error-modal-btn-ok" onclick="hideErrorModal()">
-        <i class="bi bi-check-circle mr-2"></i>
+        <span class="fa material-icons mr-2">check_circle</span></i>
         Entendido
       </button>
     </div>

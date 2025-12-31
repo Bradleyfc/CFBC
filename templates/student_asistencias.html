@@ -15,7 +15,7 @@
             <!-- Back Button -->
             <div class="mb-4">
                 <a href="{% url 'principal:profile' %}" class="glass-button glass-button-secondary">
-                    <i class="bi bi-arrow-left mr-2"></i>
+                    <span class="fa material-icons mr-2">arrow_back</span></i>
                     Volver al Perfil
                 </a>
             </div>
@@ -55,7 +55,7 @@
         <div class="glass-card mb-6">
             <div class="glass-header">
                 <h3 class="text-xl font-bold text-gray-800 flex items-center">
-                    <i class="bi bi-clipboard-data mr-2"></i>
+                    <span class="fa material-icons mr-2">assignment</span></i>
                     Registro de Asistencias
                 </h3>
             </div>
@@ -87,7 +87,7 @@
                 </div>
                 {% else %}
                 <div class="glass-alert glass-alert-info">
-                    <i class="bi bi-info-circle mr-2"></i>
+                    <span class="fa material-icons mr-2">info</span></i>
                     No hay registros de asistencia para este curso: {{ course.name }}
                 </div>
                 {% endif %}

@@ -61,7 +61,7 @@
       {% if group_name == 'Secretaria' %}
       <div class="flex justify-center lg:justify-start">
         <a href="{% url 'principal:crear_cursos'%}" class="glass-button glass-button-primary flex items-center justify-center">
-          <i class="bi bi-plus-circle mr-2"></i>
+          <span class="fa material-icons mr-2">add_circle</span></i>
           Agregar Curso
         </a>
       </div>
@@ -72,12 +72,12 @@
         <div class="inline-flex rounded-xl shadow-sm backdrop-blur-md bg-white/10 border border-white/20 p-1" role="group">
           <button type="button" id="vistaCards" onclick="cambiarVista('cards')"
                   class="px-4 py-2 text-sm font-medium text-gray-800 rounded-lg hover:bg-white/20 focus:z-10 focus:ring-2 focus:ring-blue-400/50 transition-all duration-200 active-view">
-            <i class="bi bi-grid-3x3-gap mr-1"></i>
+            <span class="fa material-icons mr-1">grid_view</span></i>
             Tarjetas
           </button>
           <button type="button" id="vistaLista" onclick="cambiarVista('lista')"
                   class="px-4 py-2 text-sm font-medium text-gray-800 rounded-lg hover:bg-white/20 focus:z-10 focus:ring-2 focus:ring-blue-400/50 transition-all duration-200">
-            <i class="bi bi-list mr-1"></i>
+            <span class="fa material-icons mr-1">assignment</span></i>
             Lista
           </button>
         </div>
@@ -121,11 +121,11 @@
                    class="glass-tag-apply flex-shrink-0 mt-0.5 pulse-options-button" 
                    title="Aplicar al curso" 
                    id="apply-btn-{{ course.id }}">
-                  <i class="bi bi-check-circle"></i>
+                  <span class="fa material-icons">check_circle</span></i>
                 </a>
                 {% elif tiene_solicitud_pendiente %}
                 <button class="glass-tag-applied flex-shrink-0 mt-0.5" title="Ya has aplicado a este curso" disabled>
-                  <i class="bi bi-check-circle-fill"></i>
+                  <span class="fa material-icons">check_circle</span></i>
                 </button>
                 {% endif %}
               {% endif %}
@@ -168,7 +168,7 @@
               <!-- Clases -->
               <div class="glass-detail-item-medium flex-1">
                 <div class="glass-icon-medium">
-                  <i class="bi bi-calendar-event"></i>
+                  <span class="bi material-icons">event</span></i>
                 </div>
                 <span class="text-gray-700 text-sm font-medium">{{course.class_quantity}} clases</span>
               </div>
@@ -176,7 +176,7 @@
               <!-- Inscritos -->
               <div class="glass-detail-item-medium flex-1">
                 <div class="glass-icon-medium">
-                  <i class="bi bi-people"></i>
+                  <span class="fa material-icons">group</span></i>
                 </div>
                 <span class="text-gray-700 text-sm font-medium">{{course.enrollment_count}} inscritos</span>
               </div>
@@ -189,7 +189,7 @@
               <div class="glass-detail-item-medium flex-1">
                 {% if course.enrollment_deadline %}
                 <div class="glass-icon-medium {% if course.get_dynamic_status == 'I' %}pulse-red-icon{% endif %}">
-                  <i class="bi bi-clock {% if course.get_dynamic_status == 'I' %}pulse-red-text{% endif %}"></i>
+                  <span class="fa material-icons {% if course.get_dynamic_status == 'I' %}pulse-red-text{% endif %}">schedule</span></i>
                 </div>
                 <span class="text-gray-700 text-sm font-medium {% if course.get_dynamic_status == 'I' %}pulse-red-text{% endif %}">{{course.enrollment_deadline|date:"d/m"}}</span>
                 {% endif %}
@@ -199,7 +199,7 @@
               <div class="glass-detail-item-medium flex-1">
                 {% if course.start_date and course.get_dynamic_status != 'P' and course.get_dynamic_status != 'F' %}
                 <div class="glass-icon-medium {% if course.get_dynamic_status == 'IT' %}pulse-red-icon{% endif %}">
-                  <i class="bi bi-play-circle {% if course.get_dynamic_status == 'IT' %}pulse-red-text{% endif %}"></i>
+                  <span class="bi material-icons {% if course.get_dynamic_status == 'IT' %}pulse-red-text{% endif %}">play_circle</span></i>
                 </div>
                 <span class="text-gray-700 text-sm font-medium {% if course.get_dynamic_status == 'IT' %}pulse-red-text{% endif %}">{{course.start_date|date:"d/m"}}</span>
                 {% endif %}
@@ -261,7 +261,7 @@
               {% if group_name == 'Secretaria' %}
               <a href="{% url 'principal:editar_curso' course.id %}" class="glass-option-link glass-option-orange glass-option-compact flex items-center gap-1.5 p-2 rounded-md transition-all duration-300">
                 <div class="glass-icon-compact-opt glass-icon-orange">
-                  <i class="bi bi-pencil"></i>
+                  <span class="fa material-icons">edit</span></i>
                 </div>
                 <span class="glass-text-orange font-medium text-xs">Editar Curso</span>
               </a>
@@ -269,14 +269,14 @@
               {% if course.formulario_aplicacion %}
               <a href="{% url 'principal:formulario_update' course.formulario_aplicacion.id %}" class="glass-option-link glass-option-light-blue glass-option-compact flex items-center gap-1.5 p-2 rounded-md transition-all duration-300">
                 <div class="glass-icon-compact-opt glass-icon-light-blue">
-                  <i class="bi bi-file-earmark-text"></i>
+                  <span class="fa material-icons">article</span></i>
                 </div>
                 <span class="glass-text-light-blue font-medium text-xs">Editar Formulario</span>
               </a>
               {% else %}
               <a href="{% url 'principal:formulario_create' %}?curso_id={{ course.id }}" class="glass-option-link glass-option-green glass-option-compact flex items-center gap-1.5 p-2 rounded-md transition-all duration-300">
                 <div class="glass-icon-compact-opt glass-icon-green">
-                  <i class="bi bi-file-earmark-plus"></i>
+                  <span class="bi material-icons">note_add</span></i>
                 </div>
                 <span class="glass-text-green font-medium text-xs">Crear Formulario</span>
               </a>
@@ -286,7 +286,7 @@
               
               <a href="#" class="glass-option-link glass-option-red glass-option-compact flex items-center gap-1.5 p-2 rounded-md transition-all duration-300" onclick="showDeleteModal('{{course.id}}', '{{course.name|escapejs}}')">
                 <div class="glass-icon-compact-opt glass-icon-red">
-                  <i class="bi bi-trash"></i>
+                  <span class="fa material-icons">delete</span></i>
                 </div>
                 <span class="glass-text-red font-medium text-xs">Eliminar Curso</span>
               </a>
@@ -307,7 +307,7 @@
   <div class="delete-modal-content">
     <div class="delete-modal-header">
       <div class="delete-modal-icon">
-        <i class="bi bi-exclamation-triangle text-red-600"></i>
+        <span class="fa material-icons text-red-600">warning</span></i>
       </div>
       <h3 class="delete-modal-title">Confirmar Eliminación</h3>
     </div>
@@ -323,11 +323,11 @@
     
     <div class="delete-modal-footer">
       <button type="button" class="delete-modal-btn delete-modal-btn-cancel" onclick="hideDeleteModal()">
-        <i class="bi bi-x-circle mr-2"></i>
+        <span class="fa material-icons mr-2">cancel</span></i>
         Cancelar
       </button>
       <a id="confirmDeleteLink" href="#" class="delete-modal-btn delete-modal-btn-confirm">
-        <i class="bi bi-trash mr-2"></i>
+        <span class="fa material-icons mr-2">delete</span></i>
         Eliminar Curso
       </a>
     </div>
@@ -340,7 +340,7 @@
   <div class="apply-modal-content">
     <div class="apply-modal-header">
       <div class="apply-modal-icon">
-        <i class="bi bi-check-circle text-green-600"></i>
+        <span class="fa material-icons text-green-600">check_circle</span></i>
       </div>
       <h3 class="apply-modal-title">Confirmar Aplicación</h3>
     </div>
@@ -356,11 +356,11 @@
     
     <div class="apply-modal-footer">
       <button type="button" class="apply-modal-btn apply-modal-btn-cancel" onclick="hideApplyModal()">
-        <i class="bi bi-x-circle mr-2"></i>
+        <span class="fa material-icons mr-2">cancel</span></i>
         Cancelar
       </button>
       <button type="button" class="apply-modal-btn apply-modal-btn-confirm" onclick="confirmApply()">
-        <i class="bi bi-check-circle mr-2"></i>
+        <span class="fa material-icons mr-2">check_circle</span></i>
         Aplicar al Curso
       </button>
     </div>

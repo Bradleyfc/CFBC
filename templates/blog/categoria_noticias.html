@@ -9,7 +9,7 @@
     <div class="col-lg-8">
         <!-- Header de categoría -->
         <div class="bg-primary text-white p-4 rounded mb-4">
-            <h1><i class="fas fa-tag"></i> {{ categoria.nombre }}</h1>
+            <h1><span class="fas material-icons">help</span></i> {{ categoria.nombre }}</h1>
             {% if categoria.descripcion %}
                 <p class="mb-0">{{ categoria.descripcion }}</p>
             {% endif %}
@@ -35,14 +35,14 @@
                                 <img src="{{ noticia.imagen_principal.url }}" class="card-img-top" alt="{{ noticia.titulo }}">
                             {% else %}
                                 <div class="card-img-top bg-light d-flex align-items-center justify-content-center">
-                                    <i class="fas fa-newspaper fa-3x text-muted"></i>
+                                    <span class="fas material-icons material-icons text-muted">close</span></i>
                                 </div>
                             {% endif %}
                             
                             <div class="card-body d-flex flex-column">
                                 {% if noticia.destacada %}
                                     <span class="badge bg-warning text-dark mb-2">
-                                        <i class="fas fa-star"></i> Destacada
+                                        <span class="fas material-icons">star</span></i> Destacada
                                     </span>
                                 {% endif %}
                                 
@@ -56,14 +56,14 @@
                                 
                                 <div class="mt-auto">
                                     <small class="text-muted">
-                                        <i class="fas fa-user"></i> {{ noticia.autor.get_full_name|default:noticia.autor.username }}
+                                        <span class="fas material-icons">person</span></i> {{ noticia.autor.get_full_name|default:noticia.autor.username }}
                                         <br>
-                                        <i class="fas fa-calendar"></i> {{ noticia.fecha_publicacion|date:"d/m/Y" }}
+                                        <span class="fas material-icons">event</span></i> {{ noticia.fecha_publicacion|date:"d/m/Y" }}
                                     </small>
                                     
                                     <div class="mt-2">
                                         <a href="{{ noticia.get_absolute_url }}" class="btn btn-primary btn-sm">
-                                            Leer más <i class="fas fa-arrow-right"></i>
+                                            Leer más <span class="fas material-icons">arrow_forward</span></i>
                                         </a>
                                     </div>
                                 </div>
@@ -80,12 +80,12 @@
                         {% if page_obj.has_previous %}
                             <li class="page-item">
                                 <a class="page-link" href="?page=1">
-                                    <i class="fas fa-angle-double-left"></i>
+                                    <span class="fas material-icons">help</span></i>
                                 </a>
                             </li>
                             <li class="page-item">
                                 <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
-                                    <i class="fas fa-angle-left"></i>
+                                    <span class="fas material-icons">help</span></i>
                                 </a>
                             </li>
                         {% endif %}
@@ -105,12 +105,12 @@
                         {% if page_obj.has_next %}
                             <li class="page-item">
                                 <a class="page-link" href="?page={{ page_obj.next_page_number }}">
-                                    <i class="fas fa-angle-right"></i>
+                                    <span class="fas material-icons">help</span></i>
                                 </a>
                             </li>
                             <li class="page-item">
                                 <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">
-                                    <i class="fas fa-angle-double-right"></i>
+                                    <span class="fas material-icons">help</span></i>
                                 </a>
                             </li>
                         {% endif %}
@@ -119,11 +119,11 @@
             {% endif %}
         {% else %}
             <div class="text-center py-5">
-                <i class="fas fa-newspaper fa-4x text-muted mb-3"></i>
+                <span class="fas material-icons material-icons text-muted mb-3">close</span></i>
                 <h3>No hay noticias en esta categoría</h3>
                 <p class="text-muted">Vuelve pronto para ver las últimas noticias de {{ categoria.nombre }}.</p>
                 <a href="{% url 'blog:lista_noticias' %}" class="btn btn-primary">
-                    <i class="fas fa-arrow-left"></i> Ver todas las noticias
+                    <span class="fas material-icons">arrow_back</span></i> Ver todas las noticias
                 </a>
             </div>
         {% endif %}
@@ -133,7 +133,7 @@
     <div class="col-lg-4">
         <div class="sidebar">
             <!-- Otras categorías -->
-            <h5><i class="fas fa-tags"></i> Otras Categorías</h5>
+            <h5><span class="fas material-icons">help</span></i> Otras Categorías</h5>
             <div class="list-group">
                 <a href="{% url 'blog:lista_noticias' %}" 
                    class="list-group-item list-group-item-action">
@@ -152,7 +152,7 @@
             
             <div class="mt-3">
                 <a href="{% url 'blog:lista_noticias' %}" class="btn btn-outline-primary w-100">
-                    <i class="fas fa-arrow-left"></i> Volver a noticias
+                    <span class="fas material-icons">arrow_back</span></i> Volver a noticias
                 </a>
             </div>
         </div>

@@ -22,11 +22,11 @@
             </div>
             <div class="flex gap-2">
                 <a href="javascript:history.back()" class="glass-button glass-button-secondary">
-                    <i class="bi bi-arrow-left mr-2"></i>
+                    <span class="fa material-icons mr-2">arrow_back</span></i>
                     Volver
                 </a>
                 <a href="#" onclick="checkRespuestasBeforeExport('general')" class="glass-button glass-button-success">
-                    <i class="bi bi-file-earmark-excel mr-2"></i>
+                    <span class="fa material-icons mr-2">table_chart</span></i>
                     Exportar Excel
                 </a>
             </div>
@@ -38,7 +38,7 @@
             <div class="glass-card flex-[1.5] flex flex-col">
                 <div class="glass-header py-3">
                     <h3 class="text-lg font-bold text-gray-800 flex items-center">
-                        <i class="bi bi-funnel mr-2"></i>
+                        <span class="fa material-icons mr-2">filter_list</span></i>
                         Filtrar respuestas
                     </h3>
                 </div>
@@ -64,11 +64,11 @@
                         <!-- Action Buttons -->
                         <div class="flex gap-2 justify-start">
                             <button type="submit" class="glass-button glass-button-primary">
-                                <i class="bi bi-funnel mr-1"></i>
+                                <span class="fa material-icons mr-1">filter_list</span></i>
                                 Filtrar
                             </button>
                             <a href="{% url 'principal:registro_respuestas_general' %}" class="glass-button glass-button-secondary">
-                                <i class="bi bi-arrow-clockwise mr-1"></i>
+                                <span class="fa material-icons mr-1">refresh</span></i>
                                 Limpiar
                             </a>
                         </div>
@@ -113,7 +113,7 @@
         <div class="glass-card mb-6">
             <div class="glass-header">
                 <h3 class="text-xl font-bold text-gray-800 flex items-center">
-                    <i class="bi bi-clipboard-data mr-2"></i>
+                    <span class="fa material-icons mr-2">assignment</span></i>
                     Cursos con Formularios de Aplicación
                 </h3>
             </div>
@@ -164,12 +164,12 @@
                                     <div class="flex gap-2">
                                         <a href="{% url 'principal:registro_respuestas_curso' curso.pk %}"
                                             class="glass-button glass-button-primary text-xs px-3 py-1" title="Ver respuestas del curso">
-                                            <i class="bi bi-eye mr-1"></i>
+                                            <span class="fa material-icons mr-1">visibility</span></i>
                                             Ver
                                         </a>
                                         <a href="#" onclick="checkRespuestasBeforeExport('curso', {{ curso.pk }})"
                                             class="glass-button glass-button-success text-xs px-3 py-1" title="Exportar a Excel">
-                                            <i class="bi bi-file-earmark-excel"></i>
+                                            <span class="fa material-icons">table_chart</span></i>
                                         </a>
                                     </div>
                                 </td>
@@ -182,7 +182,7 @@
                 <!-- Empty State -->
                 <div class="text-center py-12">
                     <div class="text-gray-400 text-6xl mb-4">
-                        <i class="bi bi-clipboard-data"></i>
+                        <span class="fa material-icons">assignment</span></i>
                     </div>
                     <h5 class="text-xl font-semibold text-gray-600 mb-2">No hay cursos con formularios de aplicación</h5>
                     <p class="text-gray-500">Los cursos aparecerán aquí cuando tengan formularios de aplicación configurados y solicitudes de estudiantes.</p>
@@ -200,7 +200,7 @@
   <div class="error-modal-content">
     <div class="error-modal-header">
       <div class="error-modal-icon">
-        <i class="bi bi-exclamation-circle text-orange-600"></i>
+        <span class="fa material-icons text-orange-600">error</span></i>
       </div>
       <h3 class="error-modal-title">Sin Datos para Exportar</h3>
     </div>
@@ -216,7 +216,7 @@
     
     <div class="error-modal-footer">
       <button type="button" class="error-modal-btn error-modal-btn-ok" onclick="hideErrorModal()">
-        <i class="bi bi-check-circle mr-2"></i>
+        <span class="fa material-icons mr-2">check_circle</span></i>
         Entendido
       </button>
     </div>

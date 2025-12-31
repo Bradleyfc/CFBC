@@ -28,6 +28,10 @@ import openpyxl
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from accounts.models import Registro
 from blog.models import Noticia
+try:
+    from course_documents.indicator_service import ContentIndicatorService
+except ImportError:
+    ContentIndicatorService = None
 from .models import (
     CursoAcademico, Curso, Matriculas, Calificaciones, Asistencia,
     FormularioAplicacion, PreguntaFormulario, OpcionRespuesta, SolicitudInscripcion, RespuestaEstudiante, NotaIndividual
@@ -988,6 +992,12 @@ class ProfileView(BaseContextMixin, TemplateView):
                         course.fecha_revision = None
                         course.revisado_por = None
                         approved_courses.append(course)
+                    
+                    # Agregar indicador de contenido nuevo si course_documents está disponible
+                    if ContentIndicatorService:
+                        course.has_new_content_indicator = ContentIndicatorService.has_new_content(course, user)
+                    else:
+                        course.has_new_content_indicator = False
                 
                 context['enrolled_courses'] = approved_courses
                 context['pending_courses'] = pending_courses

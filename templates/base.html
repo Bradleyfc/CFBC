@@ -6,7 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {% load static %}
     <link href="{% static 'css/tailwind.css' %}" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="{% static 'css/icons.css' %}" rel="stylesheet">
+    <link href="{% static 'css/document-icons.css' %}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <title>CFBC</title>
 
     <style>
@@ -72,7 +74,7 @@
             data-mensaje="{{ message }}">
             {{ message }}
             <button type="button" class="btn-close absolute top-2 right-2" onclick="this.parentElement.remove()" aria-label="Close">
-                <i class="bi bi-x-lg"></i>
+                <span class="fa material-icons">close</span>
             </button>
         </div>
         {% endfor %}

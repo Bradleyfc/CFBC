@@ -15,7 +15,7 @@
         <div class="glass-card mb-6">
             <div class="glass-header">
                 <h2 class="text-3xl font-bold text-gray-800 flex items-center">
-                    <i class="bi bi-gear mr-3"></i>
+                    <span class="fa material-icons mr-3">settings</span></i>
                     Configurar Migración Automática
                 </h2>
             </div>
@@ -25,16 +25,16 @@
         <div class="glass-card mb-6">
             <div class="glass-content">
                 <div class="glass-alert glass-alert-info">
-                    <i class="bi bi-info-circle mr-2"></i>
+                    <span class="fa material-icons mr-2">info</span></i>
                     <div class="flex-1">
                         <h5 class="text-lg font-bold mb-3">Migración Automática</h5>
                         <p class="mb-3">El sistema inspeccionará automáticamente la estructura de la base de datos MariaDB remota y migrará todos los datos.</p>
                         <ul class="space-y-1 text-sm">
-                            <li class="flex items-center"><i class="bi bi-check-circle text-blue-600 mr-2"></i>Detecta todas las tablas automáticamente</li>
-                            <li class="flex items-center"><i class="bi bi-check-circle text-blue-600 mr-2"></i>Analiza estructura de cada tabla</li>
-                            <li class="flex items-center"><i class="bi bi-check-circle text-blue-600 mr-2"></i>Crea modelos Django dinámicos</li>
-                            <li class="flex items-center"><i class="bi bi-check-circle text-blue-600 mr-2"></i>Migra todos los datos preservando estructura</li>
-                            <li class="flex items-center"><i class="bi bi-check-circle text-blue-600 mr-2"></i>Almacena en formato JSON flexible</li>
+                            <li class="flex items-center"><span class="fa material-icons text-blue-600 mr-2">check_circle</span></i>Detecta todas las tablas automáticamente</li>
+                            <li class="flex items-center"><span class="fa material-icons text-blue-600 mr-2">check_circle</span></i>Analiza estructura de cada tabla</li>
+                            <li class="flex items-center"><span class="fa material-icons text-blue-600 mr-2">check_circle</span></i>Crea modelos Django dinámicos</li>
+                            <li class="flex items-center"><span class="fa material-icons text-blue-600 mr-2">check_circle</span></i>Migra todos los datos preservando estructura</li>
+                            <li class="flex items-center"><span class="fa material-icons text-blue-600 mr-2">check_circle</span></i>Almacena en formato JSON flexible</li>
                         </ul>
                     </div>
                 </div>
@@ -82,14 +82,14 @@
 
                     <!-- Warning Alert -->
                     <div class="glass-alert glass-alert-warning mb-6">
-                        <i class="bi bi-exclamation-triangle mr-2"></i>
+                        <span class="fa material-icons mr-2">warning</span></i>
                         <div class="flex-1">
                             <h6 class="font-bold mb-2">Importante:</h6>
                             <ul class="space-y-1 text-sm">
-                                <li class="flex items-center"><i class="bi bi-dot mr-1"></i>La migración puede tomar varios minutos</li>
-                                <li class="flex items-center"><i class="bi bi-dot mr-1"></i>El proceso se ejecuta en segundo plano</li>
-                                <li class="flex items-center"><i class="bi bi-dot mr-1"></i>Puede seguir el progreso desde el dashboard</li>
-                                <li class="flex items-center"><i class="bi bi-dot mr-1"></i>Los datos se almacenarán de forma segura</li>
+                                <li class="flex items-center"><span class="bi material-icons mr-1">fiber_manual_record</span></i>La migración puede tomar varios minutos</li>
+                                <li class="flex items-center"><span class="bi material-icons mr-1">fiber_manual_record</span></i>El proceso se ejecuta en segundo plano</li>
+                                <li class="flex items-center"><span class="bi material-icons mr-1">fiber_manual_record</span></i>Puede seguir el progreso desde el dashboard</li>
+                                <li class="flex items-center"><span class="bi material-icons mr-1">fiber_manual_record</span></i>Los datos se almacenarán de forma segura</li>
                             </ul>
                         </div>
                     </div>
@@ -97,11 +97,11 @@
                     <!-- Action Buttons -->
                     <div class="flex justify-center gap-4">
                         <button type="submit" class="glass-button glass-button-primary glass-button-lg">
-                            <i class="bi bi-play-fill mr-2"></i>
+                            <span class="bi material-icons mr-2">play_arrow</span></i>
                             Iniciar Migración Automática
                         </button>
                         <a href="{% url 'datos_archivados:dashboard' %}" class="glass-button glass-button-secondary glass-button-lg">
-                            <i class="bi bi-arrow-left mr-2"></i>
+                            <span class="fa material-icons mr-2">arrow_back</span></i>
                             Volver al Dashboard
                         </a>
                     </div>
@@ -116,7 +116,7 @@
     <div class="glass-card max-w-2xl w-full mx-4 transform transition-all duration-300 scale-95 opacity-0" id="modalContent">
         <div class="glass-header">
             <h5 class="text-xl font-bold text-gray-800 flex items-center">
-                <i class="bi bi-gear-fill mr-2"></i> Migración en Progreso
+                <span class="bi material-icons mr-2">settings</span></i> Migración en Progreso
             </h5>
         </div>
         <div class="glass-content">
@@ -125,7 +125,7 @@
             </div>
             
             <div class="glass-alert glass-alert-info mb-4">
-                <i class="bi bi-info-circle mr-2"></i>
+                <span class="fa material-icons mr-2">info</span></i>
                 <div class="flex-1">
                     <h6 class="font-bold mb-1">Estado de la Migración:</h6>
                     <p id="estadoMigracion" class="text-sm">Iniciando migración automática...</p>
@@ -143,17 +143,17 @@
             <div id="detallesMigracion">
                 <h6 class="font-bold mb-3">Detalles:</h6>
                 <ul id="listaPasos" class="space-y-2">
-                    <li class="flex items-center text-sm"><i class="bi bi-clock text-gray-400 mr-2"></i> Esperando inicio...</li>
+                    <li class="flex items-center text-sm"><span class="fa material-icons text-gray-400 mr-2">schedule</span></i> Esperando inicio...</li>
                 </ul>
             </div>
         </div>
         <div class="glass-content border-t border-gray-200">
             <div class="flex justify-end gap-3">
                 <button type="button" class="glass-button glass-button-secondary" id="btnCerrarModal" disabled>
-                    <i class="bi bi-x-circle mr-2"></i> Cerrar
+                    <span class="fa material-icons mr-2">cancel</span></i> Cerrar
                 </button>
                 <a href="{% url 'datos_archivados:dashboard' %}" class="glass-button glass-button-primary hidden" id="btnIrDashboard">
-                    <i class="bi bi-speedometer2 mr-2"></i> Ir al Dashboard
+                    <span class="bi material-icons mr-2">speed</span></i> Ir al Dashboard
                 </a>
             </div>
         </div>
@@ -391,7 +391,7 @@ let migracionIniciada = false;
 // Mostrar indicador de carga al enviar el formulario
 document.querySelector('form').addEventListener('submit', function(e) {
     const submitBtn = document.querySelector('button[type="submit"]');
-    submitBtn.innerHTML = '<i class="bi bi-arrow-clockwise mr-2"></i> Iniciando migración...';
+    submitBtn.innerHTML = '<span class="fa material-icons mr-2">refresh</span></i> Iniciando migración...';
     submitBtn.disabled = true;
     
     // Mostrar modal de progreso después de enviar
@@ -462,25 +462,25 @@ function actualizarProgreso(data) {
     let pasos = [];
     
     if (data.tablas_inspeccionadas > 0) {
-        pasos.push('<li class="flex items-center text-sm"><i class="bi bi-check-circle text-green-600 mr-2"></i> Conexión establecida</li>');
-        pasos.push(`<li class="flex items-center text-sm"><i class="bi bi-check-circle text-green-600 mr-2"></i> Base de datos inspeccionada (${data.tablas_inspeccionadas} tablas)</li>`);
+        pasos.push('<li class="flex items-center text-sm"><span class="fa material-icons text-green-600 mr-2">check_circle</span></i> Conexión establecida</li>');
+        pasos.push(`<li class="flex items-center text-sm"><span class="fa material-icons text-green-600 mr-2">check_circle</span></i> Base de datos inspeccionada (${data.tablas_inspeccionadas} tablas)</li>`);
         
         if (data.tablas_procesadas > 0) {
-            pasos.push(`<li class="flex items-center text-sm"><i class="bi bi-gear text-blue-600 mr-2"></i> Migrando datos (${data.tablas_procesadas}/${data.tablas_inspeccionadas} tablas)</li>`);
+            pasos.push(`<li class="flex items-center text-sm"><span class="fa material-icons text-blue-600 mr-2">settings</span></i> Migrando datos (${data.tablas_procesadas}/${data.tablas_inspeccionadas} tablas)</li>`);
         } else {
-            pasos.push('<li class="flex items-center text-sm"><i class="bi bi-gear text-blue-600 mr-2"></i> Iniciando migración de datos...</li>');
+            pasos.push('<li class="flex items-center text-sm"><span class="fa material-icons text-blue-600 mr-2">settings</span></i> Iniciando migración de datos...</li>');
         }
         
         if (data.tablas_procesadas >= data.tablas_inspeccionadas) {
-            pasos.push('<li class="flex items-center text-sm"><i class="bi bi-check-circle text-green-600 mr-2"></i> Finalizando proceso...</li>');
+            pasos.push('<li class="flex items-center text-sm"><span class="fa material-icons text-green-600 mr-2">check_circle</span></i> Finalizando proceso...</li>');
         } else {
-            pasos.push('<li class="flex items-center text-sm"><i class="bi bi-clock text-gray-400 mr-2"></i> Finalizando proceso...</li>');
+            pasos.push('<li class="flex items-center text-sm"><span class="fa material-icons text-gray-400 mr-2">schedule</span></i> Finalizando proceso...</li>');
         }
     } else {
-        pasos.push('<li class="flex items-center text-sm"><i class="bi bi-check-circle text-green-600 mr-2"></i> Conexión establecida</li>');
-        pasos.push('<li class="flex items-center text-sm"><i class="bi bi-gear text-blue-600 mr-2"></i> Analizando estructura de base de datos...</li>');
-        pasos.push('<li class="flex items-center text-sm"><i class="bi bi-clock text-gray-400 mr-2"></i> Migrando datos...</li>');
-        pasos.push('<li class="flex items-center text-sm"><i class="bi bi-clock text-gray-400 mr-2"></i> Finalizando proceso...</li>');
+        pasos.push('<li class="flex items-center text-sm"><span class="fa material-icons text-green-600 mr-2">check_circle</span></i> Conexión establecida</li>');
+        pasos.push('<li class="flex items-center text-sm"><span class="fa material-icons text-blue-600 mr-2">settings</span></i> Analizando estructura de base de datos...</li>');
+        pasos.push('<li class="flex items-center text-sm"><span class="fa material-icons text-gray-400 mr-2">schedule</span></i> Migrando datos...</li>');
+        pasos.push('<li class="flex items-center text-sm"><span class="fa material-icons text-gray-400 mr-2">schedule</span></i> Finalizando proceso...</li>');
     }
     
     listaPasos.innerHTML = pasos.join('');
@@ -531,7 +531,7 @@ function mostrarMigracionCompletada() {
     const spinner = document.querySelector('.animate-spin');
     
     // Actualizar UI
-    estadoElement.innerHTML = '<i class="bi bi-check-circle text-green-600 mr-1"></i> ¡Migración completada exitosamente!';
+    estadoElement.innerHTML = '<span class="fa material-icons text-green-600 mr-1">check_circle</span></i> ¡Migración completada exitosamente!';
     barraProgreso.style.width = '100%';
     barraProgreso.classList.add('completed');
     textoProgreso.textContent = '100%';
@@ -543,10 +543,10 @@ function mostrarMigracionCompletada() {
     
     // Actualizar pasos
     listaPasos.innerHTML = `
-        <li class="flex items-center text-sm"><i class="bi bi-check-circle text-green-600 mr-2"></i> Conexión establecida</li>
-        <li class="flex items-center text-sm"><i class="bi bi-check-circle text-green-600 mr-2"></i> Base de datos inspeccionada</li>
-        <li class="flex items-center text-sm"><i class="bi bi-check-circle text-green-600 mr-2"></i> Datos migrados</li>
-        <li class="flex items-center text-sm"><i class="bi bi-check-circle text-green-600 mr-2"></i> Proceso finalizado</li>
+        <li class="flex items-center text-sm"><span class="fa material-icons text-green-600 mr-2">check_circle</span></i> Conexión establecida</li>
+        <li class="flex items-center text-sm"><span class="fa material-icons text-green-600 mr-2">check_circle</span></i> Base de datos inspeccionada</li>
+        <li class="flex items-center text-sm"><span class="fa material-icons text-green-600 mr-2">check_circle</span></i> Datos migrados</li>
+        <li class="flex items-center text-sm"><span class="fa material-icons text-green-600 mr-2">check_circle</span></i> Proceso finalizado</li>
     `;
     
     // Habilitar botones

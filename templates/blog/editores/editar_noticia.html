@@ -6,18 +6,18 @@
 {% block botones_accion %}
 {% if noticia.estado == 'publicado' %}
     <a href="{{ noticia.get_absolute_url }}" class="btn btn-outline-success" target="_blank">
-        <i class="fas fa-eye"></i> Ver Noticia
+        <span class="fas material-icons">visibility</span></i> Ver Noticia
     </a>
 {% endif %}
 <a href="{% url 'blog:eliminar_noticia' noticia.pk %}" class="btn btn-outline-danger">
-    <i class="fas fa-trash"></i> Eliminar
+    <span class="fas material-icons">delete</span></i> Eliminar
 </a>
 {% endblock %}
 
 {% block contenido_editores %}
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5><i class="fas fa-edit"></i> Editar Noticia</h5>
+        <h5><span class="fas material-icons">help</span></i> Editar Noticia</h5>
         <div>
             {% if noticia.estado == 'publicado' %}
                 <span class="badge bg-success">Publicado</span>
@@ -168,10 +168,10 @@
             
             <div class="d-flex justify-content-between">
                 <a href="{% url 'blog:mis_noticias' %}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Volver
+                    <span class="fas material-icons">arrow_back</span></i> Volver
                 </a>
                 <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save"></i> Guardar Cambios
+                    <span class="fas material-icons">help</span></i> Guardar Cambios
                 </button>
             </div>
         </form>

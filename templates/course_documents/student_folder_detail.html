@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ folder.name }} - {{ curso.name }}{% endblock %}
+
+{% block content %}
+<!-- Background Section with Gradient -->
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-30"
+        style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;">
+    </div>
+
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        <!-- Breadcrumb and Header -->
+        <div class="mb-6">
+            <nav class="flex mb-4" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                    <li class="inline-flex items-center">
+                        <a href="{% url 'course_documents:student_dashboard' curso_id=curso.id %}" 
+                           class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+                            <span class="fa material-icons mr-2">folder</span></i>
+                            Documentos
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <span class="fa material-icons text-gray-400">arrow_back</span></i>
+                            <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">{{ folder.name }}</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+            
+            <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">📁 {{ folder.name }}</h1>
+            <p class="text-xl text-center text-gray-700">{{ curso.name }}</p>
+        </div>
+
+        <!-- Estadísticas del estudiante -->
+        <div class="glass-card mb-6">
+            <div class="glass-content p-4">
+                <div class="flex items-center justify-center">
+                    <div class="glass-icon-medium mr-3">
+                        <span class="fa material-icons text-blue-600 text-2xl">cloud_download</span></i>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm text-gray-600">Tus descargas en esta carpeta</p>
+                        <p class="text-2xl font-bold text-blue-600">{{ user_stats.downloads_count }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Documentos -->
+        <div class="space-y-4">
+            {% for document in documents %}
+                <div class="glass-card">
+                    <div class="glass-content p-6">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <div class="flex items-center mb-2">
+                                    <div class="document-icon-container {{ document.get_file_icon_class }} mr-3 document-icon-tooltip" 
+                                         data-tooltip="{{ document.get_file_type_name }}">
+                                        <span class="material-icons {{ document.get_file_icon_color }}">{{ document.get_file_icon }}</span>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h3 class="text-lg font-semibold text-gray-800">{{ document.name }}</h3>
+                                        <p class="text-sm text-gray-600">
+                                            Subido el {{ document.uploaded_at|date:"d/m/Y H:i" }}
+                                        </p>
+                                        <p class="text-sm text-gray-500">
+                                            Tamaño: {{ document.get_file_size_display }} • Tipo: {{ document.get_file_extension|upper }}
+                                        </p>
+                                    </div>
+                                </div>
+                                {% if document.description %}
+                                    <p class="text-sm text-gray-600 mt-2">{{ document.description }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="flex gap-2">
+                                <a href="{% url 'course_documents:download_document' curso_id=curso.id document_id=document.id %}" 
+                                   class="glass-button glass-button-success">
+                                    <span class="fa material-icons mr-1">cloud_download</span></i> Descargar
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="glass-card">
+                    <div class="glass-content p-12 text-center">
+                        <span class="fa material-icons text-6xl text-gray-300 mb-4">description</span></i>
+                        <h3 class="text-xl font-semibold text-gray-600 mb-2">No hay documentos en esta carpeta</h3>
+                        <p class="text-gray-500">El profesor aún no ha subido documentos a esta carpeta</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Glass Card */
+    .glass-card {
+        position: relative;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            0 4px 16px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .glass-content {
+        position: relative;
+    }
+
+    /* Glass Icon */
+    .glass-icon-medium {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08));
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Glass Button */
+    .glass-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        cursor: pointer;
+        min-width: 120px;
+    }
+
+    .glass-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        text-decoration: none;
+    }
+
+    .glass-button-success {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+        color: #14532d;
+    }
+</style>
+{% endblock %}

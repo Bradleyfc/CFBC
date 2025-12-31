@@ -3,7 +3,7 @@
     <div class="glass-card">
         <div class="glass-content">
             <h5 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <i class="bi bi-book mr-2"></i>
+                <span class="fa material-icons mr-2">book</span></i>
                 Cursos Inscritos
             </h5>
             <div class="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent mb-4"></div>
@@ -45,16 +45,16 @@
                             <div class="glass-enrollment-card">
                                 <div class="text-center">
                                     <p class="text-xs text-gray-600 mb-2">
-                                        <i class="bi bi-clipboard-check mr-1"></i>
+                                        <span class="fa material-icons mr-1">assignment</span></i>
                                         Estado de Matrícula
                                     </p>
                                     <span class="glass-badge-enrollment glass-badge-green-enrollment">
-                                        <i class="bi bi-check-circle mr-1"></i>
+                                        <span class="fa material-icons mr-1">check_circle</span></i>
                                         Matrícula Aprobada
                                     </span>
                                     {% if course.fecha_revision %}
                                     <p class="text-xs text-gray-500 mt-2">
-                                        <i class="bi bi-calendar-check mr-1"></i>
+                                        <span class="fa material-icons mr-1">event</span></i>
                                         {{ course.fecha_revision|date:"d/m/Y" }}
                                     </p>
                                     {% endif %}
@@ -66,26 +66,36 @@
                     </div>
 
                     <!-- Action Buttons -->
-                    {% if course.get_dynamic_status == 'P' or course.get_dynamic_status == 'F' %}
                     <div class="flex flex-col gap-2 mt-3">
+                        <!-- Botón de documentos siempre visible -->
+                        <a href="{% url 'course_documents:student_dashboard' curso_id=course.id %}"
+                            class="glass-action-button glass-action-primary w-full">
+                            <span class="fa material-icons mr-1">folder_open</span></i>
+                            Documentos
+                            {% if course.has_new_content_indicator %}
+                            <span class="glass-badge-new">!</span>
+                            {% endif %}
+                        </a>
+                        
+                        {% if course.get_dynamic_status == 'P' or course.get_dynamic_status == 'F' %}
                         <a href="{% url 'principal:student_course_attendances' student_id=user.id course_id=course.id %}"
                             class="glass-action-button glass-action-info w-full">
-                            <i class="bi bi-calendar-check mr-1"></i>
+                            <span class="fa material-icons mr-1">event</span></i>
                             Ver asistencias
                         </a>
                         <a href="{% url 'principal:student_course_notes' student_id=user.id course_id=course.id %}"
                             class="glass-action-button glass-action-success w-full">
-                            <i class="bi bi-clipboard-data mr-1"></i>
+                            <span class="fa material-icons mr-1">assignment</span></i>
                             Ver Notas
                         </a>
+                        {% endif %}
                     </div>
-                    {% endif %}
                 </div>
                 {% endfor %}
             </div>
             {% else %}
             <div class="glass-alert glass-alert-info">
-                <i class="bi bi-info-circle mr-2"></i>
+                <span class="fa material-icons mr-2">info</span></i>
                 No estás inscrito en ningún curso actualmente.
             </div>
             {% endif %}
@@ -97,7 +107,7 @@
     <div class="glass-card">
         <div class="glass-content">
             <h5 class="text-xl font-bold text-gray-800 mb-2 flex items-center">
-                <i class="bi bi-clock-history mr-2"></i>
+                <span class="fa material-icons mr-2">schedule</span></i>
                 Cursos Pendientes
             </h5>
             <p class="text-sm text-gray-600 mb-4">Cursos con solicitudes esperando revisión del profesor</p>
@@ -129,11 +139,11 @@
                             <div class="glass-pending-card">
                                 <div class="text-center">
                                     <span class="glass-badge-pending">
-                                        <i class="bi bi-clock mr-1"></i>
+                                        <span class="fa material-icons mr-1">schedule</span></i>
                                         Pendiente de Revisión
                                     </span>
                                     <p class="text-xs text-gray-600 mt-2">
-                                        <i class="bi bi-info-circle mr-1"></i>
+                                        <span class="fa material-icons mr-1">info</span></i>
                                         Esperando respuesta del profesor
                                     </p>
                                 </div>
@@ -280,6 +290,39 @@
     .glass-action-success {
         background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
         color: #14532d;
+    }
+
+    .glass-action-primary {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        color: #1e40af;
+    }
+
+    /* Glass Badge New */
+    .glass-badge-new {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.25rem;
+        height: 1.25rem;
+        margin-left: 0.5rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.8));
+        color: white;
+        font-size: 0.75rem;
+        font-weight: 700;
+        animation: pulse 2s infinite;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.1);
+            opacity: 0.8;
+        }
     }
 
     /* Glass Alert */

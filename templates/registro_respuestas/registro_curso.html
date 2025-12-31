@@ -19,13 +19,13 @@
                     <li class="inline-flex items-center">
                         <a href="{% url 'principal:registro_respuestas_general' %}" 
                            class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
-                            <i class="bi bi-house mr-2"></i>
+                            <span class="fa material-icons mr-2">home</span></i>
                             Registro General
                         </a>
                     </li>
                     <li>
                         <div class="flex items-center">
-                            <i class="bi bi-chevron-right text-gray-400"></i>
+                            <span class="fa material-icons text-gray-400">arrow_back</span></i>
                             <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">{{ curso.name }}</span>
                         </div>
                     </li>
@@ -39,7 +39,7 @@
                 </div>
                 <div>
                     <a href="#" onclick="checkRespuestasBeforeExport('curso', '{{ curso.pk }}')" class="glass-button glass-button-success">
-                        <i class="bi bi-file-earmark-excel mr-2"></i>
+                        <span class="fa material-icons mr-2">table_chart</span></i>
                         Exportar Excel
                     </a>
                 </div>
@@ -52,7 +52,7 @@
             <div class="glass-card flex-[1.5] flex flex-col">
                 <div class="glass-header py-3">
                     <h3 class="text-lg font-bold text-gray-800 flex items-center">
-                        <i class="bi bi-funnel mr-2"></i>
+                        <span class="fa material-icons mr-2">filter_list</span></i>
                         Filtrar asistencias
                     </h3>
                 </div>
@@ -78,11 +78,11 @@
                         <!-- Action Buttons -->
                         <div class="flex gap-2 justify-start">
                             <button type="submit" class="glass-button glass-button-primary">
-                                <i class="bi bi-funnel mr-1"></i>
+                                <span class="fa material-icons mr-1">filter_list</span></i>
                                 Filtrar
                             </button>
                             <a href="{% url 'principal:registro_respuestas_curso' curso.pk %}" class="glass-button glass-button-secondary">
-                                <i class="bi bi-arrow-clockwise mr-1"></i>
+                                <span class="fa material-icons mr-1">refresh</span></i>
                                 Limpiar
                             </a>
                         </div>
@@ -128,7 +128,7 @@
             <div class="glass-card mb-6">
                 <div class="glass-header">
                     <h3 class="text-xl font-bold text-gray-800 flex items-center">
-                        <i class="bi bi-clipboard-data mr-2"></i>
+                        <span class="fa material-icons mr-2">assignment</span></i>
                         Solicitudes y Respuestas de Estudiantes
                     </h3>
                 </div>
@@ -141,7 +141,7 @@
                                         <div class="flex items-center justify-between gap-4">
                                             <!-- Student Info -->
                                             <div class="flex items-center">
-                                                <i class="bi bi-person text-blue-600 mr-3 text-xl"></i>
+                                                <span class="fa material-icons text-blue-600 mr-3 text-xl">person</span></i>
                                                 <div class="flex items-center gap-2">
                                                     <h6 class="font-semibold text-gray-800">
                                                         {{ solicitud.estudiante.get_full_name|default:solicitud.estudiante.username }}
@@ -160,7 +160,7 @@
                                                 </div>
                                                 <a href="{% url 'principal:registro_respuestas_estudiante' solicitud.pk %}" 
                                                    class="glass-button glass-button-primary text-xs px-3 py-1">
-                                                    <i class="bi bi-eye mr-1"></i>
+                                                    <span class="fa material-icons mr-1">visibility</span></i>
                                                     Ver Detalle
                                                 </a>
                                             </div>
@@ -193,7 +193,7 @@
                         <!-- Empty State -->
                         <div class="text-center py-12">
                             <div class="text-gray-400 text-6xl mb-4">
-                                <i class="bi bi-inbox"></i>
+                                <span class="fa material-icons">inbox</span></i>
                             </div>
                             <h5 class="text-xl font-semibold text-gray-600 mb-2">No hay solicitudes para este curso</h5>
                             <p class="text-gray-500">Las solicitudes de estudiantes aparecerán aquí cuando se registren.</p>
@@ -212,7 +212,7 @@
   <div class="error-modal-content">
     <div class="error-modal-header">
       <div class="error-modal-icon">
-        <i class="bi bi-exclamation-circle text-orange-600"></i>
+        <span class="fa material-icons text-orange-600">error</span></i>
       </div>
       <h3 class="error-modal-title">Sin Datos para Exportar</h3>
     </div>
@@ -228,7 +228,7 @@
     
     <div class="error-modal-footer">
       <button type="button" class="error-modal-btn error-modal-btn-ok" onclick="hideErrorModal()">
-        <i class="bi bi-check-circle mr-2"></i>
+        <span class="fa material-icons mr-2">check_circle</span></i>
         Entendido
       </button>
     </div>

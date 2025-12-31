@@ -17,13 +17,13 @@
                     <li class="inline-flex items-center">
                         <a href="{% url 'principal:asistencias' course.id %}" 
                            class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
-                            <i class="bi bi-clipboard-data mr-2"></i>
+                            <span class="fa material-icons mr-2">assignment</span></i>
                             Ver Asistencias
                         </a>
                     </li>
                     <li>
                         <div class="flex items-center">
-                            <i class="bi bi-chevron-right text-gray-400"></i>
+                            <span class="fa material-icons text-gray-400">arrow_back</span></i>
                             <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Agregar Asistencia</span>
                         </div>
                     </li>
@@ -38,7 +38,7 @@
         <div class="glass-card">
             <div class="glass-header">
                 <h3 class="text-xl font-bold text-gray-800 flex items-center">
-                    <i class="bi bi-plus-circle mr-2"></i>
+                    <span class="fa material-icons mr-2">add_circle</span></i>
                     Registrar Asistencia
                 </h3>
             </div>
@@ -49,7 +49,7 @@
                     <!-- Date Selection -->
                     <div class="mb-6">
                         <label for="date" class="block text-sm font-medium text-gray-700 mb-2">
-                            <i class="bi bi-calendar mr-1"></i>
+                            <span class="fa material-icons mr-1">event</span></i>
                             Fecha de la clase
                         </label>
                         <input class="glass-input" 
@@ -66,7 +66,7 @@
                     <!-- Students Selection -->
                     <div class="mb-6">
                         <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                            <i class="bi bi-people mr-2"></i>
+                            <span class="fa material-icons mr-2">group</span></i>
                             Marcar estudiantes ausentes
                         </h4>
                         <p class="text-sm text-gray-600 mb-4">
@@ -101,7 +101,7 @@
                             </div>
                         {% else %}
                             <div class="glass-alert glass-alert-info">
-                                <i class="bi bi-info-circle mr-2"></i>
+                                <span class="fa material-icons mr-2">info</span></i>
                                 No hay estudiantes matriculados en este curso.
                             </div>
                         {% endif %}
@@ -111,11 +111,11 @@
                     <div class="flex flex-col sm:flex-row gap-3 justify-end">
                         <a href="{% url 'principal:asistencias' course.id %}" 
                            class="glass-button glass-button-secondary">
-                            <i class="bi bi-arrow-left mr-2"></i>
+                            <span class="fa material-icons mr-2">arrow_back</span></i>
                             Cancelar
                         </a>
                         <button type="submit" class="glass-button glass-button-success">
-                            <i class="bi bi-plus-circle mr-2"></i>
+                            <span class="fa material-icons mr-2">add_circle</span></i>
                             Registrar Asistencia
                         </button>
                     </div>

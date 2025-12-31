@@ -16,7 +16,7 @@
             <div class="glass-header">
                 <div class="flex justify-between items-center">
                     <h2 class="text-3xl font-bold text-gray-800 flex items-center">
-                        <i class="bi bi-hdd-stack mr-3"></i>
+                        <span class="fa material-icons mr-3">dns</span></i>
                         Dashboard de Datos Archivados
                     </h2>
                     <!-- Indicador de migración en progreso -->
@@ -24,7 +24,7 @@
                         <div class="flex items-center">
                             <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-2"></div>
                             <span class="glass-badge glass-badge-warning">
-                                <i class="bi bi-gear-fill mr-1"></i> Migración en Progreso
+                                <span class="bi material-icons mr-1">settings</span></i> Migración en Progreso
                             </span>
                         </div>
                     </div>
@@ -37,7 +37,7 @@
         <div class="glass-card">
             <div class="glass-content">
                 <div class="glass-alert glass-alert-warning">
-                    <i class="bi bi-exclamation-triangle mr-2"></i>
+                    <span class="fa material-icons mr-2">warning</span></i>
                     <div>
                         <h4 class="text-xl font-bold mb-2">Sin Permisos</h4>
                         <p class="mb-2">No tiene permisos para acceder a esta sección. Solo usuarios del grupo "Secretaria" pueden acceder.</p>
@@ -51,7 +51,7 @@
                         </p>
                         <div class="flex gap-3">
                             <a href="{% url 'principal:profile' %}" class="glass-button glass-button-primary">
-                                <i class="bi bi-arrow-left mr-2"></i>
+                                <span class="fa material-icons mr-2">arrow_back</span></i>
                                 Volver al Perfil
                             </a>
                         </div>
@@ -70,7 +70,7 @@
                     </div>
                     <div class="flex-1">
                         <h4 class="text-xl font-bold text-gray-800 mb-2 flex items-center">
-                            <i class="bi bi-gear-fill mr-2"></i>
+                            <span class="bi material-icons mr-2">settings</span></i>
                             Migración Automática en Progreso
                         </h4>
                         <p class="text-gray-600 mb-3" id="estadoMigracionDashboard">Procesando datos desde la base de datos remota...</p>
@@ -89,7 +89,7 @@
         <div class="glass-card mb-6" id="alertaBienvenida">
             <div class="glass-content">
                 <div class="glass-alert glass-alert-success">
-                    <i class="bi bi-check-circle mr-2"></i>
+                    <span class="fa material-icons mr-2">check_circle</span></i>
                     <div class="flex-1">
                         <div class="flex justify-between items-start">
                             <div>
@@ -99,7 +99,7 @@
                                 {% if ultima_migracion and ultima_migracion.tablas_inspeccionadas > 0 %}
                                 <div class="border-t border-green-200 pt-3 mt-3">
                                     <p class="mb-0 flex items-center">
-                                        <i class="bi bi-info-circle mr-2"></i>
+                                        <span class="fa material-icons mr-2">info</span></i>
                                         <strong>Última migración:</strong> 
                                         Se inspeccionaron {{ ultima_migracion.tablas_inspeccionadas }} tablas, 
                                         {{ ultima_migracion.tablas_con_datos }} con datos y 
@@ -109,7 +109,7 @@
                                 {% endif %}
                             </div>
                             <button type="button" class="glass-button glass-button-secondary ml-4" onclick="cerrarAlertaBienvenida()">
-                                <i class="bi bi-x"></i>
+                                <span class="fa material-icons">close</span></i>
                             </button>
                         </div>
                     </div>
@@ -124,7 +124,7 @@
                 <div class="glass-card hover-lift flex-shrink-0" style="width: 175px; min-width: 175px;">
                     <div class="glass-content p-4 text-center">
                         <div class="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <i class="bi bi-archive text-lg text-blue-600"></i>
+                            <span class="bi material-icons text-lg text-blue-600">archive</span></i>
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 mb-2">{{ total_datos_archivados|default:0 }}</h3>
                         <p class="text-sm text-gray-600">Registros</p>
@@ -135,7 +135,7 @@
                 <div class="glass-card hover-lift flex-shrink-0" style="width: 175px; min-width: 175px;">
                     <div class="glass-content p-4 text-center">
                         <div class="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <i class="bi bi-grid-3x3-gap text-lg text-green-600"></i>
+                            <span class="fa material-icons text-lg text-green-600">grid_view</span></i>
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 mb-2">{{ total_tablas_migradas|default:0 }}</h3>
                         <p class="text-sm text-gray-600">Tablas</p>
@@ -146,7 +146,7 @@
                 <div class="glass-card hover-lift flex-shrink-0" style="width: 175px; min-width: 175px;">
                     <div class="glass-content p-4 text-center">
                         <div class="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <i class="bi bi-clipboard-data text-lg" style="color: #ec4899;"></i>
+                            <span class="fa material-icons text-lg">assignment</span></i>
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 mb-2">{{ tablas_inspeccionadas_actuales|default:0 }}</h3>
                         <p class="text-sm text-gray-600">Inspeccionadas</p>
@@ -157,7 +157,7 @@
                 <div class="glass-card hover-lift flex-shrink-0" style="width: 175px; min-width: 175px;">
                     <div class="glass-content p-4 text-center">
                         <div class="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <i class="bi bi-file-earmark text-lg" style="color: #ea580c;"></i>
+                            <span class="fa material-icons text-lg">description</span></i>
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 mb-2">{{ tablas_vacias_actuales|default:0 }}</h3>
                         <p class="text-sm text-gray-600">Vacías</p>
@@ -168,7 +168,7 @@
                 <div class="glass-card hover-lift flex-shrink-0" style="width: 175px; min-width: 175px;">
                     <div class="glass-content p-4 text-center">
                         <div class="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <i class="bi bi-clock-history text-lg" style="color: #9333ea;"></i>
+                            <span class="fa material-icons text-lg">schedule</span></i>
                         </div>
                         <h3 class="text-base font-bold text-gray-800 mb-2">{% if ultima_migracion %}{{ ultima_migracion.fecha_inicio|date:"d/m" }}{% else %}N/A{% endif %}</h3>
                         <p class="text-sm text-gray-600">Última</p>
@@ -179,7 +179,7 @@
                 <div class="glass-card hover-lift flex-shrink-0" style="width: 175px; min-width: 175px;">
                     <div class="glass-content p-4 text-center">
                         <div class="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <i class="bi bi-activity text-lg" style="color: #4f46e5;"></i>
+                            <span class="bi material-icons text-lg" style="color: #4f46e5;">trending_up</span></i>
                         </div>
                         <h3 class="text-base font-bold text-gray-800 mb-2">{% if ultima_migracion %}{{ ultima_migracion.estado|title }}{% else %}Inactivo{% endif %}</h3>
                         <p class="text-sm text-gray-600">Estado</p>
@@ -194,12 +194,12 @@
             <div class="glass-card hover-lift">
                 <div class="glass-content text-center">
                     <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="bi bi-download text-4xl text-blue-600"></i>
+                        <span class="fa material-icons text-4xl text-blue-600">cloud_download</span></i>
                     </div>
                     <h4 class="text-2xl font-bold text-gray-800 mb-3">Migración Automática</h4>
                     <p class="text-gray-600 mb-6">Configure y ejecute la migración desde su base de datos MariaDB remota</p>
                     <a href="{% url 'datos_archivados:configurar_migracion' %}" class="glass-button glass-button-primary">
-                        <i class="bi bi-gear mr-2"></i>
+                        <span class="fa material-icons mr-2">settings</span></i>
                         Configurar Migración
                     </a>
                 </div>
@@ -209,12 +209,12 @@
             <div class="glass-card hover-lift">
                 <div class="glass-content text-center">
                     <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="bi bi-table text-4xl text-green-600"></i>
+                        <span class="fa material-icons text-4xl text-green-600">table_view</span></i>
                     </div>
                     <h4 class="text-2xl font-bold text-gray-800 mb-3">Consultar Datos</h4>
                     <p class="text-gray-600 mb-6">Explore y busque en todos los datos archivados migrados</p>
                     <a href="{% url 'datos_archivados:tablas_list' %}" class="glass-button glass-button-success">
-                        <i class="bi bi-search mr-2"></i>
+                        <span class="fa material-icons mr-2">search</span></i>
                         Ver Datos Archivados
                     </a>
                 </div>
@@ -225,7 +225,7 @@
         <div class="glass-card">
             <div class="glass-header">
                 <h5 class="text-xl font-bold text-gray-800 flex items-center">
-                    <i class="bi bi-info-circle mr-2"></i>
+                    <span class="fa material-icons mr-2">info</span></i>
                     Características del Sistema
                 </h5>
             </div>
@@ -234,11 +234,11 @@
                     <div>
                         <ul class="space-y-3">
                             <li class="flex items-center">
-                                <i class="bi bi-check-circle text-green-600 mr-3"></i>
+                                <span class="fa material-icons text-green-600 mr-3">check_circle</span></i>
                                 <span><strong>Inspección automática</strong> de todas las tablas</span>
                             </li>
                             <li class="flex items-center">
-                                <i class="bi bi-check-circle text-green-600 mr-3"></i>
+                                <span class="fa material-icons text-green-600 mr-3">check_circle</span></i>
                                 <span><strong>Modelos dinámicos</strong> creados automáticamente</span>
                             </li>
                         </ul>
@@ -246,11 +246,11 @@
                     <div>
                         <ul class="space-y-3">
                             <li class="flex items-center">
-                                <i class="bi bi-check-circle text-green-600 mr-3"></i>
+                                <span class="fa material-icons text-green-600 mr-3">check_circle</span></i>
                                 <span><strong>Migración inteligente</strong> de tipos de datos</span>
                             </li>
                             <li class="flex items-center">
-                                <i class="bi bi-check-circle text-green-600 mr-3"></i>
+                                <span class="fa material-icons text-green-600 mr-3">check_circle</span></i>
                                 <span><strong>Almacenamiento flexible</strong> en formato JSON</span>
                             </li>
                         </ul>
@@ -269,14 +269,14 @@
         <div class="glass-content">
             <div class="flex items-center">
                 <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                    <i class="bi bi-check-circle-fill text-green-600"></i>
+                    <span class="fa material-icons text-green-600">check_circle</span></i>
                 </div>
                 <div class="flex-1">
                     <strong class="text-gray-800">Migración Completada</strong>
                     <p class="text-sm text-gray-600 mb-0">¡La migración de datos se ha completado exitosamente! La página se actualizará automáticamente.</p>
                 </div>
                 <button type="button" class="glass-button glass-button-secondary ml-3" onclick="cerrarToast()">
-                    <i class="bi bi-x"></i>
+                    <span class="fa material-icons">close</span></i>
                 </button>
             </div>
         </div>

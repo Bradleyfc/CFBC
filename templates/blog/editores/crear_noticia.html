@@ -6,7 +6,7 @@
 {% block contenido_editores %}
 <div class="card">
     <div class="card-header">
-        <h5><i class="fas fa-plus"></i> Crear Nueva Noticia</h5>
+        <h5><span class="fas material-icons">add</span></i> Crear Nueva Noticia</h5>
     </div>
     <div class="card-body">
         <form method="post" enctype="multipart/form-data">
@@ -122,10 +122,10 @@
             
             <div class="d-flex justify-content-between">
                 <a href="{% url 'blog:mis_noticias' %}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Cancelar
+                    <span class="fas material-icons">arrow_back</span></i> Cancelar
                 </a>
                 <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save"></i> Crear Noticia
+                    <span class="fas material-icons">help</span></i> Crear Noticia
                 </button>
             </div>
         </form>

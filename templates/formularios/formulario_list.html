@@ -10,7 +10,7 @@
         </div>
         <div class="col-auto">
             <a href="{% url 'principal:formulario_create' %}" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i> Crear Formulario
+                <span class="fa material-icons">add_circle</span></i> Crear Formulario
             </a>
         </div>
     </div>
@@ -61,11 +61,11 @@
                                 <div class="btn-group" role="group">
                                     <a href="{% url 'principal:formulario_update' formulario.id %}"
                                         class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-pencil-square"></i> Editar
+                                        <span class="fa material-icons">edit</span></i> Editar
                                     </a>
                                     <a href="{% url 'principal:formulario_preguntas' formulario.id %}"
                                         class="btn btn-sm btn-outline-info">
-                                        <i class="bi bi-list-ul"></i> Preguntas
+                                        <span class="bi material-icons">list</span></i> Preguntas
                                     </a>
                                 </div>
                             </td>

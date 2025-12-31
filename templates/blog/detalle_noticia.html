@@ -45,7 +45,7 @@
         <article class="mb-5">
             {% if noticia.destacada %}
                 <div class="alert alert-warning">
-                    <i class="fas fa-star"></i> <strong>Noticia Destacada</strong>
+                    <span class="fas material-icons">star</span></i> <strong>Noticia Destacada</strong>
                 </div>
             {% endif %}
 
@@ -58,11 +58,11 @@
                         <div class="d-flex flex-wrap gap-3">
                             <span class="badge bg-primary">{{ noticia.categoria.nombre }}</span>
                             <small class="text-muted">
-                                <i class="fas fa-user"></i> 
+                                <span class="fas material-icons">person</span></i> 
                                 {{ noticia.autor.get_full_name|default:noticia.autor.username }}
                             </small>
                             <small class="text-muted">
-                                <i class="fas fa-calendar"></i> 
+                                <span class="fas material-icons">event</span></i> 
                                 {{ noticia.fecha_publicacion|date:"d/m/Y H:i" }}
                             </small>
                         </div>
@@ -72,15 +72,15 @@
                         <div class="btn-group" role="group">
                             <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" 
                                target="_blank" class="btn btn-outline-primary btn-sm">
-                                <i class="fab fa-facebook-f"></i>
+                                <span class="fab material-icons">help</span></i>
                             </a>
                             <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri }}&text={{ noticia.titulo }}" 
                                target="_blank" class="btn btn-outline-info btn-sm">
-                                <i class="fab fa-twitter"></i>
+                                <span class="fab material-icons">twitter</span></i>
                             </a>
                             <a href="https://wa.me/?text={{ noticia.titulo }} {{ request.build_absolute_uri }}" 
                                target="_blank" class="btn btn-outline-success btn-sm">
-                                <i class="fab fa-whatsapp"></i>
+                                <span class="fab material-icons">help</span></i>
                             </a>
                         </div>
                     </div>
@@ -103,7 +103,7 @@
 
         <!-- Sección de comentarios -->
         <section class="mt-5">
-            <h3><i class="fas fa-comments"></i> Comentarios ({{ comentarios.count }})</h3>
+            <h3><span class="fas material-icons">help</span></i> Comentarios ({{ comentarios.count }})</h3>
             
             {% if user.is_authenticated %}
                 <!-- Formulario para nuevo comentario -->
@@ -116,14 +116,14 @@
                             {% csrf_token %}
                             {{ comentario_form.as_p }}
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-paper-plane"></i> Publicar comentario
+                                <span class="fas material-icons">send</span></i> Publicar comentario
                             </button>
                         </form>
                     </div>
                 </div>
             {% else %}
                 <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i>
+                    <span class="fas material-icons">info</span></i>
                     <a href="{% url 'login' %}">Inicia sesión</a> para poder comentar.
                 </div>
             {% endif %}
@@ -134,7 +134,7 @@
                     <div class="comentario">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <strong>
-                                <i class="fas fa-user-circle"></i>
+                                <span class="fas material-icons">person</span></i>
                                 {{ comentario.autor.get_full_name|default:comentario.autor.username }}
                             </strong>
                             <small class="text-muted">
@@ -146,7 +146,7 @@
                 {% endfor %}
             {% else %}
                 <div class="text-center py-4">
-                    <i class="fas fa-comment-slash fa-3x text-muted mb-3"></i>
+                    <span class="fas material-icons material-icons text-muted mb-3">close</span></i>
                     <p class="text-muted">Aún no hay comentarios. ¡Sé el primero en comentar!</p>
                 </div>
             {% endif %}
@@ -158,7 +158,7 @@
         <div class="sidebar">
             <!-- Noticias relacionadas -->
             {% if noticias_relacionadas %}
-                <h5><i class="fas fa-newspaper"></i> Noticias Relacionadas</h5>
+                <h5><span class="fas material-icons">help</span></i> Noticias Relacionadas</h5>
                 {% for noticia_rel in noticias_relacionadas %}
                     <div class="card mb-3">
                         {% if noticia_rel.imagen_principal %}
@@ -174,7 +174,7 @@
                                 </a>
                             </h6>
                             <small class="text-muted">
-                                <i class="fas fa-calendar"></i> 
+                                <span class="fas material-icons">event</span></i> 
                                 {{ noticia_rel.fecha_publicacion|date:"d/m/Y" }}
                             </small>
                         </div>
@@ -186,7 +186,7 @@
             <!-- Volver a la lista -->
             <div class="d-grid">
                 <a href="{% url 'blog:lista_noticias' %}" class="btn btn-outline-primary">
-                    <i class="fas fa-arrow-left"></i> Volver a noticias
+                    <span class="fas material-icons">arrow_back</span></i> Volver a noticias
                 </a>
             </div>
         </div>

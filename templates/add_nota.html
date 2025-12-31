@@ -17,13 +17,13 @@
                     <li class="inline-flex items-center">
                         <a href="{% url 'principal:student_list_notas_by_course' course_id=matricula.course.id %}" 
                            class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
-                            <i class="bi bi-journal-text mr-2"></i>
+                            <span class="fa material-icons mr-2">article</span></i>
                             Lista de Calificaciones
                         </a>
                     </li>
                     <li>
                         <div class="flex items-center">
-                            <i class="bi bi-chevron-right text-gray-400"></i>
+                            <span class="fa material-icons text-gray-400">arrow_back</span></i>
                             <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Agregar Calificación</span>
                         </div>
                     </li>
@@ -37,7 +37,7 @@
         <div class="glass-card mb-6">
             <div class="glass-header">
                 <h3 class="text-xl font-bold text-gray-800 flex items-center">
-                    <i class="bi bi-person-badge mr-2"></i>
+                    <span class="fa material-icons mr-2">person</span></i>
                     Información del Estudiante
                 </h3>
             </div>
@@ -59,7 +59,7 @@
         <div class="glass-card">
             <div class="glass-header">
                 <h3 class="text-xl font-bold text-gray-800 flex items-center">
-                    <i class="bi bi-clipboard-plus mr-2"></i>
+                    <span class="fa material-icons mr-2">assignment</span></i>
                     Formulario de Calificaciones
                 </h3>
             </div>
@@ -114,7 +114,7 @@
                         {% else %}
                             <!-- Si no hay campos visibles, mostrar información -->
                             <div class="glass-alert glass-alert-info">
-                                <i class="bi bi-info-circle mr-2"></i>
+                                <span class="fa material-icons mr-2">info</span></i>
                                 La información del estudiante y curso se maneja automáticamente. Proceda a agregar las notas individuales.
                             </div>
                         {% endif %}
@@ -123,7 +123,7 @@
                     <!-- Individual Notes Section -->
                     <div class="border-t border-gray-200 pt-6">
                         <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                            <i class="bi bi-list-ol mr-2"></i>
+                            <span class="fa material-icons mr-2">assignment</span></i>
                             Notas Individuales
                         </h4>
                         
@@ -136,7 +136,7 @@
                             <!-- Debug: Verificar que el formset existe -->
                             {% if not formset %}
                                 <div class="glass-alert glass-alert-info">
-                                    <i class="bi bi-exclamation-triangle mr-2"></i>
+                                    <span class="fa material-icons mr-2">warning</span></i>
                                     Error: El formset no está disponible.
                                 </div>
                             {% endif %}
@@ -168,13 +168,13 @@
                                                 <button type="button" 
                                                         class="glass-button glass-button-info edit-nota-button" 
                                                         data-form-id="{{ form_nota.prefix }}">
-                                                    <i class="bi bi-pencil mr-1"></i>
+                                                    <span class="fa material-icons mr-1">edit</span></i>
                                                     Editar
                                                 </button>
                                                 <button type="button" 
                                                         class="glass-button glass-button-danger delete-nota-button" 
                                                         data-form-id="{{ form_nota.prefix }}">
-                                                    <i class="bi bi-trash mr-1"></i>
+                                                    <span class="fa material-icons mr-1">delete</span></i>
                                                     Eliminar
                                                 </button>
                                             </div>
@@ -201,13 +201,13 @@
                                                 <button type="button" 
                                                         class="glass-button glass-button-success save-edit-button" 
                                                         data-form-id="{{ form_nota.prefix }}">
-                                                    <i class="bi bi-check mr-1"></i>
+                                                    <span class="fa material-icons mr-1">check_circle</span></i>
                                                     Guardar
                                                 </button>
                                                 <button type="button" 
                                                         class="glass-button glass-button-secondary cancel-edit-button" 
                                                         data-form-id="{{ form_nota.prefix }}">
-                                                    <i class="bi bi-x mr-1"></i>
+                                                    <span class="fa material-icons mr-1">close</span></i>
                                                     Cancelar
                                                 </button>
                                             </div>
@@ -235,7 +235,7 @@
                                         <button type="button" 
                                                 class="glass-button glass-button-danger delete-nota-button" 
                                                 data-form-id="{{ form_nota.prefix }}">
-                                            <i class="bi bi-trash mr-1"></i>
+                                            <span class="fa material-icons mr-1">delete</span></i>
                                             Eliminar
                                         </button>
                                     </div>
@@ -269,7 +269,7 @@
                                     <button type="button" 
                                             class="glass-button glass-button-danger delete-nota-button" 
                                             data-form-id="notas-0">
-                                        <i class="bi bi-trash mr-1"></i>
+                                        <span class="fa material-icons mr-1">delete</span></i>
                                         Eliminar
                                     </button>
                                 </div>
@@ -286,7 +286,7 @@
                         <!-- Add Note Button -->
                         <div class="mb-6">
                             <button type="button" id="add-nota-button" class="glass-button glass-button-info">
-                                <i class="bi bi-plus-circle mr-2"></i>
+                                <span class="fa material-icons mr-2">add_circle</span></i>
                                 Agregar Nota
                             </button>
                         </div>
@@ -296,11 +296,11 @@
                     <div class="flex flex-col sm:flex-row gap-3 justify-end pt-6 border-t border-gray-200">
                         <a href="{% url 'principal:student_list_notas_by_course' course_id=matricula.course.id %}" 
                            class="glass-button glass-button-secondary">
-                            <i class="bi bi-x-circle mr-2"></i>
+                            <span class="fa material-icons mr-2">cancel</span></i>
                             Cancelar
                         </a>
                         <button type="submit" class="glass-button glass-button-success">
-                            <i class="bi bi-save mr-2"></i>
+                            <span class="fa material-icons mr-2">cloud_download</span></i>
                             Guardar Calificación
                         </button>
                     </div>
@@ -317,7 +317,7 @@
     <div class="delete-modal-content">
         <div class="delete-modal-header">
             <div class="delete-modal-icon">
-                <i class="bi bi-exclamation-triangle text-red-600"></i>
+                <span class="fa material-icons text-red-600">warning</span></i>
             </div>
             <h3 class="delete-modal-title">Confirmar Eliminación</h3>
         </div>
@@ -333,11 +333,11 @@
         
         <div class="delete-modal-footer">
             <button type="button" class="delete-modal-btn delete-modal-btn-cancel" onclick="hideDeleteNoteModal()">
-                <i class="bi bi-x-circle mr-2"></i>
+                <span class="fa material-icons mr-2">cancel</span></i>
                 Cancelar
             </button>
             <button type="button" class="delete-modal-btn delete-modal-btn-confirm" onclick="confirmDeleteNote()">
-                <i class="bi bi-trash mr-2"></i>
+                <span class="fa material-icons mr-2">delete</span></i>
                 Eliminar
             </button>
         </div>
@@ -952,7 +952,7 @@
                                 </div>
                                 <div class="flex items-end">
                                     <button type="button" class="glass-button glass-button-danger delete-nota-button" data-form-id="notas-${newFormIndex}">
-                                        <i class="bi bi-trash mr-1"></i>
+                                        <span class="fa material-icons mr-1">delete</span></i>
                                         Eliminar
                                     </button>
                                 </div>

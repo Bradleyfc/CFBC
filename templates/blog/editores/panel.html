@@ -44,20 +44,20 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <h5><i class="fas fa-bolt"></i> Acciones Rápidas</h5>
+                <h5><span class="fas material-icons">flash_on</span></i> Acciones Rápidas</h5>
             </div>
             <div class="card-body">
                 <a href="{% url 'blog:crear_noticia' %}" class="btn btn-primary btn-editor">
-                    <i class="fas fa-plus"></i> Nueva Noticia
+                    <span class="fas material-icons">add</span></i> Nueva Noticia
                 </a>
                 <a href="{% url 'blog:mis_noticias' %}" class="btn btn-outline-primary btn-editor">
-                    <i class="fas fa-list"></i> Ver Mis Noticias
+                    <span class="fas material-icons">help</span></i> Ver Mis Noticias
                 </a>
                 <a href="{% url 'blog:gestionar_categorias' %}" class="btn btn-outline-secondary btn-editor">
-                    <i class="fas fa-tags"></i> Gestionar Categorías
+                    <span class="fas material-icons">help</span></i> Gestionar Categorías
                 </a>
                 <a href="{% url 'blog:lista_noticias' %}" class="btn btn-outline-success btn-editor">
-                    <i class="fas fa-eye"></i> Ver Sitio Público
+                    <span class="fas material-icons">visibility</span></i> Ver Sitio Público
                 </a>
             </div>
         </div>
@@ -70,7 +70,7 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <h5><i class="fas fa-clock"></i> Mis Últimas Noticias</h5>
+                <h5><span class="fas material-icons">schedule</span></i> Mis Últimas Noticias</h5>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -107,12 +107,12 @@
                                 <td>
                                     <a href="{% url 'blog:editar_noticia' noticia.pk %}" 
                                        class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-edit"></i>
+                                        <span class="fas material-icons">help</span></i>
                                     </a>
                                     {% if noticia.estado == 'publicado' %}
                                         <a href="{{ noticia.get_absolute_url }}" 
                                            class="btn btn-sm btn-outline-success" target="_blank">
-                                            <i class="fas fa-eye"></i>
+                                            <span class="fas material-icons">visibility</span></i>
                                         </a>
                                     {% endif %}
                                 </td>
@@ -130,11 +130,11 @@
     <div class="col-12">
         <div class="card">
             <div class="card-body text-center py-5">
-                <i class="fas fa-newspaper fa-4x text-muted mb-3"></i>
+                <span class="fas material-icons material-icons text-muted mb-3">close</span></i>
                 <h4>¡Bienvenido al Panel de Editores!</h4>
                 <p class="text-muted">Aún no has creado ninguna noticia. ¡Comienza creando tu primera noticia!</p>
                 <a href="{% url 'blog:crear_noticia' %}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Crear Primera Noticia
+                    <span class="fas material-icons">add</span></i> Crear Primera Noticia
                 </a>
             </div>
         </div>

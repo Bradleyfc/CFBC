@@ -10,13 +10,13 @@
             <div class="card">
                 <div class="card-header bg-info text-white">
                     <h4 class="mb-0">
-                        <i class="fas fa-search"></i>
+                        <span class="fas material-icons">search</span></i>
                         Buscar Usuario Archivado
                     </h4>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
+                        <span class="fas material-icons">info</span></i>
                         <strong>Busca tu cuenta anterior</strong><br>
                         Ingresa tu correo electrónico para encontrar tu cuenta archivada.
                     </div>
@@ -28,7 +28,7 @@
                             </div>
                             <div class="col-md-4 d-flex align-items-end">
                                 <button type="submit" class="btn btn-primary w-100">
-                                    <i class="fas fa-search"></i>
+                                    <span class="fas material-icons">search</span></i>
                                     Buscar
                                 </button>
                             </div>
@@ -37,7 +37,7 @@
 
                     {% if usuarios_encontrados %}
                         <div class="alert alert-success">
-                            <i class="fas fa-check-circle"></i>
+                            <span class="fas material-icons">check_circle</span></i>
                             Se encontraron {{ usuarios_encontrados|length }} usuario(s) en las tablas archivadas.
                         </div>
 
@@ -95,7 +95,7 @@
                                                 <a href="{% url 'datos_archivados:reclamar_usuario' %}" 
                                                    class="btn btn-sm btn-success"
                                                    title="Reclamar esta cuenta">
-                                                    <i class="fas fa-user-check"></i>
+                                                    <span class="fas material-icons">person</span></i>
                                                     Reclamar
                                                 </a>
                                             {% else %}
@@ -105,13 +105,13 @@
                                                             data-bs-toggle="modal" 
                                                             data-bs-target="#modalDatos{{ forloop.counter }}"
                                                             title="Ver datos completos">
-                                                        <i class="fas fa-eye"></i>
+                                                        <span class="fas material-icons">visibility</span></i>
                                                         Ver
                                                     </button>
                                                     <a href="{% url 'datos_archivados:iniciar_reclamacion_usuario' usuario.id %}" 
                                                        class="btn btn-sm btn-success"
                                                        title="Reclamar esta cuenta">
-                                                        <i class="fas fa-user-check"></i>
+                                                        <span class="fas material-icons">person</span></i>
                                                         Reclamar
                                                     </a>
                                                 </div>
@@ -161,7 +161,7 @@
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                                             <a href="{% url 'datos_archivados:iniciar_reclamacion_usuario' usuario.id %}" class="btn btn-primary">
-                                                <i class="fas fa-user-check"></i>
+                                                <span class="fas material-icons">person</span></i>
                                                 Reclamar Cuenta
                                             </a>
                                         </div>
@@ -173,14 +173,14 @@
 
                         {% if usuarios_encontrados|length == 20 %}
                             <div class="alert alert-warning">
-                                <i class="fas fa-exclamation-triangle"></i>
+                                <span class="fas material-icons">warning</span></i>
                                 Se muestran solo los primeros 20 resultados. Refina tu búsqueda para encontrar más usuarios específicos.
                             </div>
                         {% endif %}
 
                     {% elif form.is_bound %}
                         <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle"></i>
+                            <span class="fas material-icons">warning</span></i>
                             No se encontraron usuarios archivados con ese correo electrónico.
                             <br><small>Verifica que el correo electrónico sea exactamente el mismo que usabas anteriormente.</small>
                         </div>
@@ -188,11 +188,11 @@
 
                     <div class="text-center mt-4">
                         <a href="{% url 'datos_archivados:reclamar_usuario' %}" class="btn btn-outline-primary me-2">
-                            <i class="fas fa-user-check"></i>
+                            <span class="fas material-icons">person</span></i>
                             Reclamar Cuenta Directamente
                         </a>
                         <a href="{% url 'principal:registro' %}" class="btn btn-outline-secondary">
-                            <i class="fas fa-user-plus"></i>
+                            <span class="fas material-icons">person</span></i>
                             Crear Cuenta Nueva
                         </a>
                     </div>

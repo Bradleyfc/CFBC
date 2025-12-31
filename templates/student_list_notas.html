@@ -15,7 +15,7 @@
             <!-- Back Button -->
             <div class="mb-4">
                 <a href="{% url 'principal:courses' %}" class="glass-button glass-button-secondary">
-                    <i class="bi bi-arrow-left mr-2"></i>
+                    <span class="fa material-icons mr-2">arrow_back</span></i>
                     Volver a Cursos
                 </a>
             </div>
@@ -28,7 +28,7 @@
         <div class="glass-card mb-6">
             <div class="glass-header">
                 <h3 class="text-xl font-bold text-gray-800 flex items-center">
-                    <i class="bi bi-search mr-2"></i>
+                    <span class="fa material-icons mr-2">search</span></i>
                     Buscar Estudiante
                 </h3>
             </div>
@@ -45,11 +45,11 @@
                     <!-- Action Buttons -->
                     <div class="flex flex-wrap gap-2 justify-end">
                         <button type="submit" class="glass-button glass-button-primary">
-                            <i class="bi bi-search mr-2"></i>
+                            <span class="fa material-icons mr-2">search</span></i>
                             Buscar/Filtrar
                         </button>
                         <a href="{% url 'principal:student_list_notas_by_course' course_id=course.id %}" class="glass-button glass-button-secondary">
-                            <i class="bi bi-arrow-clockwise mr-2"></i>
+                            <span class="fa material-icons mr-2">refresh</span></i>
                             Limpiar
                         </a>
                     </div>
@@ -61,7 +61,7 @@
         <div class="glass-card mb-6">
             <div class="glass-header">
                 <h3 class="text-xl font-bold text-gray-800 flex items-center">
-                    <i class="bi bi-clipboard-data mr-2"></i>
+                    <span class="fa material-icons mr-2">assignment</span></i>
                     Lista de Calificaciones
                 </h3>
             </div>
@@ -114,7 +114,7 @@
                                 <td class="acciones-col">
                                     <a href="{% url 'principal:add_nota' matricula_id=data.matricula_id %}" 
                                        class="glass-button glass-button-primary text-xs px-3 py-1">
-                                        <i class="bi bi-plus-circle mr-1"></i>
+                                        <span class="fa material-icons mr-1">add_circle</span></i>
                                         Agregar/Editar
                                     </a>
                                 </td>
@@ -125,7 +125,7 @@
                 </div>
                 {% else %}
                 <div class="glass-alert glass-alert-info">
-                    <i class="bi bi-info-circle mr-2"></i>
+                    <span class="fa material-icons mr-2">info</span></i>
                     No se encontraron matrículas o notas para este curso.
                 </div>
                 {% endif %}

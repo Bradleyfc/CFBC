@@ -42,7 +42,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
             <a class="navbar-brand" href="{% url 'blog:lista_noticias' %}">
-                <i class="fas fa-newspaper"></i> Noticias CFBC
+                <span class="fas material-icons">help</span></i> Noticias CFBC
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -68,7 +68,7 @@
                     <input class="form-control me-2" type="search" name="q" placeholder="Buscar noticias..." 
                            value="{{ request.GET.q }}">
                     <button class="btn btn-outline-light" type="submit">
-                        <i class="fas fa-search"></i>
+                        <span class="fas material-icons">search</span></i>
                     </button>
                 </form>
                 
@@ -77,27 +77,27 @@
                     {% if user.is_authenticated %}
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-user"></i> {{ user.username }}
+                                <span class="fas material-icons">person</span></i> {{ user.username }}
                             </a>
                             <ul class="dropdown-menu">
                                 {% if user.groups.all|length > 0 %}
                                     {% for group in user.groups.all %}
                                         {% if group.name == 'Editores' %}
                                             <li><a class="dropdown-item" href="{% url 'blog:panel_editores' %}">
-                                                <i class="fas fa-edit"></i> Panel de Editores
+                                                <span class="fas material-icons">help</span></i> Panel de Editores
                                             </a></li>
                                         {% endif %}
                                     {% endfor %}
                                 {% endif %}
                                 {% if user.is_staff %}
                                 <li><a class="dropdown-item" href="{% url 'admin:index' %}">
-                                    <i class="fas fa-cog"></i> Admin
+                                    <span class="fas material-icons">settings</span></i> Admin
                                 </a></li>
                                 {% endif %}
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <a class="dropdown-item" href="#" onclick="document.getElementById('logout-form').submit(); return false;">
-                                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                                        <span class="fas material-icons">help</span></i> Cerrar Sesión
                                     </a>
                                     <form id="logout-form" method="post" action="{% url 'logout' %}" style="display: none;">
                                         {% csrf_token %}

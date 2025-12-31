@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Nuevo documento disponible</title>
+</head>
+<body>
+    <h2>Nuevo documento disponible en {{ curso.name }}</h2>
+    
+    <p>Hola {{ student.get_full_name|default:student.username }},</p>
+    
+    <p>Se ha subido un nuevo documento al curso <strong>{{ curso.name }}</strong>:</p>
+    
+    <ul>
+        <li><strong>Documento:</strong> {{ document.name }}</li>
+        <li><strong>Carpeta:</strong> {{ folder.name }}</li>
+        <li><strong>Fecha:</strong> {{ document.uploaded_at|date:"d/m/Y H:i" }}</li>
+    </ul>
+    
+    <p>Puedes acceder a los documentos del curso desde tu perfil de estudiante.</p>
+    
+    <p>Saludos,<br>
+    Centro Fray Bartolomé de las Casas</p>
+</body>
+</html>

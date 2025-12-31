@@ -450,7 +450,7 @@
       <div class="animate-from-bottom form-links">
         <div class="link-row">
           <button class="glass-login-btn text-white font-medium py-2 px-4 rounded-md transition duration-200 inline-flex items-center" type="submit">
-            <i class="bi bi-box-arrow-in-right mr-2"></i> Iniciar Sesión
+            <span class="fa material-icons mr-2">login</span></i> Iniciar Sesión
           </button>
         </div>
         
@@ -458,14 +458,14 @@
           <p class="text-sm text-gray-600" style="margin: 0 !important; font-size: 14px !important; color: #6b7280 !important; font-style: italic !important; padding: 8px 12px !important; border: 1px solid #e5e7eb !important; border-radius: 6px !important; background-color: #f9fafb !important; display: inline-block !important;">
             No tienes una cuenta? 
             <a href="{% url 'principal:registro' %}" class="register-link" style="margin-left: 12px; padding: 4px 8px !important; font-size: 12px !important; border-radius: 12px !important;">
-              <i class="bi bi-person-plus" style="margin-right: 6px;"></i> Registrarse
+              <span class="fa material-icons">person</span></i> Registrarse
             </a>
           </p>
           <a href="{% url 'principal:password_reset_request' %}" class="forgot-link" style="padding: 6px 12px; font-size: 13px;" title="¿Olvidó su contraseña?">
-            <i class="bi bi-key"></i>
+            <span class="fa material-icons">vpn_key</span></i>
           </a>
           <a href="{% url 'principal:home' %}" class="forgot-link" style="padding: 6px 12px; font-size: 13px;" title="Ir a Inicio">
-            <i class="bi bi-house"></i>
+            <span class="fa material-icons">home</span></i>
           </a>
         </div>
       </div>
