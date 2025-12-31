@@ -368,6 +368,9 @@ class StudentDashboardView(LoginRequiredMixin, StudentPermissionMixin, DetailVie
             folder.document_list = CourseDocument.objects.filter(
                 folder=folder
             ).order_by('-uploaded_at')
+            
+            # Calcular documentos nuevos para este estudiante
+            folder.new_documents_count = folder.get_new_documents_count(self.request.user)
 
         context['folders'] = folders
 
@@ -390,16 +393,17 @@ class StudentDashboardView(LoginRequiredMixin, StudentPermissionMixin, DetailVie
         """Override get to mark content as seen"""
         response = super().get(request, *args, **kwargs)
 
-        # Marcar contenido como visto usando el servicio
+        # Actualizar la fecha de última verificación del estudiante
         curso = self.get_object()
-        if ContentIndicatorService.deactivate_indicator_for_student(curso, request.user):
-            # Registrar en audit log
-            AuditLog.log_action(
-                user=request.user,
-                action='content_viewed',
-                curso=curso,
-                details=f'Estudiante accedió al dashboard del curso "{curso.name}"'
-            )
+        ContentIndicatorService.update_last_checked(curso, request.user)
+        
+        # Registrar en audit log
+        AuditLog.log_action(
+            user=request.user,
+            action='content_viewed',
+            curso=curso,
+            details=f'Estudiante accedió al dashboard del curso "{curso.name}"'
+        )
 
         return response
 
@@ -514,6 +518,37 @@ class StudentFolderDetailView(LoginRequiredMixin, StudentPermissionMixin, Detail
         }
 
         return context
+
+    def get(self, request, *args, **kwargs):
+        """Override get to update folder access"""
+        response = super().get(request, *args, **kwargs)
+        
+        # Actualizar el acceso a la carpeta
+        folder = self.get_object()
+        from .models import FolderAccess
+        
+        folder_access, created = FolderAccess.objects.get_or_create(
+            folder=folder,
+            student=request.user
+        )
+        
+        # Si no es la primera vez, actualizar last_accessed (se hace automáticamente por auto_now=True)
+        if not created:
+            folder_access.save()  # Esto actualiza last_accessed
+        
+        # Actualizar el indicador global del curso
+        ContentIndicatorService.update_last_checked(folder.curso, request.user)
+        
+        # Registrar en audit log
+        AuditLog.log_action(
+            user=request.user,
+            action='folder_accessed',
+            curso=folder.curso,
+            folder=folder,
+            details=f'Estudiante accedió a la carpeta "{folder.name}"'
+        )
+        
+        return response
 
 
 class StudentDocumentHistoryView(LoginRequiredMixin, StudentPermissionMixin, DetailView):

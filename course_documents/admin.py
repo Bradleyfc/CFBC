@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import DocumentFolder, CourseDocument, DocumentAccess, NewContentNotification, AuditLog
+from .models import DocumentFolder, CourseDocument, DocumentAccess, FolderAccess, NewContentNotification, AuditLog
 
 
 @admin.register(DocumentFolder)
@@ -32,6 +32,18 @@ class DocumentAccessAdmin(admin.ModelAdmin):
     list_filter = ['accessed_at', 'document__folder__curso']
     search_fields = ['document__name', 'student__username']
     readonly_fields = ['accessed_at']
+
+
+@admin.register(FolderAccess)
+class FolderAccessAdmin(admin.ModelAdmin):
+    list_display = ['student', 'folder', 'folder_curso', 'last_accessed', 'created_at']
+    list_filter = ['last_accessed', 'created_at', 'folder__curso']
+    search_fields = ['student__username', 'folder__name', 'folder__curso__name']
+    readonly_fields = ['created_at', 'last_accessed']
+
+    def folder_curso(self, obj):
+        return obj.folder.curso.name
+    folder_curso.short_description = 'Curso'
 
 
 @admin.register(NewContentNotification)

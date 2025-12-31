@@ -24,6 +24,14 @@
             {% endif %}
         </div>
 
+        <!-- Botón Volver al Perfil -->
+        <div class="mb-6 text-center">
+            <a href="{% url 'principal:profile' %}" 
+               class="glass-button glass-button-secondary">
+                <span class="fa material-icons mr-2">arrow_back</span>Volver al Perfil
+            </a>
+        </div>
+
         <!-- Estadísticas -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div class="glass-card">
@@ -79,15 +87,10 @@
                             <h3 class="text-lg font-semibold text-gray-800 mb-2">
                                 {{ folder.name }}
                             </h3>
-                            <div class="flex items-center justify-center gap-2 mb-4">
-                                <p class="text-sm text-gray-500">
-                                    {{ folder.document_list.count }} documento{{ folder.document_list.count|pluralize }}
+                            <div class="mb-4">
+                                <p class="text-sm text-gray-500 text-center">
+                                    {{ folder.document_list.count }} documento{{ folder.document_list.count|pluralize }}{% if folder.new_documents_count > 0 %} - <span class="text-red-600 font-semibold">{{ folder.new_documents_count }} nuevo{{ folder.new_documents_count|pluralize }}</span>{% endif %}
                                 </p>
-                                {% if folder.new_documents_count > 0 %}
-                                    <span class="text-xs font-semibold text-red-600 bg-red-100 px-2 py-1 rounded-full">
-                                        {{ folder.new_documents_count }} Documento{{ folder.new_documents_count|pluralize }} Nuevo{{ folder.new_documents_count|pluralize }}
-                                    </span>
-                                {% endif %}
                             </div>
                             <a href="{% url 'course_documents:student_folder_detail' curso_id=curso.id folder_id=folder.id %}" 
                                class="glass-button glass-button-primary w-full">
@@ -210,6 +213,11 @@
     .glass-button-info {
         background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
         color: #1e3a8a;
+    }
+
+    .glass-button-secondary {
+        background: linear-gradient(135deg, rgba(107, 114, 128, 0.3), rgba(75, 85, 99, 0.2));
+        color: #374151;
     }
 
     /* Glass Alert */

@@ -55,6 +55,26 @@ class DocumentFolder(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
+    def get_new_documents_count(self, student):
+        """Calcula el número de documentos nuevos en esta carpeta para un estudiante específico"""
+        try:
+            # Obtener el último acceso del estudiante a esta carpeta específica
+            folder_access = FolderAccess.objects.get(
+                folder=self,
+                student=student
+            )
+            
+            # Contar documentos subidos después del último acceso a la carpeta
+            new_documents = self.documents.filter(
+                uploaded_at__gt=folder_access.last_accessed
+            ).count()
+            
+            return new_documents
+            
+        except FolderAccess.DoesNotExist:
+            # Si nunca ha accedido a esta carpeta, todos los documentos son "nuevos"
+            return self.documents.count()
+
 
 class CourseDocument(models.Model):
     """Documento subido por el profesor"""
@@ -287,6 +307,24 @@ class CourseDocument(models.Model):
         }
         
         return type_map.get(extension, type_map['default'])
+
+
+class FolderAccess(models.Model):
+    """Registro de acceso a carpetas por estudiantes"""
+    folder = models.ForeignKey(DocumentFolder, on_delete=models.CASCADE, 
+                              related_name='access_logs', verbose_name='Carpeta')
+    student = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Estudiante')
+    last_accessed = models.DateTimeField(auto_now=True, verbose_name='Último acceso')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Primer acceso')
+
+    class Meta:
+        verbose_name = '📂 Acceso a Carpeta'
+        verbose_name_plural = '📂 Accesos a Carpetas'
+        unique_together = [['folder', 'student']]
+        ordering = ['-last_accessed']
+
+    def __str__(self):
+        return f"{self.student.get_full_name() or self.student.username} - {self.folder.name} - {self.last_accessed}"
 
 
 class DocumentAccess(models.Model):

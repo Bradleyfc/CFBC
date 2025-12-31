@@ -45,10 +45,48 @@ class ContentIndicatorService:
             )
             if notification.has_new_content:
                 notification.has_new_content = False
+                # IMPORTANTE: Actualizar last_checked para reflejar que el estudiante vio el contenido
+                from django.utils import timezone
+                notification.last_checked = timezone.now()
                 notification.save()
                 return True
         except NewContentNotification.DoesNotExist:
             pass
+        return False
+    
+    @classmethod
+    def update_last_checked(cls, curso, student):
+        """Actualiza la fecha de última verificación para un estudiante en un curso"""
+        from django.utils import timezone
+        
+        notification, created = NewContentNotification.objects.get_or_create(
+            curso=curso,
+            student=student,
+            defaults={
+                'has_new_content': False,
+                'last_checked': timezone.now()
+            }
+        )
+        
+        if not created:
+            notification.last_checked = timezone.now()
+            # Solo desactivar has_new_content si NO hay documentos nuevos en ninguna carpeta
+            notification.has_new_content = cls.has_new_documents_in_any_folder(curso, student)
+            notification.save()
+        
+        return notification
+    
+    @classmethod
+    def has_new_documents_in_any_folder(cls, curso, student):
+        """Verifica si hay documentos nuevos en cualquier carpeta del curso"""
+        from .models import DocumentFolder
+        
+        folders = DocumentFolder.objects.filter(curso=curso, documents__isnull=False).distinct()
+        
+        for folder in folders:
+            if folder.get_new_documents_count(student) > 0:
+                return True
+        
         return False
     
     @classmethod
