@@ -184,7 +184,7 @@
 
             <!-- Fechas si existen - Espacio reservado siempre -->
             <div class="flex justify-between gap-2 mb-3 min-h-[2rem]">
-              {% if course.enrollment_deadline or course.start_date %}
+              {% if course.get_dynamic_status != 'P' and course.get_dynamic_status != 'F' %}
               <!-- Fecha límite -->
               <div class="glass-detail-item-medium flex-1">
                 {% if course.enrollment_deadline %}
@@ -197,7 +197,7 @@
 
               <!-- Fecha inicio -->
               <div class="glass-detail-item-medium flex-1">
-                {% if course.start_date and course.get_dynamic_status != 'P' and course.get_dynamic_status != 'F' %}
+                {% if course.start_date %}
                 <div class="glass-icon-medium {% if course.get_dynamic_status == 'IT' %}pulse-red-icon{% endif %}">
                   <span class="bi material-icons {% if course.get_dynamic_status == 'IT' %}pulse-red-text{% endif %}">play_circle</span></i>
                 </div>
