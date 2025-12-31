@@ -4,7 +4,7 @@ from django.views.generic import DetailView, CreateView, View
 from django.contrib import messages
 from django.urls import reverse_lazy, reverse
 from django.http import JsonResponse, HttpResponse, Http404
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.utils import timezone
 from django.db import transaction
 from django.core.files.storage import default_storage
@@ -163,6 +163,17 @@ class UploadDocumentView(LoginRequiredMixin, TeacherPermissionMixin, CreateView)
         if curso.teacher != self.request.user:
             raise PermissionDenied("No tienes permisos para subir documentos en este curso")
 
+        # Verificar duplicados antes de guardar
+        try:
+            form.check_duplicate_document(folder)
+        except ValidationError as e:
+            # Agregar el error específico de duplicado
+            messages.error(
+                self.request,
+                f'⚠️ Documento duplicado: {e.message}'
+            )
+            return self.form_invalid(form)
+
         # Asignar carpeta y usuario ANTES de guardar
         document = form.save(commit=False)
         document.folder = folder
@@ -196,22 +207,23 @@ class UploadDocumentView(LoginRequiredMixin, TeacherPermissionMixin, CreateView)
 
                 messages.success(
                     self.request,
-                    f'Documento "{self.object.name}" subido exitosamente.'
+                    f'✅ Documento "{self.object.name}" subido exitosamente.'
                 )
 
                 return redirect(self.get_success_url())
 
-        except Exception as e:
+        except ValidationError as e:
+            # Error de validación del modelo (duplicado a nivel de BD)
+            error_msg = str(e.message_dict.get('name', ['Error de validación'])[0]) if hasattr(e, 'message_dict') else str(e)
             messages.error(
                 self.request,
-                f'Error al subir el documento: {str(e)}'
+                f'⚠️ {error_msg}'
             )
             return self.form_invalid(form)
-
         except Exception as e:
             messages.error(
                 self.request,
-                f'Error al subir el documento: {str(e)}'
+                f'❌ Error al subir el documento: {str(e)}'
             )
             return self.form_invalid(form)
 
@@ -219,10 +231,15 @@ class UploadDocumentView(LoginRequiredMixin, TeacherPermissionMixin, CreateView)
         """Manejar formulario inválido"""
         curso = self.get_curso()
         folder = self.get_folder()
-        messages.error(
-            self.request,
-            'Error al subir el documento. Verifica el archivo y el nombre.'
-        )
+        
+        # Si no hay mensajes específicos, agregar uno genérico
+        if not messages.get_messages(self.request):
+            messages.error(
+                self.request,
+                '❌ Error al subir el documento. Verifica el archivo y el nombre.'
+            )
+        
+        # Redirigir de vuelta a la página de la carpeta (no al formulario de subida)
         return redirect('course_documents:folder_detail', curso_id=curso.id, folder_id=folder.id)
 
     def get_success_url(self):

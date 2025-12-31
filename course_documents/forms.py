@@ -194,3 +194,37 @@ class CourseDocumentForm(forms.ModelForm):
             cleaned_data['name'] = name.strip()
 
         return cleaned_data
+
+    def check_duplicate_document(self, folder):
+        """
+        Verificar si ya existe un documento con el mismo nombre y tamaño en la carpeta
+        """
+        cleaned_data = self.cleaned_data
+        name = cleaned_data.get('name')
+        file = cleaned_data.get('file')
+
+        if not name or not file or not folder:
+            return
+
+        # Buscar documentos existentes con el mismo nombre y tamaño en la misma carpeta
+        existing_document = CourseDocument.objects.filter(
+            folder=folder,
+            name=name,
+            file_size=file.size
+        ).first()
+
+        if existing_document:
+            raise ValidationError(
+                f'Ya existe un documento con el nombre "{name}" y el mismo tamaño '
+                f'({self.get_file_size_display(file.size)}) en esta carpeta. '
+                f'Por favor, cambia el nombre del documento o verifica que no sea un duplicado.'
+            )
+
+    def get_file_size_display(self, size_bytes):
+        """Muestra el tamaño del archivo en formato legible"""
+        if size_bytes < 1024:
+            return f"{size_bytes} bytes"
+        elif size_bytes < 1024 * 1024:
+            return f"{size_bytes / 1024:.1f} KB"
+        else:
+            return f"{size_bytes / (1024 * 1024):.1f} MB"

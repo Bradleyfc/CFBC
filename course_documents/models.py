@@ -115,6 +115,23 @@ class CourseDocument(models.Model):
             # Limpiar espacios
             self.name = self.name.strip()
 
+        # Validar duplicados si el folder está asignado
+        if self.folder_id and self.name and self.file_size:
+            # Excluir el documento actual si estamos editando (tiene pk)
+            existing_query = CourseDocument.objects.filter(
+                folder=self.folder,
+                name=self.name,
+                file_size=self.file_size
+            )
+            
+            if self.pk:
+                existing_query = existing_query.exclude(pk=self.pk)
+            
+            if existing_query.exists():
+                raise ValidationError({
+                    'name': f'Ya existe un documento con el nombre "{self.name}" y el mismo tamaño en esta carpeta.'
+                })
+
     def save(self, *args, **kwargs):
         """Override save para calcular tamaño del archivo"""
         if self.file and not self.file_size:
@@ -124,7 +141,7 @@ class CourseDocument(models.Model):
         if not self.name and self.file:
             self.name = os.path.splitext(self.file.name)[0]
 
-        # Solo ejecutar validaciones si el folder está asignado
+        # Ejecutar validaciones si el folder está asignado
         if self.folder_id:
             self.full_clean()
 
