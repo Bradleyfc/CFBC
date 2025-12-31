@@ -376,7 +376,7 @@ PreguntaFormularioFormSet = inlineformset_factory(
     FormularioAplicacion,
     PreguntaFormulario,
     form=PreguntaFormularioForm,
-    extra=1,
+    extra=0,  # No mostrar formularios vacíos automáticamente
     can_delete=True
 )
 

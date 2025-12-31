@@ -66,10 +66,10 @@
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="flex flex-col gap-2 mt-3">
+                    <div class="flex flex-row gap-2 mt-3">
                         <!-- Botón de documentos siempre visible -->
                         <a href="{% url 'course_documents:student_dashboard' curso_id=course.id %}"
-                            class="glass-action-button glass-action-primary w-full">
+                            class="glass-action-button glass-action-primary flex-1">
                             <span class="fa material-icons mr-1">folder_open</span></i>
                             Documentos
                             {% if course.has_new_content_indicator %}
@@ -79,12 +79,12 @@
                         
                         {% if course.get_dynamic_status == 'P' or course.get_dynamic_status == 'F' %}
                         <a href="{% url 'principal:student_course_attendances' student_id=user.id course_id=course.id %}"
-                            class="glass-action-button glass-action-info w-full">
+                            class="glass-action-button glass-action-info flex-1">
                             <span class="fa material-icons mr-1">event</span></i>
                             Ver asistencias
                         </a>
                         <a href="{% url 'principal:student_course_notes' student_id=user.id course_id=course.id %}"
-                            class="glass-action-button glass-action-success w-full">
+                            class="glass-action-button glass-action-success flex-1">
                             <span class="fa material-icons mr-1">assignment</span></i>
                             Ver Notas
                         </a>

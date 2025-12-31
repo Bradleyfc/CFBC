@@ -2350,7 +2350,7 @@ class PreguntaOpcionesView(LoginRequiredMixin, SecretariaRequiredMixin, UpdateVi
         return self.render_to_response(context)
     
     def get_success_url(self):
-        return reverse('principal:formulario_preguntas', kwargs={'pk': self.object.formulario.pk}) + '?add_new=1'
+        return reverse('principal:formulario_preguntas', kwargs={'pk': self.object.formulario.pk})
 
 # Vistas para los estudiantes
 

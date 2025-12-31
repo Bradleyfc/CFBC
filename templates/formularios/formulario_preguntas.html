@@ -10,6 +10,26 @@
 {% load static %}
 
 <style>
+  /* Ocultar el elemento problemático que aparece debajo del selector */
+  .glass-table select + * {
+    display: none !important;
+  }
+  
+  .glass-table select ~ * {
+    display: none !important;
+  }
+  
+  /* Ocultar elementos específicos de crispy forms que pueden causar la flecha */
+  .glass-table .form-group > div:not(:first-child) {
+    display: none !important;
+  }
+  
+  .glass-table .form-group .invalid-feedback,
+  .glass-table .form-group .form-text,
+  .glass-table .form-group .help-text {
+    display: none !important;
+  }
+
   /* Ocultar todos los tipos de mensajes de error que aparecen en la parte superior */
   .messages,
   .alert,
@@ -287,6 +307,18 @@
     background-color: rgba(255, 255, 255, 0.8) !important;
     backdrop-filter: blur(10px) !important;
     -webkit-backdrop-filter: blur(10px) !important;
+  }
+
+  /* Ocultar flecha del selector de tipo de pregunta */
+  .glass-table select {
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 8px center !important;
+    background-size: 16px !important;
+    padding-right: 32px !important;
   }
 
   .glass-table input[type="text"]:focus,
@@ -708,11 +740,19 @@
         // Ocultar la primera fila al cargar la página, excepto si viene de agregar respuestas
         const addNew = false; // Default to false for now
         const formsetRows = document.querySelectorAll('.formset-row');
+        
+        // No ocultar automáticamente ninguna fila, solo si no hay preguntas guardadas
         if (formsetRows.length > 0 && !addNew) {
-            // Solo ocultar si no hay preguntas guardadas (verificar si tiene ID) y no viene de add_new
+            // Solo ocultar si la primera fila no tiene ID (es nueva) y no hay otras preguntas
             const firstRow = formsetRows[0];
             const idField = firstRow.querySelector('input[name$="-id"]');
-            if (!idField || !idField.value) {
+            const hasExistingQuestions = Array.from(formsetRows).some(row => {
+                const rowIdField = row.querySelector('input[name$="-id"]');
+                return rowIdField && rowIdField.value;
+            });
+            
+            // Solo ocultar la primera fila si no hay preguntas existentes y es una fila nueva
+            if (!hasExistingQuestions && (!idField || !idField.value)) {
                 firstRow.style.display = 'none';
                 console.log('Primera fila oculta al cargar la página');
             }
@@ -733,6 +773,11 @@
 
         // Remover cualquier event listener existente para evitar duplicación
         const addButton = document.getElementById('add-pregunta');
+        if (!addButton) {
+            console.error('No se encontró el botón add-pregunta');
+            return;
+        }
+        
         const newAddButton = addButton.cloneNode(true);
         addButton.parentNode.replaceChild(newAddButton, addButton);
 
@@ -981,7 +1026,7 @@
             const visibleRows = Array.from(document.querySelectorAll('.formset-row')).filter(row => row.style.display !== 'none');
             
             if (visibleRows.length === 0) {
-                // Si no hay filas visibles, mostrar la primera fila oculta
+                // Si no hay filas visibles, verificar si hay una fila oculta
                 const firstRow = document.querySelector('.formset-row:first-child');
                 if (firstRow) {
                     // Mostrar la fila
@@ -1002,19 +1047,99 @@
                     // Asegurarse de que el campo orden tenga un valor correcto
                     const ordenInput = firstRow.querySelector('input[name$="-orden"]');
                     if (ordenInput) {
-                        // Calcular el siguiente orden disponible
-                        let maxOrden = -1;
-                        document.querySelectorAll('input[name$="-orden"]').forEach(function(input) {
-                            if (input !== ordenInput) { // Excluir el input actual
-                                const valor = parseInt(input.value) || 0;
-                                if (valor > maxOrden) {
-                                    maxOrden = valor;
-                                }
-                            }
-                        });
-                        const siguienteOrden = maxOrden + 1;
-                        ordenInput.value = siguienteOrden.toString();
+                        ordenInput.value = '0';
                     }
+                    
+                    // Permitir nuevas adiciones después de un breve retraso
+                    setTimeout(function () {
+                        isAddingQuestion = false;
+                    }, 500);
+                    return;
+                } else {
+                    // Si no hay filas en absoluto, crear una nueva fila manualmente
+                    console.log('No hay filas existentes, creando una nueva fila desde cero');
+                    
+                    const tbody = document.querySelector('.glass-table tbody');
+                    if (!tbody) {
+                        console.error('No se encontró el tbody de la tabla');
+                        isAddingQuestion = false;
+                        return;
+                    }
+                    
+                    // Crear una nueva fila HTML
+                    const newRow = document.createElement('tr');
+                    newRow.className = 'formset-row';
+                    
+                    const formularioId = "{{ formulario.id }}";
+                    
+                    newRow.innerHTML = `
+                        <td>
+                            <input type="hidden" name="preguntas-${currentFormCount}-id" id="id_preguntas-${currentFormCount}-id">
+                            <div class="form-group">
+                                <textarea name="preguntas-${currentFormCount}-texto" id="id_preguntas-${currentFormCount}-texto" 
+                                         class="form-control" rows="3" placeholder="Escribe tu pregunta aquí..."></textarea>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="form-group">
+                                <select name="preguntas-${currentFormCount}-tipo" id="id_preguntas-${currentFormCount}-tipo" class="form-control">
+                                    <option value="seleccion_unica">Selección única</option>
+                                    <option value="seleccion_multiple">Selección múltiple</option>
+                                    <option value="escritura_libre">Escritura libre</option>
+                                </select>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class="form-group">
+                                <input type="checkbox" name="preguntas-${currentFormCount}-requerida" 
+                                       id="id_preguntas-${currentFormCount}-requerida" checked>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class="form-group">
+                                <input type="number" name="preguntas-${currentFormCount}-orden" 
+                                       id="id_preguntas-${currentFormCount}-orden" 
+                                       class="form-control" value="0" style="width: 80px;">
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <a href="#" onclick="guardarYRedirigir(this, '${formularioId}', ${currentFormCount}); return false;" 
+                               class="glass-btn glass-btn-primary btn-agregar-respuestas">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"></path>
+                                </svg>
+                                Agregar
+                            </a>
+                        </td>
+                        <td class="text-center">
+                            <button type="button" class="glass-btn glass-btn-danger eliminar-pregunta">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"></path>
+                                </svg>
+                                Eliminar
+                            </button>
+                        </td>
+                    `;
+                    
+                    // Agregar la nueva fila al tbody
+                    tbody.appendChild(newRow);
+                    
+                    // Incrementar el contador de formularios
+                    totalForms.value = currentFormCount + 1;
+                    
+                    // Configurar el selector de tipo para la nueva fila
+                    const newTipoSelect = newRow.querySelector('select[name$="-tipo"]');
+                    if (newTipoSelect) {
+                        newTipoSelect.addEventListener('change', function () {
+                            console.log('Cambio en selector de tipo de nueva fila, nuevo valor:', this.value);
+                            updateAgregarRespuestasButton(newRow);
+                        });
+                        
+                        // Actualizar el estado inicial
+                        updateAgregarRespuestasButton(newRow);
+                    }
+                    
+                    console.log('Nueva fila creada desde cero');
                     
                     // Permitir nuevas adiciones después de un breve retraso
                     setTimeout(function () {
@@ -1024,7 +1149,7 @@
                 }
             }
 
-            // Clonar la última fila de pregunta
+            // Si hay filas existentes, clonar la última fila
             const formsetRows = document.querySelectorAll('.formset-row');
             const lastRow = formsetRows[formsetRows.length - 1];
             const newRow = lastRow.cloneNode(true);
