@@ -83,15 +83,17 @@
                         <div class="flex justify-center gap-1">
                             <a href="{{ document.file.url }}" 
                                target="_blank" 
+                               title="Ver/Abrir"
                                class="glass-btn glass-btn-info glass-btn-xs">
                                 <span class="glass-btn-content">
-                                    <span class="material-icons">visibility</span>
+                                    <span class="material-icons">open_in_new</span>
                                 </span>
                                 <div class="glass-btn-glow"></div>
                             </a>
                             
                             <a href="{{ document.file.url }}" 
                                download 
+                               title="Descargar"
                                class="glass-btn glass-btn-success glass-btn-xs">
                                 <span class="glass-btn-content">
                                     <span class="material-icons">cloud_download</span>
@@ -101,6 +103,7 @@
                             
                             <button type="button" 
                                     class="glass-btn glass-btn-danger glass-btn-xs glass-btn-icon"
+                                    title="Eliminar documento"
                                     onclick="showDeleteDocumentModal('{{ document.id }}', '{{ document.name|escapejs }}')">
                                 <span class="glass-btn-content">
                                     <span class="material-icons">delete</span>

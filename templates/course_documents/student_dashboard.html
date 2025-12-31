@@ -68,56 +68,31 @@
         </div>
 
         <!-- Lista de Carpetas -->
-        <div class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {% for folder in folders %}
                 <div class="glass-card">
-                    <div class="glass-content p-6">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="flex-1">
-                                <h3 class="text-lg font-semibold text-gray-800 mb-2">
-                                    <span class="fa material-icons text-blue-600 mr-2">folder</span></i>
-                                    {{ folder.name }}
-                                </h3>
-                                <p class="text-sm text-gray-500 mb-3">
-                                    {{ folder.document_list.count }} documento{{ folder.document_list.count|pluralize }} disponible{{ folder.document_list.count|pluralize }}
+                    <div class="glass-content p-4">
+                        <div class="text-center">
+                            <div class="glass-icon-large mx-auto mb-3">
+                                <span class="fa material-icons text-blue-600 text-3xl">folder</span></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">
+                                {{ folder.name }}
+                            </h3>
+                            <div class="flex items-center justify-center gap-2 mb-4">
+                                <p class="text-sm text-gray-500">
+                                    {{ folder.document_list.count }} documento{{ folder.document_list.count|pluralize }}
                                 </p>
+                                {% if folder.new_documents_count > 0 %}
+                                    <span class="text-xs font-semibold text-red-600 bg-red-100 px-2 py-1 rounded-full">
+                                        {{ folder.new_documents_count }} Documento{{ folder.new_documents_count|pluralize }} Nuevo{{ folder.new_documents_count|pluralize }}
+                                    </span>
+                                {% endif %}
                             </div>
-                            <div class="flex gap-2">
-                                <a href="{% url 'course_documents:student_folder_detail' curso_id=curso.id folder_id=folder.id %}" 
-                                   class="glass-button glass-button-primary">
-                                    <span class="fa material-icons mr-1">visibility</span></i> Ver Documentos
-                                </a>
-                            </div>
-                        </div>
-
-                        <!-- Lista de documentos en la carpeta -->
-                        <div class="space-y-3">
-                            {% for document in folder.document_list %}
-                                <div class="glass-document-card">
-                                    <div class="flex justify-between items-center">
-                                        <div class="flex-1">
-                                            <div class="flex items-center mb-2">
-                                                <div class="document-icon-container {{ document.get_file_icon_class }} mr-3 document-icon-tooltip" 
-                                                     data-tooltip="{{ document.get_file_type_name }}">
-                                                    <span class="material-icons {{ document.get_file_icon_color }}">{{ document.get_file_icon }}</span>
-                                                </div>
-                                                <div class="flex-1">
-                                                    <h4 class="font-medium text-gray-800">{{ document.name }}</h4>
-                                                    <p class="text-xs text-gray-500 mt-1">
-                                                        Subido el {{ document.uploaded_at|date:"d/m/Y H:i" }} • {{ document.get_file_size_display }}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="flex gap-2">
-                                            <a href="{% url 'course_documents:download_document' curso_id=curso.id document_id=document.id %}" 
-                                               class="glass-button glass-button-success">
-                                                <span class="fa material-icons mr-1">cloud_download</span></i> Descargar
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
+                            <a href="{% url 'course_documents:student_folder_detail' curso_id=curso.id folder_id=folder.id %}" 
+                               class="glass-button glass-button-primary w-full">
+                                <span class="fa material-icons mr-1">folder_open</span></i> Abrir
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -170,29 +145,24 @@
         position: relative;
     }
 
-    /* Glass Document Card */
-    .glass-document-card {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.4));
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        padding: 1rem;
-        transition: all 0.3s ease;
-        border-left: 4px solid rgba(59, 130, 246, 0.5);
-    }
-
-    .glass-document-card:hover {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.5));
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
     /* Glass Icon */
     .glass-icon-medium {
         width: 48px;
         height: 48px;
         border-radius: 12px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08));
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .glass-icon-large {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
         background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08));
         backdrop-filter: blur(4px);
         -webkit-backdrop-filter: blur(4px);

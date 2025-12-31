@@ -70,9 +70,17 @@
             </div>
         </div>
 
-        <!-- Botón Nueva Carpeta (solo si hay carpetas) -->
+        <!-- Botones Nueva Carpeta y Volver (solo si hay carpetas) -->
         {% if folders %}
-        <div class="mb-6 text-center">
+        <div class="mb-6 text-center flex justify-center gap-3">
+            <a href="{% url 'principal:profile' %}" 
+               class="glass-btn glass-btn-secondary">
+                <span class="glass-btn-content">
+                    <span class="material-icons mr-2">arrow_back</span>
+                    Volver al Perfil
+                </span>
+                <div class="glass-btn-glow"></div>
+            </a>
             <button type="button" 
                     class="glass-btn glass-btn-primary"
                     onclick="showCreateFolderModal()">
@@ -104,6 +112,7 @@
                         <div class="flex justify-center gap-1">
                             <button type="button" 
                                     class="glass-btn glass-btn-success glass-btn-xs"
+                                    title="Subir documento"
                                     onclick="showUploadModal('{{ folder.id }}', '{{ folder.name|escapejs }}')">
                                 <span class="glass-btn-content">
                                     <span class="material-icons">cloud_upload</span>
@@ -112,15 +121,17 @@
                             </button>
                             
                             <a href="{% url 'course_documents:folder_detail' curso_id=curso.id folder_id=folder.id %}" 
+                               title="Abrir"
                                class="glass-btn glass-btn-info glass-btn-xs">
                                 <span class="glass-btn-content">
-                                    <span class="material-icons">visibility</span>
+                                    <span class="material-icons">folder_open</span>
                                 </span>
                                 <div class="glass-btn-glow"></div>
                             </a>
                             
                             <button type="button" 
                                     class="glass-btn glass-btn-danger glass-btn-xs glass-btn-icon"
+                                    title="Eliminar carpeta"
                                     onclick="showDeleteModal('{{ folder.id }}', '{{ folder.name|escapejs }}')">
                                 <span class="glass-btn-content">
                                     <span class="material-icons">delete</span>
@@ -143,14 +154,24 @@
                     </div>
                     <h3 class="glass-card-title mb-2">No hay carpetas creadas</h3>
                     <p class="glass-card-subtitle mb-8">Crea tu primera carpeta para organizar los documentos del curso</p>
-                    <button type="button" 
-                            class="glass-btn glass-btn-primary"
-                            onclick="showCreateFolderModal()">
-                        <span class="glass-btn-content">
-                            <span class="material-icons mr-2">create_new_folder</span> Crear Primera Carpeta
-                        </span>
-                        <div class="glass-btn-glow"></div>
-                    </button>
+                    <div class="flex justify-center gap-3">
+                        <a href="{% url 'principal:profile' %}" 
+                           class="glass-btn glass-btn-secondary">
+                            <span class="glass-btn-content">
+                                <span class="material-icons mr-2">arrow_back</span>
+                                Volver al Perfil
+                            </span>
+                            <div class="glass-btn-glow"></div>
+                        </a>
+                        <button type="button" 
+                                class="glass-btn glass-btn-primary"
+                                onclick="showCreateFolderModal()">
+                            <span class="glass-btn-content">
+                                <span class="material-icons mr-2">create_new_folder</span> Crear Primera Carpeta
+                            </span>
+                            <div class="glass-btn-glow"></div>
+                        </button>
+                    </div>
                 </div>
                 <div class="glass-card-glow glass-glow-neutral"></div>
             </div>
