@@ -163,17 +163,20 @@ class UploadDocumentView(LoginRequiredMixin, TeacherPermissionMixin, CreateView)
         if curso.teacher != self.request.user:
             raise PermissionDenied("No tienes permisos para subir documentos en este curso")
 
-        # Asignar carpeta y usuario
-        form.instance.folder = folder
-        form.instance.uploaded_by = self.request.user
+        # Asignar carpeta y usuario ANTES de guardar
+        document = form.save(commit=False)
+        document.folder = folder
+        document.uploaded_by = self.request.user
 
         # Calcular tamaño del archivo
-        if form.instance.file:
-            form.instance.file_size = form.instance.file.size
+        if document.file:
+            document.file_size = document.file.size
 
         try:
             with transaction.atomic():
-                response = super().form_valid(form)
+                # Guardar el documento
+                document.save()
+                self.object = document
 
                 # Registrar en audit log
                 AuditLog.log_action(
@@ -196,7 +199,14 @@ class UploadDocumentView(LoginRequiredMixin, TeacherPermissionMixin, CreateView)
                     f'Documento "{self.object.name}" subido exitosamente.'
                 )
 
-                return response
+                return redirect(self.get_success_url())
+
+        except Exception as e:
+            messages.error(
+                self.request,
+                f'Error al subir el documento: {str(e)}'
+            )
+            return self.form_invalid(form)
 
         except Exception as e:
             messages.error(

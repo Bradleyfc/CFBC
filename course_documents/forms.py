@@ -74,6 +74,23 @@ class CourseDocumentForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Hacer que el campo name no sea requerido
         self.fields['name'].required = False
+        
+        # Agregar clases CSS a los campos
+        self.fields['name'].widget.attrs.update({
+            'class': 'glass-input',
+            'placeholder': 'Dejar vacío para usar el nombre original del archivo',
+            'maxlength': 200,
+            'data-bs-toggle': 'tooltip',
+            'title': 'Opcional. Si se deja vacío, se usará el nombre original del archivo'
+        })
+        
+        self.fields['file'].widget.attrs.update({
+            'class': 'glass-input',
+            'accept': '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,.7z,.jpg,.jpeg,.png,.gif,.bmp',
+            'required': True,
+            'data-bs-toggle': 'tooltip',
+            'title': 'Tamaño máximo: 10MB. Tipos permitidos: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, ZIP, RAR, JPG, JPEG, PNG, GIF, BMP'
+        })
 
     class Meta:
         model = CourseDocument

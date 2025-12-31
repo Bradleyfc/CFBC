@@ -10,7 +10,11 @@ import os
 def course_document_upload_path(instance, filename):
     """Genera la ruta de subida para documentos del curso"""
     # Organizar por curso y carpeta
-    return f'course_documents/{instance.folder.curso.id}/{instance.folder.id}/{filename}'
+    if instance.folder_id:
+        return f'course_documents/{instance.folder.curso.id}/{instance.folder.id}/{filename}'
+    else:
+        # Fallback temporal si no hay folder asignado aún
+        return f'course_documents/temp/{filename}'
 
 
 class DocumentFolder(models.Model):
@@ -97,7 +101,10 @@ class CourseDocument(models.Model):
         ordering = ['-uploaded_at']
 
     def __str__(self):
-        return f"{self.name} - {self.folder.name}"
+        if self.folder_id:
+            return f"{self.name} - {self.folder.name}"
+        else:
+            return f"{self.name} - Sin carpeta"
 
     def clean(self):
         """Validación personalizada del modelo"""
@@ -117,16 +124,21 @@ class CourseDocument(models.Model):
         if not self.name and self.file:
             self.name = os.path.splitext(self.file.name)[0]
 
-        # Ejecutar validaciones antes de guardar
-        self.full_clean()
+        # Solo ejecutar validaciones si el folder está asignado
+        if self.folder_id:
+            self.full_clean()
 
         super().save(*args, **kwargs)
 
         # Después de guardar, activar notificaciones para estudiantes
-        self._activate_notifications()
+        if self.folder_id:
+            self._activate_notifications()
 
     def _activate_notifications(self):
         """Activa las notificaciones de contenido nuevo para estudiantes del curso"""
+        if not self.folder_id:
+            return
+            
         from principal.models import Matriculas
 
         # Obtener todos los estudiantes inscritos en el curso

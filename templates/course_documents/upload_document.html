@@ -22,31 +22,49 @@
                     {% csrf_token %}
                     <div class="space-y-4">
                         <div>
-                            <label for="id_name" class="block text-sm font-medium text-gray-700 mb-2">
-                                Nombre del documento
+                            <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                {{ form.name.label }}
                             </label>
-                            <input type="text" 
-                                   name="name" 
-                                   id="id_name"
-                                   maxlength="200"
-                                   required
-                                   class="glass-input"
-                                   placeholder="Nombre del documento">
+                            {{ form.name }}
+                            {% if form.name.help_text %}
+                                <p class="text-xs text-gray-500 mt-1">{{ form.name.help_text }}</p>
+                            {% endif %}
+                            {% if form.name.errors %}
+                                <div class="text-red-600 text-xs mt-1">
+                                    {% for error in form.name.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
                         <div>
-                            <label for="id_file" class="block text-sm font-medium text-gray-700 mb-2">
-                                Archivo
+                            <label for="{{ form.file.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                {{ form.file.label }}
                             </label>
-                            <input type="file" 
-                                   name="file" 
-                                   id="id_file"
-                                   required
-                                   accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,.7z,.jpg,.jpeg,.png,.gif"
-                                   class="glass-input">
-                            <p class="text-xs text-gray-500 mt-1">
-                                Tamaño máximo: 10MB. Tipos permitidos: PDF, DOC, PPT, XLS, TXT, ZIP, imágenes
-                            </p>
+                            {{ form.file }}
+                            {% if form.file.help_text %}
+                                <p class="text-xs text-gray-500 mt-1">{{ form.file.help_text }}</p>
+                            {% else %}
+                                <p class="text-xs text-gray-500 mt-1">
+                                    Tamaño máximo: 10MB. Tipos permitidos: PDF, DOC, PPT, XLS, TXT, ZIP, imágenes
+                                </p>
+                            {% endif %}
+                            {% if form.file.errors %}
+                                <div class="text-red-600 text-xs mt-1">
+                                    {% for error in form.file.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
+                        
+                        {% if form.non_field_errors %}
+                            <div class="text-red-600 text-sm">
+                                {% for error in form.non_field_errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
                     </div>
                     
                     <div class="flex gap-3 mt-6">

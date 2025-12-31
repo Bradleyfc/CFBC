@@ -11,7 +11,7 @@
         style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;">
     </div>
 
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         <!-- Breadcrumb and Header -->
         <div class="mb-6">
             <nav class="flex mb-4" aria-label="Breadcrumb">
@@ -60,42 +60,40 @@
         </div>
 
         <!-- Lista de Documentos -->
-        <div class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {% for document in documents %}
                 <div class="glass-card">
-                    <div class="glass-content p-6">
-                        <div class="flex justify-between items-start">
-                            <div class="flex-1">
-                                <div class="flex items-center mb-2">
-                                    <div class="document-icon-container {{ document.get_file_icon_class }} mr-3 document-icon-tooltip" 
-                                         data-tooltip="{{ document.get_file_type_name }}">
-                                        <span class="material-icons {{ document.get_file_icon_color }}">{{ document.get_file_icon }}</span>
-                                    </div>
-                                    <div class="flex-1">
-                                        <h3 class="text-lg font-semibold text-gray-800">{{ document.name }}</h3>
-                                        <p class="text-sm text-gray-600">
-                                            Subido el {{ document.uploaded_at|date:"d/m/Y H:i" }}
-                                        </p>
-                                        <p class="text-sm text-gray-500">
-                                            Tamaño: {{ document.get_file_size_display }} • Tipo: {{ document.get_file_extension|upper }}
-                                        </p>
-                                    </div>
-                                </div>
-                                {% if document.description %}
-                                    <p class="text-sm text-gray-600 mt-2">{{ document.description }}</p>
-                                {% endif %}
+                    <div class="glass-content p-4">
+                        <div class="text-center">
+                            <div class="document-icon-container {{ document.get_file_icon_class }} mx-auto mb-3 document-icon-tooltip" 
+                                 data-tooltip="{{ document.get_file_type_name }}">
+                                <span class="material-icons {{ document.get_file_icon_color }} text-3xl">{{ document.get_file_icon }}</span>
                             </div>
-                            <div class="flex gap-2">
-                                <a href="{% url 'course_documents:download_document' curso_id=curso.id document_id=document.id %}" 
-                                   class="glass-button glass-button-success">
-                                    <span class="fa material-icons mr-1">cloud_download</span></i> Descargar
-                                </a>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2 truncate" title="{{ document.name }}">
+                                {{ document.name }}
+                            </h3>
+                            <div class="mb-3">
+                                <p class="text-xs text-gray-600">
+                                    {{ document.uploaded_at|date:"d/m/Y H:i" }}
+                                </p>
+                                <p class="text-xs text-gray-500">
+                                    {{ document.get_file_size_display }} • {{ document.get_file_extension|upper }}
+                                </p>
                             </div>
+                            {% if document.description %}
+                                <p class="text-xs text-gray-600 mb-3 line-clamp-2" title="{{ document.description }}">
+                                    {{ document.description }}
+                                </p>
+                            {% endif %}
+                            <a href="{% url 'course_documents:download_document' curso_id=curso.id document_id=document.id %}" 
+                               class="glass-button glass-button-success w-full">
+                                <span class="fa material-icons mr-1">cloud_download</span></i> Descargar
+                            </a>
                         </div>
                     </div>
                 </div>
             {% empty %}
-                <div class="glass-card">
+                <div class="glass-card col-span-full">
                     <div class="glass-content p-12 text-center">
                         <span class="fa material-icons text-6xl text-gray-300 mb-4">description</span></i>
                         <h3 class="text-xl font-semibold text-gray-600 mb-2">No hay documentos en esta carpeta</h3>
@@ -147,6 +145,20 @@
         border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
+    /* Document Icon Container */
+    .document-icon-container {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08));
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
     /* Glass Button */
     .glass-button {
         display: inline-flex;
@@ -180,6 +192,41 @@
     .glass-button-secondary {
         background: linear-gradient(135deg, rgba(107, 114, 128, 0.3), rgba(75, 85, 99, 0.2));
         color: #374151;
+    }
+
+    /* Text truncation utilities */
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .truncate {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Tooltip for document icons */
+    .document-icon-tooltip {
+        position: relative;
+    }
+
+    .document-icon-tooltip:hover::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        white-space: nowrap;
+        z-index: 1000;
     }
 </style>
 {% endblock %}
