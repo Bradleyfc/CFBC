@@ -29,7 +29,7 @@
                 0 8px 32px rgba(0, 0, 0, 0.3),
                 inset 0 1px 0 rgba(147, 197, 253, 0.4);
             position: relative;
-            overflow: hidden;
+            /* Sin overflow para permitir dropdown */
         }
 
         .glass-header-container::before {
@@ -234,15 +234,62 @@
             box-shadow: 
                 0 8px 32px rgba(0, 0, 0, 0.2),
                 inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            z-index: 9999 !important;
+            min-width: 200px;
+            position: fixed;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .glass-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            pointer-events: auto;
         }
 
         .glass-dropdown a {
             transition: all 0.2s ease;
+            color: #374151 !important;
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            text-decoration: none;
         }
 
         .glass-dropdown a:hover {
             background: rgba(59, 130, 246, 0.1);
             border-radius: 8px;
+            color: #1e40af !important;
+        }
+
+        /* Asegurar que el dropdown sea visible */
+        .dropdown-container {
+            position: relative;
+            z-index: 9999;
+        }
+
+        /* Prevenir scroll horizontal global */
+        html, body {
+            overflow-x: hidden;
+            max-width: 100vw;
+        }
+
+        /* Asegurar que el shimmer no interfiera */
+        .glass-header-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(147, 197, 253, 0.3), transparent);
+            animation: shimmer 3s infinite;
+            pointer-events: none;
+            z-index: 1;
         }
 
         /* Mobile Menu Glassmorphism */
@@ -296,7 +343,7 @@
 </head>
 <<body class="bg-gray-50">
     <!-- Glassmorphism Header Container -->
-    <div class="container mx-auto px-4">
+    <div class="container mx-auto px-4" style="position: relative; z-index: 1000;">
         <header class="glass-header-container flex flex-wrap items-center justify-between py-4 mb-4 mx-4 mt-3">
             <!-- Left Side: Logo and Inicio -->
             <div class="flex items-center space-x-4 ml-8">
@@ -337,18 +384,18 @@
 
                 <!-- User Menu -->
                 {% if user.is_authenticated %}
-                    <div class="relative group">
-                        <button class="glass-nav-link flex items-center">
+                    <div class="dropdown-container">
+                        <button class="glass-nav-link flex items-center" id="user-menu-button">
                             <span class="material-icons mr-1">person</span>
                             {{ user.username }}
                             <span class="material-icons ml-1">arrow_drop_down</span>
                         </button>
-                        <div class="absolute right-0 mt-2 w-48 glass-dropdown opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                        <div class="glass-dropdown" id="user-dropdown">
                             <div class="py-1">
                                 {% if user.groups.all|length > 0 %}
                                     {% for group in user.groups.all %}
                                         {% if group.name == 'Editores' %}
-                                            <a href="{% url 'blog:panel_editores' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            <a href="{% url 'blog:panel_editores' %}">
                                                 <span class="material-icons mr-2 text-sm">edit</span>
                                                 Panel de Editores
                                             </a>
@@ -356,14 +403,13 @@
                                     {% endfor %}
                                 {% endif %}
                                 {% if user.is_staff %}
-                                <a href="{% url 'admin:index' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <a href="{% url 'admin:index' %}">
                                     <span class="material-icons mr-2 text-sm">settings</span>
                                     Admin
                                 </a>
                                 {% endif %}
-                                <hr class="my-1">
-                                <a href="#" onclick="document.getElementById('logout-form').submit(); return false;" 
-                                   class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <hr class="my-1 border-gray-200">
+                                <a href="#" onclick="document.getElementById('logout-form').submit(); return false;">
                                     <span class="material-icons mr-2 text-sm">logout</span>
                                     Cerrar Sesión
                                 </a>
@@ -463,15 +509,232 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-gray-800 text-white py-12 mt-16">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                    <h5 class="text-xl font-semibold mb-4">Centro Fray Bartolomé de las Casas</h5>
-                    <p class="text-gray-300">Mantente informado con las últimas noticias y eventos de nuestra institución.</p>
+    <style>
+    /* Efectos glassmorphism para footer */
+    .glass-footer {
+        background: linear-gradient(135deg, rgba(17, 24, 39, 0.8) 0%, rgba(31, 41, 55, 0.9) 50%, rgba(17, 24, 39, 0.8) 100%);
+        backdrop-filter: blur(20px);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .glass-footer::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+        z-index: 1;
+    }
+
+    .glass-footer-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .glass-section {
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 0.75rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-section:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .glass-link {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .glass-link::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        transition: left 0.5s;
+    }
+
+    .glass-link:hover::before {
+        left: 100%;
+    }
+
+    .glass-link:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.3);
+        transform: translateY(-1px) scale(1.02);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .glass-social {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .glass-social::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+        border-radius: 50%;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        transform: translate(-50%, -50%);
+    }
+
+    .glass-social:hover::before {
+        width: 100%;
+        height: 100%;
+    }
+
+    .glass-social:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.4);
+        transform: translateY(-3px) scale(1.1);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .glass-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        border: none;
+        margin: 1.25rem 0;
+    }
+
+    .contact-item {
+        backdrop-filter: blur(8px);
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 0.6rem;
+        margin-bottom: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .contact-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.15);
+        transform: translateX(4px);
+    }
+
+    .icon-glow {
+        filter: drop-shadow(0 0 8px currentColor);
+    }
+
+    .glass-section-compact {
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 0.5rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-section-compact:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+    }
+    </style>
+
+    <footer class="glass-footer py-4 mt-8">
+        <div class="glass-footer-content container mx-auto px-4">
+            <div class="flex flex-col md:flex-row gap-3">
+                <div class="glass-section w-full md:w-[40%]">
+                    <h5 class="text-white text-lg font-bold mb-3 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Centro Fray Bartolomé de las Casas</h5>
+                    <p class="text-gray-200 leading-relaxed text-sm">Formación integral y educación de calidad para el desarrollo personal y
+                        profesional.</p>
                 </div>
-                <div class="text-left md:text-right">
-                    <p class="text-gray-300">&copy; 2025 CFBC. Todos los derechos reservados.</p>
+                <div class="glass-section w-full md:w-[20%]">
+                    <h6 class="text-white text-base font-bold mb-3 bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">Enlaces Rápidos</h6>
+                    <ul class="space-y-2">
+                        <li><a href="{% url 'principal:home' %}" class="glass-link text-gray-200 hover:text-white no-underline text-sm">Inicio</a></li>
+                        <li><a href="{% url 'principal:cursos' %}" class="glass-link text-gray-200 hover:text-white no-underline text-sm">Cursos</a></li>
+                        <li><a href="{% url 'blog:lista_noticias' %}" class="glass-link text-gray-200 hover:text-white no-underline text-sm">Noticias</a></li>
+                        <li><a href="#" class="glass-link text-gray-200 hover:text-white no-underline text-sm">Contacto</a></li>
+                    </ul>
+                </div>
+                <div class="glass-section w-full md:w-[40%]">
+                    <h6 class="text-white text-base font-bold mb-3 bg-gradient-to-r from-red-400 to-pink-400 bg-clip-text text-transparent">Contacto</h6>
+                    <div class="space-y-2">
+                        <div class="contact-item">
+                            <p class="text-gray-200 flex items-start text-sm">
+                                <span class="material-icons mr-2 mt-0.5 text-blue-400">location_on</span>
+                                <span class="leading-snug text-xs">
+                                    Calle 19 No 258 e/ J e I<br>
+                                    Vedado, Plaza de la Revolución<br>
+                                    La Habana
+                                </span>
+                            </p>
+                        </div>
+                        <div class="contact-item">
+                            <p class="text-gray-200 flex items-center text-sm">
+                                <span class="material-icons mr-2 text-green-400">phone</span>
+                                <span class="text-xs">+53 59518075</span>
+                            </p>
+                        </div>
+                        <div class="contact-item">
+                            <p class="text-gray-200 flex items-center text-sm">
+                                <span class="material-icons mr-2 text-red-400 flex-shrink-0">email</span>
+                                <span class="text-xs break-all">centrofraybartolomedelascasas@gmail.com</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr class="glass-divider">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-2">
+                <div>
+                    <p class="text-gray-200 text-xs">&copy; 2025 Centro Fray Bartolomé de las Casas. Todos los derechos
+                        reservados.</p>
+                </div>
+                <div class="flex space-x-3">
+                    <a href="#" class="glass-social text-gray-200 hover:text-blue-400 no-underline">
+                        <span class="material-icons">facebook</span>
+                    </a>
+                    <a href="#" class="glass-social text-gray-200 hover:text-blue-400 no-underline">
+                        <span class="material-icons">twitter</span>
+                    </a>
+                    <a href="#" class="glass-social text-gray-200 hover:text-pink-400 no-underline">
+                        <span class="material-icons">instagram</span>
+                    </a>
+                    <a href="#" class="glass-social text-gray-200 hover:text-blue-600 no-underline">
+                        <span class="material-icons">linkedin</span>
+                    </a>
                 </div>
             </div>
         </div>
@@ -482,6 +745,46 @@
             const menu = document.getElementById('mobile-menu');
             menu.classList.toggle('hidden');
         }
+
+        // Dropdown functionality with JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            const userMenuButton = document.getElementById('user-menu-button');
+            const userDropdown = document.getElementById('user-dropdown');
+            
+            if (userMenuButton && userDropdown) {
+                let timeoutId;
+                
+                // Position dropdown
+                function positionDropdown() {
+                    const buttonRect = userMenuButton.getBoundingClientRect();
+                    userDropdown.style.top = (buttonRect.bottom + 8) + 'px';
+                    userDropdown.style.right = (window.innerWidth - buttonRect.right) + 'px';
+                }
+                
+                userMenuButton.addEventListener('mouseenter', function() {
+                    clearTimeout(timeoutId);
+                    positionDropdown();
+                    userDropdown.classList.add('show');
+                });
+                
+                userMenuButton.addEventListener('mouseleave', function() {
+                    timeoutId = setTimeout(function() {
+                        userDropdown.classList.remove('show');
+                    }, 150);
+                });
+                
+                userDropdown.addEventListener('mouseenter', function() {
+                    clearTimeout(timeoutId);
+                });
+                
+                userDropdown.addEventListener('mouseleave', function() {
+                    userDropdown.classList.remove('show');
+                });
+                
+                // Reposition on window resize
+                window.addEventListener('resize', positionDropdown);
+            }
+        });
     </script>
     {% block extra_js %}{% endblock %}
 </body>
