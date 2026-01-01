@@ -1169,15 +1169,15 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-// Función para cerrar el modal de duplicado y abrir el modal de subida
+// Función para cerrar el modal de duplicado (sin abrir modal de subida)
 function closeDuplicateModal() {
     const modal = document.getElementById('duplicateModal');
     if (modal) {
         modal.classList.remove('show');
         setTimeout(() => {
             modal.classList.add('hidden');
-            // Abrir automáticamente el modal de subir documentos
-            showUploadModal();
+            // Ya no abrimos automáticamente el modal de subir documentos
+            // El usuario puede hacer clic en "Subir Documento" nuevamente si lo desea
         }, 300);
     }
 }
