@@ -3,74 +3,68 @@
 
 {% block extra_css %}
 <style>
-    .sidebar-editores {
-        background-color: #f8f9fa;
-        min-height: 100vh;
-        padding: 20px;
-    }
-    .nav-editores .nav-link {
-        color: #495057;
-        padding: 10px 15px;
-        margin-bottom: 5px;
-        border-radius: 5px;
-        transition: all 0.3s;
-    }
-    .nav-editores .nav-link:hover,
-    .nav-editores .nav-link.active {
-        background-color: #007bff;
+    .nav-editores-active {
+        background-color: #3b82f6;
         color: white;
     }
     .card-stat {
-        border-left: 4px solid #007bff;
-    }
-    .btn-editor {
-        margin-right: 10px;
-        margin-bottom: 10px;
+        border-left: 4px solid #3b82f6;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="row">
-    <!-- Sidebar de navegación -->
-    <div class="col-md-3">
-        <div class="sidebar-editores">
-            <h5><span class="fas material-icons">help</span></i> Panel de Editores</h5>
-            <hr>
-            <nav class="nav nav-editores flex-column">
-                <a class="nav-link {% if request.resolver_match.url_name == 'panel_editores' %}active{% endif %}" 
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+    <!-- Sidebar Navigation -->
+    <div class="md:col-span-1">
+        <div class="bg-gray-50 min-h-screen p-6 rounded-lg">
+            <h5 class="flex items-center text-lg font-semibold text-gray-900 mb-4">
+                <span class="material-icons mr-2">edit</span>
+                Panel de Editores
+            </h5>
+            <hr class="border-gray-200 mb-4">
+            <nav class="space-y-2">
+                <a class="flex items-center px-4 py-3 rounded-lg transition-colors {% if request.resolver_match.url_name == 'panel_editores' %}nav-editores-active{% else %}text-gray-700 hover:bg-gray-100{% endif %}" 
                    href="{% url 'blog:panel_editores' %}">
-                    <span class="fas material-icons">home</span></i> Dashboard
+                    <span class="material-icons mr-3">dashboard</span>
+                    Dashboard
                 </a>
-                <a class="nav-link {% if request.resolver_match.url_name == 'mis_noticias' %}active{% endif %}" 
+                <a class="flex items-center px-4 py-3 rounded-lg transition-colors {% if request.resolver_match.url_name == 'mis_noticias' %}nav-editores-active{% else %}text-gray-700 hover:bg-gray-100{% endif %}" 
                    href="{% url 'blog:mis_noticias' %}">
-                    <span class="fas material-icons">help</span></i> Mis Noticias
+                    <span class="material-icons mr-3">article</span>
+                    Mis Noticias
                 </a>
-                <a class="nav-link {% if request.resolver_match.url_name == 'crear_noticia' %}active{% endif %}" 
+                <a class="flex items-center px-4 py-3 rounded-lg transition-colors {% if request.resolver_match.url_name == 'crear_noticia' %}nav-editores-active{% else %}text-gray-700 hover:bg-gray-100{% endif %}" 
                    href="{% url 'blog:crear_noticia' %}">
-                    <span class="fas material-icons">add</span></i> Nueva Noticia
+                    <span class="material-icons mr-3">add</span>
+                    Nueva Noticia
                 </a>
-                <a class="nav-link {% if request.resolver_match.url_name == 'gestionar_categorias' %}active{% endif %}" 
+                <a class="flex items-center px-4 py-3 rounded-lg transition-colors {% if request.resolver_match.url_name == 'gestionar_categorias' %}nav-editores-active{% else %}text-gray-700 hover:bg-gray-100{% endif %}" 
                    href="{% url 'blog:gestionar_categorias' %}">
-                    <span class="fas material-icons">help</span></i> Categorías
+                    <span class="material-icons mr-3">category</span>
+                    Categorías
                 </a>
-                <hr>
-                <a class="nav-link" href="{% url 'blog:lista_noticias' %}">
-                    <span class="fas material-icons">visibility</span></i> Ver Noticias Públicas
+                <hr class="border-gray-200 my-4">
+                <a class="flex items-center px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors" 
+                   href="{% url 'blog:lista_noticias' %}">
+                    <span class="material-icons mr-3">visibility</span>
+                    Ver Noticias Públicas
                 </a>
                 {% if user.is_staff %}
-                <a class="nav-link" href="{% url 'admin:index' %}">
-                    <span class="fas material-icons">settings</span></i> Admin Django
+                <a class="flex items-center px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors" 
+                   href="{% url 'admin:index' %}">
+                    <span class="material-icons mr-3">settings</span>
+                    Admin Django
                 </a>
                 {% endif %}
             </nav>
         </div>
     </div>
     
-    <!-- Contenido principal -->
-    <div class="col-md-9">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>{% block titulo_pagina %}Panel de Editores{% endblock %}</h2>
+    <!-- Main Content -->
+    <div class="md:col-span-3">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-900">{% block titulo_pagina %}Panel de Editores{% endblock %}</h2>
             <div>
                 {% block botones_accion %}{% endblock %}
             </div>
