@@ -21,7 +21,7 @@
                 <!-- Mostrar mensajes de Django -->
                 {% if messages %}
                     {% for message in messages %}
-                        {% if message.tags == 'error' and '⚠️ Documento duplicado:' in message.message %}
+                        {% if message.tags == 'error' and 'MODAL_DUPLICATE:' in message.message %}
                             <!-- Modal de advertencia para duplicados -->
                             <div id="duplicateModal" class="delete-modal show">
                                 <div class="delete-modal-overlay" onclick="closeDuplicateModal()"></div>
@@ -35,7 +35,7 @@
                                     
                                     <div class="delete-modal-body">
                                         <p class="delete-modal-message">
-                                            {{ message.message|slice:"24:" }}
+                                            {{ message.message|slice:"16:" }}
                                         </p>
                                     </div>
                                     

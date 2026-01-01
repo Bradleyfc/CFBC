@@ -167,10 +167,10 @@ class UploadDocumentView(LoginRequiredMixin, TeacherPermissionMixin, CreateView)
         try:
             form.check_duplicate_document(folder)
         except ValidationError as e:
-            # Agregar el error específico de duplicado
+            # Agregar mensaje especial solo para el modal (no se mostrará como alerta)
             messages.error(
                 self.request,
-                f'⚠️ Documento duplicado: {e.message}'
+                f'MODAL_DUPLICATE: ⚠️ Documento duplicado: {e.message}'
             )
             return self.form_invalid(form)
 

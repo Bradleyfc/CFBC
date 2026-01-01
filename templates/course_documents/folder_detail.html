@@ -1184,25 +1184,19 @@ function closeDuplicateModal() {
 
 // Mostrar modal de duplicado si hay mensaje de error
 document.addEventListener('DOMContentLoaded', function() {
-    {% if messages %}
-        {% for message in messages %}
-            {% if message.tags == 'error' and '⚠️ Documento duplicado:' in message.message %}
-                // Mostrar modal de duplicado automáticamente
-                const modal = document.getElementById('duplicateModal');
-                if (modal) {
-                    modal.classList.remove('hidden');
-                    modal.classList.add('show');
-                }
-            {% endif %}
-        {% endfor %}
-    {% endif %}
+    // El modal se muestra automáticamente si existe en el HTML
+    const modal = document.getElementById('duplicateModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('show');
+    }
 });
 </script>
 
 <!-- Modal de error de documento duplicado -->
 {% if messages %}
     {% for message in messages %}
-        {% if message.tags == 'error' and '⚠️ Documento duplicado:' in message.message %}
+        {% if message.tags == 'error' and 'MODAL_DUPLICATE:' in message.message %}
             <div id="duplicateModal" class="delete-modal show">
                 <div class="delete-modal-overlay" onclick="closeDuplicateModal()"></div>
                 <div class="delete-modal-content">
@@ -1215,7 +1209,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     <div class="delete-modal-body">
                         <p class="delete-modal-message">
-                            {{ message.message|slice:"24:" }}
+                            {{ message.message|slice:"16:" }}
                         </p>
                     </div>
                     
