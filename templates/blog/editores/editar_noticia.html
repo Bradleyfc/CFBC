@@ -3,178 +3,622 @@
 
 {% block titulo_pagina %}Editar: {{ noticia.titulo|truncatechars:30 }}{% endblock %}
 
+{% block extra_css %}
+{{ block.super }}
+<style>
+    /* Glassmorphism Buttons */
+    .glass-button-primary {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.8) 0%, rgba(37, 99, 235, 0.9) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(147, 197, 253, 0.3);
+        box-shadow: 
+            0 8px 32px rgba(59, 130, 246, 0.3),
+            inset 0 1px 0 rgba(147, 197, 253, 0.4);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-button-primary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.6s ease;
+        pointer-events: none;
+    }
+
+    .glass-button-primary:hover {
+        background: linear-gradient(135deg, rgba(96, 165, 250, 0.9) 0%, rgba(59, 130, 246, 1) 100%);
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 
+            0 12px 40px rgba(59, 130, 246, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6),
+            0 0 30px rgba(59, 130, 246, 0.3);
+    }
+
+    .glass-button-primary:hover::before {
+        left: 100%;
+    }
+
+    .glass-button-secondary {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(249, 250, 251, 0.8) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(209, 213, 219, 0.4);
+        color: #374151;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-button-secondary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+        transition: left 0.6s ease;
+        pointer-events: none;
+    }
+
+    .glass-button-secondary:hover {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 197, 253, 0.2) 100%);
+        border-color: rgba(59, 130, 246, 0.3);
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 
+            0 12px 40px rgba(0, 0, 0, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8),
+            0 0 25px rgba(59, 130, 246, 0.2);
+        color: #1e40af;
+    }
+
+    .glass-button-secondary:hover::before {
+        left: 100%;
+    }
+
+    .glass-button-success {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.8) 0%, rgba(22, 163, 74, 0.9) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(134, 239, 172, 0.3);
+        box-shadow: 
+            0 8px 32px rgba(34, 197, 94, 0.3),
+            inset 0 1px 0 rgba(134, 239, 172, 0.4);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-button-success:hover {
+        background: linear-gradient(135deg, rgba(74, 222, 128, 0.9) 0%, rgba(34, 197, 94, 1) 100%);
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 
+            0 12px 40px rgba(34, 197, 94, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6),
+            0 0 30px rgba(34, 197, 94, 0.3);
+    }
+
+    .glass-button-danger {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.8) 0%, rgba(220, 38, 38, 0.9) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(252, 165, 165, 0.3);
+        box-shadow: 
+            0 8px 32px rgba(239, 68, 68, 0.3),
+            inset 0 1px 0 rgba(252, 165, 165, 0.4);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-button-danger:hover {
+        background: linear-gradient(135deg, rgba(248, 113, 113, 0.9) 0%, rgba(239, 68, 68, 1) 100%);
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 
+            0 12px 40px rgba(239, 68, 68, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6),
+            0 0 30px rgba(239, 68, 68, 0.3);
+    }
+
+    /* Glass Input Fields */
+    .glass-input {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(209, 213, 219, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .glass-input:focus {
+        background: rgba(255, 255, 255, 0.95);
+        border-color: rgba(59, 130, 246, 0.5);
+        box-shadow: 
+            0 0 0 3px rgba(59, 130, 246, 0.1),
+            0 4px 20px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Glass Sections */
+    .glass-section {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(249, 250, 251, 0.8) 100%);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        transition: all 0.3s ease;
+    }
+
+    .glass-section:hover {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(249, 250, 251, 0.9) 100%);
+        transform: translateY(-1px);
+        box-shadow: 
+            0 12px 40px rgba(0, 0, 0, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    /* Glass File Input */
+    .glass-file-input {
+        position: relative;
+        display: inline-block;
+        width: 100%;
+    }
+
+    .glass-file-input input[type="file"] {
+        position: absolute;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+        z-index: 2;
+    }
+
+    .glass-file-button {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.8) 0%, rgba(37, 99, 235, 0.9) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(147, 197, 253, 0.3);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 500;
+        box-shadow: 
+            0 8px 32px rgba(59, 130, 246, 0.3),
+            inset 0 1px 0 rgba(147, 197, 253, 0.4);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        width: 100%;
+    }
+
+    .glass-file-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.6s ease;
+        pointer-events: none;
+    }
+
+    .glass-file-input:hover .glass-file-button {
+        background: linear-gradient(135deg, rgba(96, 165, 250, 0.9) 0%, rgba(59, 130, 246, 1) 100%);
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 
+            0 12px 40px rgba(59, 130, 246, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6),
+            0 0 30px rgba(59, 130, 246, 0.3);
+    }
+
+    .glass-file-input:hover .glass-file-button::before {
+        left: 100%;
+    }
+
+    .glass-file-selected {
+        margin-top: 8px;
+        padding: 8px 12px;
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        border-radius: 6px;
+        color: #059669;
+        font-size: 12px;
+        display: none;
+    }
+</style>
+
+    .glass-button-primary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.6s ease;
+        pointer-events: none;
+    }
+
+    .glass-button-primary:hover {
+        background: linear-gradient(135deg, rgba(96, 165, 250, 0.9) 0%, rgba(59, 130, 246, 1) 100%);
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 
+            0 12px 40px rgba(59, 130, 246, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6),
+            0 0 30px rgba(59, 130, 246, 0.3);
+    }
+
+    .glass-button-primary:hover::before {
+        left: 100%;
+    }
+
+    .glass-button-secondary {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(249, 250, 251, 0.8) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(209, 213, 219, 0.4);
+        color: #374151;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-button-secondary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+        transition: left 0.6s ease;
+        pointer-events: none;
+    }
+
+    .glass-button-secondary:hover {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 197, 253, 0.2) 100%);
+        border-color: rgba(59, 130, 246, 0.3);
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 
+            0 12px 40px rgba(0, 0, 0, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8),
+            0 0 25px rgba(59, 130, 246, 0.2);
+        color: #1e40af;
+    }
+
+    .glass-button-secondary:hover::before {
+        left: 100%;
+    }
+
+    .glass-button-success {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.8) 0%, rgba(22, 163, 74, 0.9) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(134, 239, 172, 0.3);
+        box-shadow: 
+            0 8px 32px rgba(34, 197, 94, 0.3),
+            inset 0 1px 0 rgba(134, 239, 172, 0.4);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-button-success:hover {
+        background: linear-gradient(135deg, rgba(74, 222, 128, 0.9) 0%, rgba(34, 197, 94, 1) 100%);
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 
+            0 12px 40px rgba(34, 197, 94, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6),
+            0 0 30px rgba(34, 197, 94, 0.3);
+    }
+
+    .glass-button-danger {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.8) 0%, rgba(220, 38, 38, 0.9) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(252, 165, 165, 0.3);
+        box-shadow: 
+            0 8px 32px rgba(239, 68, 68, 0.3),
+            inset 0 1px 0 rgba(252, 165, 165, 0.4);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-button-danger:hover {
+        background: linear-gradient(135deg, rgba(248, 113, 113, 0.9) 0%, rgba(239, 68, 68, 1) 100%);
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 
+            0 12px 40px rgba(239, 68, 68, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6),
+            0 0 30px rgba(239, 68, 68, 0.3);
+    }
+
+    /* Glass Input Fields */
+    .glass-input {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(209, 213, 219, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .glass-input:focus {
+        background: rgba(255, 255, 255, 0.95);
+        border-color: rgba(59, 130, 246, 0.5);
+        box-shadow: 
+            0 0 0 3px rgba(59, 130, 246, 0.1),
+            0 4px 20px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Glass Sections */
+    .glass-section {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(249, 250, 251, 0.8) 100%);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        transition: all 0.3s ease;
+    }
+
+    .glass-section:hover {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(249, 250, 251, 0.9) 100%);
+        transform: translateY(-1px);
+        box-shadow: 
+            0 12px 40px rgba(0, 0, 0, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+</style>
+{% endblock %}
+
 {% block botones_accion %}
 {% if noticia.estado == 'publicado' %}
-    <a href="{{ noticia.get_absolute_url }}" class="btn btn-outline-success" target="_blank">
-        <span class="fas material-icons">visibility</span></i> Ver Noticia
+    <a href="{{ noticia.get_absolute_url }}" 
+       class="glass-button-success inline-flex items-center px-4 py-2 text-white rounded-md transition-all duration-300" 
+       target="_blank">
+        <span class="material-icons mr-2 text-sm">visibility</span>
+        Ver Noticia
     </a>
 {% endif %}
-<a href="{% url 'blog:eliminar_noticia' noticia.pk %}" class="btn btn-outline-danger">
-    <span class="fas material-icons">delete</span></i> Eliminar
+<a href="{% url 'blog:eliminar_noticia' noticia.pk %}" 
+   class="glass-button-danger inline-flex items-center px-4 py-2 text-white rounded-md transition-all duration-300">
+    <span class="material-icons mr-2 text-sm">delete</span>
+    Eliminar
 </a>
 {% endblock %}
 
 {% block contenido_editores %}
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5><span class="fas material-icons">help</span></i> Editar Noticia</h5>
-        <div>
+<div class="glass-card">
+    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+        <h5 class="flex items-center text-lg font-semibold text-gray-800">
+            <span class="material-icons mr-2">edit</span>
+            Editar Noticia
+        </h5>
+        <div class="flex space-x-2">
             {% if noticia.estado == 'publicado' %}
-                <span class="badge bg-success">Publicado</span>
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Publicado
+                </span>
             {% elif noticia.estado == 'borrador' %}
-                <span class="badge bg-warning">Borrador</span>
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    Borrador
+                </span>
             {% else %}
-                <span class="badge bg-secondary">Archivado</span>
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    Archivado
+                </span>
             {% endif %}
             
             {% if noticia.destacada %}
-                <span class="badge bg-warning text-dark">Destacada</span>
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    Destacada
+                </span>
             {% endif %}
         </div>
     </div>
-    <div class="card-body">
+    <div class="p-6">
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             
-            <div class="row">
-                <div class="col-md-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2">
                     <!-- Información básica -->
-                    <div class="mb-3">
-                        {{ form.titulo.label_tag }}
-                        {{ form.titulo }}
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.titulo.label }}</label>
+                        <input type="text" name="{{ form.titulo.name }}" value="{{ form.titulo.value|default:'' }}" 
+                               class="glass-input w-full px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         {% if form.titulo.errors %}
-                            <div class="text-danger">{{ form.titulo.errors }}</div>
+                            <div class="text-red-600 text-sm mt-1">{{ form.titulo.errors }}</div>
                         {% endif %}
                     </div>
                     
-                    <div class="mb-3">
-                        {{ form.resumen.label_tag }}
-                        {{ form.resumen }}
-                        <small class="form-text text-muted">Máximo 300 caracteres</small>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.resumen.label }}</label>
+                        <textarea name="{{ form.resumen.name }}" rows="3"
+                                  class="glass-input w-full px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">{{ form.resumen.value|default:'' }}</textarea>
+                        <small class="text-gray-500 text-sm">Máximo 300 caracteres</small>
                         {% if form.resumen.errors %}
-                            <div class="text-danger">{{ form.resumen.errors }}</div>
+                            <div class="text-red-600 text-sm mt-1">{{ form.resumen.errors }}</div>
                         {% endif %}
                     </div>
                     
-                    <div class="mb-3">
-                        {{ form.contenido.label_tag }}
-                        {{ form.contenido }}
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.contenido.label }}</label>
+                        <textarea name="{{ form.contenido.name }}" rows="12"
+                                  class="glass-input w-full px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">{{ form.contenido.value|default:'' }}</textarea>
                         {% if form.contenido.errors %}
-                            <div class="text-danger">{{ form.contenido.errors }}</div>
+                            <div class="text-red-600 text-sm mt-1">{{ form.contenido.errors }}</div>
                         {% endif %}
                     </div>
                 </div>
                 
-                <div class="col-md-4">
+                <div class="lg:col-span-1 space-y-6">
                     <!-- Configuración -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h6>Configuración</h6>
+                    <div class="glass-section rounded-lg p-4">
+                        <h6 class="text-lg font-medium text-gray-800 mb-4">Configuración</h6>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.categoria.label }}</label>
+                            <select name="{{ form.categoria.name }}" 
+                                    class="glass-input w-full px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                {% for choice in form.categoria.field.choices %}
+                                    <option value="{{ choice.0 }}" {% if form.categoria.value == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if form.categoria.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.categoria.errors }}</div>
+                            {% endif %}
                         </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                {{ form.categoria.label_tag }}
-                                {{ form.categoria }}
-                                {% if form.categoria.errors %}
-                                    <div class="text-danger">{{ form.categoria.errors }}</div>
-                                {% endif %}
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.estado.label }}</label>
+                            <select name="{{ form.estado.name }}" 
+                                    class="glass-input w-full px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                {% for choice in form.estado.field.choices %}
+                                    <option value="{{ choice.0 }}" {% if form.estado.value == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if form.estado.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.estado.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="flex items-center">
+                                <input type="checkbox" name="{{ form.destacada.name }}" id="{{ form.destacada.id_for_label }}"
+                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                       {% if form.destacada.value %}checked{% endif %}>
+                                <label for="{{ form.destacada.id_for_label }}" class="ml-2 block text-sm text-gray-700">
+                                    {{ form.destacada.label }}
+                                </label>
                             </div>
-                            
-                            <div class="mb-3">
-                                {{ form.estado.label_tag }}
-                                {{ form.estado }}
-                                {% if form.estado.errors %}
-                                    <div class="text-danger">{{ form.estado.errors }}</div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    {{ form.destacada }}
-                                    {{ form.destacada.label_tag }}
-                                </div>
-                                {% if form.destacada.errors %}
-                                    <div class="text-danger">{{ form.destacada.errors }}</div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="mb-3">
-                                {{ form.fecha_publicacion.label_tag }}
-                                {{ form.fecha_publicacion }}
-                                {% if form.fecha_publicacion.errors %}
-                                    <div class="text-danger">{{ form.fecha_publicacion.errors }}</div>
-                                {% endif %}
-                            </div>
+                            {% if form.destacada.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.destacada.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.fecha_publicacion.label }}</label>
+                            <input type="datetime-local" name="{{ form.fecha_publicacion.name }}" 
+                                   value="{{ form.fecha_publicacion.value|default:'' }}"
+                                   class="glass-input w-full px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            {% if form.fecha_publicacion.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.fecha_publicacion.errors }}</div>
+                            {% endif %}
                         </div>
                     </div>
                     
                     <!-- Imagen -->
-                    <div class="card mt-3">
-                        <div class="card-header">
-                            <h6>Imagen Principal</h6>
-                        </div>
-                        <div class="card-body">
-                            {% if noticia.imagen_principal %}
-                                <div class="mb-3">
-                                    <img src="{{ noticia.imagen_principal.url }}" 
-                                         class="img-fluid rounded" 
-                                         style="max-height: 200px; width: 100%; object-fit: cover;"
-                                         alt="{{ noticia.titulo }}">
-                                </div>
-                            {% endif %}
-                            <div class="mb-3">
-                                {{ form.imagen_principal }}
-                                {% if form.imagen_principal.errors %}
-                                    <div class="text-danger">{{ form.imagen_principal.errors }}</div>
-                                {% endif %}
+                    <div class="glass-section rounded-lg p-4">
+                        <h6 class="text-lg font-medium text-gray-800 mb-4">Imagen Principal</h6>
+                        {% if noticia.imagen_principal %}
+                            <div class="mb-4">
+                                <img src="{{ noticia.imagen_principal.url }}" 
+                                     class="w-full h-32 object-cover rounded-lg" 
+                                     alt="{{ noticia.titulo }}">
                             </div>
+                        {% endif %}
+                        <div class="mb-4">
+                            <div class="glass-file-input">
+                                <input type="file" name="{{ form.imagen_principal.name }}" accept="image/*" id="imagen-input-edit">
+                                <div class="glass-file-button">
+                                    <span class="material-icons mr-2 text-sm">cloud_upload</span>
+                                    {% if noticia.imagen_principal %}Cambiar Imagen{% else %}Elegir Imagen{% endif %}
+                                </div>
+                                <div class="glass-file-selected" id="file-selected-edit">
+                                    <span class="material-icons mr-1 text-xs">check_circle</span>
+                                    <span id="file-name-edit"></span>
+                                </div>
+                            </div>
+                            {% if form.imagen_principal.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.imagen_principal.errors }}</div>
+                            {% endif %}
                         </div>
                     </div>
                     
                     <!-- SEO -->
-                    <div class="card mt-3">
-                        <div class="card-header">
-                            <h6>SEO</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                {{ form.meta_descripcion.label_tag }}
-                                {{ form.meta_descripcion }}
-                                <small class="form-text text-muted">Máximo 160 caracteres</small>
-                                {% if form.meta_descripcion.errors %}
-                                    <div class="text-danger">{{ form.meta_descripcion.errors }}</div>
-                                {% endif %}
-                            </div>
+                    <div class="glass-section rounded-lg p-4">
+                        <h6 class="text-lg font-medium text-gray-800 mb-4">SEO</h6>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.meta_descripcion.label }}</label>
+                            <textarea name="{{ form.meta_descripcion.name }}" rows="3"
+                                      class="glass-input w-full px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">{{ form.meta_descripcion.value|default:'' }}</textarea>
+                            <small class="text-gray-500 text-sm">Máximo 160 caracteres</small>
+                            {% if form.meta_descripcion.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.meta_descripcion.errors }}</div>
+                            {% endif %}
                         </div>
                     </div>
                     
                     <!-- Información adicional -->
-                    <div class="card mt-3">
-                        <div class="card-header">
-                            <h6>Información</h6>
-                        </div>
-                        <div class="card-body">
-                            <small class="text-muted">
-                                <strong>Creado:</strong> {{ noticia.fecha_creacion|date:"d/m/Y H:i" }}<br>
-                                <strong>Actualizado:</strong> {{ noticia.fecha_actualizacion|date:"d/m/Y H:i" }}<br>
-                                <strong>Slug:</strong> {{ noticia.slug }}
-                            </small>
+                    <div class="glass-section rounded-lg p-4">
+                        <h6 class="text-lg font-medium text-gray-800 mb-4">Información</h6>
+                        <div class="text-sm text-gray-600 space-y-1">
+                            <div><strong>Creado:</strong> {{ noticia.fecha_creacion|date:"d/m/Y H:i" }}</div>
+                            <div><strong>Actualizado:</strong> {{ noticia.fecha_actualizacion|date:"d/m/Y H:i" }}</div>
+                            <div><strong>Slug:</strong> {{ noticia.slug }}</div>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <hr>
+            <hr class="my-6 border-gray-200">
             
-            <div class="d-flex justify-content-between">
-                <a href="{% url 'blog:mis_noticias' %}" class="btn btn-secondary">
-                    <span class="fas material-icons">arrow_back</span></i> Volver
+            <div class="flex justify-between">
+                <a href="{% url 'blog:mis_noticias' %}" 
+                   class="glass-button-secondary inline-flex items-center px-6 py-3 rounded-lg font-medium transition-all duration-300">
+                    <span class="material-icons mr-2 text-sm">arrow_back</span>
+                    Volver
                 </a>
-                <button type="submit" class="btn btn-primary">
-                    <span class="fas material-icons">help</span></i> Guardar Cambios
+                <button type="submit" 
+                        class="glass-button-primary inline-flex items-center px-6 py-3 text-white rounded-lg font-medium transition-all duration-300">
+                    <span class="material-icons mr-2 text-sm">save</span>
+                    Guardar Cambios
                 </button>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('imagen-input-edit');
+    const fileSelected = document.getElementById('file-selected-edit');
+    const fileName = document.getElementById('file-name-edit');
+    const fileButton = document.querySelector('.glass-file-button');
+
+    fileInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+            const file = e.target.files[0];
+            fileName.textContent = file.name;
+            fileSelected.style.display = 'block';
+            fileButton.innerHTML = '<span class="material-icons mr-2 text-sm">check</span>Nueva Imagen Seleccionada';
+        } else {
+            fileSelected.style.display = 'none';
+            fileButton.innerHTML = '<span class="material-icons mr-2 text-sm">cloud_upload</span>{% if noticia.imagen_principal %}Cambiar Imagen{% else %}Elegir Imagen{% endif %}';
+        }
+    });
+});
+</script>
 {% endblock %}

@@ -3,74 +3,314 @@
 
 {% block extra_css %}
 <style>
-    .nav-editores-active {
-        background-color: #3b82f6;
+    /* Glassmorphism Effects for Editor Panel */
+    .glass-editor-container {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(249, 250, 251, 0.8));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(209, 213, 219, 0.3);
+        border-radius: 20px;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .glass-editor-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.3), transparent);
+        pointer-events: none;
+    }
+
+    .glass-sidebar {
+        background: linear-gradient(135deg, rgba(249, 250, 251, 0.9), rgba(243, 244, 246, 0.8));
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(209, 213, 219, 0.3);
+        border-radius: 20px;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        min-height: calc(100vh - 200px);
+    }
+
+    .glass-nav-item {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(209, 213, 219, 0.3);
+        border-radius: 12px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 8px;
+    }
+
+    .glass-nav-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+        transition: left 0.5s ease;
+        pointer-events: none;
+    }
+
+    .glass-nav-item:hover::before {
+        left: 100%;
+    }
+
+    .glass-nav-item:hover {
+        background: rgba(59, 130, 246, 0.1);
+        border-color: rgba(59, 130, 246, 0.3);
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 
+            0 12px 40px rgba(59, 130, 246, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    .glass-nav-item.active {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        border-color: rgba(59, 130, 246, 0.4);
+        box-shadow: 
+            0 8px 32px rgba(59, 130, 246, 0.2),
+            inset 0 1px 0 rgba(147, 197, 253, 0.5);
+    }
+
+    .glass-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(249, 250, 251, 0.8));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(209, 213, 219, 0.3);
+        border-radius: 16px;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .glass-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 
+            0 20px 60px rgba(0, 0, 0, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    .glass-button {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        border-radius: 12px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        box-shadow: 
+            0 4px 16px rgba(59, 130, 246, 0.1),
+            inset 0 1px 0 rgba(147, 197, 253, 0.3);
+    }
+
+    .glass-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: left 0.5s ease;
+        pointer-events: none;
+    }
+
+    .glass-button:hover::before {
+        left: 100%;
+    }
+
+    .glass-button:hover {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.4), rgba(37, 99, 235, 0.2));
+        border-color: rgba(59, 130, 246, 0.5);
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 
+            0 12px 40px rgba(59, 130, 246, 0.2),
+            inset 0 1px 0 rgba(147, 197, 253, 0.5);
+    }
+
+    .glass-button-primary {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(37, 99, 235, 0.6));
+        color: white;
+        border-color: rgba(59, 130, 246, 0.6);
+    }
+
+    .glass-button-primary:hover {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(37, 99, 235, 0.7));
         color: white;
     }
-    .card-stat {
-        border-left: 4px solid #3b82f6;
+
+    .glass-button-success {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.1));
+        border-color: rgba(34, 197, 94, 0.3);
+        color: rgb(22, 163, 74);
+    }
+
+    .glass-button-success:hover {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.4), rgba(22, 163, 74, 0.2));
+        color: rgb(22, 163, 74);
+    }
+
+    .glass-button-danger {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
+        border-color: rgba(239, 68, 68, 0.3);
+        color: rgb(220, 38, 38);
+    }
+
+    .glass-button-danger:hover {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.4), rgba(220, 38, 38, 0.2));
+        color: rgb(220, 38, 38);
+    }
+
+    .glass-input {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(209, 213, 219, 0.4);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        color: #374151;
+    }
+
+    .glass-input:focus {
+        background: rgba(255, 255, 255, 0.95);
+        border-color: rgba(59, 130, 246, 0.5);
+        outline: none;
+        box-shadow: 
+            0 0 0 3px rgba(59, 130, 246, 0.1),
+            inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        color: #374151;
+    }
+
+    .glass-badge {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .glass-badge-success {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+        border-color: rgba(34, 197, 94, 0.4);
+        color: rgb(22, 163, 74);
+    }
+
+    .glass-badge-warning {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(217, 119, 6, 0.2));
+        border-color: rgba(245, 158, 11, 0.4);
+        color: rgb(217, 119, 6);
+    }
+
+    .glass-badge-secondary {
+        background: linear-gradient(135deg, rgba(107, 114, 128, 0.3), rgba(75, 85, 99, 0.2));
+        border-color: rgba(107, 114, 128, 0.4);
+        color: rgb(75, 85, 99);
+    }
+
+    .glass-table {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        overflow: hidden;
+    }
+
+    .glass-table-row:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Page Background */
+    body {
+        background: #ffffff;
+        min-height: 100vh;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-    <!-- Sidebar Navigation -->
-    <div class="md:col-span-1">
-        <div class="bg-gray-50 min-h-screen p-6 rounded-lg">
-            <h5 class="flex items-center text-lg font-semibold text-gray-900 mb-4">
-                <span class="material-icons mr-2">edit</span>
-                Panel de Editores
-            </h5>
-            <hr class="border-gray-200 mb-4">
-            <nav class="space-y-2">
-                <a class="flex items-center px-4 py-3 rounded-lg transition-colors {% if request.resolver_match.url_name == 'panel_editores' %}nav-editores-active{% else %}text-gray-700 hover:bg-gray-100{% endif %}" 
-                   href="{% url 'blog:panel_editores' %}">
-                    <span class="material-icons mr-3">dashboard</span>
-                    Dashboard
-                </a>
-                <a class="flex items-center px-4 py-3 rounded-lg transition-colors {% if request.resolver_match.url_name == 'mis_noticias' %}nav-editores-active{% else %}text-gray-700 hover:bg-gray-100{% endif %}" 
-                   href="{% url 'blog:mis_noticias' %}">
-                    <span class="material-icons mr-3">article</span>
-                    Mis Noticias
-                </a>
-                <a class="flex items-center px-4 py-3 rounded-lg transition-colors {% if request.resolver_match.url_name == 'crear_noticia' %}nav-editores-active{% else %}text-gray-700 hover:bg-gray-100{% endif %}" 
-                   href="{% url 'blog:crear_noticia' %}">
-                    <span class="material-icons mr-3">add</span>
-                    Nueva Noticia
-                </a>
-                <a class="flex items-center px-4 py-3 rounded-lg transition-colors {% if request.resolver_match.url_name == 'gestionar_categorias' %}nav-editores-active{% else %}text-gray-700 hover:bg-gray-100{% endif %}" 
-                   href="{% url 'blog:gestionar_categorias' %}">
-                    <span class="material-icons mr-3">category</span>
-                    Categorías
-                </a>
-                <hr class="border-gray-200 my-4">
-                <a class="flex items-center px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors" 
-                   href="{% url 'blog:lista_noticias' %}">
-                    <span class="material-icons mr-3">visibility</span>
-                    Ver Noticias Públicas
-                </a>
-                {% if user.is_staff %}
-                <a class="flex items-center px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors" 
-                   href="{% url 'admin:index' %}">
-                    <span class="material-icons mr-3">settings</span>
-                    Admin Django
-                </a>
-                {% endif %}
-            </nav>
-        </div>
-    </div>
-    
-    <!-- Main Content -->
-    <div class="md:col-span-3">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-gray-900">{% block titulo_pagina %}Panel de Editores{% endblock %}</h2>
-            <div>
-                {% block botones_accion %}{% endblock %}
+<div class="min-h-screen py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <!-- Sidebar Navigation -->
+            <div class="md:col-span-1">
+                <div class="glass-sidebar p-6">
+                    <h5 class="flex items-center text-lg font-semibold text-gray-800 mb-6">
+                        <span class="material-icons mr-2">edit</span>
+                        Panel de Editores
+                    </h5>
+                    <nav class="space-y-2">
+                        <a class="glass-nav-item flex items-center px-4 py-3 text-gray-700 transition-colors {% if request.resolver_match.url_name == 'panel_editores' %}active{% endif %}" 
+                           href="{% url 'blog:panel_editores' %}">
+                            <span class="material-icons mr-3">dashboard</span>
+                            Dashboard
+                        </a>
+                        <a class="glass-nav-item flex items-center px-4 py-3 text-gray-700 transition-colors {% if request.resolver_match.url_name == 'mis_noticias' %}active{% endif %}" 
+                           href="{% url 'blog:mis_noticias' %}">
+                            <span class="material-icons mr-3">article</span>
+                            Mis Noticias
+                        </a>
+                        <a class="glass-nav-item flex items-center px-4 py-3 text-gray-700 transition-colors {% if request.resolver_match.url_name == 'crear_noticia' %}active{% endif %}" 
+                           href="{% url 'blog:crear_noticia' %}">
+                            <span class="material-icons mr-3">add</span>
+                            Nueva Noticia
+                        </a>
+                        <a class="glass-nav-item flex items-center px-4 py-3 text-gray-700 transition-colors {% if request.resolver_match.url_name == 'gestionar_categorias' %}active{% endif %}" 
+                           href="{% url 'blog:gestionar_categorias' %}">
+                            <span class="material-icons mr-3">category</span>
+                            Categorías
+                        </a>
+                        <hr class="border-gray-300 border-opacity-50 my-4">
+                        <a class="glass-nav-item flex items-center px-4 py-3 text-gray-700 transition-colors" 
+                           href="{% url 'blog:lista_noticias' %}">
+                            <span class="material-icons mr-3">visibility</span>
+                            Ver Noticias Públicas
+                        </a>
+                        {% if user.is_staff %}
+                        <a class="glass-nav-item flex items-center px-4 py-3 text-gray-700 transition-colors" 
+                           href="{% url 'admin:index' %}">
+                            <span class="material-icons mr-3">settings</span>
+                            Admin Django
+                        </a>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="md:col-span-3">
+                <div class="glass-editor-container p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">{% block titulo_pagina %}Panel de Editores{% endblock %}</h2>
+                        <div class="flex space-x-3">
+                            {% block botones_accion %}{% endblock %}
+                        </div>
+                    </div>
+                    
+                    {% block contenido_editores %}{% endblock %}
+                </div>
             </div>
         </div>
-        
-        {% block contenido_editores %}{% endblock %}
     </div>
 </div>
 {% endblock %}

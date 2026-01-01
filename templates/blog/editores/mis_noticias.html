@@ -3,105 +3,126 @@
 {% block titulo_pagina %}Mis Noticias{% endblock %}
 
 {% block botones_accion %}
-<a href="{% url 'blog:crear_noticia' %}" class="btn btn-primary">
-    <span class="fas material-icons">add</span></i> Nueva Noticia
+<a href="{% url 'blog:crear_noticia' %}" 
+   class="glass-button glass-button-primary inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all">
+    <span class="material-icons mr-2 text-sm">add</span>
+    Nueva Noticia
 </a>
 {% endblock %}
 
 {% block contenido_editores %}
 <!-- Filtros -->
-<div class="card mb-4">
-    <div class="card-body">
-        <form method="GET" class="row g-3">
-            <div class="col-md-4">
-                <label class="form-label">Estado</label>
-                <select name="estado" class="form-select">
-                    <option value="">Todos los estados</option>
-                    <option value="borrador" {% if estado_actual == 'borrador' %}selected{% endif %}>Borrador</option>
-                    <option value="publicado" {% if estado_actual == 'publicado' %}selected{% endif %}>Publicado</option>
-                    <option value="archivado" {% if estado_actual == 'archivado' %}selected{% endif %}>Archivado</option>
-                </select>
+<div class="glass-card p-6 mb-6">
+    <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+            <select name="estado" class="glass-input w-full px-3 py-2">
+                <option value="">Todos los estados</option>
+                <option value="borrador" {% if estado_actual == 'borrador' %}selected{% endif %}>Borrador</option>
+                <option value="publicado" {% if estado_actual == 'publicado' %}selected{% endif %}>Publicado</option>
+                <option value="archivado" {% if estado_actual == 'archivado' %}selected{% endif %}>Archivado</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
+            <select name="categoria" class="glass-input w-full px-3 py-2">
+                <option value="">Todas las categorías</option>
+                {% for categoria in categorias %}
+                    <option value="{{ categoria.id }}" {% if categoria_actual == categoria.id|stringformat:"s" %}selected{% endif %}>
+                        {{ categoria.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">&nbsp;</label>
+            <div class="flex space-x-2">
+                <button type="submit" 
+                        class="glass-button glass-button-primary inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all">
+                    <span class="material-icons mr-2 text-sm">filter_list</span>
+                    Filtrar
+                </button>
+                <a href="{% url 'blog:mis_noticias' %}" 
+                   class="glass-button inline-flex items-center px-4 py-2 text-gray-700 text-sm font-medium rounded-lg transition-all">
+                    <span class="material-icons mr-2 text-sm">clear</span>
+                    Limpiar
+                </a>
             </div>
-            <div class="col-md-4">
-                <label class="form-label">Categoría</label>
-                <select name="categoria" class="form-select">
-                    <option value="">Todas las categorías</option>
-                    {% for categoria in categorias %}
-                        <option value="{{ categoria.id }}" {% if categoria_actual == categoria.id|stringformat:"s" %}selected{% endif %}>
-                            {{ categoria.nombre }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">&nbsp;</label>
-                <div>
-                    <button type="submit" class="btn btn-primary">
-                        <span class="fas material-icons">filter_list</span></i> Filtrar
-                    </button>
-                    <a href="{% url 'blog:mis_noticias' %}" class="btn btn-outline-secondary">
-                        <span class="fas material-icons">close</span></i> Limpiar
-                    </a>
-                </div>
-            </div>
-        </form>
-    </div>
+        </div>
+    </form>
 </div>
 
 <!-- Lista de noticias -->
 {% if page_obj %}
-    <div class="row">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         {% for noticia in page_obj %}
-            <div class="col-md-6 mb-4">
-                <div class="card h-100">
-                    {% if noticia.imagen_principal %}
-                        <img src="{{ noticia.imagen_principal.url }}" class="card-img-top" 
-                             style="height: 200px; object-fit: cover;" alt="{{ noticia.titulo }}">
-                    {% endif %}
+            <div class="glass-card overflow-hidden hover:transform hover:scale-105 transition-all duration-300">
+                {% if noticia.imagen_principal %}
+                    <div class="relative overflow-hidden">
+                        <img src="{{ noticia.imagen_principal.url }}" 
+                             class="w-full h-48 object-cover" 
+                             alt="{{ noticia.titulo }}">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                    </div>
+                {% endif %}
+                
+                <div class="p-6 flex flex-col h-full">
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        {% if noticia.estado == 'publicado' %}
+                            <span class="glass-badge glass-badge-success inline-flex items-center px-3 py-1 text-xs font-medium">
+                                Publicado
+                            </span>
+                        {% elif noticia.estado == 'borrador' %}
+                            <span class="glass-badge glass-badge-warning inline-flex items-center px-3 py-1 text-xs font-medium">
+                                Borrador
+                            </span>
+                        {% else %}
+                            <span class="glass-badge glass-badge-secondary inline-flex items-center px-3 py-1 text-xs font-medium">
+                                Archivado
+                            </span>
+                        {% endif %}
+                        
+                        {% if noticia.destacada %}
+                            <span class="glass-badge glass-badge-warning inline-flex items-center px-3 py-1 text-xs font-medium">
+                                <span class="material-icons text-xs mr-1">star</span>
+                                Destacada
+                            </span>
+                        {% endif %}
+                        
+                        <span class="glass-badge inline-flex items-center px-3 py-1 text-xs font-medium text-gray-600">
+                            {{ noticia.categoria.nombre }}
+                        </span>
+                    </div>
                     
-                    <div class="card-body d-flex flex-column">
-                        <div class="mb-2">
-                            {% if noticia.estado == 'publicado' %}
-                                <span class="badge bg-success">Publicado</span>
-                            {% elif noticia.estado == 'borrador' %}
-                                <span class="badge bg-warning">Borrador</span>
-                            {% else %}
-                                <span class="badge bg-secondary">Archivado</span>
-                            {% endif %}
-                            
-                            {% if noticia.destacada %}
-                                <span class="badge bg-warning text-dark">Destacada</span>
-                            {% endif %}
-                            
-                            <span class="badge bg-primary">{{ noticia.categoria.nombre }}</span>
+                    <h5 class="text-xl font-semibold text-gray-800 mb-3">{{ noticia.titulo }}</h5>
+                    <p class="text-gray-600 mb-4 flex-grow">{{ noticia.resumen|truncatechars:100 }}</p>
+                    
+                    <div class="mt-auto">
+                        <div class="flex items-center text-sm text-gray-500 mb-4">
+                            <span class="material-icons mr-1 text-sm">event</span>
+                            {{ noticia.fecha_creacion|date:"d/m/Y H:i" }}
                         </div>
                         
-                        <h5 class="card-title">{{ noticia.titulo }}</h5>
-                        <p class="card-text">{{ noticia.resumen|truncatechars:100 }}</p>
-                        
-                        <div class="mt-auto">
-                            <small class="text-muted d-block mb-2">
-                                <span class="fas material-icons">event</span></i> {{ noticia.fecha_creacion|date:"d/m/Y H:i" }}
-                            </small>
+                        <div class="grid grid-cols-3 gap-2">
+                            <a href="{% url 'blog:editar_noticia' noticia.pk %}" 
+                               class="glass-button inline-flex items-center justify-center px-3 py-2 text-gray-700 text-xs rounded-lg transition-all">
+                                <span class="material-icons text-xs">edit</span>
+                            </a>
                             
-                            <div class="btn-group w-100" role="group">
-                                <a href="{% url 'blog:editar_noticia' noticia.pk %}" 
-                                   class="btn btn-outline-primary btn-sm">
-                                    <span class="fas material-icons">help</span></i> Editar
+                            {% if noticia.estado == 'publicado' %}
+                                <a href="{{ noticia.get_absolute_url }}" 
+                                   class="glass-button-success inline-flex items-center justify-center px-3 py-2 text-xs rounded-lg transition-all" 
+                                   target="_blank">
+                                    <span class="material-icons text-xs">visibility</span>
                                 </a>
-                                
-                                {% if noticia.estado == 'publicado' %}
-                                    <a href="{{ noticia.get_absolute_url }}" 
-                                       class="btn btn-outline-success btn-sm" target="_blank">
-                                        <span class="fas material-icons">visibility</span></i> Ver
-                                    </a>
-                                {% endif %}
-                                
-                                <a href="{% url 'blog:eliminar_noticia' noticia.pk %}" 
-                                   class="btn btn-outline-danger btn-sm">
-                                    <span class="fas material-icons">delete</span></i> Eliminar
-                                </a>
-                            </div>
+                            {% else %}
+                                <div></div>
+                            {% endif %}
+                            
+                            <a href="{% url 'blog:eliminar_noticia' noticia.pk %}" 
+                               class="glass-button-danger inline-flex items-center justify-center px-3 py-2 text-xs rounded-lg transition-all">
+                                <span class="material-icons text-xs">delete</span>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -111,56 +132,61 @@
 
     <!-- Paginación -->
     {% if page_obj.has_other_pages %}
-        <nav aria-label="Paginación de noticias">
-            <ul class="pagination justify-content-center">
-                {% if page_obj.has_previous %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page=1{% if estado_actual %}&estado={{ estado_actual }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}">
-                            <span class="fas material-icons">help</span></i>
-                        </a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}">
-                            <span class="fas material-icons">help</span></i>
-                        </a>
-                    </li>
-                {% endif %}
+        <nav aria-label="Paginación de noticias" class="mt-8">
+            <div class="flex justify-center">
+                <div class="glass-card p-2">
+                    <div class="flex space-x-1">
+                        {% if page_obj.has_previous %}
+                            <a href="?page=1{% if estado_actual %}&estado={{ estado_actual }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}" 
+                               class="glass-button px-3 py-2 text-sm font-medium text-gray-700 rounded-lg">
+                                <span class="material-icons text-sm">first_page</span>
+                            </a>
+                            <a href="?page={{ page_obj.previous_page_number }}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}" 
+                               class="glass-button px-3 py-2 text-sm font-medium text-gray-700 rounded-lg">
+                                <span class="material-icons text-sm">chevron_left</span>
+                            </a>
+                        {% endif %}
 
-                {% for num in page_obj.paginator.page_range %}
-                    {% if page_obj.number == num %}
-                        <li class="page-item active">
-                            <span class="page-link">{{ num }}</span>
-                        </li>
-                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ num }}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}">{{ num }}</a>
-                        </li>
-                    {% endif %}
-                {% endfor %}
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <span class="glass-button-primary px-3 py-2 text-sm font-medium rounded-lg">
+                                    {{ num }}
+                                </span>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <a href="?page={{ num }}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}" 
+                                   class="glass-button px-3 py-2 text-sm font-medium text-gray-700 rounded-lg">
+                                    {{ num }}
+                                </a>
+                            {% endif %}
+                        {% endfor %}
 
-                {% if page_obj.has_next %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}">
-                            <span class="fas material-icons">help</span></i>
-                        </a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}">
-                            <span class="fas material-icons">help</span></i>
-                        </a>
-                    </li>
-                {% endif %}
-            </ul>
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}" 
+                               class="glass-button px-3 py-2 text-sm font-medium text-gray-700 rounded-lg">
+                                <span class="material-icons text-sm">chevron_right</span>
+                            </a>
+                            <a href="?page={{ page_obj.paginator.num_pages }}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}" 
+                               class="glass-button px-3 py-2 text-sm font-medium text-gray-700 rounded-lg">
+                                <span class="material-icons text-sm">last_page</span>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
         </nav>
     {% endif %}
 {% else %}
-    <div class="card">
-        <div class="card-body text-center py-5">
-            <span class="fas material-icons material-icons text-muted mb-3">close</span></i>
-            <h4>No tienes noticias aún</h4>
-            <p class="text-muted">¡Comienza creando tu primera noticia!</p>
-            <a href="{% url 'blog:crear_noticia' %}" class="btn btn-primary">
-                <span class="fas material-icons">add</span></i> Crear Primera Noticia
+    <div class="glass-card">
+        <div class="p-12 text-center">
+            <div class="flex items-center justify-center w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-r from-blue-400 to-purple-600">
+                <span class="material-icons text-white text-3xl">article</span>
+            </div>
+            <h4 class="text-2xl font-semibold text-gray-800 mb-3">No tienes noticias aún</h4>
+            <p class="text-gray-600 mb-8">¡Comienza creando tu primera noticia y comparte tus ideas con el mundo!</p>
+            <a href="{% url 'blog:crear_noticia' %}" 
+               class="glass-button glass-button-primary inline-flex items-center px-8 py-4 text-lg font-medium rounded-lg transition-all">
+                <span class="material-icons mr-3">add</span>
+                Crear Primera Noticia
             </a>
         </div>
     </div>
