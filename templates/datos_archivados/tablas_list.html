@@ -1382,6 +1382,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Iniciar monitoreo de progreso
+        window.tiempoInicioMonitoreo = Date.now(); // Inicializar tiempo
         let intervalId = setInterval(verificarEstadoCombinacion, 2000);
         
         // Realizar petición AJAX
@@ -1496,6 +1497,28 @@ document.addEventListener('DOMContentLoaded', function() {
                         btnConfirmarCombinacion.disabled = false;
                         btnCancelarCombinacion.disabled = false;
                         btnConfirmarCombinacion.innerHTML = '<span class="bi material-icons mr-2">swap_vert</span></i>Reintentar';
+                    } else {
+                        // Estado desconocido o sin combinaciones
+                        console.log("🔍 DEBUG: Estado no manejado:", data);
+                        
+                        // Si llevamos más de 30 segundos sin progreso, mostrar error
+                        if (!window.tiempoInicioMonitoreo) {
+                            window.tiempoInicioMonitoreo = Date.now();
+                        }
+                        
+                        const tiempoTranscurrido = Date.now() - window.tiempoInicioMonitoreo;
+                        if (tiempoTranscurrido > 30000) { // 30 segundos
+                            clearInterval(intervalId);
+                            progressMessage.innerHTML = `
+                                <div class="glass-alert glass-alert-warning mt-4">
+                                    <span class="fa material-icons mr-2">warning</span></i>
+                                    <strong>Timeout:</strong> La combinación no se inició correctamente. Estado: ${data.estado || 'Desconocido'}
+                                </div>
+                            `;
+                            btnConfirmarCombinacion.disabled = false;
+                            btnCancelarCombinacion.disabled = false;
+                            btnConfirmarCombinacion.innerHTML = '<span class="bi material-icons mr-2">swap_vert</span></i>Reintentar';
+                        }
                     }
                 })
                 .catch(error => {

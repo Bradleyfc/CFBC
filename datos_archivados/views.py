@@ -14,8 +14,8 @@ def es_secretaria(user):
     return user.groups.filter(name='Secretaria').exists()
 
 def tiene_permisos_datos_archivados(user):
-    """Verifica si el usuario tiene permisos para acceder a datos archivados (Secretaria o Admin)"""
-    return (user.groups.filter(name='Secretaria').exists() or 
+    """Verifica si el usuario tiene permisos para acceder a datos archivados (Administracion o Admin)"""
+    return (user.groups.filter(name='Administracion').exists() or 
             user.is_superuser or 
             user.is_staff)
 
@@ -1843,9 +1843,14 @@ def combinar_datos_archivados(request):
     
     # Ejecutar combinación en hilo separado para no bloquear la respuesta
     def ejecutar_combinacion():
+        import logging
+        logger = logging.getLogger(__name__)
+        
         try:
+            logger.info("=== INICIANDO COMBINACIÓN REAL DE DATOS ===")
+            
             from .models import DatoArchivadoDinamico
-            from django.contrib.auth.models import User
+            from django.contrib.auth.models import User, Group
             from accounts.models import Registro
             from principal.models import (
                 CursoAcademico, Curso, Matriculas, 
@@ -1857,9 +1862,6 @@ def combinar_datos_archivados(request):
             from decimal import Decimal
             from django.core.cache import cache
             from django.utils import timezone
-            import logging
-            
-            logger = logging.getLogger(__name__)
             
             # Inicializar progreso en cache
             def actualizar_progreso(paso_actual, pasos_completados, pasos_totales=8, **kwargs):
@@ -1874,6 +1876,29 @@ def combinar_datos_archivados(request):
                     'matriculas_combinadas': kwargs.get('matriculas_combinadas', 0),
                 }
                 cache.set('combinacion_en_progreso', progreso, timeout=300)  # 5 minutos
+                logger.info(f"Progreso actualizado: {paso_actual} ({pasos_completados}/{pasos_totales})")
+            
+            # Función para copiar campos dinámicamente
+            def copiar_campos_dinamicos(objeto_destino, datos_origen, campos_excluir=None, logger=None):
+                if campos_excluir is None:
+                    campos_excluir = ['id', 'pk']
+                
+                campos_copiados = 0
+                for campo, valor in datos_origen.items():
+                    if campo in campos_excluir:
+                        continue
+                    
+                    try:
+                        if hasattr(objeto_destino, campo):
+                            setattr(objeto_destino, campo, valor)
+                            campos_copiados += 1
+                            if logger:
+                                logger.debug(f"Campo copiado: {campo} = {valor}")
+                    except Exception as e:
+                        if logger:
+                            logger.warning(f"Error copiando campo {campo}: {e}")
+                
+                return campos_copiados
             
             # Contadores
             estadisticas = {
@@ -1887,56 +1912,21 @@ def combinar_datos_archivados(request):
                 'notas_combinadas': 0,
                 'otras_tablas': 0
             }
-            campos_agregados = []
-            errores = []
             
             # Mapeo de usuarios archivados a usuarios actuales
             mapeo_usuarios = {}
             
             # Inicializar progreso
-            actualizar_progreso('Iniciando combinación...', 0, **estadisticas)
+            actualizar_progreso('Iniciando combinación real...', 0, **estadisticas)
             
-            # IMPORTANTE: Usar transaction.atomic() con savepoints individuales
+            # PASO 1: COMBINAR USUARIOS
+            actualizar_progreso('Combinando usuarios...', 1, **estadisticas)
+            logger.info("=== Iniciando combinación de auth_user ===")
+            
+            datos_auth_user = DatoArchivadoDinamico.objects.filter(tabla_origen='auth_user')
+            logger.info(f"Encontrados {datos_auth_user.count()} usuarios archivados")
+            
             with transaction.atomic():
-                # Paso 1: DETECTAR Y AGREGAR CAMPOS FALTANTES
-                actualizar_progreso('Detectando campos faltantes...', 1, **estadisticas)
-                logger.info("=== Detectando campos faltantes en modelos ===")
-                
-                # Analizar campos para User
-                datos_users_all = DatoArchivadoDinamico.objects.filter(tabla_origen='auth_user')
-                todos_campos_user = {}
-                for dato_user in datos_users_all:
-                    for campo, valor in dato_user.datos_originales.items():
-                        if campo not in todos_campos_user:
-                            todos_campos_user[campo] = valor
-                
-                if todos_campos_user:
-                    campos_agregados_user = agregar_campos_faltantes_a_modelo(User, todos_campos_user, logger)
-                    if campos_agregados_user:
-                        campos_agregados.extend([f"User.{c}" for c in campos_agregados_user])
-                
-                # Analizar campos para Registro
-                datos_registros_all = DatoArchivadoDinamico.objects.filter(
-                    Q(tabla_origen='Docencia_studentpersonalinformation') |
-                    Q(tabla_origen='Docencia_teacherpersonalinformation') |
-                    Q(tabla_origen='accounts_registro')
-                )
-                todos_campos_registro = {}
-                for dato_reg in datos_registros_all:
-                    for campo, valor in dato_reg.datos_originales.items():
-                        if campo not in todos_campos_registro:
-                            todos_campos_registro[campo] = valor
-                
-                if todos_campos_registro:
-                    campos_agregados_registro = agregar_campos_faltantes_a_modelo(Registro, todos_campos_registro, logger)
-                    if campos_agregados_registro:
-                        campos_agregados.extend([f"Registro.{c}" for c in campos_agregados_registro])
-                
-                # Paso 2: COMBINAR USUARIOS
-                actualizar_progreso('Combinando usuarios...', 2, **estadisticas)
-                logger.info("=== Iniciando combinación de auth_user ===")
-                datos_auth_user = DatoArchivadoDinamico.objects.filter(tabla_origen='auth_user')
-                
                 for dato in datos_auth_user:
                     try:
                         sid = transaction.savepoint()
@@ -1946,78 +1936,83 @@ def combinar_datos_archivados(request):
                         id_original = dato.id_original
                         
                         if not username:
+                            logger.warning(f"Usuario sin username, saltando: {datos}")
                             transaction.savepoint_rollback(sid)
                             continue
                         
                         # Buscar si el usuario ya existe
-                        usuario_existente = User.objects.filter(
-                            Q(username=username) | (Q(email=email) if email else Q(pk=None))
-                        ).first()
+                        usuario_existente = User.objects.filter(username=username).first()
                         
                         if usuario_existente:
+                            logger.info(f"Actualizando usuario existente: {username}")
                             # Actualizar usuario existente
-                            campos_copiados = copiar_todos_los_campos(
-                                usuario_existente, 
-                                datos, 
-                                campos_excluir=['id', 'pk', 'username'],
-                                logger=logger
-                            )
+                            copiar_campos_dinamicos(usuario_existente, datos, 
+                                                  campos_excluir=['id', 'pk', 'username'], 
+                                                  logger=logger)
                             
                             # Procesar contraseña
                             password_original = datos.get('password')
-                            if password_original:
+                            if password_original and password_original.strip():
                                 if password_original.startswith(('pbkdf2_sha256', 'bcrypt', 'argon2', 'sha1', 'md5')):
                                     usuario_existente.password = password_original
+                                    logger.info(f"Contraseña hasheada copiada para {username}")
                                 else:
                                     usuario_existente.set_password(password_original)
+                                    logger.info(f"Contraseña en texto plano hasheada para {username}")
                             
                             usuario_existente.save()
                             mapeo_usuarios[id_original] = usuario_existente
                             estadisticas['usuarios_combinados'] += 1
-                            transaction.savepoint_commit(sid)
+                            
                         else:
+                            logger.info(f"Creando nuevo usuario: {username}")
                             # Crear nuevo usuario
                             nuevo_usuario = User(username=username)
-                            campos_copiados = copiar_todos_los_campos(
-                                nuevo_usuario,
-                                datos,
-                                campos_excluir=['id', 'pk'],
-                                logger=logger
-                            )
+                            copiar_campos_dinamicos(nuevo_usuario, datos, 
+                                                  campos_excluir=['id', 'pk'], 
+                                                  logger=logger)
                             
                             # Procesar contraseña
                             password_original = datos.get('password')
-                            if password_original:
+                            if password_original and password_original.strip():
                                 if password_original.startswith(('pbkdf2_sha256', 'bcrypt', 'argon2', 'sha1', 'md5')):
                                     nuevo_usuario.password = password_original
+                                    logger.info(f"Contraseña hasheada asignada para {username}")
                                 else:
                                     nuevo_usuario.set_password(password_original)
+                                    logger.info(f"Contraseña en texto plano hasheada para {username}")
                             else:
                                 nuevo_usuario.set_unusable_password()
+                                logger.info(f"Contraseña no utilizable asignada para {username}")
                             
                             nuevo_usuario.save()
                             mapeo_usuarios[id_original] = nuevo_usuario
                             estadisticas['usuarios_combinados'] += 1
-                            transaction.savepoint_commit(sid)
-                    
+                        
+                        transaction.savepoint_commit(sid)
+                        
                     except Exception as e:
                         transaction.savepoint_rollback(sid)
                         error_msg = f"Error procesando usuario {username}: {str(e)}"
                         logger.error(error_msg)
-                        errores.append(error_msg)
                         continue
-                
-                # Actualizar progreso después de usuarios
-                actualizar_progreso('Usuarios combinados. Procesando registros...', 3, **estadisticas)
-                
-                # Paso 3: COMBINAR REGISTROS (simplificado para el ejemplo)
-                logger.info("=== Combinando registros de estudiantes/profesores ===")
-                datos_registros = DatoArchivadoDinamico.objects.filter(
-                    Q(tabla_origen='Docencia_studentpersonalinformation') |
-                    Q(tabla_origen='Docencia_teacherpersonalinformation') |
-                    Q(tabla_origen='accounts_registro')
-                )
-                
+            
+            # PASO 2: COMBINAR REGISTROS DE ESTUDIANTES/PROFESORES
+            actualizar_progreso('Combinando registros de estudiantes y profesores...', 2, **estadisticas)
+            logger.info("=== Combinando registros de estudiantes/profesores ===")
+            
+            datos_registros = DatoArchivadoDinamico.objects.filter(
+                Q(tabla_origen='Docencia_studentpersonalinformation') |
+                Q(tabla_origen='Docencia_teacherpersonalinformation') |
+                Q(tabla_origen='accounts_registro')
+            )
+            logger.info(f"Encontrados {datos_registros.count()} registros archivados")
+            
+            # Obtener o crear grupos
+            grupo_estudiantes, _ = Group.objects.get_or_create(name='Estudiantes')
+            grupo_profesores, _ = Group.objects.get_or_create(name='Profesores')
+            
+            with transaction.atomic():
                 for dato in datos_registros:
                     try:
                         sid = transaction.savepoint()
@@ -2025,6 +2020,7 @@ def combinar_datos_archivados(request):
                         user_id_original = datos.get('user_id')
                         
                         if not user_id_original or user_id_original not in mapeo_usuarios:
+                            logger.warning(f"Usuario no encontrado para registro: user_id={user_id_original}")
                             transaction.savepoint_rollback(sid)
                             continue
                         
@@ -2033,60 +2029,78 @@ def combinar_datos_archivados(request):
                         # Buscar o crear registro
                         registro, created = Registro.objects.get_or_create(user=usuario)
                         
+                        if created:
+                            logger.info(f"Creado nuevo registro para usuario: {usuario.username}")
+                        else:
+                            logger.info(f"Actualizando registro existente para usuario: {usuario.username}")
+                        
                         # Copiar todos los campos
-                        datos_mapeados = mapear_campos_ingles_espanol(datos, logger)
-                        campos_copiados = copiar_todos_los_campos(
-                            registro,
-                            datos_mapeados,
-                            campos_excluir=['id', 'pk', 'user_id', 'user'],
-                            logger=logger
-                        )
+                        copiar_campos_dinamicos(registro, datos, 
+                                              campos_excluir=['id', 'pk', 'user_id', 'user'], 
+                                              logger=logger)
                         
                         registro.save()
                         estadisticas['registros_combinados'] += 1
+                        
+                        # Asignar grupo según el tipo de registro
+                        if dato.tabla_origen == 'Docencia_studentpersonalinformation':
+                            usuario.groups.add(grupo_estudiantes)
+                            logger.info(f"Usuario {usuario.username} agregado al grupo Estudiantes")
+                        elif dato.tabla_origen == 'Docencia_teacherpersonalinformation':
+                            usuario.groups.add(grupo_profesores)
+                            logger.info(f"Usuario {usuario.username} agregado al grupo Profesores")
+                        
                         transaction.savepoint_commit(sid)
-                    
+                        
                     except Exception as e:
                         transaction.savepoint_rollback(sid)
                         error_msg = f"Error procesando registro: {str(e)}"
                         logger.error(error_msg)
-                        errores.append(error_msg)
                         continue
-                
-                # Continuar con más pasos...
-                actualizar_progreso('Registros combinados. Procesando cursos...', 4, **estadisticas)
-                
-                # Aquí irían los demás pasos de combinación (cursos, matrículas, etc.)
-                # Por brevedad, solo simulo el progreso
-                
-                actualizar_progreso('Procesando matrículas...', 5, **estadisticas)
-                actualizar_progreso('Procesando asistencias...', 6, **estadisticas)
-                actualizar_progreso('Procesando calificaciones...', 7, **estadisticas)
-                
-                # Paso final: Marcar como completado
-                actualizar_progreso('Combinación completada', 8, **estadisticas)
-                
-                # Guardar resultado final en cache
-                resultado_final = {
-                    'fecha_inicio': timezone.now().isoformat(),
-                    'fecha_fin': timezone.now().isoformat(),
-                    **estadisticas,
-                    'campos_agregados': len(campos_agregados)
-                }
-                cache.set('ultima_combinacion_completada', resultado_final, timeout=300)
-                cache.delete('combinacion_en_progreso')
-                
-                logger.info("=== Combinación completada exitosamente ===")
+            
+            # PASO 3: ACTUALIZAR PROGRESO FINAL
+            actualizar_progreso('Combinación completada exitosamente', 8, **estadisticas)
+            
+            # Marcar como completado
+            resultado_final = {
+                'fecha_inicio': timezone.now().isoformat(),
+                'fecha_fin': timezone.now().isoformat(),
+                **estadisticas,
+                'campos_agregados': 0  # Por ahora no agregamos campos dinámicamente
+            }
+            cache.set('ultima_combinacion_completada', resultado_final, timeout=300)
+            cache.delete('combinacion_en_progreso')
+            
+            logger.info("=== COMBINACIÓN REAL COMPLETADA EXITOSAMENTE ===")
+            logger.info(f"Usuarios combinados: {estadisticas['usuarios_combinados']}")
+            logger.info(f"Registros combinados: {estadisticas['registros_combinados']}")
                 
         except Exception as e:
-            # En caso de error, limpiar cache
+            # En caso de error, limpiar cache y registrar error
+            logger.error(f"Error en combinación real: {str(e)}")
+            logger.error(f"Traceback: ", exc_info=True)
+            
             cache.delete('combinacion_en_progreso')
-            logger.error(f"Error en combinación: {str(e)}")
+            
+            # Guardar error en cache para mostrar en frontend
+            error_info = {
+                'estado': 'error',
+                'mensaje': str(e),
+                'fecha_error': timezone.now().isoformat()
+            }
+            cache.set('combinacion_error', error_info, timeout=300)
             raise
     
     # Ejecutar en hilo separado
     import threading
-    thread = threading.Thread(target=ejecutar_combinacion)
+    import time
+    
+    def wrapper():
+        # Pequeña pausa para asegurar que la respuesta se envíe primero
+        time.sleep(0.1)
+        ejecutar_combinacion()
+    
+    thread = threading.Thread(target=wrapper)
     thread.daemon = True
     thread.start()
     
@@ -2132,8 +2146,18 @@ def estado_combinacion_ajax(request):
         else:
             # Verificar si hay una combinación completada recientemente (últimos 10 minutos)
             resultado_final = cache.get('ultima_combinacion_completada')
+            error_info = cache.get('combinacion_error')
             
-            if resultado_final:
+            if error_info:
+                data = {
+                    'en_progreso': False,
+                    'completada_recientemente': False,
+                    'estado': 'error',
+                    'progreso_real': 0,
+                    'mensaje': error_info.get('mensaje', 'Error desconocido'),
+                    'fecha_error': error_info.get('fecha_error'),
+                }
+            elif resultado_final:
                 data = {
                     'en_progreso': False,
                     'completada_recientemente': True,
