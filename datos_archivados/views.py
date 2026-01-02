@@ -190,7 +190,7 @@ def detalle_dato_archivado(request, pk):
         
     except Exception as e:
         messages.error(request, f'Error al cargar el detalle: {str(e)}')
-        return redirect('datos_archivados:datos_list')
+        return redirect('datos_archivados:tablas_list')
 
 @method_decorator(login_required, name='dispatch')
 class TablasArchivadosListView(TemplateView):
@@ -211,7 +211,7 @@ class TablasArchivadosListView(TemplateView):
             
             # Obtener parámetros de búsqueda
             search_query = self.request.GET.get('search', '').strip()
-            search_type = self.request.GET.get('search_type', 'tabla')
+            search_type = self.request.GET.get('search_type', 'global')
             
             # Query base
             queryset = DatoArchivadoDinamico.objects.all()
@@ -245,6 +245,11 @@ class TablasArchivadosListView(TemplateView):
             total_registros_filtrados = queryset.count()
             total_registros_totales = DatoArchivadoDinamico.objects.count()
             
+            # Obtener la fecha de la última migración
+            ultima_migracion = DatoArchivadoDinamico.objects.aggregate(
+                ultima_fecha=Max('fecha_migracion')
+            )['ultima_fecha']
+            
             context.update({
                 'tablas_stats': tablas_stats,
                 'total_tablas': tablas_stats.count(),
@@ -253,6 +258,7 @@ class TablasArchivadosListView(TemplateView):
                 'search_query': search_query,
                 'search_type': search_type,
                 'is_filtered': bool(search_query),
+                'ultima_migracion': ultima_migracion,
             })
             
         except Exception as e:
@@ -264,6 +270,7 @@ class TablasArchivadosListView(TemplateView):
                 'search_query': '',
                 'search_type': 'tabla',
                 'is_filtered': False,
+                'ultima_migracion': None,
             })
         
         return context

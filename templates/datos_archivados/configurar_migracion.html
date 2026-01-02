@@ -15,7 +15,7 @@
         <div class="glass-card mb-6">
             <div class="glass-header">
                 <h2 class="text-3xl font-bold text-gray-800 flex items-center">
-                    <span class="fa material-icons mr-3">settings</span></i>
+                    <span class="material-icons mr-3">settings</span>
                     Configurar Migración Automática
                 </h2>
             </div>
@@ -25,16 +25,16 @@
         <div class="glass-card mb-6">
             <div class="glass-content">
                 <div class="glass-alert glass-alert-info">
-                    <span class="fa material-icons mr-2">info</span></i>
+                    <span class="material-icons mr-2">info</span>
                     <div class="flex-1">
                         <h5 class="text-lg font-bold mb-3">Migración Automática</h5>
                         <p class="mb-3">El sistema inspeccionará automáticamente la estructura de la base de datos MariaDB remota y migrará todos los datos.</p>
                         <ul class="space-y-1 text-sm">
-                            <li class="flex items-center"><span class="fa material-icons text-blue-600 mr-2">check_circle</span></i>Detecta todas las tablas automáticamente</li>
-                            <li class="flex items-center"><span class="fa material-icons text-blue-600 mr-2">check_circle</span></i>Analiza estructura de cada tabla</li>
-                            <li class="flex items-center"><span class="fa material-icons text-blue-600 mr-2">check_circle</span></i>Crea modelos Django dinámicos</li>
-                            <li class="flex items-center"><span class="fa material-icons text-blue-600 mr-2">check_circle</span></i>Migra todos los datos preservando estructura</li>
-                            <li class="flex items-center"><span class="fa material-icons text-blue-600 mr-2">check_circle</span></i>Almacena en formato JSON flexible</li>
+                            <li class="flex items-center"><span class="material-icons text-blue-600 mr-2">check_circle</span>Detecta todas las tablas automáticamente</li>
+                            <li class="flex items-center"><span class="material-icons text-blue-600 mr-2">check_circle</span>Analiza estructura de cada tabla</li>
+                            <li class="flex items-center"><span class="material-icons text-blue-600 mr-2">check_circle</span>Crea modelos Django dinámicos</li>
+                            <li class="flex items-center"><span class="material-icons text-blue-600 mr-2">check_circle</span>Migra todos los datos preservando estructura</li>
+                            <li class="flex items-center"><span class="material-icons text-blue-600 mr-2">check_circle</span>Almacena en formato JSON flexible</li>
                         </ul>
                     </div>
                 </div>
@@ -82,14 +82,14 @@
 
                     <!-- Warning Alert -->
                     <div class="glass-alert glass-alert-warning mb-6">
-                        <span class="fa material-icons mr-2">warning</span></i>
+                        <span class="material-icons mr-2">warning</span>
                         <div class="flex-1">
                             <h6 class="font-bold mb-2">Importante:</h6>
                             <ul class="space-y-1 text-sm">
-                                <li class="flex items-center"><span class="bi material-icons mr-1">fiber_manual_record</span></i>La migración puede tomar varios minutos</li>
-                                <li class="flex items-center"><span class="bi material-icons mr-1">fiber_manual_record</span></i>El proceso se ejecuta en segundo plano</li>
-                                <li class="flex items-center"><span class="bi material-icons mr-1">fiber_manual_record</span></i>Puede seguir el progreso desde el dashboard</li>
-                                <li class="flex items-center"><span class="bi material-icons mr-1">fiber_manual_record</span></i>Los datos se almacenarán de forma segura</li>
+                                <li class="flex items-center"><span class="material-icons mr-1">fiber_manual_record</span>La migración puede tomar varios minutos</li>
+                                <li class="flex items-center"><span class="material-icons mr-1">fiber_manual_record</span>El proceso se ejecuta en segundo plano</li>
+                                <li class="flex items-center"><span class="material-icons mr-1">fiber_manual_record</span>Puede seguir el progreso desde el dashboard</li>
+                                <li class="flex items-center"><span class="material-icons mr-1">fiber_manual_record</span>Los datos se almacenarán de forma segura</li>
                             </ul>
                         </div>
                     </div>
@@ -97,11 +97,11 @@
                     <!-- Action Buttons -->
                     <div class="flex justify-center gap-4">
                         <button type="submit" class="glass-button glass-button-primary glass-button-lg">
-                            <span class="bi material-icons mr-2">play_arrow</span></i>
+                            <span class="material-icons mr-2">play_arrow</span>
                             Iniciar Migración Automática
                         </button>
                         <a href="{% url 'datos_archivados:dashboard' %}" class="glass-button glass-button-secondary glass-button-lg">
-                            <span class="fa material-icons mr-2">arrow_back</span></i>
+                            <span class="material-icons mr-2">arrow_back</span>
                             Volver al Dashboard
                         </a>
                     </div>
@@ -116,7 +116,7 @@
     <div class="glass-card max-w-2xl w-full mx-4 transform transition-all duration-300 scale-95 opacity-0" id="modalContent">
         <div class="glass-header">
             <h5 class="text-xl font-bold text-gray-800 flex items-center">
-                <span class="bi material-icons mr-2">settings</span></i> Migración en Progreso
+                <span class="material-icons mr-2">settings</span> Migración en Progreso
             </h5>
         </div>
         <div class="glass-content">
@@ -125,7 +125,7 @@
             </div>
             
             <div class="glass-alert glass-alert-info mb-4">
-                <span class="fa material-icons mr-2">info</span></i>
+                <span class="material-icons mr-2">info</span>
                 <div class="flex-1">
                     <h6 class="font-bold mb-1">Estado de la Migración:</h6>
                     <p id="estadoMigracion" class="text-sm">Iniciando migración automática...</p>
@@ -143,17 +143,17 @@
             <div id="detallesMigracion">
                 <h6 class="font-bold mb-3">Detalles:</h6>
                 <ul id="listaPasos" class="space-y-2">
-                    <li class="flex items-center text-sm"><span class="fa material-icons text-gray-400 mr-2">schedule</span></i> Esperando inicio...</li>
+                    <li class="flex items-center text-sm"><span class="material-icons text-gray-400 mr-2">schedule</span> Esperando inicio...</li>
                 </ul>
             </div>
         </div>
         <div class="glass-content border-t border-gray-200">
             <div class="flex justify-end gap-3">
                 <button type="button" class="glass-button glass-button-secondary" id="btnCerrarModal" disabled>
-                    <span class="fa material-icons mr-2">cancel</span></i> Cerrar
+                    <span class="material-icons mr-2">cancel</span> Cerrar
                 </button>
                 <a href="{% url 'datos_archivados:dashboard' %}" class="glass-button glass-button-primary hidden" id="btnIrDashboard">
-                    <span class="bi material-icons mr-2">speed</span></i> Ir al Dashboard
+                    <span class="material-icons mr-2">speed</span> Ir al Dashboard
                 </a>
             </div>
         </div>
@@ -304,45 +304,182 @@
 
     /* Glass Button */
     .glass-button {
+        position: relative;
         display: inline-flex;
         align-items: center;
-        padding: 0.625rem 1.25rem;
-        border-radius: 10px;
-        font-weight: 500;
+        justify-content: center;
+        padding: 0.875rem 1.75rem;
+        border-radius: 16px;
+        font-weight: 600;
         font-size: 0.875rem;
-        text-align: center;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         text-decoration: none;
         cursor: pointer;
+        border: none;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        
+        /* Glassmorphism base */
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        
+        /* Sombras múltiples para profundidad */
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.12),
+            0 4px 16px rgba(0, 0, 0, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+        
+        /* Bordes con gradiente sutil */
+        border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
+    .glass-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.1) 0%, 
+            rgba(255, 255, 255, 0.05) 50%, 
+            rgba(0, 0, 0, 0.02) 100%);
+        border-radius: inherit;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .glass-button::after {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        border-radius: inherit;
+        z-index: -1;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .glass-button-content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.3s ease;
+    }
+
+    .glass-button-glow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    /* Estados hover y active */
     .glass-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 
+            0 16px 48px rgba(0, 0, 0, 0.18),
+            0 8px 24px rgba(0, 0, 0, 0.12),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+    }
+
+    .glass-button:hover::before {
+        opacity: 1;
+    }
+
+    .glass-button:hover::after {
+        opacity: 1;
+    }
+
+    .glass-button:hover .glass-button-glow {
+        width: 100%;
+        height: 100%;
+    }
+
+    .glass-button:active {
+        transform: translateY(-1px) scale(0.98);
+        transition: all 0.1s ease;
+    }
+
+    .glass-button:active .glass-button-content {
+        transform: scale(0.95);
     }
 
     .glass-button-primary {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        background: linear-gradient(135deg, 
+            rgba(59, 130, 246, 0.25) 0%, 
+            rgba(37, 99, 235, 0.15) 50%, 
+            rgba(29, 78, 216, 0.1) 100%);
         color: #1e40af;
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    .glass-button-primary .glass-button-glow {
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
+    }
+
+    .glass-button-primary:hover {
+        background: linear-gradient(135deg, 
+            rgba(59, 130, 246, 0.35) 0%, 
+            rgba(37, 99, 235, 0.25) 50%, 
+            rgba(29, 78, 216, 0.15) 100%);
+        border-color: rgba(59, 130, 246, 0.5);
+        color: #1d4ed8;
     }
 
     .glass-button-secondary {
-        background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
+        background: linear-gradient(135deg, 
+            rgba(107, 114, 128, 0.25) 0%, 
+            rgba(75, 85, 99, 0.15) 50%, 
+            rgba(55, 65, 81, 0.1) 100%);
         color: #374151;
+        border-color: rgba(107, 114, 128, 0.3);
+    }
+
+    .glass-button-secondary .glass-button-glow {
+        background: radial-gradient(circle, rgba(107, 114, 128, 0.2) 0%, transparent 70%);
+    }
+
+    .glass-button-secondary:hover {
+        background: linear-gradient(135deg, 
+            rgba(107, 114, 128, 0.35) 0%, 
+            rgba(75, 85, 99, 0.25) 50%, 
+            rgba(55, 65, 81, 0.15) 100%);
+        border-color: rgba(107, 114, 128, 0.5);
+        color: #1f2937;
     }
 
     .glass-button-lg {
-        padding: 0.875rem 1.75rem;
+        padding: 1rem 2rem;
         font-size: 1rem;
+        border-radius: 18px;
     }
 
     .glass-button:disabled {
         opacity: 0.6;
         cursor: not-allowed;
         transform: none;
+    }
+
+    .glass-button:disabled:hover {
+        transform: none;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.12),
+            0 4px 16px rgba(0, 0, 0, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.1);
     }
 
     /* Glass Alert */
@@ -391,7 +528,7 @@ let migracionIniciada = false;
 // Mostrar indicador de carga al enviar el formulario
 document.querySelector('form').addEventListener('submit', function(e) {
     const submitBtn = document.querySelector('button[type="submit"]');
-    submitBtn.innerHTML = '<span class="fa material-icons mr-2">refresh</span></i> Iniciando migración...';
+    submitBtn.innerHTML = '<span class="material-icons mr-2">refresh</span> Iniciando migración...';
     submitBtn.disabled = true;
     
     // Mostrar modal de progreso después de enviar
@@ -462,25 +599,25 @@ function actualizarProgreso(data) {
     let pasos = [];
     
     if (data.tablas_inspeccionadas > 0) {
-        pasos.push('<li class="flex items-center text-sm"><span class="fa material-icons text-green-600 mr-2">check_circle</span></i> Conexión establecida</li>');
-        pasos.push(`<li class="flex items-center text-sm"><span class="fa material-icons text-green-600 mr-2">check_circle</span></i> Base de datos inspeccionada (${data.tablas_inspeccionadas} tablas)</li>`);
+        pasos.push('<li class="flex items-center text-sm"><span class="material-icons text-green-600 mr-2">check_circle</span> Conexión establecida</li>');
+        pasos.push(`<li class="flex items-center text-sm"><span class="material-icons text-green-600 mr-2">check_circle</span> Base de datos inspeccionada (${data.tablas_inspeccionadas} tablas)</li>`);
         
         if (data.tablas_procesadas > 0) {
-            pasos.push(`<li class="flex items-center text-sm"><span class="fa material-icons text-blue-600 mr-2">settings</span></i> Migrando datos (${data.tablas_procesadas}/${data.tablas_inspeccionadas} tablas)</li>`);
+            pasos.push(`<li class="flex items-center text-sm"><span class="material-icons text-blue-600 mr-2">settings</span> Migrando datos (${data.tablas_procesadas}/${data.tablas_inspeccionadas} tablas)</li>`);
         } else {
-            pasos.push('<li class="flex items-center text-sm"><span class="fa material-icons text-blue-600 mr-2">settings</span></i> Iniciando migración de datos...</li>');
+            pasos.push('<li class="flex items-center text-sm"><span class="material-icons text-blue-600 mr-2">settings</span> Iniciando migración de datos...</li>');
         }
         
         if (data.tablas_procesadas >= data.tablas_inspeccionadas) {
-            pasos.push('<li class="flex items-center text-sm"><span class="fa material-icons text-green-600 mr-2">check_circle</span></i> Finalizando proceso...</li>');
+            pasos.push('<li class="flex items-center text-sm"><span class="material-icons text-green-600 mr-2">check_circle</span> Finalizando proceso...</li>');
         } else {
-            pasos.push('<li class="flex items-center text-sm"><span class="fa material-icons text-gray-400 mr-2">schedule</span></i> Finalizando proceso...</li>');
+            pasos.push('<li class="flex items-center text-sm"><span class="material-icons text-gray-400 mr-2">schedule</span> Finalizando proceso...</li>');
         }
     } else {
-        pasos.push('<li class="flex items-center text-sm"><span class="fa material-icons text-green-600 mr-2">check_circle</span></i> Conexión establecida</li>');
-        pasos.push('<li class="flex items-center text-sm"><span class="fa material-icons text-blue-600 mr-2">settings</span></i> Analizando estructura de base de datos...</li>');
-        pasos.push('<li class="flex items-center text-sm"><span class="fa material-icons text-gray-400 mr-2">schedule</span></i> Migrando datos...</li>');
-        pasos.push('<li class="flex items-center text-sm"><span class="fa material-icons text-gray-400 mr-2">schedule</span></i> Finalizando proceso...</li>');
+        pasos.push('<li class="flex items-center text-sm"><span class="material-icons text-green-600 mr-2">check_circle</span> Conexión establecida</li>');
+        pasos.push('<li class="flex items-center text-sm"><span class="material-icons text-blue-600 mr-2">settings</span> Analizando estructura de base de datos...</li>');
+        pasos.push('<li class="flex items-center text-sm"><span class="material-icons text-gray-400 mr-2">schedule</span> Migrando datos...</li>');
+        pasos.push('<li class="flex items-center text-sm"><span class="material-icons text-gray-400 mr-2">schedule</span> Finalizando proceso...</li>');
     }
     
     listaPasos.innerHTML = pasos.join('');
@@ -531,7 +668,7 @@ function mostrarMigracionCompletada() {
     const spinner = document.querySelector('.animate-spin');
     
     // Actualizar UI
-    estadoElement.innerHTML = '<span class="fa material-icons text-green-600 mr-1">check_circle</span></i> ¡Migración completada exitosamente!';
+    estadoElement.innerHTML = '<span class="material-icons text-green-600 mr-1">check_circle</span> ¡Migración completada exitosamente!';
     barraProgreso.style.width = '100%';
     barraProgreso.classList.add('completed');
     textoProgreso.textContent = '100%';
@@ -543,10 +680,10 @@ function mostrarMigracionCompletada() {
     
     // Actualizar pasos
     listaPasos.innerHTML = `
-        <li class="flex items-center text-sm"><span class="fa material-icons text-green-600 mr-2">check_circle</span></i> Conexión establecida</li>
-        <li class="flex items-center text-sm"><span class="fa material-icons text-green-600 mr-2">check_circle</span></i> Base de datos inspeccionada</li>
-        <li class="flex items-center text-sm"><span class="fa material-icons text-green-600 mr-2">check_circle</span></i> Datos migrados</li>
-        <li class="flex items-center text-sm"><span class="fa material-icons text-green-600 mr-2">check_circle</span></i> Proceso finalizado</li>
+        <li class="flex items-center text-sm"><span class="material-icons text-green-600 mr-2">check_circle</span> Conexión establecida</li>
+        <li class="flex items-center text-sm"><span class="material-icons text-green-600 mr-2">check_circle</span> Base de datos inspeccionada</li>
+        <li class="flex items-center text-sm"><span class="material-icons text-green-600 mr-2">check_circle</span> Datos migrados</li>
+        <li class="flex items-center text-sm"><span class="material-icons text-green-600 mr-2">check_circle</span> Proceso finalizado</li>
     `;
     
     // Habilitar botones

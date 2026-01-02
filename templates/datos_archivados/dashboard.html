@@ -16,7 +16,7 @@
             <div class="glass-header">
                 <div class="flex justify-between items-center">
                     <h2 class="text-3xl font-bold text-gray-800 flex items-center">
-                        <span class="fa material-icons mr-3">dns</span></i>
+                        <span class="material-icons mr-3">dns</span>
                         Dashboard de Datos Archivados
                     </h2>
                     <!-- Indicador de migración en progreso -->
@@ -24,7 +24,7 @@
                         <div class="flex items-center">
                             <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-2"></div>
                             <span class="glass-badge glass-badge-warning">
-                                <span class="bi material-icons mr-1">settings</span></i> Migración en Progreso
+                                <span class="material-icons mr-1">settings</span> Migración en Progreso
                             </span>
                         </div>
                     </div>
@@ -37,7 +37,7 @@
         <div class="glass-card">
             <div class="glass-content">
                 <div class="glass-alert glass-alert-warning">
-                    <span class="fa material-icons mr-2">warning</span></i>
+                    <span class="material-icons mr-2">warning</span>
                     <div>
                         <h4 class="text-xl font-bold mb-2">Sin Permisos</h4>
                         <p class="mb-2">No tiene permisos para acceder a esta sección. Solo usuarios del grupo "Secretaria" pueden acceder.</p>
@@ -51,7 +51,7 @@
                         </p>
                         <div class="flex gap-3">
                             <a href="{% url 'principal:profile' %}" class="glass-button glass-button-primary">
-                                <span class="fa material-icons mr-2">arrow_back</span></i>
+                                <span class="material-icons mr-2">arrow_back</span>
                                 Volver al Perfil
                             </a>
                         </div>
@@ -70,7 +70,7 @@
                     </div>
                     <div class="flex-1">
                         <h4 class="text-xl font-bold text-gray-800 mb-2 flex items-center">
-                            <span class="bi material-icons mr-2">settings</span></i>
+                            <span class="material-icons mr-2">settings</span>
                             Migración Automática en Progreso
                         </h4>
                         <p class="text-gray-600 mb-3" id="estadoMigracionDashboard">Procesando datos desde la base de datos remota...</p>
@@ -89,7 +89,7 @@
         <div class="glass-card mb-6" id="alertaBienvenida">
             <div class="glass-content">
                 <div class="glass-alert glass-alert-success">
-                    <span class="fa material-icons mr-2">check_circle</span></i>
+                    <span class="material-icons mr-2">check_circle</span>
                     <div class="flex-1">
                         <div class="flex justify-between items-start">
                             <div>
@@ -99,7 +99,7 @@
                                 {% if ultima_migracion and ultima_migracion.tablas_inspeccionadas > 0 %}
                                 <div class="border-t border-green-200 pt-3 mt-3">
                                     <p class="mb-0 flex items-center">
-                                        <span class="fa material-icons mr-2">info</span></i>
+                                        <span class="material-icons mr-2">info</span>
                                         <strong>Última migración:</strong> 
                                         Se inspeccionaron {{ ultima_migracion.tablas_inspeccionadas }} tablas, 
                                         {{ ultima_migracion.tablas_con_datos }} con datos y 
@@ -109,7 +109,7 @@
                                 {% endif %}
                             </div>
                             <button type="button" class="glass-button glass-button-secondary ml-4" onclick="cerrarAlertaBienvenida()">
-                                <span class="fa material-icons">close</span></i>
+                                <span class="material-icons">close</span>
                             </button>
                         </div>
                     </div>
@@ -124,7 +124,7 @@
                 <div class="glass-card hover-lift flex-shrink-0" style="width: 175px; min-width: 175px;">
                     <div class="glass-content p-4 text-center">
                         <div class="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <span class="bi material-icons text-lg text-blue-600">archive</span></i>
+                            <span class="material-icons text-lg text-blue-600">archive</span>
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 mb-2">{{ total_datos_archivados|default:0 }}</h3>
                         <p class="text-sm text-gray-600">Registros</p>
@@ -135,7 +135,7 @@
                 <div class="glass-card hover-lift flex-shrink-0" style="width: 175px; min-width: 175px;">
                     <div class="glass-content p-4 text-center">
                         <div class="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <span class="fa material-icons text-lg text-green-600">grid_view</span></i>
+                            <span class="material-icons text-lg text-green-600">grid_view</span>
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 mb-2">{{ total_tablas_migradas|default:0 }}</h3>
                         <p class="text-sm text-gray-600">Tablas</p>
@@ -146,7 +146,7 @@
                 <div class="glass-card hover-lift flex-shrink-0" style="width: 175px; min-width: 175px;">
                     <div class="glass-content p-4 text-center">
                         <div class="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <span class="fa material-icons text-lg">assignment</span></i>
+                            <span class="material-icons text-lg">assignment</span>
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 mb-2">{{ tablas_inspeccionadas_actuales|default:0 }}</h3>
                         <p class="text-sm text-gray-600">Inspeccionadas</p>
@@ -157,7 +157,7 @@
                 <div class="glass-card hover-lift flex-shrink-0" style="width: 175px; min-width: 175px;">
                     <div class="glass-content p-4 text-center">
                         <div class="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <span class="fa material-icons text-lg">description</span></i>
+                            <span class="material-icons text-lg">description</span>
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 mb-2">{{ tablas_vacias_actuales|default:0 }}</h3>
                         <p class="text-sm text-gray-600">Vacías</p>
@@ -168,7 +168,7 @@
                 <div class="glass-card hover-lift flex-shrink-0" style="width: 175px; min-width: 175px;">
                     <div class="glass-content p-4 text-center">
                         <div class="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <span class="fa material-icons text-lg">schedule</span></i>
+                            <span class="material-icons text-lg">schedule</span>
                         </div>
                         <h3 class="text-base font-bold text-gray-800 mb-2">{% if ultima_migracion %}{{ ultima_migracion.fecha_inicio|date:"d/m" }}{% else %}N/A{% endif %}</h3>
                         <p class="text-sm text-gray-600">Última</p>
@@ -179,7 +179,7 @@
                 <div class="glass-card hover-lift flex-shrink-0" style="width: 175px; min-width: 175px;">
                     <div class="glass-content p-4 text-center">
                         <div class="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <span class="bi material-icons text-lg" style="color: #4f46e5;">trending_up</span></i>
+                            <span class="material-icons text-lg" style="color: #4f46e5;">trending_up</span>
                         </div>
                         <h3 class="text-base font-bold text-gray-800 mb-2">{% if ultima_migracion %}{{ ultima_migracion.estado|title }}{% else %}Inactivo{% endif %}</h3>
                         <p class="text-sm text-gray-600">Estado</p>
@@ -194,12 +194,12 @@
             <div class="glass-card hover-lift">
                 <div class="glass-content text-center">
                     <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span class="fa material-icons text-4xl text-blue-600">cloud_download</span></i>
+                        <span class="material-icons text-4xl text-blue-600">cloud_download</span>
                     </div>
                     <h4 class="text-2xl font-bold text-gray-800 mb-3">Migración Automática</h4>
                     <p class="text-gray-600 mb-6">Configure y ejecute la migración desde su base de datos MariaDB remota</p>
                     <a href="{% url 'datos_archivados:configurar_migracion' %}" class="glass-button glass-button-primary">
-                        <span class="fa material-icons mr-2">settings</span></i>
+                        <span class="material-icons mr-2">settings</span>
                         Configurar Migración
                     </a>
                 </div>
@@ -209,12 +209,12 @@
             <div class="glass-card hover-lift">
                 <div class="glass-content text-center">
                     <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span class="fa material-icons text-4xl text-green-600">table_view</span></i>
+                        <span class="material-icons text-4xl text-green-600">table_view</span>
                     </div>
                     <h4 class="text-2xl font-bold text-gray-800 mb-3">Consultar Datos</h4>
                     <p class="text-gray-600 mb-6">Explore y busque en todos los datos archivados migrados</p>
                     <a href="{% url 'datos_archivados:tablas_list' %}" class="glass-button glass-button-success">
-                        <span class="fa material-icons mr-2">search</span></i>
+                        <span class="material-icons mr-2">search</span>
                         Ver Datos Archivados
                     </a>
                 </div>
@@ -225,7 +225,7 @@
         <div class="glass-card">
             <div class="glass-header">
                 <h5 class="text-xl font-bold text-gray-800 flex items-center">
-                    <span class="fa material-icons mr-2">info</span></i>
+                    <span class="material-icons mr-2">info</span>
                     Características del Sistema
                 </h5>
             </div>
@@ -234,11 +234,11 @@
                     <div>
                         <ul class="space-y-3">
                             <li class="flex items-center">
-                                <span class="fa material-icons text-green-600 mr-3">check_circle</span></i>
+                                <span class="material-icons text-green-600 mr-3">check_circle</span>
                                 <span><strong>Inspección automática</strong> de todas las tablas</span>
                             </li>
                             <li class="flex items-center">
-                                <span class="fa material-icons text-green-600 mr-3">check_circle</span></i>
+                                <span class="material-icons text-green-600 mr-3">check_circle</span>
                                 <span><strong>Modelos dinámicos</strong> creados automáticamente</span>
                             </li>
                         </ul>
@@ -246,11 +246,11 @@
                     <div>
                         <ul class="space-y-3">
                             <li class="flex items-center">
-                                <span class="fa material-icons text-green-600 mr-3">check_circle</span></i>
+                                <span class="material-icons text-green-600 mr-3">check_circle</span>
                                 <span><strong>Migración inteligente</strong> de tipos de datos</span>
                             </li>
                             <li class="flex items-center">
-                                <span class="fa material-icons text-green-600 mr-3">check_circle</span></i>
+                                <span class="material-icons text-green-600 mr-3">check_circle</span>
                                 <span><strong>Almacenamiento flexible</strong> en formato JSON</span>
                             </li>
                         </ul>
@@ -269,14 +269,14 @@
         <div class="glass-content">
             <div class="flex items-center">
                 <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                    <span class="fa material-icons text-green-600">check_circle</span></i>
+                    <span class="material-icons text-green-600">check_circle</span>
                 </div>
                 <div class="flex-1">
                     <strong class="text-gray-800">Migración Completada</strong>
                     <p class="text-sm text-gray-600 mb-0">¡La migración de datos se ha completado exitosamente! La página se actualizará automáticamente.</p>
                 </div>
                 <button type="button" class="glass-button glass-button-secondary ml-3" onclick="cerrarToast()">
-                    <span class="fa material-icons">close</span></i>
+                    <span class="material-icons">close</span>
                 </button>
             </div>
         </div>
@@ -317,44 +317,205 @@
 
     /* Glass Button */
     .glass-button {
+        position: relative;
         display: inline-flex;
         align-items: center;
-        padding: 0.625rem 1.25rem;
-        border-radius: 10px;
-        font-weight: 500;
+        justify-content: center;
+        padding: 0.875rem 1.75rem;
+        border-radius: 16px;
+        font-weight: 600;
         font-size: 0.875rem;
-        text-align: center;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         text-decoration: none;
         cursor: pointer;
+        border: none;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        
+        /* Glassmorphism base */
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        
+        /* Sombras múltiples para profundidad */
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.12),
+            0 4px 16px rgba(0, 0, 0, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+        
+        /* Bordes con gradiente sutil */
+        border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
+    .glass-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.1) 0%, 
+            rgba(255, 255, 255, 0.05) 50%, 
+            rgba(0, 0, 0, 0.02) 100%);
+        border-radius: inherit;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .glass-button::after {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        border-radius: inherit;
+        z-index: -1;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .glass-button-content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.3s ease;
+    }
+
+    .glass-button-glow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    /* Estados hover y active */
     .glass-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 
+            0 16px 48px rgba(0, 0, 0, 0.18),
+            0 8px 24px rgba(0, 0, 0, 0.12),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+    }
+
+    .glass-button:hover::before {
+        opacity: 1;
+    }
+
+    .glass-button:hover::after {
+        opacity: 1;
+    }
+
+    .glass-button:hover .glass-button-glow {
+        width: 100%;
+        height: 100%;
+    }
+
+    .glass-button:active {
+        transform: translateY(-1px) scale(0.98);
+        transition: all 0.1s ease;
+    }
+
+    .glass-button:active .glass-button-content {
+        transform: scale(0.95);
     }
 
     .glass-button-primary {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        background: linear-gradient(135deg, 
+            rgba(59, 130, 246, 0.25) 0%, 
+            rgba(37, 99, 235, 0.15) 50%, 
+            rgba(29, 78, 216, 0.1) 100%);
         color: #1e40af;
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    .glass-button-primary .glass-button-glow {
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
+    }
+
+    .glass-button-primary:hover {
+        background: linear-gradient(135deg, 
+            rgba(59, 130, 246, 0.35) 0%, 
+            rgba(37, 99, 235, 0.25) 50%, 
+            rgba(29, 78, 216, 0.15) 100%);
+        border-color: rgba(59, 130, 246, 0.5);
+        color: #1d4ed8;
     }
 
     .glass-button-secondary {
-        background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
+        background: linear-gradient(135deg, 
+            rgba(107, 114, 128, 0.25) 0%, 
+            rgba(75, 85, 99, 0.15) 50%, 
+            rgba(55, 65, 81, 0.1) 100%);
         color: #374151;
+        border-color: rgba(107, 114, 128, 0.3);
+    }
+
+    .glass-button-secondary .glass-button-glow {
+        background: radial-gradient(circle, rgba(107, 114, 128, 0.2) 0%, transparent 70%);
+    }
+
+    .glass-button-secondary:hover {
+        background: linear-gradient(135deg, 
+            rgba(107, 114, 128, 0.35) 0%, 
+            rgba(75, 85, 99, 0.25) 50%, 
+            rgba(55, 65, 81, 0.15) 100%);
+        border-color: rgba(107, 114, 128, 0.5);
+        color: #1f2937;
     }
 
     .glass-button-success {
-        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+        background: linear-gradient(135deg, 
+            rgba(34, 197, 94, 0.25) 0%, 
+            rgba(22, 163, 74, 0.15) 50%, 
+            rgba(21, 128, 61, 0.1) 100%);
         color: #14532d;
+        border-color: rgba(34, 197, 94, 0.3);
+    }
+
+    .glass-button-success .glass-button-glow {
+        background: radial-gradient(circle, rgba(34, 197, 94, 0.2) 0%, transparent 70%);
+    }
+
+    .glass-button-success:hover {
+        background: linear-gradient(135deg, 
+            rgba(34, 197, 94, 0.35) 0%, 
+            rgba(22, 163, 74, 0.25) 50%, 
+            rgba(21, 128, 61, 0.15) 100%);
+        border-color: rgba(34, 197, 94, 0.5);
+        color: #15803d;
     }
 
     .glass-button-info {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        background: linear-gradient(135deg, 
+            rgba(59, 130, 246, 0.25) 0%, 
+            rgba(37, 99, 235, 0.15) 50%, 
+            rgba(29, 78, 216, 0.1) 100%);
         color: #1e40af;
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    .glass-button-info .glass-button-glow {
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
+    }
+
+    .glass-button-info:hover {
+        background: linear-gradient(135deg, 
+            rgba(59, 130, 246, 0.35) 0%, 
+            rgba(37, 99, 235, 0.25) 50%, 
+            rgba(29, 78, 216, 0.15) 100%);
+        border-color: rgba(59, 130, 246, 0.5);
+        color: #1d4ed8;
     }
 
     /* Glass Badge */

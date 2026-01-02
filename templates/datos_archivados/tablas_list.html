@@ -16,7 +16,7 @@
         <div class="glass-card mb-6">
             <div class="glass-header">
                 <h3 class="text-xl font-bold text-gray-800 flex items-center">
-                    <span class="fa material-icons mr-2">search</span></i>
+                    <span class="material-icons mr-2">search</span>
                     Buscar en Datos Archivados
                 </h3>
             </div>
@@ -34,7 +34,7 @@
                                        placeholder="Ingrese término de búsqueda..."
                                        autocomplete="off">
                                 <button class="glass-button glass-button-secondary rounded-l-none border-l-0" type="button" id="clearSearch" title="Limpiar búsqueda">
-                                    <span class="fa material-icons">cancel</span></i>
+                                    <span class="material-icons">cancel</span>
                                 </button>
                             </div>
                         </div>
@@ -57,15 +57,15 @@
                     <!-- Action Buttons -->
                     <div class="flex flex-wrap gap-2 justify-end">
                         <button type="submit" class="glass-button glass-button-primary">
-                            <span class="fa material-icons mr-2">search</span></i>
+                            <span class="material-icons mr-2">search</span>
                             Buscar
                         </button>
                         <button type="button" class="glass-button glass-button-success" id="btnBusquedaRapida">
-                            <span class="bi material-icons mr-2">flash_on</span></i>
+                            <span class="material-icons mr-2">flash_on</span>
                             Búsqueda Rápida
                         </button>
                         <a href="{% url 'datos_archivados:dashboard' %}" class="glass-button glass-button-secondary group hover:scale-105 transition-all duration-200">
-                            <span class="bi material-icons mr-2 group-hover:scale-110 transition-transform duration-200">home</span></i>
+                            <span class="material-icons mr-2 group-hover:scale-110 transition-transform duration-200">home</span>
                             <span class="font-medium">Ir al Dashboard</span>
                         </a>
                     </div>
@@ -78,11 +78,11 @@
             <div class="glass-header">
                 <div class="flex justify-between items-center">
                     <h3 class="text-xl font-bold text-gray-800 flex items-center">
-                        <span class="bi material-icons mr-2">flash_on</span></i>
+                        <span class="material-icons mr-2">flash_on</span>
                         Resultados de Búsqueda Rápida
                     </h3>
                     <button type="button" class="glass-button glass-button-secondary" id="closeQuickSearch">
-                        <span class="fa material-icons">close</span></i>
+                        <span class="material-icons">close</span>
                     </button>
                 </div>
             </div>
@@ -97,33 +97,33 @@
                 <div class="flex flex-wrap gap-3 justify-between items-center">
                     <div class="flex flex-wrap gap-2">
                         <button type="button" class="glass-button glass-button-success" id="btnCombinar">
-                            <span class="bi material-icons mr-2">swap_vert</span></i>
+                            <span class="material-icons mr-2">swap_vert</span>
                             Combinar Datos
                         </button>
                         <button type="button" class="glass-button glass-button-info" id="btnModoSeleccion">
-                            <span class="bi material-icons mr-2">check_box</span></i>
+                            <span class="material-icons mr-2">check_box</span>
                             Seleccionar Tablas
                         </button>
                         <button type="button" class="glass-button glass-button-danger opacity-50 hidden" id="btnEliminar">
-                            <span class="fa material-icons mr-2">delete</span></i>
+                            <span class="material-icons mr-2">delete</span>
                             Eliminar Seleccionadas (<span id="contadorSeleccionadas">0</span>)
                         </button>
                     </div>
                     <div class="flex items-center gap-2">
                         {% if is_filtered %}
                             <span class="glass-badge glass-badge-warning">
-                                <span class="fa material-icons mr-1">filter_list</span></i>
+                                <span class="material-icons mr-1">filter_list</span>
                                 Filtrado: {{ total_tablas }} tablas | {{ total_registros_filtrados }} registros
                             </span>
                             <a href="{% url 'datos_archivados:tablas_list' %}" class="glass-button glass-button-secondary">
-                                <span class="fa material-icons mr-1">cancel</span></i>
+                                <span class="material-icons mr-1">cancel</span>
                                 Limpiar filtros
                             </a>
                         {% else %}
                             <span class="glass-badge glass-badge-info">
-                                <span class="fa material-icons mr-1">table_view</span></i>
+                                <span class="material-icons mr-1">table_view</span>
                                 {{ total_tablas }} tablas | 
-                                <span class="fa material-icons ml-2 mr-1">storage</span></i>
+                                <span class="material-icons ml-2 mr-1">storage</span>
                                 {{ total_registros }} registros totales
                             </span>
                         {% endif %}
@@ -135,7 +135,7 @@
         <!-- Filter Info -->
         {% if is_filtered %}
         <div class="glass-alert glass-alert-info mb-6">
-            <span class="fa material-icons mr-2">info</span></i>
+            <span class="material-icons mr-2">info</span>
             <strong>Filtros activos:</strong> 
             Búsqueda "{{ search_query }}" en 
             {% if search_type == 'tabla' %}nombres de tablas
@@ -147,9 +147,65 @@
         
         {% if tablas_stats %}
         <!-- Success Message -->
-        <div class="glass-alert glass-alert-success mb-6">
-            <span class="fa material-icons mr-2">check_circle</span></i>
-            Se encontraron <strong>{{ total_tablas }}</strong> tablas con datos archivados
+        <div class="glass-card mb-6">
+            <div class="glass-content">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 mr-4">
+                        <div class="w-12 h-12 success-icon-container rounded-full flex items-center justify-center">
+                            <span class="material-icons text-2xl text-green-600">check_circle</span>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">¡Datos Archivados Disponibles!</h3>
+                        <p class="text-gray-600 mb-4">
+                            Se encontraron <strong class="text-green-600">{{ total_tablas }}</strong> 
+                            tabla{{ total_tablas|pluralize }} con datos migrados desde la base de datos MariaDB.
+                            Puede explorar, buscar y combinar estos datos con su sistema actual.
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div class="success-stats">
+                                <div class="flex items-center">
+                                    <span class="material-icons text-blue-500 mr-2 text-lg">storage</span>
+                                    <div>
+                                        <div class="text-xs text-gray-500 uppercase tracking-wide">Total Registros</div>
+                                        <div class="font-bold text-blue-600">{{ total_registros|default:0 }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="success-stats">
+                                <div class="flex items-center">
+                                    <span class="material-icons text-purple-500 mr-2 text-lg">table_view</span>
+                                    <div>
+                                        <div class="text-xs text-gray-500 uppercase tracking-wide">Tablas Activas</div>
+                                        <div class="font-bold text-purple-600">{{ total_tablas }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if ultima_migracion %}
+                            <div class="success-stats">
+                                <div class="flex items-center">
+                                    <span class="material-icons text-orange-500 mr-2 text-lg">schedule</span>
+                                    <div>
+                                        <div class="text-xs text-gray-500 uppercase tracking-wide">Última Migración</div>
+                                        <div class="font-bold text-orange-600">{{ ultima_migracion|date:"d/m/Y" }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="success-stats">
+                                <div class="flex items-center">
+                                    <span class="material-icons text-gray-400 mr-2 text-lg">info</span>
+                                    <div>
+                                        <div class="text-xs text-gray-500 uppercase tracking-wide">Estado</div>
+                                        <div class="font-bold text-gray-600">Datos Disponibles</div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <!-- Tables Grid -->
@@ -159,7 +215,7 @@
                 <div class="glass-content">
                     <div class="flex justify-between items-start mb-4">
                         <h4 class="text-lg font-bold text-gray-800 flex items-center flex-1">
-                            <span class="fa material-icons text-blue-600 mr-2">table_view</span></i>
+                            <span class="material-icons text-blue-600 mr-2">table_view</span>
                             {{ tabla.tabla_origen }}
                         </h4>
                         <div class="checkbox-seleccion hidden">
@@ -172,12 +228,12 @@
                     
                     <div class="space-y-3 mb-4">
                         <div class="flex items-center">
-                            <span class="fa material-icons text-blue-500 mr-2">storage</span></i>
+                            <span class="material-icons text-blue-500 mr-2">storage</span>
                             <span class="text-sm text-gray-600 mr-2">Registros:</span>
                             <span class="glass-badge glass-badge-info">{{ tabla.total_registros }}</span>
                         </div>
                         <div class="flex items-center">
-                            <span class="fa material-icons text-gray-500 mr-2">schedule</span></i>
+                            <span class="material-icons text-gray-500 mr-2">schedule</span>
                             <span class="text-sm text-gray-600">Última migración:</span>
                         </div>
                         <div class="text-xs text-gray-500 ml-6">
@@ -187,7 +243,7 @@
                     
                     <a href="{% url 'datos_archivados:datos_list' tabla.tabla_origen %}" 
                        class="glass-button glass-button-success w-full btn-ver-registros">
-                        <span class="fa material-icons mr-2">visibility</span></i>
+                        <span class="material-icons mr-2">visibility</span>
                         Ver Registros
                     </a>
                 </div>
@@ -198,18 +254,18 @@
         <!-- Empty State -->
         <div class="glass-alert glass-alert-info">
             <div class="text-center">
-                <span class="fa material-icons text-4xl text-blue-500 mb-4">info</span></i>
+                <span class="material-icons text-4xl text-blue-500 mb-4">info</span>
                 <h4 class="text-xl font-bold text-gray-800 mb-2">No hay datos archivados</h4>
                 <p class="text-gray-600 mb-4">Aún no se han migrado datos desde la base de datos MariaDB.</p>
                 <div class="text-left max-w-md mx-auto">
                     <p class="font-semibold text-gray-700 mb-2">Para migrar datos:</p>
                     <ol class="list-decimal list-inside space-y-1 text-sm text-gray-600">
                         <li>Vaya al <a href="{% url 'datos_archivados:dashboard' %}" class="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105">
-                            <span class="bi material-icons mr-2">home</span></i>
+                            <span class="material-icons mr-2">home</span>
                             Dashboard
                         </a></li>
                         <li>Haga clic en <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-200 text-black text-xs font-bold">
-                            <span class="fa material-icons mr-2">settings</span></i>
+                            <span class="material-icons mr-2">settings</span>
                             Configurar Migración
                         </span></li>
                         <li>Ingrese los datos de conexión de su base de datos MariaDB</li>
@@ -227,17 +283,17 @@
   <div class="modal-content">
     <div class="modal-header-danger">
       <h3 class="modal-title">
-        <span class="fa material-icons mr-2">error</span></i>
+        <span class="material-icons mr-2">error</span>
         Sin Datos para Combinar
       </h3>
       <button type="button" class="modal-close-btn" id="closeErrorModalCombinar">
-        <span class="fa material-icons">close</span></i>
+        <span class="material-icons">close</span>
       </button>
     </div>
     
     <div class="modal-body">
       <div class="glass-alert glass-alert-warning mb-4">
-        <span class="fa material-icons mr-2">info</span></i>
+        <span class="material-icons mr-2">info</span>
         <div>
           <p class="font-semibold mb-2">No se encontraron datos archivados para combinar.</p>
           <p class="text-sm">Para poder combinar datos, primero debe migrar información desde la base de datos MariaDB.</p>
@@ -248,11 +304,11 @@
         <p class="font-semibold text-gray-700 mb-2">Para migrar datos:</p>
         <ol class="list-decimal list-inside space-y-1 text-sm text-gray-600">
           <li>Vaya al <a href="{% url 'datos_archivados:dashboard' %}" class="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105">
-            <span class="bi material-icons mr-2">home</span></i>
+            <span class="material-icons mr-2">home</span>
             Dashboard
           </a></li>
           <li>Haga clic en <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-200 text-black text-xs font-bold">
-            <span class="fa material-icons mr-2">settings</span></i>
+            <span class="material-icons mr-2">settings</span>
             Configurar Migración
           </span></li>
           <li>Ingrese los datos de conexión de su base de datos MariaDB</li>
@@ -264,11 +320,11 @@
     
     <div class="modal-footer">
       <a href="{% url 'datos_archivados:dashboard' %}" class="glass-button glass-button-primary group hover:scale-105 transition-all duration-200">
-        <span class="bi material-icons mr-2 group-hover:scale-110 transition-transform duration-200">home</span></i>
+        <span class="material-icons mr-2 group-hover:scale-110 transition-transform duration-200">home</span>
         <span class="font-medium">Ir al Dashboard</span>
       </a>
       <button type="button" class="glass-button glass-button-success" onclick="hideErrorModalCombinar()">
-        <span class="fa material-icons mr-2">check_circle</span></i>
+        <span class="material-icons mr-2">check_circle</span>
         Entendido
       </button>
     </div>
@@ -280,16 +336,16 @@
     <div class="modal-content-large">
         <div class="modal-header-success">
             <h3 class="modal-title">
-                <span class="bi material-icons mr-2">swap_vert</span></i>
+                <span class="material-icons mr-2">swap_vert</span>
                 Combinar Datos Archivados
             </h3>
             <button type="button" class="modal-close-btn" id="closeModalCombinacion">
-                <span class="fa material-icons">close</span></i>
+                <span class="material-icons">close</span>
             </button>
         </div>
         <div class="modal-body">
             <div class="glass-alert glass-alert-info mb-4">
-                <span class="fa material-icons mr-2">info</span></i>
+                <span class="material-icons mr-2">info</span>
                 <div>
                     <strong>¿Qué hace esta función?</strong>
                     <p class="mt-2 mb-2">Esta función combinará <strong>TODA</strong> la información de las tablas archivadas con las tablas activas de su base de datos:</p>
@@ -303,7 +359,7 @@
             
             <div class="mb-4">
                 <h4 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                    <span class="bi material-icons mr-2">account_tree</span></i>
+                    <span class="material-icons mr-2">account_tree</span>
                     Proceso de Combinación:
                 </h4>
                 <div class="space-y-3">
@@ -353,7 +409,7 @@
             </div>
             
             <div class="glass-alert glass-alert-warning mb-4">
-                <span class="fa material-icons mr-2">warning</span></i>
+                <span class="material-icons mr-2">warning</span>
                 <div>
                     <strong>Importante:</strong>
                     <ul class="mt-2 mb-0 list-disc list-inside space-y-1 text-sm">
@@ -381,11 +437,11 @@
         </div>
         <div class="modal-footer">
             <button type="button" class="glass-button glass-button-secondary" id="btnCancelarCombinacion">
-                <span class="fa material-icons mr-2">cancel</span></i>
+                <span class="material-icons mr-2">cancel</span>
                 Cancelar
             </button>
             <button type="button" class="glass-button glass-button-success" id="btnConfirmarCombinacion">
-                <span class="bi material-icons mr-2">swap_vert</span></i>
+                <span class="material-icons mr-2">swap_vert</span>
                 Sí, Combinar Datos
             </button>
         </div>
@@ -397,16 +453,16 @@
     <div class="modal-content">
         <div class="modal-header-danger">
             <h3 class="modal-title">
-                <span class="fa material-icons mr-2">error</span></i>
+                <span class="material-icons mr-2">error</span>
                 Sin Datos Disponibles
             </h3>
             <button type="button" class="modal-close-btn" id="closeErrorModal">
-                <span class="fa material-icons">close</span></i>
+                <span class="material-icons">close</span>
             </button>
         </div>
         <div class="modal-body">
             <div class="glass-alert glass-alert-warning mb-4">
-                <span class="fa material-icons mr-2">info</span></i>
+                <span class="material-icons mr-2">info</span>
                 <div id="errorMessage">
                     <!-- Mensaje dinámico -->
                 </div>
@@ -414,11 +470,11 @@
         </div>
         <div class="modal-footer">
             <a href="{% url 'datos_archivados:dashboard' %}" class="glass-button glass-button-primary group hover:scale-105 transition-all duration-200">
-                <span class="bi material-icons mr-2 group-hover:scale-110 transition-transform duration-200">home</span></i>
+                <span class="material-icons mr-2 group-hover:scale-110 transition-transform duration-200">home</span>
                 <span class="font-medium">Ir al Dashboard</span>
             </a>
             <button type="button" class="glass-button glass-button-secondary" id="btnCerrarError">
-                <span class="fa material-icons mr-2">check_circle</span></i>
+                <span class="material-icons mr-2">check_circle</span>
                 Entendido
             </button>
         </div>
@@ -428,16 +484,16 @@
     <div class="modal-content">
         <div class="modal-header-danger">
             <h3 class="modal-title">
-                <span class="fa material-icons mr-2">warning</span></i>
+                <span class="material-icons mr-2">warning</span>
                 Confirmar Eliminación
             </h3>
             <button type="button" class="modal-close-btn" id="closeModalEliminacion">
-                <span class="fa material-icons">close</span></i>
+                <span class="material-icons">close</span>
             </button>
         </div>
         <div class="modal-body">
             <div class="glass-alert glass-alert-warning mb-4">
-                <span class="fa material-icons mr-2">warning</span></i>
+                <span class="material-icons mr-2">warning</span>
                 <strong>¡ADVERTENCIA!</strong> Esta acción no se puede deshacer.
             </div>
             <p class="mb-3">Está a punto de eliminar <strong id="cantidadTablas">0</strong> tabla(s) y todos sus registros.</p>
@@ -446,17 +502,17 @@
                 <ul id="listaTablas" class="mt-2 space-y-1"></ul>
             </div>
             <p class="text-red-600 mb-0 flex items-center">
-                <span class="fa material-icons mr-2">info</span></i>
+                <span class="material-icons mr-2">info</span>
                 Se eliminarán permanentemente todos los datos de estas tablas.
             </p>
         </div>
         <div class="modal-footer">
             <button type="button" class="glass-button glass-button-secondary" id="btnCancelarEliminacion">
-                <span class="fa material-icons mr-2">cancel</span></i>
+                <span class="material-icons mr-2">cancel</span>
                 Cancelar
             </button>
             <button type="button" class="glass-button glass-button-danger" id="btnConfirmarEliminacion">
-                <span class="fa material-icons mr-2">delete</span></i>
+                <span class="material-icons mr-2">delete</span>
                 Sí, Eliminar
             </button>
         </div>
@@ -521,34 +577,251 @@
         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     }
 
+    /* Glass Button */
+    .glass-button {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.875rem 1.75rem;
+        border-radius: 16px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-decoration: none;
+        cursor: pointer;
+        border: none;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        
+        /* Glassmorphism base */
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        
+        /* Sombras múltiples para profundidad */
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.12),
+            0 4px 16px rgba(0, 0, 0, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+        
+        /* Bordes con gradiente sutil */
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .glass-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.1) 0%, 
+            rgba(255, 255, 255, 0.05) 50%, 
+            rgba(0, 0, 0, 0.02) 100%);
+        border-radius: inherit;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .glass-button::after {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        border-radius: inherit;
+        z-index: -1;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .glass-button-content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.3s ease;
+    }
+
+    .glass-button-glow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    /* Estados hover y active */
+    .glass-button:hover {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 
+            0 16px 48px rgba(0, 0, 0, 0.18),
+            0 8px 24px rgba(0, 0, 0, 0.12),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+    }
+
+    .glass-button:hover::before {
+        opacity: 1;
+    }
+
+    .glass-button:hover::after {
+        opacity: 1;
+    }
+
+    .glass-button:hover .glass-button-glow {
+        width: 100%;
+        height: 100%;
+    }
+
+    .glass-button:active {
+        transform: translateY(-1px) scale(0.98);
+        transition: all 0.1s ease;
+    }
+
+    .glass-button:active .glass-button-content {
+        transform: scale(0.95);
+    }
+
     .glass-button-primary {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        background: linear-gradient(135deg, 
+            rgba(59, 130, 246, 0.25) 0%, 
+            rgba(37, 99, 235, 0.15) 50%, 
+            rgba(29, 78, 216, 0.1) 100%);
         color: #1e40af;
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    .glass-button-primary .glass-button-glow {
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
+    }
+
+    .glass-button-primary:hover {
+        background: linear-gradient(135deg, 
+            rgba(59, 130, 246, 0.35) 0%, 
+            rgba(37, 99, 235, 0.25) 50%, 
+            rgba(29, 78, 216, 0.15) 100%);
+        border-color: rgba(59, 130, 246, 0.5);
+        color: #1d4ed8;
     }
 
     .glass-button-secondary {
-        background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
+        background: linear-gradient(135deg, 
+            rgba(107, 114, 128, 0.25) 0%, 
+            rgba(75, 85, 99, 0.15) 50%, 
+            rgba(55, 65, 81, 0.1) 100%);
         color: #374151;
+        border-color: rgba(107, 114, 128, 0.3);
+    }
+
+    .glass-button-secondary .glass-button-glow {
+        background: radial-gradient(circle, rgba(107, 114, 128, 0.2) 0%, transparent 70%);
+    }
+
+    .glass-button-secondary:hover {
+        background: linear-gradient(135deg, 
+            rgba(107, 114, 128, 0.35) 0%, 
+            rgba(75, 85, 99, 0.25) 50%, 
+            rgba(55, 65, 81, 0.15) 100%);
+        border-color: rgba(107, 114, 128, 0.5);
+        color: #1f2937;
     }
 
     .glass-button-success {
-        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+        background: linear-gradient(135deg, 
+            rgba(34, 197, 94, 0.25) 0%, 
+            rgba(22, 163, 74, 0.15) 50%, 
+            rgba(21, 128, 61, 0.1) 100%);
         color: #14532d;
+        border-color: rgba(34, 197, 94, 0.3);
+    }
+
+    .glass-button-success .glass-button-glow {
+        background: radial-gradient(circle, rgba(34, 197, 94, 0.2) 0%, transparent 70%);
+    }
+
+    .glass-button-success:hover {
+        background: linear-gradient(135deg, 
+            rgba(34, 197, 94, 0.35) 0%, 
+            rgba(22, 163, 74, 0.25) 50%, 
+            rgba(21, 128, 61, 0.15) 100%);
+        border-color: rgba(34, 197, 94, 0.5);
+        color: #15803d;
     }
 
     .glass-button-info {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        background: linear-gradient(135deg, 
+            rgba(59, 130, 246, 0.25) 0%, 
+            rgba(37, 99, 235, 0.15) 50%, 
+            rgba(29, 78, 216, 0.1) 100%);
         color: #1e40af;
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    .glass-button-info .glass-button-glow {
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
+    }
+
+    .glass-button-info:hover {
+        background: linear-gradient(135deg, 
+            rgba(59, 130, 246, 0.35) 0%, 
+            rgba(37, 99, 235, 0.25) 50%, 
+            rgba(29, 78, 216, 0.15) 100%);
+        border-color: rgba(59, 130, 246, 0.5);
+        color: #1d4ed8;
     }
 
     .glass-button-danger {
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.2));
+        background: linear-gradient(135deg, 
+            rgba(239, 68, 68, 0.25) 0%, 
+            rgba(220, 38, 38, 0.15) 50%, 
+            rgba(185, 28, 28, 0.1) 100%);
         color: #7f1d1d;
+        border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .glass-button-danger .glass-button-glow {
+        background: radial-gradient(circle, rgba(239, 68, 68, 0.2) 0%, transparent 70%);
+    }
+
+    .glass-button-danger:hover {
+        background: linear-gradient(135deg, 
+            rgba(239, 68, 68, 0.35) 0%, 
+            rgba(220, 38, 38, 0.25) 50%, 
+            rgba(185, 28, 28, 0.15) 100%);
+        border-color: rgba(239, 68, 68, 0.5);
+        color: #991b1b;
     }
 
     .glass-button-warning {
-        background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(217, 119, 6, 0.2));
+        background: linear-gradient(135deg, 
+            rgba(245, 158, 11, 0.25) 0%, 
+            rgba(217, 119, 6, 0.15) 50%, 
+            rgba(180, 83, 9, 0.1) 100%);
         color: #78350f;
+        border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .glass-button-warning .glass-button-glow {
+        background: radial-gradient(circle, rgba(245, 158, 11, 0.2) 0%, transparent 70%);
+    }
+
+    .glass-button-warning:hover {
+        background: linear-gradient(135deg, 
+            rgba(245, 158, 11, 0.35) 0%, 
+            rgba(217, 119, 6, 0.25) 50%, 
+            rgba(180, 83, 9, 0.15) 100%);
+        border-color: rgba(245, 158, 11, 0.5);
+        color: #92400e;
     }
 
     /* Glass Input & Select */
@@ -629,7 +902,38 @@
         color: #78350f;
     }
 
-    /* Hover Effects */
+    /* Mensaje de éxito mejorado */
+    .success-icon-container {
+        background: linear-gradient(135deg, 
+            rgba(34, 197, 94, 0.15) 0%, 
+            rgba(22, 163, 74, 0.1) 100%);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(34, 197, 94, 0.2);
+        box-shadow: 
+            0 4px 12px rgba(34, 197, 94, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    }
+
+    .success-stats {
+        background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.6) 0%, 
+            rgba(255, 255, 255, 0.3) 100%);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 8px;
+        padding: 0.5rem 0.75rem;
+        transition: all 0.3s ease;
+    }
+
+    .success-stats:hover {
+        background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.8) 0%, 
+            rgba(255, 255, 255, 0.5) 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
     .hover-lift {
         transition: all 0.3s ease;
     }
@@ -1043,7 +1347,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.error) {
                     quickSearchContent.innerHTML = `
                         <div class="glass-alert glass-alert-warning">
-                            <span class="fa material-icons mr-2">warning</span></i>
+                            <span class="material-icons mr-2">warning</span>
                             ${data.error}
                         </div>
                     `;
@@ -1053,7 +1357,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.results.length === 0) {
                     quickSearchContent.innerHTML = `
                         <div class="glass-alert glass-alert-warning">
-                            <span class="fa material-icons mr-2">search</span></i>
+                            <span class="material-icons mr-2">search</span>
                             No se encontraron resultados para "${query}"
                         </div>
                     `;
@@ -1064,7 +1368,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 let html = `
                     <div class="mb-4">
                         <div class="glass-badge glass-badge-success">
-                            <span class="fa material-icons mr-1">search</span></i>
+                            <span class="material-icons mr-1">search</span>
                             Encontrados ${data.total} registros en ${data.results.length} tabla(s)
                         </div>
                     </div>
@@ -1076,7 +1380,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="p-4">
                                 <div class="flex justify-between items-center mb-3">
                                     <h4 class="text-lg font-semibold text-gray-800 flex items-center">
-                                        <span class="fa material-icons text-green-600 mr-2">table_view</span></i>
+                                        <span class="material-icons text-green-600 mr-2">table_view</span>
                                         ${tabla.tabla}
                                     </h4>
                                     <span class="glass-badge glass-badge-success">${tabla.total_registros} registros</span>
@@ -1107,7 +1411,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="text-right">
                                     <a href="/datos-archivados/tablas/${tabla.tabla}/" 
                                        class="glass-button glass-button-success">
-                                        <span class="fa material-icons mr-2">visibility</span></i>
+                                        <span class="material-icons mr-2">visibility</span>
                                         Ver todos los registros
                                     </a>
                                 </div>
@@ -1121,7 +1425,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 quickSearchContent.innerHTML = `
                     <div class="glass-alert glass-alert-warning">
-                        <span class="fa material-icons mr-2">warning</span></i>
+                        <span class="material-icons mr-2">warning</span>
                         Error en la búsqueda: ${error.message}
                     </div>
                 `;
@@ -1192,7 +1496,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (modoSeleccion) {
             // Activar modo selección
-            btnModoSeleccion.innerHTML = '<span class="fa material-icons mr-2">cancel</span></i>Cancelar Selección';
+            btnModoSeleccion.innerHTML = '<span class="material-icons mr-2">cancel</span>Cancelar Selección';
             btnModoSeleccion.classList.remove('glass-button-info');
             btnModoSeleccion.classList.add('glass-button-secondary');
             btnEliminar.classList.remove('hidden');
@@ -1214,7 +1518,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         } else {
             // Desactivar modo selección
-            btnModoSeleccion.innerHTML = '<span class="bi material-icons mr-2">check_box</span></i>Seleccionar Tablas';
+            btnModoSeleccion.innerHTML = '<span class="material-icons mr-2">check_box</span>Seleccionar Tablas';
             btnModoSeleccion.classList.remove('glass-button-secondary');
             btnModoSeleccion.classList.add('glass-button-info');
             btnEliminar.classList.add('hidden');
@@ -1303,7 +1607,7 @@ document.addEventListener('DOMContentLoaded', function() {
         listaTablas.innerHTML = '';
         seleccionadas.forEach(tabla => {
             const li = document.createElement('li');
-            li.innerHTML = `<span class="fa material-icons text-red-600 mr-2">table_view</span></i><strong>${tabla}</strong>`;
+            li.innerHTML = `<span class="material-icons text-red-600 mr-2">table_view</span><strong>${tabla}</strong>`;
             li.className = 'flex items-center';
             listaTablas.appendChild(li);
         });
@@ -1399,7 +1703,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // La combinación se inició correctamente, el progreso se monitoreará via AJAX
                 progressMessage.innerHTML = `
                     <div class="glass-alert glass-alert-info mt-4">
-                        <span class="fa material-icons mr-2">info</span></i>
+                        <span class="material-icons mr-2">info</span>
                         <strong>Combinación iniciada:</strong> Monitoreando progreso en tiempo real...
                     </div>
                 `;
@@ -1408,26 +1712,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 clearInterval(intervalId);
                 progressMessage.innerHTML = `
                     <div class="glass-alert glass-alert-warning mt-4">
-                        <span class="fa material-icons mr-2">warning</span></i>
+                        <span class="material-icons mr-2">warning</span>
                         <strong>Error:</strong> ${data.error || 'Error desconocido'}
                     </div>
                 `;
                 btnConfirmarCombinacion.disabled = false;
                 btnCancelarCombinacion.disabled = false;
-                btnConfirmarCombinacion.innerHTML = '<span class="bi material-icons mr-2">swap_vert</span></i>Reintentar';
+                btnConfirmarCombinacion.innerHTML = '<span class="material-icons mr-2">swap_vert</span>Reintentar';
             }
         })
         .catch(error => {
             clearInterval(intervalId);
             progressMessage.innerHTML = `
                 <div class="glass-alert glass-alert-warning mt-4">
-                    <span class="fa material-icons mr-2">warning</span></i>
+                    <span class="material-icons mr-2">warning</span>
                     <strong>Error de conexión:</strong> ${error.message}
                 </div>
             `;
             btnConfirmarCombinacion.disabled = false;
             btnCancelarCombinacion.disabled = false;
-            btnConfirmarCombinacion.innerHTML = '<span class="bi material-icons mr-2">swap_vert</span></i>Reintentar';
+            btnConfirmarCombinacion.innerHTML = '<span class="material-icons mr-2">swap_vert</span>Reintentar';
         });
         
         // Función para verificar estado de combinación
@@ -1447,7 +1751,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Actualizar mensaje de estado
                         progressMessage.innerHTML = `
                             <div class="glass-alert glass-alert-info mt-4">
-                                <span class="fa material-icons mr-2">settings</span></i>
+                                <span class="material-icons mr-2">settings</span>
                                 <div>
                                     <strong>Estado:</strong> ${data.estado}<br>
                                     <small>Paso ${data.pasos_completados}/${data.pasos_totales}</small>
@@ -1468,7 +1772,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         progressMessage.innerHTML = `
                             <div class="glass-alert glass-alert-success mt-4">
-                                <span class="fa material-icons mr-2">check_circle</span></i>
+                                <span class="material-icons mr-2">check_circle</span>
                                 <div>
                                     <strong>¡Combinación completada exitosamente!</strong>
                                     <ul class="mt-2 mb-0 list-disc list-inside space-y-1 text-sm">
@@ -1490,13 +1794,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         clearInterval(intervalId);
                         progressMessage.innerHTML = `
                             <div class="glass-alert glass-alert-warning mt-4">
-                                <span class="fa material-icons mr-2">warning</span></i>
+                                <span class="material-icons mr-2">warning</span>
                                 <strong>Error en la combinación:</strong> ${data.mensaje || 'Error desconocido'}
                             </div>
                         `;
                         btnConfirmarCombinacion.disabled = false;
                         btnCancelarCombinacion.disabled = false;
-                        btnConfirmarCombinacion.innerHTML = '<span class="bi material-icons mr-2">swap_vert</span></i>Reintentar';
+                        btnConfirmarCombinacion.innerHTML = '<span class="material-icons mr-2">swap_vert</span>Reintentar';
                     } else {
                         // Estado desconocido o sin combinaciones
                         console.log("🔍 DEBUG: Estado no manejado:", data);
@@ -1511,13 +1815,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             clearInterval(intervalId);
                             progressMessage.innerHTML = `
                                 <div class="glass-alert glass-alert-warning mt-4">
-                                    <span class="fa material-icons mr-2">warning</span></i>
+                                    <span class="material-icons mr-2">warning</span>
                                     <strong>Timeout:</strong> La combinación no se inició correctamente. Estado: ${data.estado || 'Desconocido'}
                                 </div>
                             `;
                             btnConfirmarCombinacion.disabled = false;
                             btnCancelarCombinacion.disabled = false;
-                            btnConfirmarCombinacion.innerHTML = '<span class="bi material-icons mr-2">swap_vert</span></i>Reintentar';
+                            btnConfirmarCombinacion.innerHTML = '<span class="material-icons mr-2">swap_vert</span>Reintentar';
                         }
                     }
                 })
@@ -1549,7 +1853,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Actualizar contenido del modal
         const modalTitle = modal.querySelector('.modal-title');
-        modalTitle.innerHTML = `<span class="fa material-icons mr-2">error</span></i>${titulo}`;
+        modalTitle.innerHTML = `<span class="material-icons mr-2">error</span>${titulo}`;
         
         errorMessage.innerHTML = `
             <div>
