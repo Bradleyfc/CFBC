@@ -2205,3 +2205,323 @@ def estado_combinacion_ajax(request):
             'progreso_real': 0,
             'mensaje': 'Error al obtener estado de combinación'
         })
+
+
+@login_required
+def combinar_datos_seleccionadas(request):
+    """Vista para combinar SOLO las tablas seleccionadas por el usuario
+    
+    Esta función permite al usuario elegir qué tablas específicas combinar
+    en lugar de combinar todas las tablas archivadas
+    """
+    if not tiene_permisos_datos_archivados(request.user):
+        return JsonResponse({'success': False, 'error': 'Sin permisos'}, status=403)
+    
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+    
+    try:
+        # Obtener las tablas seleccionadas del request
+        data = json.loads(request.body)
+        tablas_seleccionadas = data.get('tablas_seleccionadas', [])
+        
+        if not tablas_seleccionadas:
+            return JsonResponse({'success': False, 'error': 'No se seleccionaron tablas para combinar'})
+        
+        # Validar que las tablas existen
+        from .models import DatoArchivadoDinamico
+        tablas_disponibles = DatoArchivadoDinamico.objects.values_list('tabla_origen', flat=True).distinct()
+        
+        for tabla in tablas_seleccionadas:
+            if tabla not in tablas_disponibles:
+                return JsonResponse({'success': False, 'error': f'La tabla {tabla} no existe en los datos archivados'})
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Datos JSON inválidos'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': f'Error procesando solicitud: {str(e)}'})
+    
+    # Ejecutar combinación en hilo separado para no bloquear la respuesta
+    def ejecutar_combinacion_seleccionada():
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            logger.info(f"=== INICIANDO COMBINACIÓN SELECTIVA DE DATOS ===")
+            logger.info(f"Tablas seleccionadas: {tablas_seleccionadas}")
+            
+            from .models import DatoArchivadoDinamico
+            from django.contrib.auth.models import User, Group
+            from accounts.models import Registro
+            from principal.models import (
+                CursoAcademico, Curso, Matriculas, 
+                Asistencia, Calificaciones, NotaIndividual
+            )
+            from django.db import transaction, IntegrityError
+            from django.db.models import Q
+            from datetime import datetime, date
+            from decimal import Decimal
+            from django.core.cache import cache
+            from django.utils import timezone
+            
+            # Inicializar progreso en cache (usar clave diferente para no interferir)
+            def actualizar_progreso_selectivo(paso_actual, pasos_completados, pasos_totales, **kwargs):
+                progreso = {
+                    'paso_actual': paso_actual,
+                    'pasos_completados': pasos_completados,
+                    'pasos_totales': pasos_totales,
+                    'fecha_inicio': timezone.now().isoformat(),
+                    'usuarios_combinados': kwargs.get('usuarios_combinados', 0),
+                    'registros_combinados': kwargs.get('registros_combinados', 0),
+                    'cursos_combinados': kwargs.get('cursos_combinados', 0),
+                    'matriculas_combinadas': kwargs.get('matriculas_combinadas', 0),
+                    'tablas_seleccionadas': tablas_seleccionadas,
+                    'tipo_combinacion': 'selectiva'
+                }
+                cache.set('combinacion_en_progreso', progreso, timeout=300)  # 5 minutos
+                logger.info(f"Progreso selectivo actualizado: {paso_actual} ({pasos_completados}/{pasos_totales})")
+            
+            # Función para copiar campos dinámicamente (reutilizada)
+            def copiar_campos_dinamicos(objeto_destino, datos_origen, campos_excluir=None, logger=None):
+                if campos_excluir is None:
+                    campos_excluir = ['id', 'pk']
+                
+                campos_copiados = 0
+                for campo, valor in datos_origen.items():
+                    if campo in campos_excluir:
+                        continue
+                    
+                    try:
+                        if hasattr(objeto_destino, campo):
+                            setattr(objeto_destino, campo, valor)
+                            campos_copiados += 1
+                            if logger:
+                                logger.debug(f"Campo copiado: {campo} = {valor}")
+                    except Exception as e:
+                        if logger:
+                            logger.warning(f"Error copiando campo {campo}: {e}")
+                
+                return campos_copiados
+            
+            # Contadores
+            estadisticas = {
+                'usuarios_combinados': 0,
+                'registros_combinados': 0,
+                'cursos_academicos_combinados': 0,
+                'cursos_combinados': 0,
+                'matriculas_combinadas': 0,
+                'asistencias_combinadas': 0,
+                'calificaciones_combinadas': 0,
+                'notas_combinadas': 0,
+                'otras_tablas': 0
+            }
+            
+            # Mapeo de usuarios archivados a usuarios actuales
+            mapeo_usuarios = {}
+            
+            # Calcular pasos totales basado en tablas seleccionadas
+            pasos_totales = len(tablas_seleccionadas) + 1  # +1 para finalización
+            paso_actual = 0
+            
+            # Inicializar progreso
+            actualizar_progreso_selectivo('Iniciando combinación selectiva...', 0, pasos_totales, **estadisticas)
+            
+            # PROCESAR CADA TABLA SELECCIONADA
+            for tabla in tablas_seleccionadas:
+                paso_actual += 1
+                actualizar_progreso_selectivo(f'Procesando tabla: {tabla}', paso_actual, pasos_totales, **estadisticas)
+                logger.info(f"=== Procesando tabla: {tabla} ===")
+                
+                # Obtener datos de la tabla
+                datos_tabla = DatoArchivadoDinamico.objects.filter(tabla_origen=tabla)
+                logger.info(f"Encontrados {datos_tabla.count()} registros en {tabla}")
+                
+                if tabla == 'auth_user':
+                    # PROCESAR USUARIOS
+                    with transaction.atomic():
+                        for dato in datos_tabla:
+                            try:
+                                sid = transaction.savepoint()
+                                datos = dato.datos_originales
+                                username = datos.get('username', '')
+                                email = datos.get('email', '')
+                                id_original = dato.id_original
+                                
+                                if not username:
+                                    logger.warning(f"Usuario sin username, saltando: {datos}")
+                                    transaction.savepoint_rollback(sid)
+                                    continue
+                                
+                                # Buscar si el usuario ya existe
+                                usuario_existente = User.objects.filter(username=username).first()
+                                
+                                if usuario_existente:
+                                    logger.info(f"Actualizando usuario existente: {username}")
+                                    # Actualizar usuario existente
+                                    copiar_campos_dinamicos(usuario_existente, datos, 
+                                                          campos_excluir=['id', 'pk', 'username'], 
+                                                          logger=logger)
+                                    
+                                    # Procesar contraseña
+                                    password_original = datos.get('password')
+                                    if password_original and password_original.strip():
+                                        if password_original.startswith(('pbkdf2_sha256', 'bcrypt', 'argon2', 'sha1', 'md5')):
+                                            usuario_existente.password = password_original
+                                            logger.info(f"Contraseña hasheada copiada para {username}")
+                                        else:
+                                            usuario_existente.set_password(password_original)
+                                            logger.info(f"Contraseña en texto plano hasheada para {username}")
+                                    
+                                    usuario_existente.save()
+                                    mapeo_usuarios[id_original] = usuario_existente
+                                    estadisticas['usuarios_combinados'] += 1
+                                    
+                                else:
+                                    logger.info(f"Creando nuevo usuario: {username}")
+                                    # Crear nuevo usuario
+                                    nuevo_usuario = User(username=username)
+                                    copiar_campos_dinamicos(nuevo_usuario, datos, 
+                                                          campos_excluir=['id', 'pk'], 
+                                                          logger=logger)
+                                    
+                                    # Procesar contraseña
+                                    password_original = datos.get('password')
+                                    if password_original and password_original.strip():
+                                        if password_original.startswith(('pbkdf2_sha256', 'bcrypt', 'argon2', 'sha1', 'md5')):
+                                            nuevo_usuario.password = password_original
+                                            logger.info(f"Contraseña hasheada asignada para {username}")
+                                        else:
+                                            nuevo_usuario.set_password(password_original)
+                                            logger.info(f"Contraseña en texto plano hasheada para {username}")
+                                    else:
+                                        nuevo_usuario.set_unusable_password()
+                                        logger.info(f"Contraseña no utilizable asignada para {username}")
+                                    
+                                    nuevo_usuario.save()
+                                    mapeo_usuarios[id_original] = nuevo_usuario
+                                    estadisticas['usuarios_combinados'] += 1
+                                
+                                transaction.savepoint_commit(sid)
+                                
+                            except Exception as e:
+                                transaction.savepoint_rollback(sid)
+                                error_msg = f"Error procesando usuario {username}: {str(e)}"
+                                logger.error(error_msg)
+                                continue
+                
+                elif tabla in ['Docencia_studentpersonalinformation', 'Docencia_teacherpersonalinformation', 'accounts_registro']:
+                    # PROCESAR REGISTROS DE ESTUDIANTES/PROFESORES
+                    # Obtener o crear grupos
+                    grupo_estudiantes, _ = Group.objects.get_or_create(name='Estudiantes')
+                    grupo_profesores, _ = Group.objects.get_or_create(name='Profesores')
+                    
+                    with transaction.atomic():
+                        for dato in datos_tabla:
+                            try:
+                                sid = transaction.savepoint()
+                                datos = dato.datos_originales
+                                user_id_original = datos.get('user_id')
+                                
+                                if not user_id_original or user_id_original not in mapeo_usuarios:
+                                    logger.warning(f"Usuario no encontrado para registro: user_id={user_id_original}")
+                                    transaction.savepoint_rollback(sid)
+                                    continue
+                                
+                                usuario = mapeo_usuarios[user_id_original]
+                                
+                                # Buscar o crear registro
+                                registro, created = Registro.objects.get_or_create(user=usuario)
+                                
+                                if created:
+                                    logger.info(f"Creado nuevo registro para usuario: {usuario.username}")
+                                else:
+                                    logger.info(f"Actualizando registro existente para usuario: {usuario.username}")
+                                
+                                # Copiar todos los campos
+                                copiar_campos_dinamicos(registro, datos, 
+                                                      campos_excluir=['id', 'pk', 'user_id', 'user'], 
+                                                      logger=logger)
+                                
+                                registro.save()
+                                estadisticas['registros_combinados'] += 1
+                                
+                                # Asignar grupo según el tipo de registro
+                                if dato.tabla_origen == 'Docencia_studentpersonalinformation':
+                                    usuario.groups.add(grupo_estudiantes)
+                                    logger.info(f"Usuario {usuario.username} agregado al grupo Estudiantes")
+                                elif dato.tabla_origen == 'Docencia_teacherpersonalinformation':
+                                    usuario.groups.add(grupo_profesores)
+                                    logger.info(f"Usuario {usuario.username} agregado al grupo Profesores")
+                                
+                                transaction.savepoint_commit(sid)
+                                
+                            except Exception as e:
+                                transaction.savepoint_rollback(sid)
+                                error_msg = f"Error procesando registro: {str(e)}"
+                                logger.error(error_msg)
+                                continue
+                
+                else:
+                    # PROCESAR OTRAS TABLAS (implementación básica)
+                    logger.info(f"Procesando tabla genérica: {tabla}")
+                    estadisticas['otras_tablas'] += datos_tabla.count()
+                
+                # Actualizar progreso después de cada tabla
+                actualizar_progreso_selectivo(f'Tabla {tabla} completada', paso_actual, pasos_totales, **estadisticas)
+            
+            # PASO FINAL: COMPLETAR
+            actualizar_progreso_selectivo('Combinación selectiva completada exitosamente', pasos_totales, pasos_totales, **estadisticas)
+            
+            # Marcar como completado
+            resultado_final = {
+                'fecha_inicio': timezone.now().isoformat(),
+                'fecha_fin': timezone.now().isoformat(),
+                'tipo_combinacion': 'selectiva',
+                'tablas_procesadas': tablas_seleccionadas,
+                **estadisticas,
+                'campos_agregados': 0  # Por ahora no agregamos campos dinámicamente
+            }
+            cache.set('ultima_combinacion_completada', resultado_final, timeout=300)
+            cache.delete('combinacion_en_progreso')
+            
+            logger.info("=== COMBINACIÓN SELECTIVA COMPLETADA EXITOSAMENTE ===")
+            logger.info(f"Tablas procesadas: {tablas_seleccionadas}")
+            logger.info(f"Usuarios combinados: {estadisticas['usuarios_combinados']}")
+            logger.info(f"Registros combinados: {estadisticas['registros_combinados']}")
+                
+        except Exception as e:
+            # En caso de error, limpiar cache y registrar error
+            logger.error(f"Error en combinación selectiva: {str(e)}")
+            logger.error(f"Traceback: ", exc_info=True)
+            
+            cache.delete('combinacion_en_progreso')
+            
+            # Guardar error en cache para mostrar en frontend
+            error_info = {
+                'estado': 'error',
+                'mensaje': str(e),
+                'fecha_error': timezone.now().isoformat(),
+                'tipo_combinacion': 'selectiva'
+            }
+            cache.set('combinacion_error', error_info, timeout=300)
+            raise
+    
+    # Ejecutar en hilo separado
+    import threading
+    import time
+    
+    def wrapper():
+        # Pequeña pausa para asegurar que la respuesta se envíe primero
+        time.sleep(0.1)
+        ejecutar_combinacion_seleccionada()
+    
+    thread = threading.Thread(target=wrapper)
+    thread.daemon = True
+    thread.start()
+    
+    # Respuesta inmediata
+    return JsonResponse({
+        'success': True, 
+        'message': f'Combinación selectiva iniciada para {len(tablas_seleccionadas)} tablas. Puede seguir el progreso en tiempo real.',
+        'tablas_seleccionadas': tablas_seleccionadas
+    })

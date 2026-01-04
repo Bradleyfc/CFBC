@@ -22,6 +22,7 @@ urlpatterns = [
     
     # Combinación de datos
     path('combinacion/estado/', views.estado_combinacion_ajax, name='estado_combinacion'),
+    path('combinar-datos-seleccionadas/', views.combinar_datos_seleccionadas, name='combinar_datos_seleccionadas'),
     
     # Usuarios archivados - DESHABILITADO (ya no es necesario con la nueva implementación de combinación)
     # path('reclamar-usuario/', views.reclamar_usuario_archivado, name='reclamar_usuario'),
