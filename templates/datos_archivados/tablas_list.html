@@ -2491,10 +2491,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 container.classList.remove('hidden');
             });
             
-            // Inicializar sistema de relaciones
-            initializeRelationshipSystem().catch(error => {
-                console.error('Error inicializando sistema de relaciones en modo selección:', error);
-            });
+            // NO inicializar sistema de relaciones en modo selección simple
+            // Solo se necesita para seleccionar tablas para eliminar
             
             // Deshabilitar botones de ver registros
             botonesVerRegistros.forEach(btn => {
@@ -2675,31 +2673,38 @@ document.addEventListener('DOMContentLoaded', function() {
                     checkbox.checked = !checkbox.checked;
                     checkbox.dispatchEvent(new Event('change'));
                 }
+                // En modo selección, NO ejecutar auto-detección - solo seleccionar para eliminar
+                return;
             }
             
-            // Ejecutar validación automática cuando se selecciona cualquier tabla
-            const tableName = this.getAttribute('data-tabla');
-            if (tableName && window.relationshipManager && window.relationshipManager.isInitialized) {
-                window.relationshipManager.autoDetectParentTable(tableName);
-            } else if (tableName) {
-                console.log('⚠️ Sistema de relaciones no inicializado, intentando inicializar...');
-                // Intentar inicializar el sistema si no está listo
-                initializeRelationshipSystem().then(() => {
-                    if (window.relationshipManager && window.relationshipManager.isInitialized) {
-                        console.log('✅ Sistema inicializado, ejecutando validación para:', tableName);
-                        window.relationshipManager.autoDetectParentTable(tableName);
-                    }
-                }).catch(error => {
-                    console.error('❌ Error inicializando sistema para validación:', error);
-                });
+            // Solo ejecutar validación automática si NO está en modo selección
+            if (!modoSeleccion) {
+                const tableName = this.getAttribute('data-tabla');
+                if (tableName && window.relationshipManager && window.relationshipManager.isInitialized) {
+                    window.relationshipManager.autoDetectParentTable(tableName);
+                } else if (tableName) {
+                    console.log('⚠️ Sistema de relaciones no inicializado, intentando inicializar...');
+                    // Intentar inicializar el sistema si no está listo
+                    initializeRelationshipSystem().then(() => {
+                        if (window.relationshipManager && window.relationshipManager.isInitialized) {
+                            console.log('✅ Sistema inicializado, ejecutando validación para:', tableName);
+                            window.relationshipManager.autoDetectParentTable(tableName);
+                        }
+                    }).catch(error => {
+                        console.error('❌ Error inicializando sistema para validación:', error);
+                    });
+                }
             }
         });
     });
     
-    // Agregar validación automática adicional para todas las tablas (independiente del modo selección)
+    // Agregar validación automática adicional para todas las tablas (solo fuera del modo selección)
     document.querySelectorAll('.tabla-card').forEach(card => {
-        // Agregar evento adicional para validación automática
+        // Agregar evento adicional para validación automática (solo si no está en modo selección)
         card.addEventListener('mouseenter', function() {
+            // No ejecutar auto-detección en modo selección
+            if (modoSeleccion) return;
+            
             const tableName = this.getAttribute('data-tabla');
             if (tableName && window.relationshipManager && window.relationshipManager.isInitialized) {
                 console.log('🔍 Validación automática al pasar mouse sobre tabla:', tableName);
@@ -2714,6 +2719,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // También agregar validación en clic directo (fuera del modo selección)
         card.addEventListener('dblclick', function() {
+            // No ejecutar auto-detección en modo selección
+            if (modoSeleccion) return;
+            
             const tableName = this.getAttribute('data-tabla');
             if (tableName) {
                 console.log('🔍 Validación automática por doble clic en tabla:', tableName);
@@ -4906,22 +4914,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return [...new Set(commonFields)];
         }
 
-        // NUEVO: Detecta relaciones analizando foreign keys de todas las tablas
-        detectRelationshipsByForeignKeys(tables) {
-            const relations = new Map();
-            
-            for (const table of tables) {
-                const fields = this.getSimulatedTableFields(table);
-                const parentTable = this.detectParentByForeignKeys(table, tables);
-                
-                if (parentTable) {
-                    relations.set(table, parentTable);
-                }
-            }
-            
-            return relations;
-        }
-        
         // NUEVO: Determina el tipo de relación basado en el contexto de las tablas
         determineRelationshipType(childTable, parentTable) {
             const childLower = childTable.toLowerCase();
@@ -7127,6 +7119,12 @@ document.addEventListener('DOMContentLoaded', function() {
         autoDetectParentTable(childTableName) {
             console.log('🔍 Auto-detectando tabla padre para:', childTableName);
             
+            // Verificar que el sistema esté inicializado
+            if (!this.isInitialized || !this.detector) {
+                console.warn('⚠️ Sistema de relaciones no inicializado, saltando auto-detección');
+                return;
+            }
+            
             // Limpiar errores previos
             if (window.validationErrorHandler) {
                 window.validationErrorHandler.clearErrors();
@@ -7272,6 +7270,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Detecta tabla padre por patrones de nombres
         detectParentByNamingPattern(childTableName) {
+            // Verificar que el detector esté inicializado
+            if (!this.detector) {
+                console.error('❌ Detector no inicializado en detectParentByNamingPattern');
+                return null;
+            }
+            
             const availableTables = Array.from(document.querySelectorAll('.tabla-card')).map(card => 
                 card.getAttribute('data-tabla')
             ).filter(tabla => tabla);
@@ -7280,14 +7284,14 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('📋 Tablas disponibles para comparar:', availableTables);
             
             // NUEVO: Primero intentar detección por foreign keys/IDs
-            const parentByForeignKey = this.detectParentByForeignKeys(childTableName, availableTables);
+            const parentByForeignKey = this.detector.detectParentByForeignKeys(childTableName, availableTables);
             if (parentByForeignKey) {
                 console.log('✅ Padre detectado por foreign key:', parentByForeignKey);
                 return parentByForeignKey;
             }
             
             // Si no se encuentra por foreign key, usar patrones de nombres como fallback
-            const parentByNaming = this.detectParentByNamingPatterns(childTableName, availableTables);
+            const parentByNaming = this.detector.detectParentByTableNamePatterns(childTableName, availableTables);
             if (parentByNaming) {
                 console.log('✅ Padre detectado por patrón de nombres:', parentByNaming);
                 return parentByNaming;
