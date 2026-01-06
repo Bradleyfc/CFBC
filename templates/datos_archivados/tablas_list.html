@@ -830,6 +830,7 @@
                             <input class="tabla-checkbox w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2" 
                                    type="checkbox" 
                                    value="{{ tabla.tabla_origen }}" 
+                                   data-tabla="{{ tabla.tabla_origen }}"
                                    id="check_{{ forloop.counter }}">
                         </div>
                     </div>
@@ -2813,7 +2814,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Manejar eliminación - Mostrar modal
     btnEliminar.addEventListener('click', function() {
         const seleccionadas = Array.from(document.querySelectorAll('.tabla-checkbox:checked'))
-            .map(cb => cb.value);
+            .map(cb => cb.dataset.tabla || cb.value)
+            .filter(tabla => tabla && tabla !== 'undefined' && tabla !== 'null');
+        
+        console.log('🗑️ Tablas seleccionadas para eliminar:', seleccionadas);
         
         if (seleccionadas.length === 0) {
             // Mostrar modal de error si no hay tablas seleccionadas
@@ -2843,7 +2847,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Confirmar eliminación desde el modal
     document.getElementById('btnConfirmarEliminacion').addEventListener('click', function() {
         const seleccionadas = Array.from(document.querySelectorAll('.tabla-checkbox:checked'))
-            .map(cb => cb.value);
+            .map(cb => cb.dataset.tabla || cb.value)
+            .filter(tabla => tabla && tabla !== 'undefined' && tabla !== 'null');
+        
+        console.log('✅ Confirmando eliminación de tablas:', seleccionadas);
         
         if (seleccionadas.length === 0) return;
         
@@ -2909,9 +2916,11 @@ document.addEventListener('DOMContentLoaded', function() {
             progressText.textContent = '0%';
         }
         
-        // Iniciar monitoreo de progreso
-        window.tiempoInicioMonitoreo = Date.now(); // Inicializar tiempo
-        let intervalId = setInterval(verificarEstadoCombinacion, 2000);
+        // Iniciar monitoreo de progreso (optimizado para reducir carga del servidor)
+        window.tiempoInicioMonitoreo = Date.now();
+        let intervalId = setInterval(verificarEstadoCombinacion, 3000); // Aumentado a 3 segundos para reducir carga
+        
+        console.log('🚀 Iniciando combinación completa - Timestamp:', new Date().toISOString());
         
         // Realizar petición AJAX
         fetch('{% url "datos_archivados:combinar_datos" %}', {
@@ -2928,7 +2937,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 progressMessage.innerHTML = `
                     <div class="glass-alert glass-alert-info mt-4">
                         <span class="material-icons mr-2">info</span>
-                        <strong>Combinación iniciada:</strong> Monitoreando progreso en tiempo real...
+                        <div>
+                            <strong>Combinación iniciada exitosamente</strong>
+                            <div class="mt-2 text-sm">
+                                ✅ El proceso de combinación ha comenzado<br>
+                                📊 Monitoreando progreso en tiempo real<br>
+                                ⏱️ Tiempo estimado: 2-10 minutos (dependiendo del volumen de datos)
+                            </div>
+                            <div class="mt-2 text-xs text-gray-600 bg-blue-50 p-2 rounded">
+                                💡 <strong>Importante:</strong> No cierre esta ventana hasta que el proceso termine completamente.
+                            </div>
+                        </div>
                     </div>
                 `;
             } else {
@@ -2958,11 +2977,17 @@ document.addEventListener('DOMContentLoaded', function() {
             btnConfirmarCombinacion.innerHTML = '<span class="material-icons mr-2">swap_vert</span>Reintentar';
         });
         
-        // Función para verificar estado de combinación
+        // Función para verificar estado de combinación (con logging mejorado)
         function verificarEstadoCombinacion() {
+            console.log('🔍 Verificando estado de combinación...', new Date().toISOString());
             fetch('{% url "datos_archivados:estado_combinacion" %}')
-                .then(response => response.json())
+                .then(response => {
+                    console.log('📡 Respuesta del servidor recibida:', response.status);
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('📊 Estado actual:', data);
+                    
                     if (data.en_progreso) {
                         // Actualizar progreso
                         const progreso = data.progreso_real || 0;
@@ -2972,20 +2997,49 @@ document.addEventListener('DOMContentLoaded', function() {
                             progressText.textContent = progreso + '%';
                         }
                         
-                        // Actualizar mensaje de estado
+                        // Actualizar mensaje de estado con información detallada y diagnóstico
+                        const tiempoTranscurrido = Math.round((Date.now() - window.tiempoInicioMonitoreo) / 1000);
+                        const minutosTranscurridos = Math.floor(tiempoTranscurrido / 60);
+                        const segundosRestantes = tiempoTranscurrido % 60;
+                        const tiempoFormateado = minutosTranscurridos > 0 ? 
+                            `${minutosTranscurridos}m ${segundosRestantes}s` : 
+                            `${segundosRestantes}s`;
+                        
+                        // Diagnóstico de rendimiento
+                        let diagnostico = '';
+                        if (tiempoTranscurrido > 60) {
+                            diagnostico = `
+                                <div class="mt-2 text-xs text-orange-600 bg-orange-50 p-2 rounded border-l-2 border-orange-400">
+                                    ⚠️ <strong>Diagnóstico:</strong> El proceso está tardando más de lo normal para ${(data && data.pasos_totales) || 'N/A'} pasos.
+                                    Esto puede indicar un problema en el servidor o gran volumen de datos.
+                                </div>
+                            `;
+                        }
+                        
                         progressMessage.innerHTML = `
                             <div class="glass-alert glass-alert-info mt-4">
                                 <span class="material-icons mr-2">settings</span>
                                 <div>
-                                    <strong>Estado:</strong> ${(data && data.estado) || 'Procesando'}<br>
-                                    <small>Paso ${(data && data.pasos_completados) || 0}/${(data && data.pasos_totales) || 0}</small>
-                                    ${(data && data.usuarios_combinados > 0) ? `<br><small>Usuarios: ${data.usuarios_combinados}</small>` : ''}
-                                    ${(data && data.registros_combinados > 0) ? `<br><small>Registros: ${data.registros_combinados}</small>` : ''}
+                                    <div class="flex justify-between items-center mb-2">
+                                        <strong>Estado:</strong> ${(data && data.estado) || 'Procesando'}
+                                        <span class="text-sm"><strong>Tiempo:</strong> ${tiempoFormateado}</span>
+                                    </div>
+                                    <div class="text-sm">
+                                        <strong>Progreso:</strong> Paso ${(data && data.pasos_completados) || 0}/${(data && data.pasos_totales) || 0}
+                                        ${(data && data.usuarios_combinados > 0) ? `<br><strong>Usuarios procesados:</strong> ${data.usuarios_combinados}` : ''}
+                                        ${(data && data.registros_combinados > 0) ? `<br><strong>Registros procesados:</strong> ${data.registros_combinados}` : ''}
+                                    </div>
+                                    ${diagnostico}
+                                    <div class="mt-2 text-xs text-gray-600 bg-blue-50 p-2 rounded">
+                                        💡 <strong>Información:</strong> El proceso puede tomar varios minutos. Por favor, mantenga esta ventana abierta.
+                                        <br>🔧 <strong>Debug:</strong> Revise la consola del navegador (F12) para más detalles técnicos.
+                                    </div>
                                 </div>
                             </div>
                         `;
-                    } else if (data.completada_recientemente) {
-                        // Combinación completada
+                    } else if (data.completada_recientemente || data.progreso_real >= 100) {
+                        // Combinación completada (detectada por completada_recientemente o progreso 100%)
+                        console.log('✅ Combinación completa terminada - deteniendo polling');
                         clearInterval(intervalId);
                         progressBar.style.width = '100%';
                         progressBar.classList.add('completed');
@@ -3035,12 +3089,24 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                         
                         const tiempoTranscurrido = Date.now() - window.tiempoInicioMonitoreo;
-                        if (tiempoTranscurrido > 30000) { // 30 segundos
+                        if (tiempoTranscurrido > 300000) { // 5 minutos (300 segundos) - aumentado para procesos largos
                             clearInterval(intervalId);
                             progressMessage.innerHTML = `
                                 <div class="glass-alert glass-alert-warning mt-4">
                                     <span class="material-icons mr-2">warning</span>
-                                    <strong>Timeout:</strong> La combinación no se inició correctamente. Estado: ${(data && data.estado) || 'Desconocido'}
+                                    <strong>Timeout:</strong> La combinación está tardando más de lo esperado.
+                                    <div class="mt-2 text-sm">
+                                        <strong>Tiempo transcurrido:</strong> ${Math.round(tiempoTranscurrido / 1000)} segundos<br>
+                                        <strong>Estado actual:</strong> ${(data && data.estado) || 'Procesando...'}
+                                        <div class="mt-2">
+                                            <strong>Posibles causas:</strong>
+                                            <ul class="list-disc list-inside mt-1 text-xs">
+                                                <li>Gran cantidad de datos a procesar</li>
+                                                <li>Múltiples tablas con relaciones complejas</li>
+                                                <li>Servidor ocupado procesando otras tareas</li>
+                                            </ul>
+                                        </div>
+                                    </div>
                                 </div>
                             `;
                             btnConfirmarCombinacion.disabled = false;
@@ -3200,8 +3266,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const currentlySelected = [];
                 const mainCheckboxes = document.querySelectorAll('.tabla-checkbox:checked');
                 mainCheckboxes.forEach(checkbox => {
-                    const tableName = checkbox.value || checkbox.getAttribute('data-tabla');
-                    if (tableName) {
+                    const tableName = checkbox.dataset.tabla || checkbox.value;
+                    if (tableName && tableName !== 'undefined' && tableName !== 'null') {
                         currentlySelected.push(tableName);
                     }
                 });
@@ -4009,7 +4075,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Manejar confirmación de combinación selectiva
     btnConfirmarSeleccionCombinacion.addEventListener('click', function() {
         const tablasSeleccionadas = Array.from(document.querySelectorAll('.tabla-checkbox:checked'))
-            .map(checkbox => checkbox.dataset.tabla);
+            .map(checkbox => checkbox.dataset.tabla || checkbox.value)
+            .filter(tabla => tabla && tabla !== 'undefined' && tabla !== 'null');
+        
+        console.log('📋 Tablas seleccionadas para combinar:', tablasSeleccionadas);
         
         if (tablasSeleccionadas.length === 0) {
             alert('Por favor seleccione al menos una tabla para combinar.');
@@ -4030,9 +4099,11 @@ document.addEventListener('DOMContentLoaded', function() {
             progressText.textContent = '0%';
         }
         
-        // Iniciar monitoreo de progreso
+        // Iniciar monitoreo de progreso (optimizado para reducir carga del servidor)
         window.tiempoInicioMonitoreoSelectivo = Date.now();
-        let intervalId = setInterval(verificarEstadoCombinacionSelectiva, 2000);
+        let intervalId = setInterval(verificarEstadoCombinacionSelectiva, 3000); // Aumentado a 3 segundos para reducir carga
+        
+        console.log('🚀 Iniciando combinación selectiva - Tablas:', tablasSeleccionadas, '- Timestamp:', new Date().toISOString());
         
         // Realizar petición AJAX
         fetch('{% url "datos_archivados:combinar_datos_seleccionadas" %}', {
@@ -4052,7 +4123,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 progressMessageSelectivo.innerHTML = `
                     <div class="glass-alert glass-alert-info mt-4">
                         <span class="material-icons mr-2">info</span>
-                        <strong>Combinación selectiva iniciada:</strong> Procesando ${tablasSeleccionadas.length} tablas...
+                        <div>
+                            <strong>Combinación selectiva iniciada exitosamente</strong>
+                            <div class="mt-2 text-sm">
+                                ✅ Procesando ${tablasSeleccionadas.length} tabla(s) seleccionada(s)<br>
+                                📊 Monitoreando progreso en tiempo real<br>
+                                ⏱️ Tiempo estimado: 1-5 minutos por tabla
+                            </div>
+                            <div class="mt-2 text-xs text-gray-600 bg-green-50 p-2 rounded">
+                                💡 <strong>Ventaja:</strong> Solo se procesarán las tablas que seleccionó, lo que reduce el tiempo total.
+                            </div>
+                        </div>
                     </div>
                 `;
             } else {
@@ -4082,34 +4163,78 @@ document.addEventListener('DOMContentLoaded', function() {
             btnConfirmarSeleccionCombinacion.innerHTML = '<span class="material-icons mr-2">merge_type</span>Reintentar';
         });
         
-        // Función para verificar estado de combinación selectiva
+        // Función para verificar estado de combinación selectiva (con logging mejorado)
         function verificarEstadoCombinacionSelectiva() {
+            console.log('🔍 Verificando estado de combinación selectiva...', new Date().toISOString());
             fetch('{% url "datos_archivados:estado_combinacion" %}')
-                .then(response => response.json())
+                .then(response => {
+                    console.log('📡 Respuesta del servidor recibida:', response.status);
+                    return response.json();
+                })
                 .then(data => {
-                    if (data.en_progreso && data.tipo_combinacion === 'selectiva') {
-                        // Actualizar progreso
-                        const progreso = Math.min(Math.round((data.pasos_completados / data.pasos_totales) * 100), 95);
+                    console.log('📊 Estado actual (selectiva):', data);
+                    console.log('🔍 Verificando condiciones:', {
+                        en_progreso: data.en_progreso,
+                        progreso_real: data.progreso_real,
+                        completada_recientemente: data.completada_recientemente,
+                        estado: data.estado
+                    });
+                    
+                    if (data.en_progreso) {
+                        // Actualizar progreso usando progreso_real del servidor
+                        const progreso = Math.min(data.progreso_real || 0, 100);
+                        console.log('📊 Actualizando barra de progreso selectiva:', progreso + '%');
                         progressBarSelectivo.style.width = progreso + '%';
                         const progressText = progressBarSelectivo.querySelector('.glass-progress-text');
                         if (progressText) {
                             progressText.textContent = progreso + '%';
                         }
                         
-                        // Actualizar mensaje de estado
+                        // Actualizar mensaje de estado con información detallada y diagnóstico
+                        const tiempoTranscurrido = Math.round((Date.now() - window.tiempoInicioMonitoreoSelectivo) / 1000);
+                        const minutosTranscurridos = Math.floor(tiempoTranscurrido / 60);
+                        const segundosRestantes = tiempoTranscurrido % 60;
+                        const tiempoFormateado = minutosTranscurridos > 0 ? 
+                            `${minutosTranscurridos}m ${segundosRestantes}s` : 
+                            `${segundosRestantes}s`;
+                        
+                        // Diagnóstico de rendimiento específico para combinación selectiva
+                        let diagnostico = '';
+                        const tiempoPorTabla = tiempoTranscurrido / tablasSeleccionadas.length;
+                        if (tiempoPorTabla > 30) { // Más de 30 segundos por tabla
+                            diagnostico = `
+                                <div class="mt-2 text-xs text-orange-600 bg-orange-50 p-2 rounded border-l-2 border-orange-400">
+                                    ⚠️ <strong>Diagnóstico:</strong> ${Math.round(tiempoPorTabla)}s por tabla es más lento de lo esperado.
+                                    <br>🔍 <strong>Posibles causas:</strong> Tablas con muchos registros, consultas SQL lentas, o problemas de servidor.
+                                </div>
+                            `;
+                        }
+                        
                         progressMessageSelectivo.innerHTML = `
                             <div class="glass-alert glass-alert-info mt-4">
                                 <span class="material-icons mr-2">settings</span>
                                 <div>
-                                    <strong>Estado:</strong> ${(data && data.estado) || 'Procesando'}<br>
-                                    <small>Paso ${(data && data.pasos_completados) || 0}/${(data && data.pasos_totales) || 0}</small>
-                                    ${(data && data.usuarios_combinados > 0) ? `<br><small>Usuarios: ${data.usuarios_combinados}</small>` : ''}
-                                    ${(data && data.registros_combinados > 0) ? `<br><small>Registros: ${data.registros_combinados}</small>` : ''}
+                                    <div class="flex justify-between items-center mb-2">
+                                        <strong>Estado:</strong> ${(data && data.estado) || 'Procesando'}
+                                        <span class="text-sm"><strong>Tiempo:</strong> ${tiempoFormateado}</span>
+                                    </div>
+                                    <div class="text-sm">
+                                        <strong>Progreso:</strong> Paso ${(data && data.pasos_completados) || 0}/${(data && data.pasos_totales) || 0}
+                                        <br><strong>Tablas seleccionadas:</strong> ${tablasSeleccionadas.length} (${Math.round(tiempoPorTabla)}s promedio por tabla)
+                                        ${(data && data.usuarios_combinados > 0) ? `<br><strong>Usuarios procesados:</strong> ${data.usuarios_combinados}` : ''}
+                                        ${(data && data.registros_combinados > 0) ? `<br><strong>Registros procesados:</strong> ${data.registros_combinados}` : ''}
+                                    </div>
+                                    ${diagnostico}
+                                    <div class="mt-2 text-xs text-gray-600 bg-green-50 p-2 rounded">
+                                        💡 <strong>Combinación selectiva en progreso:</strong> Procesando solo las tablas que seleccionó.
+                                        <br>🔧 <strong>Debug:</strong> Revise la consola del navegador (F12) para más detalles técnicos.
+                                    </div>
                                 </div>
                             </div>
                         `;
-                    } else if (data.completada_recientemente && data.tipo_combinacion === 'selectiva') {
-                        // Combinación completada
+                    } else if (data.completada_recientemente || data.progreso_real >= 100) {
+                        // Combinación completada (detectada por completada_recientemente o progreso 100%)
+                        console.log('✅ Combinación selectiva completada - deteniendo polling');
                         clearInterval(intervalId);
                         progressBarSelectivo.style.width = '100%';
                         progressBarSelectivo.classList.add('completed');
@@ -4124,20 +4249,28 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div>
                                     <strong>¡Combinación selectiva completada exitosamente!</strong>
                                     <ul class="mt-2 mb-0 list-disc list-inside space-y-1 text-sm">
-                                        <li><strong>Tablas procesadas:</strong> ${data.tablas_procesadas?.join(', ') || 'N/A'}</li>
+                                        <li><strong>Tablas procesadas:</strong> ${tablasSeleccionadas.join(', ')}</li>
                                         <li><strong>Usuarios:</strong> ${data.usuarios_combinados || 0} combinados</li>
                                         <li><strong>Registros:</strong> ${data.registros_combinados || 0} combinados</li>
+                                        <li><strong>Tiempo total:</strong> ${Math.round((Date.now() - window.tiempoInicioMonitoreoSelectivo) / 1000)} segundos</li>
                                     </ul>
                                 </div>
                             </div>
                         `;
                         
-                        // Recargar página después de 3 segundos
+                        // Reactivar botones
+                        btnConfirmarSeleccionCombinacion.disabled = false;
+                        btnCancelarSeleccionCombinacion.disabled = false;
+                        btnConfirmarSeleccionCombinacion.innerHTML = '<span class="material-icons mr-2">merge_type</span>Nueva Combinación';
+                        
+                        // Recargar página después de 3 segundos para mostrar los datos actualizados
                         setTimeout(() => {
+                            console.log('🔄 Recargando página para mostrar datos actualizados');
                             window.location.reload();
                         }, 3000);
-                    } else if (data.estado === 'error' && data.tipo_combinacion === 'selectiva') {
-                        // Error en la combinación
+                    } else if (data.estado === 'error') {
+                        // Error en la combinación selectiva
+                        console.log('❌ Error en combinación selectiva - deteniendo polling');
                         clearInterval(intervalId);
                         progressMessageSelectivo.innerHTML = `
                             <div class="glass-alert glass-alert-warning mt-4">
@@ -4149,14 +4282,26 @@ document.addEventListener('DOMContentLoaded', function() {
                         btnCancelarSeleccionCombinacion.disabled = false;
                         btnConfirmarSeleccionCombinacion.innerHTML = '<span class="material-icons mr-2">merge_type</span>Reintentar';
                     } else {
-                        // Verificar timeout
+                        // Verificar timeout (aumentado a 5 minutos para procesos largos)
                         const tiempoTranscurrido = Date.now() - window.tiempoInicioMonitoreoSelectivo;
-                        if (tiempoTranscurrido > 30000) { // 30 segundos
+                        if (tiempoTranscurrido > 300000) { // 5 minutos (300 segundos)
                             clearInterval(intervalId);
                             progressMessageSelectivo.innerHTML = `
                                 <div class="glass-alert glass-alert-warning mt-4">
                                     <span class="material-icons mr-2">warning</span>
-                                    <strong>Timeout:</strong> La combinación selectiva no se inició correctamente.
+                                    <strong>Timeout:</strong> La combinación selectiva está tardando más de lo esperado.
+                                    <div class="mt-2 text-sm">
+                                        <strong>Tiempo transcurrido:</strong> ${Math.round(tiempoTranscurrido / 1000)} segundos<br>
+                                        <strong>Tablas seleccionadas:</strong> ${tablasSeleccionadas.length} tabla(s)
+                                        <div class="mt-2">
+                                            <strong>Recomendaciones:</strong>
+                                            <ul class="list-disc list-inside mt-1 text-xs">
+                                                <li>Intente con menos tablas a la vez</li>
+                                                <li>Verifique que las tablas no tengan demasiados registros</li>
+                                                <li>Contacte al administrador si el problema persiste</li>
+                                            </ul>
+                                        </div>
+                                    </div>
                                 </div>
                             `;
                             btnConfirmarSeleccionCombinacion.disabled = false;
@@ -4166,7 +4311,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 })
                 .catch(error => {
-                    console.error('Error verificando estado de combinación selectiva:', error);
+                    console.error('❌ Error verificando estado de combinación selectiva:', error);
+                    // No detener el polling por errores de red temporales, solo registrar el error
+                    // El timeout se encargará de detenerlo si es necesario
                 });
         }
     });
