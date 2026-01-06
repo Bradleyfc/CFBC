@@ -15,10 +15,26 @@ chmod +x setup_proyecto.sh
 
 ## Cambios Realizados
 
-### Problema con python-mimetypes
-- **Problema**: La librería `python-mimetypes==1.1.0` no es compatible con Python 3.13+
-- **Solución**: Se removió la dependencia ya que Python incluye el módulo `mimetypes` nativo
-- **Alternativa**: Usar `import mimetypes` (módulo estándar de Python)
+### Librerías Removidas por Incompatibilidad con Python 3.13+
+- **python-mimetypes==1.1.0**: Incompatible con Python 3.13+
+  - **Solución**: Usar `import mimetypes` (módulo nativo de Python)
+- **python-magic==0.4.27**: No se usa en el código y causa problemas de compatibilidad
+- **python-magic-bin==0.4.14**: Específico para Windows y no se usa en el código
+
+### Librerías Actualizadas
+- **psycopg2 → psycopg2-binary**: Mejor compatibilidad y más fácil instalación en diferentes sistemas
+
+### Alternativas Nativas Disponibles
+
+#### Para detección de tipos MIME:
+```python
+import mimetypes
+mime_type, encoding = mimetypes.guess_type('archivo.pdf')
+print(mime_type)  # application/pdf
+```
+
+#### Para validación de archivos:
+Ya tienes `filetype==1.2.0` que es más preciso y compatible.
 
 ### Diferencias entre Scripts
 
@@ -36,9 +52,19 @@ Si necesitas detectar tipos MIME en tu código, usa:
 ```python
 import mimetypes
 
-# En lugar de python-mimetypes
+# En lugar de python-mimetypes o python-magic
 mime_type, encoding = mimetypes.guess_type('archivo.pdf')
 print(mime_type)  # application/pdf
+
+# Para validación más precisa, usa filetype (ya incluido)
+import filetype
+
+# Detectar tipo por contenido del archivo
+kind = filetype.guess('archivo.pdf')
+if kind is None:
+    print('No se pudo determinar el tipo de archivo')
+else:
+    print(f'Tipo: {kind.extension}, MIME: {kind.mime}')
 ```
 
 ## Requisitos del Sistema
