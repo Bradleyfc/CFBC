@@ -36,12 +36,42 @@ print(mime_type)  # application/pdf
 #### Para validación de archivos:
 Ya tienes `filetype==1.2.0` que es más preciso y compatible.
 
+### Configuración de Tailwind CSS
+
+El setup automático ahora incluye:
+1. **Descarga del CLI**: `python manage.py tailwind download_cli`
+   - Descarga el binario correcto para cada sistema operativo
+   - Windows: `tailwindcss.exe`
+   - Linux/macOS: `tailwindcss`
+2. **Compilación inicial**: `python manage.py tailwind build`
+   - Genera el CSS de producción inicial
+
+### Comandos de Tailwind Disponibles
+
+```bash
+# Configuración inicial (solo primera vez)
+python manage.py tailwind setup
+
+# Descargar CLI (incluido en setup automático)
+python manage.py tailwind download_cli
+
+# Compilar CSS para producción
+python manage.py tailwind build
+
+# Modo desarrollo (watch)
+python manage.py tailwind watch
+
+# Servidor con Tailwind automático
+python manage.py tailwind runserver
+```
+
 ### Diferencias entre Scripts
 
 | Característica | Windows (.bat) | Linux (.sh) |
 |----------------|----------------|-------------|
 | Entorno virtual | `python -m venv venv` | `python3 -m venv venv` |
 | Activación | `call venv\Scripts\activate.bat` | `source venv/bin/activate` |
+| Tailwind CLI | Descarga `tailwindcss.exe` | Descarga `tailwindcss` |
 | Manejo de errores | `if errorlevel 1` | `|| handle_error` |
 | Pausa | `pause` | `read` |
 
@@ -93,4 +123,28 @@ sudo apt install python3 python3-pip python3-venv
 
 # O en macOS con Homebrew
 brew install python3
+```
+
+### Problemas con Tailwind CSS
+
+#### Error "Missing command" en Tailwind
+- **Causa**: El comando `tailwind` necesita un subcomando específico
+- **Solución**: Los scripts actualizados usan `tailwind download_cli` y `tailwind build`
+
+#### Tailwind CLI no se descarga
+```bash
+# Descargar manualmente
+python manage.py tailwind download_cli
+
+# Si falla, verificar conexión a internet y permisos
+python manage.py tailwind troubleshoot
+```
+
+#### CSS no se genera
+```bash
+# Forzar regeneración
+python manage.py tailwind build --force
+
+# Verificar configuración
+python manage.py tailwind config
 ```

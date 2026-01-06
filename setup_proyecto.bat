@@ -24,7 +24,15 @@ if errorlevel 1 (
 )
 
 echo [4/5] Configurando Tailwind CSS...
-python manage.py tailwind
+echo   - Descargando Tailwind CLI para Windows...
+python manage.py tailwind download_cli
+if errorlevel 1 (
+    echo ERROR: No se pudo descargar Tailwind CLI
+    pause
+    exit /b 1
+)
+echo   - Compilando CSS...
+python manage.py tailwind build
 if errorlevel 1 (
     echo ERROR: No se pudo compilar Tailwind CSS
     pause

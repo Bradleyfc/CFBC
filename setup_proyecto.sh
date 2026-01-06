@@ -23,7 +23,10 @@ echo "[3/5] Instalando dependencias..."
 pip install -r requirements.txt || handle_error "No se pudieron instalar las dependencias"
 
 echo "[4/5] Configurando Tailwind CSS..."
-python manage.py tailwind || handle_error "No se pudo compilar Tailwind CSS"
+echo "  - Descargando Tailwind CLI para Linux..."
+python manage.py tailwind download_cli || handle_error "No se pudo descargar Tailwind CLI"
+echo "  - Compilando CSS..."
+python manage.py tailwind build || handle_error "No se pudo compilar Tailwind CSS"
 
 echo "[5/5] Aplicando migraciones..."
 python manage.py migrate || handle_error "No se pudieron aplicar las migraciones"
