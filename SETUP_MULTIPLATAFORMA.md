@@ -8,6 +8,14 @@ setup_proyecto.bat
 ```
 
 ## Para Linux/macOS
+
+### Primera vez (si hay problemas con archivos de Windows):
+```bash
+chmod +x limpiar_tailwind.sh
+./limpiar_tailwind.sh
+```
+
+### Setup normal:
 ```bash
 chmod +x setup_proyecto.sh
 ./setup_proyecto.sh
@@ -140,7 +148,21 @@ python manage.py tailwind download_cli
 python manage.py tailwind troubleshoot
 ```
 
-#### CSS no se genera
+### Problemas con archivos de Tailwind de Windows en Linux
+
+#### Error: "tailwindcss.exe no es compatible"
+```bash
+# Limpiar archivos de Windows
+./limpiar_tailwind.sh
+
+# Luego ejecutar setup normal
+./setup_proyecto.sh
+```
+
+#### Archivos binarios incorrectos
+- **Causa**: El repositorio contiene binarios de Tailwind específicos de Windows
+- **Solución**: El `.gitignore` actualizado excluye todos los binarios
+- **Comando**: `python manage.py tailwind remove_cli` limpia archivos anteriores
 ```bash
 # Forzar regeneración
 python manage.py tailwind build --force

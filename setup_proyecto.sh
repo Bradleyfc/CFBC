@@ -23,6 +23,8 @@ echo "[3/5] Instalando dependencias..."
 pip install -r requirements.txt || handle_error "No se pudieron instalar las dependencias"
 
 echo "[4/5] Configurando Tailwind CSS..."
+echo "  - Limpiando configuración anterior..."
+python manage.py tailwind remove_cli 2>/dev/null || true
 echo "  - Descargando Tailwind CLI para Linux..."
 python manage.py tailwind download_cli || handle_error "No se pudo descargar Tailwind CLI"
 echo "  - Compilando CSS..."

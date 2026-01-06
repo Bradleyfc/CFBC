@@ -156,6 +156,21 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
 
 CRISPY_TEMPLATE_PACK = "tailwind"
 
+# Configuración de django-tailwind-cli multiplataforma
+import platform
+
+# Configuración específica por sistema operativo
+if platform.system() == "Linux":
+    TAILWIND_CLI_PATH = None  # Usar ubicación por defecto
+elif platform.system() == "Darwin":  # macOS
+    TAILWIND_CLI_PATH = None  # Usar ubicación por defecto
+else:  # Windows
+    TAILWIND_CLI_PATH = None  # Usar ubicación por defecto
+
+# Configuración de archivos CSS
+TAILWIND_CLI_SRC_CSS = '.django_tailwind_cli/source.css'
+TAILWIND_CLI_DIST_CSS = 'static/css/styles.css'
+
 # Backends de autenticación
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',  # Backend por defecto de Django
