@@ -1871,39 +1871,156 @@ def combinar_datos_archivados(request):
             from django.utils import timezone
             
             # Inicializar progreso en cache
-            def actualizar_progreso(paso_actual, pasos_completados, pasos_totales=8, **kwargs):
+            def actualizar_progreso(paso_actual, pasos_completados, pasos_totales=11, **kwargs):
+                # Calcular porcentaje de progreso
+                porcentaje_progreso = min(int((pasos_completados / pasos_totales) * 100), 95) if pasos_totales > 0 else 0
+                
                 progreso = {
                     'paso_actual': paso_actual,
                     'pasos_completados': pasos_completados,
                     'pasos_totales': pasos_totales,
+                    'porcentaje_progreso': porcentaje_progreso,
                     'fecha_inicio': timezone.now().isoformat(),
                     'usuarios_combinados': kwargs.get('usuarios_combinados', 0),
                     'registros_combinados': kwargs.get('registros_combinados', 0),
+                    'cursos_academicos_combinados': kwargs.get('cursos_academicos_combinados', 0),
                     'cursos_combinados': kwargs.get('cursos_combinados', 0),
                     'matriculas_combinadas': kwargs.get('matriculas_combinadas', 0),
+                    'asistencias_combinadas': kwargs.get('asistencias_combinadas', 0),
+                    'calificaciones_combinadas': kwargs.get('calificaciones_combinadas', 0),
+                    'notas_combinadas': kwargs.get('notas_combinadas', 0),
+                    'otras_tablas': kwargs.get('otras_tablas', 0),
+                    'campos_agregados': kwargs.get('campos_agregados', 0),
+                    'errores_encontrados': kwargs.get('errores_encontrados', 0),
+                    'tiempo_transcurrido': kwargs.get('tiempo_transcurrido', ''),
+                    'tipo_combinacion': 'completa'
                 }
-                cache.set('combinacion_en_progreso', progreso, timeout=300)  # 5 minutos
-                logger.info(f"Progreso actualizado: {paso_actual} ({pasos_completados}/{pasos_totales})")
+                cache.set('combinacion_en_progreso', progreso, timeout=600)  # 10 minutos
+                logger.info(f"Progreso actualizado: {paso_actual} ({pasos_completados}/{pasos_totales}) - {porcentaje_progreso}%")
+                if kwargs.get('campos_agregados', 0) > 0:
+                    logger.info(f"📊 Campos agregados hasta ahora: {kwargs.get('campos_agregados', 0)}")
             
-            # Función para copiar campos dinámicamente
+            # Función para agregar campos faltantes dinámicamente
+            def agregar_campos_faltantes(modelo, datos_ejemplo, logger=None):
+                """Agrega campos faltantes al modelo usando ALTER TABLE"""
+                from django.db import connection
+                
+                campos_actuales = {f.name for f in modelo._meta.get_fields()}
+                campos_agregados = []
+                
+                with connection.cursor() as cursor:
+                    tabla_nombre = modelo._meta.db_table
+                    
+                    for campo_nombre, valor_ejemplo in datos_ejemplo.items():
+                        if campo_nombre not in campos_actuales and campo_nombre not in ['id', 'pk']:
+                            try:
+                                # Determinar tipo de campo basado en el valor
+                                if isinstance(valor_ejemplo, bool):
+                                    tipo_sql = 'BOOLEAN DEFAULT FALSE'
+                                elif isinstance(valor_ejemplo, int):
+                                    if valor_ejemplo > 2147483647:  # Valor muy grande
+                                        tipo_sql = 'BIGINT NULL'
+                                    else:
+                                        tipo_sql = 'INTEGER NULL'
+                                elif isinstance(valor_ejemplo, float):
+                                    tipo_sql = 'DOUBLE PRECISION NULL'
+                                elif isinstance(valor_ejemplo, (datetime, date)):
+                                    tipo_sql = 'TIMESTAMP NULL'
+                                elif isinstance(valor_ejemplo, str):
+                                    if len(valor_ejemplo) > 255:
+                                        tipo_sql = 'TEXT NULL'
+                                    else:
+                                        tipo_sql = 'VARCHAR(255) NULL'
+                                else:
+                                    # Por defecto, TEXT para valores complejos
+                                    tipo_sql = 'TEXT NULL'
+                                
+                                # Ejecutar ALTER TABLE
+                                sql = f'ALTER TABLE "{tabla_nombre}" ADD COLUMN IF NOT EXISTS "{campo_nombre}" {tipo_sql}'
+                                cursor.execute(sql)
+                                
+                                campos_agregados.append(campo_nombre)
+                                if logger:
+                                    logger.info(f"✅ Campo agregado: {tabla_nombre}.{campo_nombre} ({tipo_sql})")
+                                
+                            except Exception as e:
+                                if logger:
+                                    logger.warning(f"⚠️ No se pudo agregar campo {campo_nombre} a {tabla_nombre}: {str(e)}")
+                
+                return campos_agregados
+            
+            # Función para mapear campos de inglés a español
+            def mapear_campos_ingles_espanol(datos_origen, logger=None):
+                """Mapea campos de inglés a español y mantiene ambos"""
+                mapeo_campos = {
+                    'nacionality': 'nacionalidad',
+                    'numberidentification': 'carnet', 
+                    'phone': 'telephone',
+                    'cellphone': 'movil',
+                    'street': 'address',
+                    'city': 'location',
+                    'state': 'provincia',
+                    'degree': 'grado',
+                    'ocupation': 'ocupacion',
+                    'title': 'titulo',
+                    'gender': 'sexo',
+                    'photo': 'image',
+                    'isReligious': 'es_religioso',
+                    'name': 'first_name',  # Para usuarios
+                    'lastname': 'last_name'  # Para usuarios
+                }
+                
+                # Crear copia con todos los datos originales
+                datos_mapeados = datos_origen.copy()
+                campos_mapeados_count = 0
+                
+                # Aplicar mapeo: agregar campos traducidos
+                for campo_origen, campo_destino in mapeo_campos.items():
+                    if campo_origen in datos_origen:
+                        datos_mapeados[campo_destino] = datos_origen[campo_origen]
+                        campos_mapeados_count += 1
+                        if logger:
+                            logger.debug(f"🔄 Mapeando: {campo_origen} → {campo_destino} = {datos_origen[campo_origen]}")
+                
+                if logger and campos_mapeados_count > 0:
+                    logger.info(f"📋 Total de campos mapeados: {campos_mapeados_count}")
+                
+                return datos_mapeados
+            
+            # Función para copiar campos dinámicamente (mejorada)
             def copiar_campos_dinamicos(objeto_destino, datos_origen, campos_excluir=None, logger=None):
                 if campos_excluir is None:
                     campos_excluir = ['id', 'pk']
                 
                 campos_copiados = 0
+                campos_no_encontrados = []
+                
                 for campo, valor in datos_origen.items():
                     if campo in campos_excluir:
                         continue
                     
                     try:
                         if hasattr(objeto_destino, campo):
+                            # Convertir valores especiales
+                            if valor == 'NULL' or valor == 'null':
+                                valor = None
+                            elif isinstance(valor, str) and valor.lower() in ['true', 'false']:
+                                valor = valor.lower() == 'true'
+                            
                             setattr(objeto_destino, campo, valor)
                             campos_copiados += 1
                             if logger:
                                 logger.debug(f"Campo copiado: {campo} = {valor}")
+                        else:
+                            campos_no_encontrados.append(campo)
+                            if logger:
+                                logger.debug(f"Campo no encontrado en modelo: {campo}")
                     except Exception as e:
                         if logger:
                             logger.warning(f"Error copiando campo {campo}: {e}")
+                
+                if logger and campos_no_encontrados:
+                    logger.info(f"Campos no encontrados en modelo: {', '.join(campos_no_encontrados[:5])}")
                 
                 return campos_copiados
             
@@ -1933,6 +2050,20 @@ def combinar_datos_archivados(request):
             datos_auth_user = DatoArchivadoDinamico.objects.filter(tabla_origen='auth_user')
             logger.info(f"Encontrados {datos_auth_user.count()} usuarios archivados")
             
+            # PASO 1.1: DETECTAR Y AGREGAR CAMPOS FALTANTES AL MODELO USER
+            if datos_auth_user.exists():
+                logger.info("=== DETECTANDO CAMPOS FALTANTES EN auth_user ===")
+                
+                # Obtener una muestra de datos para detectar campos
+                muestra_datos = datos_auth_user.first().datos_originales
+                campos_agregados_user = agregar_campos_faltantes(User, muestra_datos, logger)
+                
+                if campos_agregados_user:
+                    logger.info(f"✅ Se agregaron {len(campos_agregados_user)} campos nuevos al modelo User")
+                    estadisticas['campos_agregados'] = estadisticas.get('campos_agregados', 0) + len(campos_agregados_user)
+                else:
+                    logger.info("ℹ️ No se necesitaron campos adicionales en el modelo User")
+            
             with transaction.atomic():
                 for dato in datos_auth_user:
                     try:
@@ -1952,10 +2083,12 @@ def combinar_datos_archivados(request):
                         
                         if usuario_existente:
                             logger.info(f"Actualizando usuario existente: {username}")
-                            # Actualizar usuario existente
-                            copiar_campos_dinamicos(usuario_existente, datos, 
+                            # Actualizar usuario existente con TODOS los campos
+                            campos_copiados = copiar_campos_dinamicos(usuario_existente, datos, 
                                                   campos_excluir=['id', 'pk', 'username'], 
                                                   logger=logger)
+                            
+                            logger.info(f"Se copiaron {campos_copiados} campos para usuario existente {username}")
                             
                             # Procesar contraseña
                             password_original = datos.get('password')
@@ -1968,16 +2101,21 @@ def combinar_datos_archivados(request):
                                     logger.info(f"Contraseña en texto plano hasheada para {username}")
                             
                             usuario_existente.save()
-                            mapeo_usuarios[id_original] = usuario_existente
+                            # USAR EL ID REAL DE LOS DATOS ORIGINALES (no el id_original del registro Django)
+                            user_id_real = datos.get('id')  # Este es el ID real de la tabla auth_user
+                            mapeo_usuarios[user_id_real] = usuario_existente
+                            logger.info(f"✅ Usuario {username} mapeado con ID real: {user_id_real}")
                             estadisticas['usuarios_combinados'] += 1
                             
                         else:
                             logger.info(f"Creando nuevo usuario: {username}")
-                            # Crear nuevo usuario
+                            # Crear nuevo usuario con TODOS los campos
                             nuevo_usuario = User(username=username)
-                            copiar_campos_dinamicos(nuevo_usuario, datos, 
+                            campos_copiados = copiar_campos_dinamicos(nuevo_usuario, datos, 
                                                   campos_excluir=['id', 'pk'], 
                                                   logger=logger)
+                            
+                            logger.info(f"Se copiaron {campos_copiados} campos para nuevo usuario {username}")
                             
                             # Procesar contraseña
                             password_original = datos.get('password')
@@ -1993,7 +2131,10 @@ def combinar_datos_archivados(request):
                                 logger.info(f"Contraseña no utilizable asignada para {username}")
                             
                             nuevo_usuario.save()
-                            mapeo_usuarios[id_original] = nuevo_usuario
+                            # USAR EL ID REAL DE LOS DATOS ORIGINALES (no el id_original del registro Django)
+                            user_id_real = datos.get('id')  # Este es el ID real de la tabla auth_user
+                            mapeo_usuarios[user_id_real] = nuevo_usuario
+                            logger.info(f"✅ Usuario {username} mapeado con ID real: {user_id_real}")
                             estadisticas['usuarios_combinados'] += 1
                         
                         transaction.savepoint_commit(sid)
@@ -2008,72 +2149,746 @@ def combinar_datos_archivados(request):
             actualizar_progreso('Combinando registros de estudiantes y profesores...', 2, **estadisticas)
             logger.info("=== Combinando registros de estudiantes/profesores ===")
             
-            datos_registros = DatoArchivadoDinamico.objects.filter(
-                Q(tabla_origen='Docencia_studentpersonalinformation') |
-                Q(tabla_origen='Docencia_teacherpersonalinformation') |
-                Q(tabla_origen='accounts_registro')
-            )
-            logger.info(f"Encontrados {datos_registros.count()} registros archivados")
-            
             # Obtener o crear grupos
             grupo_estudiantes, _ = Group.objects.get_or_create(name='Estudiantes')
             grupo_profesores, _ = Group.objects.get_or_create(name='Profesores')
             
+            # PASO 2A: PROCESAR PROFESORES PRIMERO
+            datos_profesores = DatoArchivadoDinamico.objects.filter(
+                tabla_origen='Docencia_teacherpersonalinformation'
+            )
+            logger.info(f"Encontrados {datos_profesores.count()} profesores archivados")
+            
+            # PASO 2A.1: DETECTAR Y AGREGAR CAMPOS FALTANTES AL MODELO REGISTRO (PROFESORES)
+            if datos_profesores.exists():
+                logger.info("=== DETECTANDO CAMPOS FALTANTES EN accounts_registro (PROFESORES) ===")
+                
+                # Obtener una muestra de datos para detectar campos
+                muestra_datos = datos_profesores.first().datos_originales
+                
+                # Mapear campos de inglés a español antes de agregar
+                muestra_mapeada = mapear_campos_ingles_espanol(muestra_datos, logger)
+                
+                campos_agregados = agregar_campos_faltantes(Registro, muestra_mapeada, logger)
+                
+                if campos_agregados:
+                    logger.info(f"✅ Se agregaron {len(campos_agregados)} campos nuevos al modelo Registro (profesores)")
+                    estadisticas['campos_agregados'] = len(campos_agregados)
+                else:
+                    logger.info("ℹ️ No se necesitaron campos adicionales en el modelo Registro (profesores)")
+            
             with transaction.atomic():
-                for dato in datos_registros:
+                for dato in datos_profesores:
                     try:
                         sid = transaction.savepoint()
                         datos = dato.datos_originales
                         user_id_original = datos.get('user_id')
                         
-                        if not user_id_original or user_id_original not in mapeo_usuarios:
-                            logger.warning(f"Usuario no encontrado para registro: user_id={user_id_original}")
+                        if not user_id_original:
+                            logger.warning(f"Profesor sin user_id, saltando: {datos}")
+                            transaction.savepoint_rollback(sid)
+                            continue
+                        
+                        if user_id_original not in mapeo_usuarios:
+                            logger.warning(f"Usuario no encontrado para profesor: user_id={user_id_original}")
+                            logger.warning(f"IDs disponibles en mapeo: {list(mapeo_usuarios.keys())}")
                             transaction.savepoint_rollback(sid)
                             continue
                         
                         usuario = mapeo_usuarios[user_id_original]
+                        logger.info(f"✅ Procesando PROFESOR: {usuario.username} (user_id={user_id_original})")
                         
                         # Buscar o crear registro
                         registro, created = Registro.objects.get_or_create(user=usuario)
                         
                         if created:
-                            logger.info(f"Creado nuevo registro para usuario: {usuario.username}")
+                            logger.info(f"Creado nuevo registro para profesor: {usuario.username}")
                         else:
-                            logger.info(f"Actualizando registro existente para usuario: {usuario.username}")
+                            logger.info(f"Actualizando registro existente para profesor: {usuario.username}")
                         
-                        # Copiar todos los campos
-                        copiar_campos_dinamicos(registro, datos, 
+                        # Copiar TODOS los campos (ahora que existen en el modelo)
+                        # Primero mapear los campos de inglés a español
+                        datos_mapeados = mapear_campos_ingles_espanol(datos, logger)
+                        
+                        campos_copiados = copiar_campos_dinamicos(registro, datos_mapeados, 
                                               campos_excluir=['id', 'pk', 'user_id', 'user'], 
                                               logger=logger)
+                        
+                        logger.info(f"Se copiaron {campos_copiados} campos para profesor {usuario.username}")
                         
                         registro.save()
                         estadisticas['registros_combinados'] += 1
                         
-                        # Asignar grupo según el tipo de registro
-                        if dato.tabla_origen == 'Docencia_studentpersonalinformation':
-                            usuario.groups.add(grupo_estudiantes)
-                            logger.info(f"Usuario {usuario.username} agregado al grupo Estudiantes")
-                        elif dato.tabla_origen == 'Docencia_teacherpersonalinformation':
-                            usuario.groups.add(grupo_profesores)
-                            logger.info(f"Usuario {usuario.username} agregado al grupo Profesores")
+                        # Asignar grupo de PROFESORES (limpiar otros grupos primero)
+                        usuario.groups.clear()  # Limpiar grupos existentes
+                        usuario.groups.add(grupo_profesores)
+                        logger.info(f"✅ Usuario {usuario.username} asignado EXCLUSIVAMENTE al grupo PROFESORES")
                         
                         transaction.savepoint_commit(sid)
                         
                     except Exception as e:
                         transaction.savepoint_rollback(sid)
-                        error_msg = f"Error procesando registro: {str(e)}"
+                        error_msg = f"Error procesando profesor: {str(e)}"
                         logger.error(error_msg)
                         continue
             
-            # PASO 3: ACTUALIZAR PROGRESO FINAL
-            actualizar_progreso('Combinación completada exitosamente', 8, **estadisticas)
+            # PASO 2B: PROCESAR ESTUDIANTES DESPUÉS
+            datos_estudiantes = DatoArchivadoDinamico.objects.filter(
+                tabla_origen='Docencia_studentpersonalinformation'
+            )
+            logger.info(f"Encontrados {datos_estudiantes.count()} estudiantes archivados")
+            
+            # PASO 2B.1: DETECTAR Y AGREGAR CAMPOS FALTANTES AL MODELO REGISTRO (ESTUDIANTES)
+            if datos_estudiantes.exists():
+                logger.info("=== DETECTANDO CAMPOS FALTANTES EN accounts_registro (ESTUDIANTES) ===")
+                
+                # Obtener una muestra de datos para detectar campos
+                muestra_datos = datos_estudiantes.first().datos_originales
+                
+                # Mapear campos de inglés a español antes de agregar
+                muestra_mapeada = mapear_campos_ingles_espanol(muestra_datos, logger)
+                
+                campos_agregados_estudiantes = agregar_campos_faltantes(Registro, muestra_mapeada, logger)
+                
+                if campos_agregados_estudiantes:
+                    logger.info(f"✅ Se agregaron {len(campos_agregados_estudiantes)} campos adicionales al modelo Registro (estudiantes)")
+                    estadisticas['campos_agregados'] = estadisticas.get('campos_agregados', 0) + len(campos_agregados_estudiantes)
+                else:
+                    logger.info("ℹ️ No se necesitaron campos adicionales en el modelo Registro (estudiantes)")
+            
+            with transaction.atomic():
+                for dato in datos_estudiantes:
+                    try:
+                        sid = transaction.savepoint()
+                        datos = dato.datos_originales
+                        user_id_original = datos.get('user_id')
+                        
+                        if not user_id_original:
+                            logger.warning(f"Estudiante sin user_id, saltando: {datos}")
+                            transaction.savepoint_rollback(sid)
+                            continue
+                        
+                        if user_id_original not in mapeo_usuarios:
+                            logger.warning(f"Usuario no encontrado para estudiante: user_id={user_id_original}")
+                            logger.warning(f"IDs disponibles en mapeo: {list(mapeo_usuarios.keys())}")
+                            transaction.savepoint_rollback(sid)
+                            continue
+                        
+                        usuario = mapeo_usuarios[user_id_original]
+                        logger.info(f"✅ Procesando ESTUDIANTE: {usuario.username} (user_id={user_id_original})")
+                        
+                        # Buscar o crear registro
+                        registro, created = Registro.objects.get_or_create(user=usuario)
+                        
+                        if created:
+                            logger.info(f"Creado nuevo registro para estudiante: {usuario.username}")
+                        else:
+                            logger.info(f"Actualizando registro existente para estudiante: {usuario.username}")
+                        
+                        # Copiar TODOS los campos (ahora que existen en el modelo)
+                        # Primero mapear los campos de inglés a español
+                        datos_mapeados = mapear_campos_ingles_espanol(datos, logger)
+                        
+                        campos_copiados = copiar_campos_dinamicos(registro, datos_mapeados, 
+                                              campos_excluir=['id', 'pk', 'user_id', 'user'], 
+                                              logger=logger)
+                        
+                        logger.info(f"Se copiaron {campos_copiados} campos para estudiante {usuario.username}")
+                        
+                        registro.save()
+                        estadisticas['registros_combinados'] += 1
+                        
+                        # Asignar grupo de ESTUDIANTES (limpiar otros grupos primero)
+                        usuario.groups.clear()  # Limpiar grupos existentes
+                        usuario.groups.add(grupo_estudiantes)
+                        logger.info(f"✅ Usuario {usuario.username} asignado EXCLUSIVAMENTE al grupo ESTUDIANTES")
+                        
+                        transaction.savepoint_commit(sid)
+                        
+                    except Exception as e:
+                        transaction.savepoint_rollback(sid)
+                        error_msg = f"Error procesando estudiante: {str(e)}"
+                        logger.error(error_msg)
+                        continue
+            
+            # PASO 2C: PROCESAR REGISTROS EXISTENTES (accounts_registro)
+            datos_registros_existentes = DatoArchivadoDinamico.objects.filter(
+                tabla_origen='accounts_registro'
+            )
+            
+            if datos_registros_existentes.exists():
+                logger.info(f"Encontrados {datos_registros_existentes.count()} registros existentes archivados")
+                
+                with transaction.atomic():
+                    for dato in datos_registros_existentes:
+                        try:
+                            sid = transaction.savepoint()
+                            datos = dato.datos_originales
+                            user_id_original = datos.get('user_id')
+                            
+                            if not user_id_original:
+                                logger.warning(f"Registro existente sin user_id, saltando: {datos}")
+                                transaction.savepoint_rollback(sid)
+                                continue
+                            
+                            if user_id_original not in mapeo_usuarios:
+                                logger.warning(f"Usuario no encontrado para registro existente: user_id={user_id_original}")
+                                transaction.savepoint_rollback(sid)
+                                continue
+                            
+                            usuario = mapeo_usuarios[user_id_original]
+                            logger.info(f"✅ Procesando registro existente: {usuario.username} (user_id={user_id_original})")
+                            
+                            # Buscar o crear registro
+                            registro, created = Registro.objects.get_or_create(user=usuario)
+                            
+                            if created:
+                                logger.info(f"Creado nuevo registro desde datos existentes: {usuario.username}")
+                            else:
+                                logger.info(f"Actualizando registro desde datos existentes: {usuario.username}")
+                            
+                            # Copiar TODOS los campos
+                            campos_copiados = copiar_campos_dinamicos(registro, datos, 
+                                                      campos_excluir=['id', 'pk', 'user_id', 'user'], 
+                                                      logger=logger)
+                            
+                            logger.info(f"Se copiaron {campos_copiados} campos desde registro existente para {usuario.username}")
+                            
+                            registro.save()
+                            estadisticas['registros_combinados'] += 1
+                            
+                            transaction.savepoint_commit(sid)
+                            
+                        except Exception as e:
+                            transaction.savepoint_rollback(sid)
+                            error_msg = f"Error procesando registro existente: {str(e)}"
+                            logger.error(error_msg)
+                            continue
+            
+            # PASO 3: COMBINAR GRUPOS DE USUARIOS
+            actualizar_progreso('Combinando grupos de usuarios...', 3, **estadisticas)
+            logger.info("=== Combinando grupos de usuarios ===")
+            
+            datos_grupos = DatoArchivadoDinamico.objects.filter(tabla_origen='auth_user_groups')
+            logger.info(f"Encontrados {datos_grupos.count()} grupos de usuarios archivados")
+            
+            with transaction.atomic():
+                for dato in datos_grupos:
+                    try:
+                        sid = transaction.savepoint()
+                        datos = dato.datos_originales
+                        user_id_original = datos.get('user_id')
+                        group_id_original = datos.get('group_id')
+                        
+                        if user_id_original in mapeo_usuarios:
+                            usuario = mapeo_usuarios[user_id_original]
+                            
+                            # Buscar grupo por ID o crear si no existe
+                            from django.contrib.auth.models import Group
+                            try:
+                                # Intentar encontrar el grupo por nombre común
+                                if group_id_original == 1:
+                                    grupo, _ = Group.objects.get_or_create(name='Estudiantes')
+                                elif group_id_original == 2:
+                                    grupo, _ = Group.objects.get_or_create(name='Profesores')
+                                else:
+                                    grupo, _ = Group.objects.get_or_create(name=f'Grupo_{group_id_original}')
+                                
+                                usuario.groups.add(grupo)
+                                logger.info(f"Usuario {usuario.username} agregado al grupo {grupo.name}")
+                                estadisticas['otras_tablas'] += 1
+                                
+                            except Exception as e:
+                                logger.warning(f"Error asignando grupo: {e}")
+                        
+                        transaction.savepoint_commit(sid)
+                        
+                    except Exception as e:
+                        transaction.savepoint_rollback(sid)
+                        logger.error(f"Error procesando grupo de usuario: {e}")
+                        continue
+            
+            # PASO 4: COMBINAR CURSOS ACADÉMICOS
+            actualizar_progreso('Combinando cursos académicos...', 4, **estadisticas)
+            logger.info("=== Combinando cursos académicos ===")
+            
+            # Buscar tablas de cursos académicos
+            tablas_cursos_academicos = DatoArchivadoDinamico.objects.filter(
+                Q(tabla_origen__icontains='academicyear') |
+                Q(tabla_origen__icontains='curso_academico') |
+                Q(tabla_origen='Docencia_academicyear')
+            ).values_list('tabla_origen', flat=True).distinct()
+            
+            for tabla_curso_academico in tablas_cursos_academicos:
+                datos_cursos_academicos = DatoArchivadoDinamico.objects.filter(tabla_origen=tabla_curso_academico)
+                logger.info(f"Procesando {datos_cursos_academicos.count()} cursos académicos de tabla {tabla_curso_academico}")
+                
+                with transaction.atomic():
+                    for dato in datos_cursos_academicos:
+                        try:
+                            sid = transaction.savepoint()
+                            datos = dato.datos_originales
+                            
+                            # Crear o actualizar curso académico
+                            curso_academico_data = {
+                                'year': datos.get('year', datos.get('anio', datetime.now().year)),
+                                'name': datos.get('name', datos.get('nombre', f'Curso Académico {datos.get("year", datetime.now().year)}')),
+                                'activo': datos.get('activo', datos.get('active', False)),
+                                'fecha_inicio': datos.get('fecha_inicio', datos.get('start_date')),
+                                'fecha_fin': datos.get('fecha_fin', datos.get('end_date'))
+                            }
+                            
+                            # Buscar curso académico existente por año
+                            curso_academico_existente = CursoAcademico.objects.filter(year=curso_academico_data['year']).first()
+                            
+                            if curso_academico_existente:
+                                # Actualizar curso académico existente
+                                copiar_campos_dinamicos(curso_academico_existente, datos, 
+                                                      campos_excluir=['id', 'pk'], 
+                                                      logger=logger)
+                                curso_academico_existente.save()
+                                logger.info(f"Curso académico actualizado: {curso_academico_data['name']}")
+                            else:
+                                # Crear nuevo curso académico
+                                nuevo_curso_academico = CursoAcademico(**curso_academico_data)
+                                copiar_campos_dinamicos(nuevo_curso_academico, datos, 
+                                                      campos_excluir=['id', 'pk', 'year', 'name', 'activo'], 
+                                                      logger=logger)
+                                nuevo_curso_academico.save()
+                                logger.info(f"Curso académico creado: {curso_academico_data['name']}")
+                            
+                            estadisticas['cursos_academicos_combinados'] += 1
+                            transaction.savepoint_commit(sid)
+                            
+                        except Exception as e:
+                            transaction.savepoint_rollback(sid)
+                            logger.error(f"Error procesando curso académico: {e}")
+                            continue
+            
+            # PASO 5: COMBINAR CURSOS
+            actualizar_progreso('Combinando cursos...', 5, **estadisticas)
+            logger.info("=== Combinando cursos ===")
+            
+            # Buscar tablas de cursos (pueden tener diferentes nombres)
+            tablas_cursos = DatoArchivadoDinamico.objects.filter(
+                Q(tabla_origen__icontains='course') |
+                Q(tabla_origen='Docencia_course') |
+                Q(tabla_origen='principal_curso')
+            ).values_list('tabla_origen', flat=True).distinct()
+            
+            # Mapeo de cursos archivados a cursos actuales (usando ID real de los datos)
+            mapeo_cursos = {}
+            
+            for tabla_curso in tablas_cursos:
+                datos_cursos = DatoArchivadoDinamico.objects.filter(tabla_origen=tabla_curso)
+                logger.info(f"Procesando {datos_cursos.count()} cursos de tabla {tabla_curso}")
+                
+                with transaction.atomic():
+                    for dato in datos_cursos:
+                        try:
+                            sid = transaction.savepoint()
+                            datos = dato.datos_originales
+                            curso_id_real = datos.get('id')  # ID real de la tabla de cursos
+                            
+                            # Crear o actualizar curso
+                            curso_data = {
+                                'name': datos.get('name', datos.get('nombre', f'Curso_{curso_id_real}')),
+                                'description': datos.get('description', datos.get('descripcion', '')),
+                                'area': datos.get('area', 'general'),
+                                'status': datos.get('status', datos.get('estado', 'F')),
+                                'activo': datos.get('activo', datos.get('active', False))
+                            }
+                            
+                            # Buscar curso existente por nombre
+                            curso_existente = Curso.objects.filter(name=curso_data['name']).first()
+                            
+                            if curso_existente:
+                                # Actualizar curso existente
+                                copiar_campos_dinamicos(curso_existente, datos, 
+                                                      campos_excluir=['id', 'pk'], 
+                                                      logger=logger)
+                                curso_existente.save()
+                                mapeo_cursos[curso_id_real] = curso_existente
+                                logger.info(f"✅ Curso actualizado: {curso_data['name']} (ID real: {curso_id_real})")
+                            else:
+                                # Crear nuevo curso
+                                nuevo_curso = Curso(**curso_data)
+                                copiar_campos_dinamicos(nuevo_curso, datos, 
+                                                      campos_excluir=['id', 'pk', 'name'], 
+                                                      logger=logger)
+                                nuevo_curso.save()
+                                mapeo_cursos[curso_id_real] = nuevo_curso
+                                logger.info(f"✅ Curso creado: {curso_data['name']} (ID real: {curso_id_real})")
+                            
+                            estadisticas['cursos_combinados'] += 1
+                            transaction.savepoint_commit(sid)
+                            
+                        except Exception as e:
+                            transaction.savepoint_rollback(sid)
+                            logger.error(f"Error procesando curso: {e}")
+                            continue
+            
+            logger.info(f"📋 Mapeo de cursos creado: {len(mapeo_cursos)} cursos mapeados")
+            
+            # PASO 6: COMBINAR MATRÍCULAS
+            actualizar_progreso('Combinando matrículas...', 6, **estadisticas)
+            logger.info("=== Combinando matrículas ===")
+            
+            # Buscar tablas de matrículas
+            tablas_matriculas = DatoArchivadoDinamico.objects.filter(
+                Q(tabla_origen__icontains='matricula') |
+                Q(tabla_origen__icontains='enrollment') |
+                Q(tabla_origen='Docencia_enrollment') |
+                Q(tabla_origen='principal_matriculas')
+            ).values_list('tabla_origen', flat=True).distinct()
+            
+            for tabla_matricula in tablas_matriculas:
+                datos_matriculas = DatoArchivadoDinamico.objects.filter(tabla_origen=tabla_matricula)
+                logger.info(f"Procesando {datos_matriculas.count()} matrículas de tabla {tabla_matricula}")
+                
+                with transaction.atomic():
+                    for dato in datos_matriculas:
+                        try:
+                            sid = transaction.savepoint()
+                            datos = dato.datos_originales
+                            # USAR IDs REALES DE LOS DATOS, NO IDs DE DJANGO
+                            student_id_real = datos.get('student_id', datos.get('user_id'))  # FK a auth_user.id
+                            course_id_real = datos.get('course_id')  # FK a course.id
+                            
+                            if student_id_real in mapeo_usuarios:
+                                estudiante = mapeo_usuarios[student_id_real]
+                                logger.info(f"✅ Estudiante encontrado: {estudiante.username} (ID real: {student_id_real})")
+                                
+                                # Buscar curso usando mapeo correcto
+                                curso = None
+                                if course_id_real and course_id_real in mapeo_cursos:
+                                    curso = mapeo_cursos[course_id_real]
+                                    logger.info(f"✅ Curso encontrado: {curso.name} (ID real: {course_id_real})")
+                                else:
+                                    # Buscar por nombre si no hay mapeo directo
+                                    course_name = datos.get('course_name', datos.get('nombre_curso'))
+                                    if course_name:
+                                        curso = Curso.objects.filter(name=course_name).first()
+                                        if curso:
+                                            logger.info(f"✅ Curso encontrado por nombre: {curso.name}")
+                                    
+                                    if not curso:
+                                        # Usar el primer curso disponible como fallback
+                                        curso = Curso.objects.first()
+                                        if curso:
+                                            logger.warning(f"⚠️ Usando curso fallback: {curso.name}")
+                                
+                                # Buscar curso académico
+                                curso_academico = CursoAcademico.objects.filter(activo=True).first()
+                                if not curso_academico:
+                                    curso_academico = CursoAcademico.objects.first()
+                                
+                                if curso and curso_academico:
+                                    matricula, created = Matriculas.objects.get_or_create(
+                                        student=estudiante,
+                                        course=curso,
+                                        curso_academico=curso_academico,
+                                        defaults={
+                                            'estado': datos.get('estado', datos.get('status', 'P')),
+                                            'activo': datos.get('activo', datos.get('active', True))
+                                        }
+                                    )
+                                    
+                                    if not created:
+                                        # Actualizar matrícula existente
+                                        copiar_campos_dinamicos(matricula, datos, 
+                                                              campos_excluir=['id', 'pk', 'student', 'course', 'curso_academico', 'student_id', 'course_id'], 
+                                                              logger=logger)
+                                        matricula.save()
+                                    
+                                    if created:
+                                        logger.info(f"✅ Matrícula creada para {estudiante.username} en {curso.name}")
+                                    else:
+                                        logger.info(f"✅ Matrícula actualizada para {estudiante.username} en {curso.name}")
+                                    
+                                    estadisticas['matriculas_combinadas'] += 1
+                                else:
+                                    logger.warning(f"⚠️ No se pudo crear matrícula: curso={curso}, curso_academico={curso_academico}")
+                            else:
+                                logger.warning(f"⚠️ Usuario no encontrado para matrícula: student_id={student_id_real}")
+                                logger.warning(f"IDs de usuarios disponibles: {list(mapeo_usuarios.keys())}")
+                            
+                            transaction.savepoint_commit(sid)
+                            
+                        except Exception as e:
+                            transaction.savepoint_rollback(sid)
+                            logger.error(f"Error procesando matrícula: {e}")
+                            continue
+            
+            # PASO 7: COMBINAR ASISTENCIAS
+            actualizar_progreso('Combinando asistencias...', 7, **estadisticas)
+            logger.info("=== Combinando asistencias ===")
+            
+            # Buscar tablas de asistencias
+            tablas_asistencias = DatoArchivadoDinamico.objects.filter(
+                Q(tabla_origen__icontains='asistencia') |
+                Q(tabla_origen__icontains='attendance') |
+                Q(tabla_origen='Docencia_attendance') |
+                Q(tabla_origen='principal_asistencia')
+            ).values_list('tabla_origen', flat=True).distinct()
+            
+            for tabla_asistencia in tablas_asistencias:
+                datos_asistencias = DatoArchivadoDinamico.objects.filter(tabla_origen=tabla_asistencia)
+                logger.info(f"Procesando {datos_asistencias.count()} asistencias de tabla {tabla_asistencia}")
+                
+                with transaction.atomic():
+                    for dato in datos_asistencias:
+                        try:
+                            sid = transaction.savepoint()
+                            datos = dato.datos_originales
+                            # USAR IDs REALES DE LOS DATOS
+                            student_id_real = datos.get('student_id', datos.get('user_id'))  # FK a auth_user.id
+                            course_id_real = datos.get('course_id')  # FK a course.id
+                            
+                            if student_id_real in mapeo_usuarios:
+                                estudiante = mapeo_usuarios[student_id_real]
+                                
+                                # Buscar curso usando mapeo correcto
+                                curso = None
+                                if course_id_real and course_id_real in mapeo_cursos:
+                                    curso = mapeo_cursos[course_id_real]
+                                else:
+                                    curso = Curso.objects.first()  # Fallback
+                                
+                                if curso:
+                                    # Crear o actualizar asistencia
+                                    fecha_asistencia = datos.get('fecha', datos.get('date', timezone.now().date()))
+                                    
+                                    asistencia, created = Asistencia.objects.get_or_create(
+                                        student=estudiante,
+                                        course=curso,
+                                        fecha=fecha_asistencia,
+                                        defaults={
+                                            'presente': datos.get('presente', datos.get('present', True)),
+                                            'justificada': datos.get('justificada', datos.get('justified', False))
+                                        }
+                                    )
+                                    
+                                    if not created:
+                                        # Actualizar asistencia existente
+                                        copiar_campos_dinamicos(asistencia, datos, 
+                                                              campos_excluir=['id', 'pk', 'student', 'course', 'fecha', 'student_id', 'course_id'], 
+                                                              logger=logger)
+                                        asistencia.save()
+                                    
+                                    estadisticas['asistencias_combinadas'] += 1
+                                    
+                                    if created:
+                                        logger.info(f"✅ Asistencia creada para {estudiante.username}")
+                                    else:
+                                        logger.info(f"✅ Asistencia actualizada para {estudiante.username}")
+                            else:
+                                logger.warning(f"⚠️ Usuario no encontrado para asistencia: student_id={student_id_real}")
+                            
+                            transaction.savepoint_commit(sid)
+                            
+                        except Exception as e:
+                            transaction.savepoint_rollback(sid)
+                            logger.error(f"Error procesando asistencia: {e}")
+                            continue
+            
+            # PASO 8: COMBINAR CALIFICACIONES
+            actualizar_progreso('Combinando calificaciones...', 8, **estadisticas)
+            logger.info("=== Combinando calificaciones ===")
+            
+            # Buscar tablas de calificaciones
+            tablas_calificaciones = DatoArchivadoDinamico.objects.filter(
+                Q(tabla_origen__icontains='calificacion') |
+                Q(tabla_origen__icontains='grade') |
+                Q(tabla_origen__icontains='qualification') |
+                Q(tabla_origen='Docencia_grade') |
+                Q(tabla_origen='principal_calificaciones')
+            ).values_list('tabla_origen', flat=True).distinct()
+            
+            for tabla_calificacion in tablas_calificaciones:
+                datos_calificaciones = DatoArchivadoDinamico.objects.filter(tabla_origen=tabla_calificacion)
+                logger.info(f"Procesando {datos_calificaciones.count()} calificaciones de tabla {tabla_calificacion}")
+                
+                with transaction.atomic():
+                    for dato in datos_calificaciones:
+                        try:
+                            sid = transaction.savepoint()
+                            datos = dato.datos_originales
+                            # USAR IDs REALES DE LOS DATOS
+                            student_id_real = datos.get('student_id', datos.get('user_id'))  # FK a auth_user.id
+                            course_id_real = datos.get('course_id')  # FK a course.id
+                            
+                            if student_id_real in mapeo_usuarios:
+                                estudiante = mapeo_usuarios[student_id_real]
+                                
+                                # Buscar curso usando mapeo correcto
+                                curso = None
+                                if course_id_real and course_id_real in mapeo_cursos:
+                                    curso = mapeo_cursos[course_id_real]
+                                else:
+                                    curso = Curso.objects.first()  # Fallback
+                                
+                                if curso:
+                                    # Crear o actualizar calificación
+                                    calificacion_data = {
+                                        'student': estudiante,
+                                        'course': curso,
+                                        'nota_final': datos.get('nota_final', datos.get('final_grade', 0)),
+                                        'estado': datos.get('estado', datos.get('status', 'P')),
+                                        'activo': datos.get('activo', datos.get('active', True))
+                                    }
+                                    
+                                    calificacion, created = Calificaciones.objects.get_or_create(
+                                        student=estudiante,
+                                        course=curso,
+                                        defaults=calificacion_data
+                                    )
+                                    
+                                    if not created:
+                                        # Actualizar calificación existente
+                                        copiar_campos_dinamicos(calificacion, datos, 
+                                                              campos_excluir=['id', 'pk', 'student', 'course', 'student_id', 'course_id'], 
+                                                              logger=logger)
+                                        calificacion.save()
+                                    
+                                    estadisticas['calificaciones_combinadas'] += 1
+                                    
+                                    if created:
+                                        logger.info(f"✅ Calificación creada para {estudiante.username}")
+                                    else:
+                                        logger.info(f"✅ Calificación actualizada para {estudiante.username}")
+                            else:
+                                logger.warning(f"⚠️ Usuario no encontrado para calificación: student_id={student_id_real}")
+                            
+                            transaction.savepoint_commit(sid)
+                            
+                        except Exception as e:
+                            transaction.savepoint_rollback(sid)
+                            logger.error(f"Error procesando calificación: {e}")
+                            continue
+            
+            # PASO 9: COMBINAR NOTAS INDIVIDUALES
+            actualizar_progreso('Combinando notas individuales...', 9, **estadisticas)
+            logger.info("=== Combinando notas individuales ===")
+            
+            # Buscar tablas de notas individuales
+            tablas_notas = DatoArchivadoDinamico.objects.filter(
+                Q(tabla_origen__icontains='nota') |
+                Q(tabla_origen__icontains='individual') |
+                Q(tabla_origen='Docencia_individualnote') |
+                Q(tabla_origen='principal_notaindividual')
+            ).values_list('tabla_origen', flat=True).distinct()
+            
+            for tabla_nota in tablas_notas:
+                datos_notas = DatoArchivadoDinamico.objects.filter(tabla_origen=tabla_nota)
+                logger.info(f"Procesando {datos_notas.count()} notas individuales de tabla {tabla_nota}")
+                
+                with transaction.atomic():
+                    for dato in datos_notas:
+                        try:
+                            sid = transaction.savepoint()
+                            datos = dato.datos_originales
+                            # USAR IDs REALES DE LOS DATOS
+                            student_id_real = datos.get('student_id', datos.get('user_id'))  # FK a auth_user.id
+                            course_id_real = datos.get('course_id')  # FK a course.id
+                            
+                            if student_id_real in mapeo_usuarios:
+                                estudiante = mapeo_usuarios[student_id_real]
+                                
+                                # Buscar curso usando mapeo correcto
+                                curso = None
+                                if course_id_real and course_id_real in mapeo_cursos:
+                                    curso = mapeo_cursos[course_id_real]
+                                else:
+                                    curso = Curso.objects.first()  # Fallback
+                                
+                                if curso:
+                                    # Crear o actualizar nota individual
+                                    nota_data = {
+                                        'student': estudiante,
+                                        'course': curso,
+                                        'tipo_evaluacion': datos.get('tipo_evaluacion', datos.get('evaluation_type', 'examen')),
+                                        'nota': datos.get('nota', datos.get('grade', 0)),
+                                        'fecha': datos.get('fecha', datos.get('date', timezone.now().date())),
+                                        'activo': datos.get('activo', datos.get('active', True))
+                                    }
+                                    
+                                    # Buscar nota existente por criterios únicos
+                                    nota_existente = NotaIndividual.objects.filter(
+                                        student=estudiante,
+                                        course=curso,
+                                        tipo_evaluacion=nota_data['tipo_evaluacion'],
+                                        fecha=nota_data['fecha']
+                                    ).first()
+                                    
+                                    if nota_existente:
+                                        # Actualizar nota existente
+                                        copiar_campos_dinamicos(nota_existente, datos, 
+                                                              campos_excluir=['id', 'pk', 'student', 'course', 'student_id', 'course_id'], 
+                                                              logger=logger)
+                                        nota_existente.save()
+                                        logger.info(f"✅ Nota individual actualizada para {estudiante.username}")
+                                    else:
+                                        # Crear nueva nota
+                                        nueva_nota = NotaIndividual(**nota_data)
+                                        copiar_campos_dinamicos(nueva_nota, datos, 
+                                                              campos_excluir=['id', 'pk', 'student', 'course', 'tipo_evaluacion', 'nota', 'fecha', 'student_id', 'course_id'], 
+                                                              logger=logger)
+                                        nueva_nota.save()
+                                        logger.info(f"✅ Nota individual creada para {estudiante.username}")
+                                    
+                                    estadisticas['notas_combinadas'] += 1
+                            else:
+                                logger.warning(f"⚠️ Usuario no encontrado para nota individual: student_id={student_id_real}")
+                            
+                            transaction.savepoint_commit(sid)
+                            
+                        except Exception as e:
+                            transaction.savepoint_rollback(sid)
+                            logger.error(f"Error procesando nota individual: {e}")
+                            continue
+            
+            # PASO 10: PROCESAR OTRAS TABLAS RESTANTES
+            actualizar_progreso('Procesando otras tablas...', 10, **estadisticas)
+            logger.info("=== Procesando otras tablas restantes ===")
+            
+            # Obtener todas las tablas que no hemos procesado específicamente
+            tablas_procesadas = {
+                'auth_user', 'auth_user_groups', 
+                'Docencia_studentpersonalinformation', 'Docencia_teacherpersonalinformation', 'accounts_registro'
+            }
+            
+            # Agregar tablas de cursos, matrículas, etc. que ya procesamos
+            tablas_procesadas.update(tablas_cursos_academicos)
+            tablas_procesadas.update(tablas_cursos)
+            tablas_procesadas.update(tablas_matriculas)
+            tablas_procesadas.update(tablas_asistencias)
+            tablas_procesadas.update(tablas_calificaciones)
+            tablas_procesadas.update(tablas_notas)
+            
+            # Obtener tablas restantes
+            todas_las_tablas = DatoArchivadoDinamico.objects.values_list('tabla_origen', flat=True).distinct()
+            tablas_restantes = [tabla for tabla in todas_las_tablas if tabla not in tablas_procesadas]
+            
+            logger.info(f"Tablas restantes por procesar: {tablas_restantes}")
+            
+            for tabla_restante in tablas_restantes:
+                datos_restantes = DatoArchivadoDinamico.objects.filter(tabla_origen=tabla_restante)
+                logger.info(f"Procesando {datos_restantes.count()} registros de tabla adicional: {tabla_restante}")
+                
+                # Para tablas no específicas, solo contamos los registros
+                estadisticas['otras_tablas'] += datos_restantes.count()
+                logger.info(f"Tabla {tabla_restante} registrada como procesada ({datos_restantes.count()} registros)")
+            
+            # PASO 11: ACTUALIZAR PROGRESO FINAL
+            actualizar_progreso('Combinación completada exitosamente', 11, **estadisticas)
             
             # Marcar como completado
             resultado_final = {
                 'fecha_inicio': timezone.now().isoformat(),
                 'fecha_fin': timezone.now().isoformat(),
                 **estadisticas,
-                'campos_agregados': 0  # Por ahora no agregamos campos dinámicamente
+                'campos_agregados': estadisticas.get('campos_agregados', 0)
             }
             cache.set('ultima_combinacion_completada', resultado_final, timeout=300)
             cache.delete('combinacion_en_progreso')
@@ -2081,6 +2896,13 @@ def combinar_datos_archivados(request):
             logger.info("=== COMBINACIÓN REAL COMPLETADA EXITOSAMENTE ===")
             logger.info(f"Usuarios combinados: {estadisticas['usuarios_combinados']}")
             logger.info(f"Registros combinados: {estadisticas['registros_combinados']}")
+            logger.info(f"Cursos académicos combinados: {estadisticas['cursos_academicos_combinados']}")
+            logger.info(f"Cursos combinados: {estadisticas['cursos_combinados']}")
+            logger.info(f"Matrículas combinadas: {estadisticas['matriculas_combinadas']}")
+            logger.info(f"Asistencias combinadas: {estadisticas['asistencias_combinadas']}")
+            logger.info(f"Calificaciones combinadas: {estadisticas['calificaciones_combinadas']}")
+            logger.info(f"Notas individuales combinadas: {estadisticas['notas_combinadas']}")
+            logger.info(f"Otras tablas procesadas: {estadisticas['otras_tablas']}")
                 
         except Exception as e:
             # En caso de error, limpiar cache y registrar error
@@ -2145,8 +2967,13 @@ def estado_combinacion_ajax(request):
                 'fecha_inicio': progreso.get('fecha_inicio'),
                 'usuarios_combinados': progreso.get('usuarios_combinados', 0),
                 'registros_combinados': progreso.get('registros_combinados', 0),
+                'cursos_academicos_combinados': progreso.get('cursos_academicos_combinados', 0),
                 'cursos_combinados': progreso.get('cursos_combinados', 0),
                 'matriculas_combinadas': progreso.get('matriculas_combinadas', 0),
+                'asistencias_combinadas': progreso.get('asistencias_combinadas', 0),
+                'calificaciones_combinadas': progreso.get('calificaciones_combinadas', 0),
+                'notas_combinadas': progreso.get('notas_combinadas', 0),
+                'otras_tablas': progreso.get('otras_tablas', 0),
                 'pasos_completados': pasos_completados,
                 'pasos_totales': pasos_totales,
             }
@@ -2174,8 +3001,13 @@ def estado_combinacion_ajax(request):
                     'fecha_fin': resultado_final.get('fecha_fin'),
                     'usuarios_combinados': resultado_final.get('usuarios_combinados', 0),
                     'registros_combinados': resultado_final.get('registros_combinados', 0),
+                    'cursos_academicos_combinados': resultado_final.get('cursos_academicos_combinados', 0),
                     'cursos_combinados': resultado_final.get('cursos_combinados', 0),
                     'matriculas_combinadas': resultado_final.get('matriculas_combinadas', 0),
+                    'asistencias_combinadas': resultado_final.get('asistencias_combinadas', 0),
+                    'calificaciones_combinadas': resultado_final.get('calificaciones_combinadas', 0),
+                    'notas_combinadas': resultado_final.get('notas_combinadas', 0),
+                    'otras_tablas': resultado_final.get('otras_tablas', 0),
                     'campos_agregados': resultado_final.get('campos_agregados', 0),
                 }
             else:
@@ -2273,13 +3105,56 @@ def combinar_datos_seleccionadas(request):
                     'fecha_inicio': timezone.now().isoformat(),
                     'usuarios_combinados': kwargs.get('usuarios_combinados', 0),
                     'registros_combinados': kwargs.get('registros_combinados', 0),
+                    'cursos_academicos_combinados': kwargs.get('cursos_academicos_combinados', 0),
                     'cursos_combinados': kwargs.get('cursos_combinados', 0),
                     'matriculas_combinadas': kwargs.get('matriculas_combinadas', 0),
+                    'asistencias_combinadas': kwargs.get('asistencias_combinadas', 0),
+                    'calificaciones_combinadas': kwargs.get('calificaciones_combinadas', 0),
+                    'notas_combinadas': kwargs.get('notas_combinadas', 0),
+                    'otras_tablas': kwargs.get('otras_tablas', 0),
                     'tablas_seleccionadas': tablas_seleccionadas,
                     'tipo_combinacion': 'selectiva'
                 }
                 cache.set('combinacion_en_progreso', progreso, timeout=300)  # 5 minutos
                 logger.info(f"Progreso selectivo actualizado: {paso_actual} ({pasos_completados}/{pasos_totales})")
+            
+            # Función para mapear campos de inglés a español
+            def mapear_campos_ingles_espanol(datos_origen, logger=None):
+                """Mapea campos de inglés a español y mantiene ambos"""
+                mapeo_campos = {
+                    'nacionality': 'nacionalidad',
+                    'numberidentification': 'carnet', 
+                    'phone': 'telephone',
+                    'cellphone': 'movil',
+                    'street': 'address',
+                    'city': 'location',
+                    'state': 'provincia',
+                    'degree': 'grado',
+                    'ocupation': 'ocupacion',
+                    'title': 'titulo',
+                    'gender': 'sexo',
+                    'photo': 'image',
+                    'isReligious': 'es_religioso',
+                    'name': 'first_name',  # Para usuarios
+                    'lastname': 'last_name'  # Para usuarios
+                }
+                
+                # Crear copia con todos los datos originales
+                datos_mapeados = datos_origen.copy()
+                campos_mapeados_count = 0
+                
+                # Aplicar mapeo: agregar campos traducidos
+                for campo_origen, campo_destino in mapeo_campos.items():
+                    if campo_origen in datos_origen:
+                        datos_mapeados[campo_destino] = datos_origen[campo_origen]
+                        campos_mapeados_count += 1
+                        if logger:
+                            logger.debug(f"🔄 Mapeando: {campo_origen} → {campo_destino} = {datos_origen[campo_origen]}")
+                
+                if logger and campos_mapeados_count > 0:
+                    logger.info(f"📋 Total de campos mapeados: {campos_mapeados_count}")
+                
+                return datos_mapeados
             
             # Función para copiar campos dinámicamente (reutilizada)
             def copiar_campos_dinamicos(objeto_destino, datos_origen, campos_excluir=None, logger=None):
@@ -2326,8 +3201,45 @@ def combinar_datos_seleccionadas(request):
             # Inicializar progreso
             actualizar_progreso_selectivo('Iniciando combinación selectiva...', 0, pasos_totales, **estadisticas)
             
-            # PROCESAR CADA TABLA SELECCIONADA
+            # ASEGURAR QUE auth_user SE PROCESE PRIMERO SI HAY TABLAS DEPENDIENTES
+            tablas_dependientes = ['Docencia_studentpersonalinformation', 'Docencia_teacherpersonalinformation', 'accounts_registro']
+            necesita_usuarios = any(tabla in tablas_dependientes for tabla in tablas_seleccionadas)
+            
+            # FORZAR ORDEN CORRECTO DE PROCESAMIENTO SIEMPRE
+            orden_correcto = [
+                'auth_user',
+                'Docencia_teacherpersonalinformation',  # Profesores primero
+                'Docencia_studentpersonalinformation',  # Estudiantes después
+                'accounts_registro'
+            ]
+            
+            # Crear lista ordenada con las tablas a procesar
+            tablas_a_procesar = []
+            
+            # PASO 1: Si necesita usuarios pero auth_user no está seleccionado, agregarlo automáticamente
+            if necesita_usuarios and 'auth_user' not in tablas_seleccionadas:
+                tablas_a_procesar.append('auth_user')
+                logger.info("✅ Se agregó auth_user automáticamente porque hay tablas que dependen de usuarios")
+            
+            # PASO 2: Agregar tablas en el orden correcto SOLO si están seleccionadas
+            for tabla_ordenada in orden_correcto:
+                if tabla_ordenada in tablas_seleccionadas:
+                    tablas_a_procesar.append(tabla_ordenada)
+            
+            # PASO 3: Agregar cualquier otra tabla que no esté en el orden predefinido
             for tabla in tablas_seleccionadas:
+                if tabla not in orden_correcto:
+                    tablas_a_procesar.append(tabla)
+            
+            # PASO 4: Recalcular pasos totales basado en las tablas finales a procesar
+            pasos_totales = len(tablas_a_procesar) + 1  # +1 para finalización
+            
+            logger.info(f"📋 Tablas originalmente seleccionadas: {tablas_seleccionadas}")
+            logger.info(f"🔄 Orden final de procesamiento: {tablas_a_procesar}")
+            logger.info(f"📊 Pasos totales calculados: {pasos_totales}")
+            
+            # PROCESAR CADA TABLA EN EL ORDEN CORRECTO
+            for tabla in tablas_a_procesar:
                 paso_actual += 1
                 actualizar_progreso_selectivo(f'Procesando tabla: {tabla}', paso_actual, pasos_totales, **estadisticas)
                 logger.info(f"=== Procesando tabla: {tabla} ===")
@@ -2373,7 +3285,10 @@ def combinar_datos_seleccionadas(request):
                                             logger.info(f"Contraseña en texto plano hasheada para {username}")
                                     
                                     usuario_existente.save()
-                                    mapeo_usuarios[id_original] = usuario_existente
+                                    # USAR EL ID REAL DE LOS DATOS ORIGINALES
+                                    user_id_real = datos.get('id')  # ID real de la tabla auth_user
+                                    mapeo_usuarios[user_id_real] = usuario_existente
+                                    logger.info(f"✅ Usuario {username} mapeado con ID real: {user_id_real}")
                                     estadisticas['usuarios_combinados'] += 1
                                     
                                 else:
@@ -2398,7 +3313,10 @@ def combinar_datos_seleccionadas(request):
                                         logger.info(f"Contraseña no utilizable asignada para {username}")
                                     
                                     nuevo_usuario.save()
-                                    mapeo_usuarios[id_original] = nuevo_usuario
+                                    # USAR EL ID REAL DE LOS DATOS ORIGINALES
+                                    user_id_real = datos.get('id')  # ID real de la tabla auth_user
+                                    mapeo_usuarios[user_id_real] = nuevo_usuario
+                                    logger.info(f"✅ Usuario {username} mapeado con ID real: {user_id_real}")
                                     estadisticas['usuarios_combinados'] += 1
                                 
                                 transaction.savepoint_commit(sid)
@@ -2409,11 +3327,111 @@ def combinar_datos_seleccionadas(request):
                                 logger.error(error_msg)
                                 continue
                 
-                elif tabla in ['Docencia_studentpersonalinformation', 'Docencia_teacherpersonalinformation', 'accounts_registro']:
-                    # PROCESAR REGISTROS DE ESTUDIANTES/PROFESORES
-                    # Obtener o crear grupos
-                    grupo_estudiantes, _ = Group.objects.get_or_create(name='Estudiantes')
+                elif tabla == 'Docencia_teacherpersonalinformation':
+                    # PASO 2A: PROCESAR PROFESORES PRIMERO
+                    logger.info("Procesando información de profesores...")
                     grupo_profesores, _ = Group.objects.get_or_create(name='Profesores')
+                    
+                    with transaction.atomic():
+                        for dato in datos_tabla:
+                            try:
+                                sid = transaction.savepoint()
+                                datos = dato.datos_originales
+                                user_id_original = datos.get('user_id')
+                                
+                                if not user_id_original or user_id_original not in mapeo_usuarios:
+                                    logger.warning(f"Usuario no encontrado para profesor: user_id={user_id_original}")
+                                    transaction.savepoint_rollback(sid)
+                                    continue
+                                
+                                usuario = mapeo_usuarios[user_id_original]
+                                
+                                # Buscar o crear registro
+                                registro, created = Registro.objects.get_or_create(user=usuario)
+                                
+                                if created:
+                                    logger.info(f"Creado nuevo registro para profesor: {usuario.username}")
+                                else:
+                                    logger.info(f"Actualizando registro existente para profesor: {usuario.username}")
+                                
+                                # Aplicar mapeo de campos de inglés a español
+                                datos_mapeados = mapear_campos_ingles_espanol(datos, logger)
+                                
+                                # Copiar todos los campos
+                                copiar_campos_dinamicos(registro, datos_mapeados, 
+                                                      campos_excluir=['id', 'pk', 'user_id', 'user'], 
+                                                      logger=logger)
+                                
+                                registro.save()
+                                estadisticas['registros_combinados'] += 1
+                                
+                                # Asignar al grupo de profesores (limpiar otros grupos primero)
+                                usuario.groups.clear()  # Limpiar grupos existentes
+                                usuario.groups.add(grupo_profesores)
+                                logger.info(f"Profesor {usuario.username} asignado EXCLUSIVAMENTE al grupo Profesores")
+                                
+                                transaction.savepoint_commit(sid)
+                                
+                            except Exception as e:
+                                transaction.savepoint_rollback(sid)
+                                error_msg = f"Error procesando profesor: {str(e)}"
+                                logger.error(error_msg)
+                                continue
+                
+                elif tabla == 'Docencia_studentpersonalinformation':
+                    # PASO 2B: PROCESAR ESTUDIANTES DESPUÉS
+                    logger.info("Procesando información de estudiantes...")
+                    grupo_estudiantes, _ = Group.objects.get_or_create(name='Estudiantes')
+                    
+                    with transaction.atomic():
+                        for dato in datos_tabla:
+                            try:
+                                sid = transaction.savepoint()
+                                datos = dato.datos_originales
+                                user_id_original = datos.get('user_id')
+                                
+                                if not user_id_original or user_id_original not in mapeo_usuarios:
+                                    logger.warning(f"Usuario no encontrado para estudiante: user_id={user_id_original}")
+                                    transaction.savepoint_rollback(sid)
+                                    continue
+                                
+                                usuario = mapeo_usuarios[user_id_original]
+                                
+                                # Buscar o crear registro
+                                registro, created = Registro.objects.get_or_create(user=usuario)
+                                
+                                if created:
+                                    logger.info(f"Creado nuevo registro para estudiante: {usuario.username}")
+                                else:
+                                    logger.info(f"Actualizando registro existente para estudiante: {usuario.username}")
+                                
+                                # Aplicar mapeo de campos de inglés a español
+                                datos_mapeados = mapear_campos_ingles_espanol(datos, logger)
+                                
+                                # Copiar todos los campos
+                                copiar_campos_dinamicos(registro, datos_mapeados, 
+                                                      campos_excluir=['id', 'pk', 'user_id', 'user'], 
+                                                      logger=logger)
+                                
+                                registro.save()
+                                estadisticas['registros_combinados'] += 1
+                                
+                                # Asignar al grupo de estudiantes (limpiar otros grupos primero)
+                                usuario.groups.clear()  # Limpiar grupos existentes
+                                usuario.groups.add(grupo_estudiantes)
+                                logger.info(f"Estudiante {usuario.username} asignado EXCLUSIVAMENTE al grupo Estudiantes")
+                                
+                                transaction.savepoint_commit(sid)
+                                
+                            except Exception as e:
+                                transaction.savepoint_rollback(sid)
+                                error_msg = f"Error procesando estudiante: {str(e)}"
+                                logger.error(error_msg)
+                                continue
+                
+                elif tabla == 'accounts_registro':
+                    # PASO 2C: PROCESAR REGISTROS EXISTENTES
+                    logger.info("Procesando registros existentes...")
                     
                     with transaction.atomic():
                         for dato in datos_tabla:
@@ -2437,21 +3455,16 @@ def combinar_datos_seleccionadas(request):
                                 else:
                                     logger.info(f"Actualizando registro existente para usuario: {usuario.username}")
                                 
+                                # Aplicar mapeo de campos de inglés a español
+                                datos_mapeados = mapear_campos_ingles_espanol(datos, logger)
+                                
                                 # Copiar todos los campos
-                                copiar_campos_dinamicos(registro, datos, 
+                                copiar_campos_dinamicos(registro, datos_mapeados, 
                                                       campos_excluir=['id', 'pk', 'user_id', 'user'], 
                                                       logger=logger)
                                 
                                 registro.save()
                                 estadisticas['registros_combinados'] += 1
-                                
-                                # Asignar grupo según el tipo de registro
-                                if dato.tabla_origen == 'Docencia_studentpersonalinformation':
-                                    usuario.groups.add(grupo_estudiantes)
-                                    logger.info(f"Usuario {usuario.username} agregado al grupo Estudiantes")
-                                elif dato.tabla_origen == 'Docencia_teacherpersonalinformation':
-                                    usuario.groups.add(grupo_profesores)
-                                    logger.info(f"Usuario {usuario.username} agregado al grupo Profesores")
                                 
                                 transaction.savepoint_commit(sid)
                                 
@@ -2462,9 +3475,435 @@ def combinar_datos_seleccionadas(request):
                                 continue
                 
                 else:
-                    # PROCESAR OTRAS TABLAS (implementación básica)
-                    logger.info(f"Procesando tabla genérica: {tabla}")
-                    estadisticas['otras_tablas'] += datos_tabla.count()
+                    # PROCESAR OTRAS TABLAS CON EL MISMO MAPEO QUE LA FUNCIÓN PRINCIPAL
+                    logger.info(f"Procesando tabla: {tabla}")
+                    
+                    # Mapeo de cursos (usando ID real de los datos)
+                    mapeo_cursos = {}
+                    
+                    if tabla == 'auth_user_groups':
+                        # PROCESAR GRUPOS DE USUARIOS (igual que función principal)
+                        with transaction.atomic():
+                            for dato in datos_tabla:
+                                try:
+                                    sid = transaction.savepoint()
+                                    datos = dato.datos_originales
+                                    user_id_original = datos.get('user_id')
+                                    group_id_original = datos.get('group_id')
+                                    
+                                    if user_id_original in mapeo_usuarios:
+                                        usuario = mapeo_usuarios[user_id_original]
+                                        
+                                        # Buscar grupo por ID o crear si no existe
+                                        from django.contrib.auth.models import Group
+                                        try:
+                                            # Intentar encontrar el grupo por nombre común
+                                            if group_id_original == 1:
+                                                grupo, _ = Group.objects.get_or_create(name='Estudiantes')
+                                            elif group_id_original == 2:
+                                                grupo, _ = Group.objects.get_or_create(name='Profesores')
+                                            else:
+                                                grupo, _ = Group.objects.get_or_create(name=f'Grupo_{group_id_original}')
+                                            
+                                            usuario.groups.add(grupo)
+                                            logger.info(f"Usuario {usuario.username} agregado al grupo {grupo.name}")
+                                            estadisticas['otras_tablas'] += 1
+                                            
+                                        except Exception as e:
+                                            logger.warning(f"Error asignando grupo: {e}")
+                                    
+                                    transaction.savepoint_commit(sid)
+                                    
+                                except Exception as e:
+                                    transaction.savepoint_rollback(sid)
+                                    logger.error(f"Error procesando grupo de usuario: {e}")
+                                    continue
+                    
+                    elif (tabla.lower().find('academicyear') != -1 or 
+                          tabla.lower().find('curso_academico') != -1 or 
+                          tabla == 'Docencia_academicyear'):
+                        # PROCESAR CURSOS ACADÉMICOS (igual que función principal)
+                        from principal.models import CursoAcademico
+                        
+                        with transaction.atomic():
+                            for dato in datos_tabla:
+                                try:
+                                    sid = transaction.savepoint()
+                                    datos = dato.datos_originales
+                                    
+                                    # Crear o actualizar curso académico
+                                    curso_academico_data = {
+                                        'year': datos.get('year', datos.get('anio', datetime.now().year)),
+                                        'name': datos.get('name', datos.get('nombre', f'Curso Académico {datos.get("year", datetime.now().year)}')),
+                                        'activo': datos.get('activo', datos.get('active', False)),
+                                        'fecha_inicio': datos.get('fecha_inicio', datos.get('start_date')),
+                                        'fecha_fin': datos.get('fecha_fin', datos.get('end_date'))
+                                    }
+                                    
+                                    # Buscar curso académico existente por año
+                                    curso_academico_existente = CursoAcademico.objects.filter(year=curso_academico_data['year']).first()
+                                    
+                                    if curso_academico_existente:
+                                        # Actualizar curso académico existente
+                                        copiar_campos_dinamicos(curso_academico_existente, datos, 
+                                                              campos_excluir=['id', 'pk'], 
+                                                              logger=logger)
+                                        curso_academico_existente.save()
+                                        logger.info(f"Curso académico actualizado: {curso_academico_data['name']}")
+                                    else:
+                                        # Crear nuevo curso académico
+                                        nuevo_curso_academico = CursoAcademico(**curso_academico_data)
+                                        copiar_campos_dinamicos(nuevo_curso_academico, datos, 
+                                                              campos_excluir=['id', 'pk', 'year', 'name', 'activo'], 
+                                                              logger=logger)
+                                        nuevo_curso_academico.save()
+                                        logger.info(f"Curso académico creado: {curso_academico_data['name']}")
+                                    
+                                    estadisticas['cursos_academicos_combinados'] += 1
+                                    transaction.savepoint_commit(sid)
+                                    
+                                except Exception as e:
+                                    transaction.savepoint_rollback(sid)
+                                    logger.error(f"Error procesando curso académico: {e}")
+                                    continue
+                    
+                    elif (tabla.lower().find('course') != -1 or 
+                          tabla == 'Docencia_course' or 
+                          tabla == 'principal_curso'):
+                        # PROCESAR CURSOS (igual que función principal)
+                        from principal.models import Curso
+                        
+                        with transaction.atomic():
+                            for dato in datos_tabla:
+                                try:
+                                    sid = transaction.savepoint()
+                                    datos = dato.datos_originales
+                                    curso_id_real = datos.get('id')  # ID real de la tabla de cursos
+                                    
+                                    # Crear o actualizar curso
+                                    curso_data = {
+                                        'name': datos.get('name', datos.get('nombre', f'Curso_{curso_id_real}')),
+                                        'description': datos.get('description', datos.get('descripcion', '')),
+                                        'area': datos.get('area', 'general'),
+                                        'status': datos.get('status', datos.get('estado', 'F')),
+                                        'activo': datos.get('activo', datos.get('active', False))
+                                    }
+                                    
+                                    # Buscar curso existente por nombre
+                                    curso_existente = Curso.objects.filter(name=curso_data['name']).first()
+                                    
+                                    if curso_existente:
+                                        # Actualizar curso existente
+                                        copiar_campos_dinamicos(curso_existente, datos, 
+                                                              campos_excluir=['id', 'pk'], 
+                                                              logger=logger)
+                                        curso_existente.save()
+                                        mapeo_cursos[curso_id_real] = curso_existente
+                                        logger.info(f"✅ Curso actualizado: {curso_data['name']} (ID real: {curso_id_real})")
+                                    else:
+                                        # Crear nuevo curso
+                                        nuevo_curso = Curso(**curso_data)
+                                        copiar_campos_dinamicos(nuevo_curso, datos, 
+                                                              campos_excluir=['id', 'pk', 'name'], 
+                                                              logger=logger)
+                                        nuevo_curso.save()
+                                        mapeo_cursos[curso_id_real] = nuevo_curso
+                                        logger.info(f"✅ Curso creado: {curso_data['name']} (ID real: {curso_id_real})")
+                                    
+                                    estadisticas['cursos_combinados'] += 1
+                                    transaction.savepoint_commit(sid)
+                                    
+                                except Exception as e:
+                                    transaction.savepoint_rollback(sid)
+                                    logger.error(f"Error procesando curso: {e}")
+                                    continue
+                    
+                    elif (tabla.lower().find('matricula') != -1 or 
+                          tabla.lower().find('enrollment') != -1 or 
+                          tabla == 'Docencia_enrollment' or 
+                          tabla == 'principal_matriculas'):
+                        # PROCESAR MATRÍCULAS (igual que función principal)
+                        from principal.models import Matriculas, Curso, CursoAcademico
+                        
+                        with transaction.atomic():
+                            for dato in datos_tabla:
+                                try:
+                                    sid = transaction.savepoint()
+                                    datos = dato.datos_originales
+                                    # USAR IDs REALES DE LOS DATOS, NO IDs DE DJANGO
+                                    student_id_real = datos.get('student_id', datos.get('user_id'))  # FK a auth_user.id
+                                    course_id_real = datos.get('course_id')  # FK a course.id
+                                    
+                                    if student_id_real in mapeo_usuarios:
+                                        estudiante = mapeo_usuarios[student_id_real]
+                                        logger.info(f"✅ Estudiante encontrado: {estudiante.username} (ID real: {student_id_real})")
+                                        
+                                        # Buscar curso usando mapeo correcto
+                                        curso = None
+                                        if course_id_real and course_id_real in mapeo_cursos:
+                                            curso = mapeo_cursos[course_id_real]
+                                            logger.info(f"✅ Curso encontrado: {curso.name} (ID real: {course_id_real})")
+                                        else:
+                                            # Buscar por nombre si no hay mapeo directo
+                                            course_name = datos.get('course_name', datos.get('nombre_curso'))
+                                            if course_name:
+                                                curso = Curso.objects.filter(name=course_name).first()
+                                                if curso:
+                                                    logger.info(f"✅ Curso encontrado por nombre: {curso.name}")
+                                            
+                                            if not curso:
+                                                # Usar el primer curso disponible como fallback
+                                                curso = Curso.objects.first()
+                                                if curso:
+                                                    logger.warning(f"⚠️ Usando curso fallback: {curso.name}")
+                                        
+                                        # Buscar curso académico
+                                        curso_academico = CursoAcademico.objects.filter(activo=True).first()
+                                        if not curso_academico:
+                                            curso_academico = CursoAcademico.objects.first()
+                                        
+                                        if curso and curso_academico:
+                                            matricula, created = Matriculas.objects.get_or_create(
+                                                student=estudiante,
+                                                course=curso,
+                                                curso_academico=curso_academico,
+                                                defaults={
+                                                    'estado': datos.get('estado', datos.get('status', 'P')),
+                                                    'activo': datos.get('activo', datos.get('active', True))
+                                                }
+                                            )
+                                            
+                                            if not created:
+                                                # Actualizar matrícula existente
+                                                copiar_campos_dinamicos(matricula, datos, 
+                                                                      campos_excluir=['id', 'pk', 'student', 'course', 'curso_academico', 'student_id', 'course_id'], 
+                                                                      logger=logger)
+                                                matricula.save()
+                                            
+                                            if created:
+                                                logger.info(f"✅ Matrícula creada para {estudiante.username} en {curso.name}")
+                                            else:
+                                                logger.info(f"✅ Matrícula actualizada para {estudiante.username} en {curso.name}")
+                                            
+                                            estadisticas['matriculas_combinadas'] += 1
+                                        else:
+                                            logger.warning(f"⚠️ No se pudo crear matrícula: curso={curso}, curso_academico={curso_academico}")
+                                    else:
+                                        logger.warning(f"⚠️ Usuario no encontrado para matrícula: student_id={student_id_real}")
+                                        logger.warning(f"IDs de usuarios disponibles: {list(mapeo_usuarios.keys())}")
+                                    
+                                    transaction.savepoint_commit(sid)
+                                    
+                                except Exception as e:
+                                    transaction.savepoint_rollback(sid)
+                                    logger.error(f"Error procesando matrícula: {e}")
+                                    continue
+                    
+                    elif (tabla.lower().find('asistencia') != -1 or 
+                          tabla.lower().find('attendance') != -1 or 
+                          tabla == 'Docencia_attendance' or 
+                          tabla == 'principal_asistencia'):
+                        # PROCESAR ASISTENCIAS (igual que función principal)
+                        from principal.models import Asistencia, Curso
+                        
+                        with transaction.atomic():
+                            for dato in datos_tabla:
+                                try:
+                                    sid = transaction.savepoint()
+                                    datos = dato.datos_originales
+                                    # USAR IDs REALES DE LOS DATOS
+                                    student_id_real = datos.get('student_id', datos.get('user_id'))  # FK a auth_user.id
+                                    course_id_real = datos.get('course_id')  # FK a course.id
+                                    
+                                    if student_id_real in mapeo_usuarios:
+                                        estudiante = mapeo_usuarios[student_id_real]
+                                        
+                                        # Buscar curso usando mapeo correcto
+                                        curso = None
+                                        if course_id_real and course_id_real in mapeo_cursos:
+                                            curso = mapeo_cursos[course_id_real]
+                                        else:
+                                            curso = Curso.objects.first()  # Fallback
+                                        
+                                        if curso:
+                                            # Crear o actualizar asistencia
+                                            fecha_asistencia = datos.get('fecha', datos.get('date', timezone.now().date()))
+                                            
+                                            asistencia, created = Asistencia.objects.get_or_create(
+                                                student=estudiante,
+                                                course=curso,
+                                                fecha=fecha_asistencia,
+                                                defaults={
+                                                    'presente': datos.get('presente', datos.get('present', True)),
+                                                    'justificada': datos.get('justificada', datos.get('justified', False))
+                                                }
+                                            )
+                                            
+                                            if not created:
+                                                # Actualizar asistencia existente
+                                                copiar_campos_dinamicos(asistencia, datos, 
+                                                                      campos_excluir=['id', 'pk', 'student', 'course', 'fecha', 'student_id', 'course_id'], 
+                                                                      logger=logger)
+                                                asistencia.save()
+                                            
+                                            estadisticas['asistencias_combinadas'] += 1
+                                            
+                                            if created:
+                                                logger.info(f"✅ Asistencia creada para {estudiante.username}")
+                                            else:
+                                                logger.info(f"✅ Asistencia actualizada para {estudiante.username}")
+                                    else:
+                                        logger.warning(f"⚠️ Usuario no encontrado para asistencia: student_id={student_id_real}")
+                                    
+                                    transaction.savepoint_commit(sid)
+                                    
+                                except Exception as e:
+                                    transaction.savepoint_rollback(sid)
+                                    logger.error(f"Error procesando asistencia: {e}")
+                                    continue
+                    
+                    elif (tabla.lower().find('calificacion') != -1 or 
+                          tabla.lower().find('grade') != -1 or 
+                          tabla.lower().find('qualification') != -1 or 
+                          tabla == 'Docencia_grade' or 
+                          tabla == 'principal_calificaciones'):
+                        # PROCESAR CALIFICACIONES (igual que función principal)
+                        from principal.models import Calificaciones, Curso
+                        
+                        with transaction.atomic():
+                            for dato in datos_tabla:
+                                try:
+                                    sid = transaction.savepoint()
+                                    datos = dato.datos_originales
+                                    # USAR IDs REALES DE LOS DATOS
+                                    student_id_real = datos.get('student_id', datos.get('user_id'))  # FK a auth_user.id
+                                    course_id_real = datos.get('course_id')  # FK a course.id
+                                    
+                                    if student_id_real in mapeo_usuarios:
+                                        estudiante = mapeo_usuarios[student_id_real]
+                                        
+                                        # Buscar curso usando mapeo correcto
+                                        curso = None
+                                        if course_id_real and course_id_real in mapeo_cursos:
+                                            curso = mapeo_cursos[course_id_real]
+                                        else:
+                                            curso = Curso.objects.first()  # Fallback
+                                        
+                                        if curso:
+                                            # Crear o actualizar calificación
+                                            calificacion_data = {
+                                                'student': estudiante,
+                                                'course': curso,
+                                                'nota_final': datos.get('nota_final', datos.get('final_grade', 0)),
+                                                'estado': datos.get('estado', datos.get('status', 'P')),
+                                                'activo': datos.get('activo', datos.get('active', True))
+                                            }
+                                            
+                                            calificacion, created = Calificaciones.objects.get_or_create(
+                                                student=estudiante,
+                                                course=curso,
+                                                defaults=calificacion_data
+                                            )
+                                            
+                                            if not created:
+                                                # Actualizar calificación existente
+                                                copiar_campos_dinamicos(calificacion, datos, 
+                                                                      campos_excluir=['id', 'pk', 'student', 'course', 'student_id', 'course_id'], 
+                                                                      logger=logger)
+                                                calificacion.save()
+                                            
+                                            estadisticas['calificaciones_combinadas'] += 1
+                                            
+                                            if created:
+                                                logger.info(f"✅ Calificación creada para {estudiante.username}")
+                                            else:
+                                                logger.info(f"✅ Calificación actualizada para {estudiante.username}")
+                                    else:
+                                        logger.warning(f"⚠️ Usuario no encontrado para calificación: student_id={student_id_real}")
+                                    
+                                    transaction.savepoint_commit(sid)
+                                    
+                                except Exception as e:
+                                    transaction.savepoint_rollback(sid)
+                                    logger.error(f"Error procesando calificación: {e}")
+                                    continue
+                    
+                    elif (tabla.lower().find('nota') != -1 or 
+                          tabla.lower().find('individual') != -1 or 
+                          tabla == 'Docencia_individualnote' or 
+                          tabla == 'principal_notaindividual'):
+                        # PROCESAR NOTAS INDIVIDUALES (igual que función principal)
+                        from principal.models import NotaIndividual, Curso
+                        
+                        with transaction.atomic():
+                            for dato in datos_tabla:
+                                try:
+                                    sid = transaction.savepoint()
+                                    datos = dato.datos_originales
+                                    # USAR IDs REALES DE LOS DATOS
+                                    student_id_real = datos.get('student_id', datos.get('user_id'))  # FK a auth_user.id
+                                    course_id_real = datos.get('course_id')  # FK a course.id
+                                    
+                                    if student_id_real in mapeo_usuarios:
+                                        estudiante = mapeo_usuarios[student_id_real]
+                                        
+                                        # Buscar curso usando mapeo correcto
+                                        curso = None
+                                        if course_id_real and course_id_real in mapeo_cursos:
+                                            curso = mapeo_cursos[course_id_real]
+                                        else:
+                                            curso = Curso.objects.first()  # Fallback
+                                        
+                                        if curso:
+                                            # Crear o actualizar nota individual
+                                            nota_data = {
+                                                'student': estudiante,
+                                                'course': curso,
+                                                'tipo_evaluacion': datos.get('tipo_evaluacion', datos.get('evaluation_type', 'examen')),
+                                                'nota': datos.get('nota', datos.get('grade', 0)),
+                                                'fecha': datos.get('fecha', datos.get('date', timezone.now().date())),
+                                                'activo': datos.get('activo', datos.get('active', True))
+                                            }
+                                            
+                                            # Buscar nota existente por criterios únicos
+                                            nota_existente = NotaIndividual.objects.filter(
+                                                student=estudiante,
+                                                course=curso,
+                                                tipo_evaluacion=nota_data['tipo_evaluacion'],
+                                                fecha=nota_data['fecha']
+                                            ).first()
+                                            
+                                            if nota_existente:
+                                                # Actualizar nota existente
+                                                copiar_campos_dinamicos(nota_existente, datos, 
+                                                                      campos_excluir=['id', 'pk', 'student', 'course', 'student_id', 'course_id'], 
+                                                                      logger=logger)
+                                                nota_existente.save()
+                                                logger.info(f"✅ Nota individual actualizada para {estudiante.username}")
+                                            else:
+                                                # Crear nueva nota
+                                                nueva_nota = NotaIndividual(**nota_data)
+                                                copiar_campos_dinamicos(nueva_nota, datos, 
+                                                                      campos_excluir=['id', 'pk', 'student', 'course', 'tipo_evaluacion', 'nota', 'fecha', 'student_id', 'course_id'], 
+                                                                      logger=logger)
+                                                nueva_nota.save()
+                                                logger.info(f"✅ Nota individual creada para {estudiante.username}")
+                                            
+                                            estadisticas['notas_combinadas'] += 1
+                                    else:
+                                        logger.warning(f"⚠️ Usuario no encontrado para nota individual: student_id={student_id_real}")
+                                    
+                                    transaction.savepoint_commit(sid)
+                                    
+                                except Exception as e:
+                                    transaction.savepoint_rollback(sid)
+                                    logger.error(f"Error procesando nota individual: {e}")
+                                    continue
+                    
+                    else:
+                        # OTRAS TABLAS - Procesamiento genérico básico (igual que función principal)
+                        logger.info(f"Tabla {tabla} procesada de forma genérica")
+                        estadisticas['otras_tablas'] += datos_tabla.count()
                 
                 # Actualizar progreso después de cada tabla
                 actualizar_progreso_selectivo(f'Tabla {tabla} completada', paso_actual, pasos_totales, **estadisticas)
@@ -2488,6 +3927,13 @@ def combinar_datos_seleccionadas(request):
             logger.info(f"Tablas procesadas: {tablas_seleccionadas}")
             logger.info(f"Usuarios combinados: {estadisticas['usuarios_combinados']}")
             logger.info(f"Registros combinados: {estadisticas['registros_combinados']}")
+            logger.info(f"Cursos académicos combinados: {estadisticas['cursos_academicos_combinados']}")
+            logger.info(f"Cursos combinados: {estadisticas['cursos_combinados']}")
+            logger.info(f"Matrículas combinadas: {estadisticas['matriculas_combinadas']}")
+            logger.info(f"Asistencias combinadas: {estadisticas['asistencias_combinadas']}")
+            logger.info(f"Calificaciones combinadas: {estadisticas['calificaciones_combinadas']}")
+            logger.info(f"Notas individuales combinadas: {estadisticas['notas_combinadas']}")
+            logger.info(f"Otras tablas procesadas: {estadisticas['otras_tablas']}")
                 
         except Exception as e:
             # En caso de error, limpiar cache y registrar error

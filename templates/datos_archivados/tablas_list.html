@@ -3032,7 +3032,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                     ${diagnostico}
                                     <div class="mt-2 text-xs text-gray-600 bg-blue-50 p-2 rounded">
                                         💡 <strong>Información:</strong> El proceso puede tomar varios minutos. Por favor, mantenga esta ventana abierta.
-                                        <br>🔧 <strong>Debug:</strong> Revise la consola del navegador (F12) para más detalles técnicos.
                                     </div>
                                 </div>
                             </div>
@@ -3081,7 +3080,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         btnConfirmarCombinacion.innerHTML = '<span class="material-icons mr-2">swap_vert</span>Reintentar';
                     } else {
                         // Estado desconocido o sin combinaciones
-                        console.log("🔍 DEBUG: Estado no manejado:", data);
                         
                         // Si llevamos más de 30 segundos sin progreso, mostrar error
                         if (!window.tiempoInicioMonitoreo) {
@@ -4227,7 +4225,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                     ${diagnostico}
                                     <div class="mt-2 text-xs text-gray-600 bg-green-50 p-2 rounded">
                                         💡 <strong>Combinación selectiva en progreso:</strong> Procesando solo las tablas que seleccionó.
-                                        <br>🔧 <strong>Debug:</strong> Revise la consola del navegador (F12) para más detalles técnicos.
                                     </div>
                                 </div>
                             </div>
@@ -7327,7 +7324,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             try {
-                // Obtener tablas disponibles para debugging
+                // Obtener tablas disponibles
                 const availableTables = Array.from(document.querySelectorAll('.tabla-card')).map(card => 
                     card.getAttribute('data-tabla')
                 ).filter(tabla => tabla);
@@ -8865,7 +8862,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.errorLog = this.errorLog.slice(0, this.maxLogSize);
             }
 
-            // Log en consola para debugging
+            // Log en consola
             console.error(`[${errorInfo.code}] ${errorInfo.message}`, errorInfo);
         }
 
@@ -9903,7 +9900,7 @@ document.addEventListener('DOMContentLoaded', function() {
             relationshipManager = new RelationshipManager();
             await relationshipManager.initialize(availableTables);
             
-            // Hacer disponible globalmente para debugging
+            // Hacer disponible globalmente
             window.relationshipManager = relationshipManager;
             
             // Verificar que la inicialización fue exitosa
@@ -10062,14 +10059,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-
-    // ===== HACER FUNCIONES DISPONIBLES GLOBALMENTE PARA DEBUG =====
-    window.cargarTablasDisponibles = cargarTablasDisponibles;
-    window.cargarTablasDisponiblesConValidacion = cargarTablasDisponiblesConValidacion;
-    window.actualizarEventListenersCheckboxes = actualizarEventListenersCheckboxes;
-    window.actualizarEventListenersCheckboxesConValidacion = actualizarEventListenersCheckboxesConValidacion;
-    
-    console.log('✅ Funciones de debug disponibles globalmente');
 });
 </script>
 {% endblock %}
