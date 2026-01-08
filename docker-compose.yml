@@ -1,0 +1,28 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:18  # Puedes cambiar '15' por la versión que necesites
+    container_name: mi_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgre       # Usuario por defecto
+      POSTGRES_PASSWORD: admin # Cambia esto
+      POSTGRES_DB: cfbc_db      # Base de datos que se creará al inicio
+    ports:
+      - "5433:5432"  # Expone el puerto 5432 de PostgreSQL
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Volumen para persistir datos
+
+  pgadmin:  # Servicio opcional para gestionar la DB desde el navegador
+    image: dpage/pgadmin4
+    container_name: mi_pgadmin
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com  # Cambia por tu email
+      PGADMIN_DEFAULT_PASSWORD: admin           # Cambia por tu contraseña
+    ports:
+      - "8090:80"  # Accede a pgAdmin en http://localhost:8090
+volumes:
+  postgres_data:  # Declara el volumen para los datos

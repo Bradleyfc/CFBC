@@ -90,13 +90,14 @@ WSGI_APPLICATION = 'cfbc.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'cfbc',
-        'USER': 'postgres',
+        'NAME': 'postgre_db',
+        'USER': 'postgre',
         'PASSWORD': 'admin',
         'HOST': 'localhost',
         'PORT': '5432',
     }
 }
+
 
 
 # Password validation
