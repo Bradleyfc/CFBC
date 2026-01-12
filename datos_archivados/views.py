@@ -8,6 +8,10 @@ from django.http import JsonResponse, HttpResponse
 from django.core.mail import send_mail
 from django.conf import settings
 import json
+import logging
+
+# Configurar logger
+logger = logging.getLogger(__name__)
 
 def es_secretaria(user):
     """Verifica si el usuario pertenece al grupo Secretaria"""
@@ -366,48 +370,259 @@ def estado_migracion_ajax(request):
         from .models import MigracionLog
         from datetime import datetime, timedelta
         from django.utils import timezone
+        from django.core.cache import cache
         
         # Función helper para manejar valores None
         def safe_int(value):
-            return value if value is not None else 0
+            try:
+                return int(value) if value is not None else 0
+            except (ValueError, TypeError):
+                return 0
         
         def safe_str(value):
-            return value if value is not None else ''
+            try:
+                return str(value) if value is not None else ''
+            except:
+                return ''
         
         # Función helper para obtener atributos que pueden no existir
         def safe_getattr(obj, attr, default=0):
-            return getattr(obj, attr, default) if hasattr(obj, attr) else default
+            try:
+                return getattr(obj, attr, default) if hasattr(obj, attr) else default
+            except:
+                return default
         
-        # Buscar migración en progreso
-        migracion_en_progreso = MigracionLog.objects.filter(
-            estado__in=['iniciada', 'en_progreso']
-        ).first()
+        # Verificar si hay una migración con error reciente (últimos 30 minutos)
+        try:
+            hace_30_minutos = timezone.now() - timedelta(minutes=30)
+            migracion_error = MigracionLog.objects.filter(
+                fecha_inicio__gte=hace_30_minutos,
+                estado='error'
+            ).first()
+        except Exception as e:
+            logger.warning(f"Error buscando migraciones con error: {e}")
+            migracion_error = None
+        
+        if migracion_error:
+            # Hay una migración con error reciente
+            try:
+                total_migrados = (
+                    safe_int(migracion_error.usuarios_migrados) +
+                    safe_int(getattr(migracion_error, 'cursos_academicos_migrados', 0)) +
+                    safe_int(getattr(migracion_error, 'cursos_migrados', 0)) +
+                    safe_int(getattr(migracion_error, 'matriculas_migradas', 0)) +
+                    safe_int(getattr(migracion_error, 'calificaciones_migradas', 0)) +
+                    safe_int(getattr(migracion_error, 'notas_migradas', 0)) +
+                    safe_int(getattr(migracion_error, 'asistencias_migradas', 0))
+                )
+                
+                # Determinar tipo de error basado en el mensaje
+                mensaje_error = safe_str(migracion_error.errores)
+                tipo_error = 'unknown'
+                
+                if 'timeout' in mensaje_error.lower() or 'time' in mensaje_error.lower():
+                    tipo_error = 'timeout'
+                elif 'connection' in mensaje_error.lower() or 'conectar' in mensaje_error.lower():
+                    tipo_error = 'connection'
+                elif 'permission' in mensaje_error.lower() or 'permiso' in mensaje_error.lower():
+                    tipo_error = 'permission'
+                elif 'database' in mensaje_error.lower() or 'base de datos' in mensaje_error.lower():
+                    tipo_error = 'database'
+                
+                data = {
+                    'error_migracion': True,
+                    'en_progreso': False,
+                    'tipo': tipo_error,
+                    'mensaje': mensaje_error,
+                    'mensaje_tecnico': mensaje_error,
+                    'fecha_inicio': migracion_error.fecha_inicio.isoformat() if migracion_error.fecha_inicio else None,
+                    'fecha_error': migracion_error.fecha_fin.isoformat() if migracion_error.fecha_fin else timezone.now().isoformat(),
+                    'total_migrados': total_migrados,
+                    'registros_migrados': total_migrados,
+                    'tablas_inspeccionadas': safe_int(safe_getattr(migracion_error, 'tablas_inspeccionadas', 0)),
+                    'tablas_con_datos': safe_int(safe_getattr(migracion_error, 'tablas_con_datos', 0)),
+                    'tablas_vacias': safe_int(safe_getattr(migracion_error, 'tablas_vacias', 0)),
+                    'total_tablas': safe_int(safe_getattr(migracion_error, 'tablas_inspeccionadas', 0)),
+                    'host_origen': safe_str(safe_getattr(migracion_error, 'host_origen', '')) or 'N/A',
+                    'base_datos_origen': safe_str(safe_getattr(migracion_error, 'base_datos_origen', '')) or 'N/A',
+                }
+                
+                # Calcular progreso alcanzado
+                tablas_procesadas = data['tablas_con_datos'] + data['tablas_vacias']
+                if data['tablas_inspeccionadas'] > 0:
+                    data['progreso_porcentaje'] = int((tablas_procesadas / data['tablas_inspeccionadas']) * 100)
+                else:
+                    data['progreso_porcentaje'] = 0
+                
+                return JsonResponse(data)
+            except Exception as e:
+                logger.error(f"Error procesando migración con error: {e}")
+        
+        # Verificar progreso en cache
+        try:
+            progreso_cache = cache.get('migracion_progreso')
+        except Exception as e:
+            logger.warning(f"Error accediendo al cache: {e}")
+            progreso_cache = None
+        
+        if progreso_cache and progreso_cache.get('en_progreso'):
+            # Verificar si la migración en cache está atascada
+            try:
+                fecha_actualizacion = progreso_cache.get('fecha_actualizacion')
+                if fecha_actualizacion:
+                    ultima_actualizacion = datetime.fromisoformat(fecha_actualizacion.replace('Z', '+00:00'))
+                    if timezone.is_naive(ultima_actualizacion):
+                        ultima_actualizacion = timezone.make_aware(ultima_actualizacion)
+                    
+                    tiempo_sin_actualizacion = timezone.now() - ultima_actualizacion
+                    
+                    # Si han pasado más de 25 minutos sin actualización, considerar como error
+                    if tiempo_sin_actualizacion.total_seconds() > 1500:  # 25 minutos
+                        # Crear un log de error
+                        try:
+                            migracion_log = MigracionLog.objects.filter(
+                                estado__in=['iniciada', 'en_progreso']
+                            ).first()
+                            
+                            if migracion_log:
+                                migracion_log.estado = 'error'
+                                migracion_log.fecha_fin = timezone.now()
+                                migracion_log.errores = f'Migración atascada por más de 25 minutos. Última actualización: {fecha_actualizacion}'
+                                migracion_log.save()
+                        except Exception as e:
+                            logger.error(f"Error actualizando log de migración: {e}")
+                        
+                        # Limpiar cache
+                        try:
+                            cache.delete('migracion_progreso')
+                        except:
+                            pass
+                        
+                        # Retornar error
+                        data = {
+                            'error_migracion': True,
+                            'en_progreso': False,
+                            'tipo': 'timeout',
+                            'mensaje': 'La migración se ha detenido por inactividad prolongada',
+                            'mensaje_tecnico': f'Sin actualizaciones por {int(tiempo_sin_actualizacion.total_seconds() / 60)} minutos',
+                            'tabla_actual': progreso_cache.get('tabla_actual', 'N/A'),
+                            'progreso_porcentaje': progreso_cache.get('progreso_porcentaje', 0),
+                            'fecha_inicio': progreso_cache.get('fecha_inicio'),
+                            'fecha_error': timezone.now().isoformat(),
+                            'tablas_con_datos': progreso_cache.get('tablas_con_datos', 0),
+                            'tablas_vacias': progreso_cache.get('tablas_vacias', 0),
+                            'total_tablas': progreso_cache.get('total_tablas', 0),
+                            'registros_migrados': progreso_cache.get('registros_migrados', 0),
+                            'host_origen': progreso_cache.get('host_origen', 'N/A'),
+                            'base_datos_origen': progreso_cache.get('base_datos_origen', 'N/A'),
+                        }
+                        return JsonResponse(data)
+                        
+            except Exception as e:
+                logger.warning(f"Error verificando tiempo de actualización: {e}")
+            
+            # Usar datos del cache para progreso en tiempo real
+            try:
+                data = {
+                    'en_progreso': True,
+                    'estado': f"Procesando tabla: {progreso_cache.get('tabla_actual', 'N/A')}",
+                    'progreso_real': progreso_cache.get('progreso_porcentaje', 0),
+                    'progreso_porcentaje': progreso_cache.get('progreso_porcentaje', 0),
+                    'tabla_actual': progreso_cache.get('tabla_actual', 'N/A'),
+                    'tabla_numero': progreso_cache.get('tabla_numero', 0),
+                    'total_tablas': progreso_cache.get('total_tablas', 0),
+                    'tablas_con_datos': progreso_cache.get('tablas_con_datos', 0),
+                    'tablas_vacias': progreso_cache.get('tablas_vacias', 0),
+                    'total_migrados': progreso_cache.get('registros_migrados', 0),
+                    'registros_migrados': progreso_cache.get('registros_migrados', 0),
+                    'fecha_actualizacion': progreso_cache.get('fecha_actualizacion'),
+                    'fecha_inicio': progreso_cache.get('fecha_inicio', timezone.now().isoformat()),
+                    'host_origen': progreso_cache.get('host_origen', 'Cache en tiempo real'),
+                    'base_datos_origen': progreso_cache.get('base_datos_origen', 'Migración activa'),
+                }
+                return JsonResponse(data)
+            except Exception as e:
+                logger.error(f"Error procesando datos del cache: {e}")
+        
+        # Buscar migración en progreso en la base de datos
+        try:
+            migracion_en_progreso = MigracionLog.objects.filter(
+                estado__in=['iniciada', 'en_progreso']
+            ).first()
+        except Exception as e:
+            logger.warning(f"Error buscando migración en progreso: {e}")
+            migracion_en_progreso = None
         
         if migracion_en_progreso:
-            # Calcular total de registros migrados
-            total_migrados = (
-                safe_int(migracion_en_progreso.usuarios_migrados) +
-                safe_int(migracion_en_progreso.cursos_academicos_migrados) +
-                safe_int(migracion_en_progreso.cursos_migrados) +
-                safe_int(migracion_en_progreso.matriculas_migradas) +
-                safe_int(migracion_en_progreso.calificaciones_migradas) +
-                safe_int(migracion_en_progreso.notas_migradas) +
-                safe_int(migracion_en_progreso.asistencias_migradas)
-            )
+            # Verificar si la migración está atascada (más de 30 minutos sin cambios)
+            try:
+                tiempo_transcurrido = timezone.now() - migracion_en_progreso.fecha_inicio
+                if tiempo_transcurrido.total_seconds() > 1800:  # 30 minutos
+                    # Marcar como error por timeout
+                    migracion_en_progreso.estado = 'error'
+                    migracion_en_progreso.fecha_fin = timezone.now()
+                    migracion_en_progreso.errores = f'Migración atascada por más de 30 minutos. Iniciada: {migracion_en_progreso.fecha_inicio}'
+                    migracion_en_progreso.save()
+                    
+                    # Retornar como error
+                    total_migrados = safe_int(migracion_en_progreso.usuarios_migrados)
+                    
+                    data = {
+                        'error_migracion': True,
+                        'en_progreso': False,
+                        'tipo': 'timeout',
+                        'mensaje': 'La migración ha excedido el tiempo límite de 30 minutos',
+                        'mensaje_tecnico': f'Tiempo transcurrido: {int(tiempo_transcurrido.total_seconds() / 60)} minutos',
+                        'fecha_inicio': migracion_en_progreso.fecha_inicio.isoformat(),
+                        'fecha_error': timezone.now().isoformat(),
+                        'total_migrados': total_migrados,
+                        'registros_migrados': total_migrados,
+                        'tablas_inspeccionadas': safe_int(safe_getattr(migracion_en_progreso, 'tablas_inspeccionadas', 0)),
+                        'tablas_con_datos': safe_int(safe_getattr(migracion_en_progreso, 'tablas_con_datos', 0)),
+                        'tablas_vacias': safe_int(safe_getattr(migracion_en_progreso, 'tablas_vacias', 0)),
+                        'total_tablas': safe_int(safe_getattr(migracion_en_progreso, 'tablas_inspeccionadas', 0)),
+                        'host_origen': safe_str(safe_getattr(migracion_en_progreso, 'host_origen', '')) or 'N/A',
+                        'base_datos_origen': safe_str(safe_getattr(migracion_en_progreso, 'base_datos_origen', '')) or 'N/A',
+                    }
+                    
+                    # Calcular progreso alcanzado
+                    tablas_procesadas = data['tablas_con_datos'] + data['tablas_vacias']
+                    if data['tablas_inspeccionadas'] > 0:
+                        data['progreso_porcentaje'] = int((tablas_procesadas / data['tablas_inspeccionadas']) * 100)
+                    else:
+                        data['progreso_porcentaje'] = 0
+                    
+                    return JsonResponse(data)
+            except Exception as e:
+                logger.error(f"Error verificando timeout de migración: {e}")
             
-            data = {
-                'en_progreso': True,
-                'estado': safe_str(migracion_en_progreso.estado) or 'iniciada',
-                'fecha_inicio': migracion_en_progreso.fecha_inicio.isoformat() if migracion_en_progreso.fecha_inicio else None,
-                'total_migrados': total_migrados,
-                'tablas_inspeccionadas': safe_int(safe_getattr(migracion_en_progreso, 'tablas_inspeccionadas', 0)),
-                'tablas_con_datos': safe_int(safe_getattr(migracion_en_progreso, 'tablas_con_datos', 0)),
-                'tablas_vacias': safe_int(safe_getattr(migracion_en_progreso, 'tablas_vacias', 0)),
-                'host_origen': safe_str(safe_getattr(migracion_en_progreso, 'host_origen', '')) or 'N/A',
-                'base_datos_origen': safe_str(safe_getattr(migracion_en_progreso, 'base_datos_origen', '')) or 'N/A',
-            }
-        else:
-            # Verificar si hay una migración completada recientemente (últimos 10 minutos)
+            # Migración en progreso normal
+            try:
+                total_migrados = safe_int(migracion_en_progreso.usuarios_migrados)
+                
+                # Calcular progreso basado en tablas procesadas
+                tablas_inspeccionadas = safe_int(safe_getattr(migracion_en_progreso, 'tablas_inspeccionadas', 0))
+                tablas_procesadas = safe_int(safe_getattr(migracion_en_progreso, 'tablas_con_datos', 0)) + safe_int(safe_getattr(migracion_en_progreso, 'tablas_vacias', 0))
+                progreso_real = int((tablas_procesadas / tablas_inspeccionadas) * 100) if tablas_inspeccionadas > 0 else 0
+                
+                data = {
+                    'en_progreso': True,
+                    'estado': safe_str(migracion_en_progreso.estado) or 'iniciada',
+                    'progreso_real': min(progreso_real, 100),
+                    'fecha_inicio': migracion_en_progreso.fecha_inicio.isoformat() if migracion_en_progreso.fecha_inicio else None,
+                    'total_migrados': total_migrados,
+                    'tablas_inspeccionadas': tablas_inspeccionadas,
+                    'tablas_con_datos': safe_int(safe_getattr(migracion_en_progreso, 'tablas_con_datos', 0)),
+                    'tablas_vacias': safe_int(safe_getattr(migracion_en_progreso, 'tablas_vacias', 0)),
+                    'host_origen': safe_str(safe_getattr(migracion_en_progreso, 'host_origen', '')) or 'N/A',
+                    'base_datos_origen': safe_str(safe_getattr(migracion_en_progreso, 'base_datos_origen', '')) or 'N/A',
+                }
+                return JsonResponse(data)
+            except Exception as e:
+                logger.error(f"Error procesando migración en progreso: {e}")
+        
+        # Verificar migración completada recientemente
+        try:
             hace_10_minutos = timezone.now() - timedelta(minutes=10)
             migracion_reciente = MigracionLog.objects.filter(
                 fecha_inicio__gte=hace_10_minutos,
@@ -415,16 +630,7 @@ def estado_migracion_ajax(request):
             ).first()
             
             if migracion_reciente:
-                # Calcular total de registros migrados
-                total_migrados = (
-                    safe_int(migracion_reciente.usuarios_migrados) +
-                    safe_int(migracion_reciente.cursos_academicos_migrados) +
-                    safe_int(migracion_reciente.cursos_migrados) +
-                    safe_int(migracion_reciente.matriculas_migradas) +
-                    safe_int(migracion_reciente.calificaciones_migradas) +
-                    safe_int(migracion_reciente.notas_migradas) +
-                    safe_int(migracion_reciente.asistencias_migradas)
-                )
+                total_migrados = safe_int(migracion_reciente.usuarios_migrados)
                 
                 data = {
                     'en_progreso': False,
@@ -438,21 +644,24 @@ def estado_migracion_ajax(request):
                     'tablas_vacias': safe_int(safe_getattr(migracion_reciente, 'tablas_vacias', 0)),
                     'host_origen': safe_str(safe_getattr(migracion_reciente, 'host_origen', '')) or 'N/A',
                 }
-            else:
-                data = {
-                    'en_progreso': False,
-                    'completada_recientemente': False,
-                    'estado': 'sin_migraciones',
-                    'mensaje': 'No hay migraciones registradas'
-                }
+                return JsonResponse(data)
+        except Exception as e:
+            logger.warning(f"Error buscando migración reciente: {e}")
+        
+        # No hay migraciones
+        data = {
+            'en_progreso': False,
+            'completada_recientemente': False,
+            'estado': 'sin_migraciones',
+            'mensaje': 'No hay migraciones registradas'
+        }
         
         return JsonResponse(data)
+        
     except Exception as e:
         # Log del error para debugging
-        import logging
-        import traceback
-        logger = logging.getLogger(__name__)
         logger.error(f"Error en estado_migracion_ajax: {str(e)}")
+        import traceback
         logger.error(f"Traceback: {traceback.format_exc()}")
         
         # Respuesta de error segura
@@ -463,6 +672,167 @@ def estado_migracion_ajax(request):
             'estado': 'error',
             'mensaje': 'Error al obtener estado de migración'
         })
+
+@login_required
+def cancelar_migracion_ajax(request):
+    """Vista AJAX para cancelar una migración en progreso"""
+    if not tiene_permisos_datos_archivados(request.user):
+        return JsonResponse({'error': 'Sin permisos'}, status=403)
+    
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
+    
+    try:
+        from .models import MigracionLog
+        from django.utils import timezone
+        from django.core.cache import cache
+        
+        # Buscar migración en progreso
+        migracion_en_progreso = MigracionLog.objects.filter(
+            estado__in=['iniciada', 'en_progreso']
+        ).first()
+        
+        if migracion_en_progreso:
+            # Marcar como cancelada
+            migracion_en_progreso.estado = 'cancelada'
+            migracion_en_progreso.fecha_fin = timezone.now()
+            migracion_en_progreso.errores = f'Migración cancelada por el usuario {request.user.username}'
+            migracion_en_progreso.save()
+        
+        # Limpiar cache de progreso
+        cache.delete('migracion_progreso')
+        
+        return JsonResponse({
+            'success': True,
+            'mensaje': 'Migración cancelada correctamente'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error cancelando migración: {str(e)}")
+        
+        return JsonResponse({
+            'error': 'Error al cancelar la migración',
+            'mensaje': str(e)
+        }, status=500)
+
+@login_required
+def continuar_migracion_ajax(request):
+    """Vista AJAX para continuar una migración desde donde se quedó"""
+    if not tiene_permisos_datos_archivados(request.user):
+        return JsonResponse({'error': 'Sin permisos'}, status=403)
+    
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
+    
+    try:
+        from .models import MigracionLog
+        from django.utils import timezone
+        from django.core.cache import cache
+        import json
+        
+        # Obtener datos de la solicitud
+        data = json.loads(request.body)
+        
+        # Buscar la última migración con error
+        migracion_error = MigracionLog.objects.filter(
+            estado='error'
+        ).first()
+        
+        if not migracion_error:
+            return JsonResponse({
+                'error': 'No se encontró una migración con error para continuar'
+            }, status=404)
+        
+        # Obtener configuración de conexión desde la migración anterior
+        host = migracion_error.host_origen
+        database = migracion_error.base_datos_origen
+        
+        # Necesitamos las credenciales del usuario (deberían enviarse en la solicitud)
+        user_db = data.get('user')
+        password_db = data.get('password')
+        port = data.get('port', 3306)
+        
+        if not all([user_db, password_db]):
+            return JsonResponse({
+                'error': 'Se requieren las credenciales de la base de datos para continuar'
+            }, status=400)
+        
+        # Crear nueva migración marcando la anterior como "continuada"
+        migracion_error.errores += f' | Continuada por {request.user.username} el {timezone.now()}'
+        migracion_error.save()
+        
+        # Ejecutar migración en hilo separado
+        def ejecutar_continuacion_migracion():
+            try:
+                from .services import MigracionService
+                servicio = MigracionService(host, database, user_db, password_db, int(port))
+                servicio.inspeccionar_y_migrar_automaticamente(request.user)
+            except Exception as e:
+                logger.error(f"Error en continuación de migración: {e}")
+        
+        import threading
+        thread = threading.Thread(target=ejecutar_continuacion_migracion)
+        thread.daemon = True
+        thread.start()
+        
+        return JsonResponse({
+            'success': True,
+            'mensaje': 'Migración reiniciada correctamente'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error continuando migración: {str(e)}")
+        
+        return JsonResponse({
+            'error': 'Error al continuar la migración',
+            'mensaje': str(e)
+        }, status=500)
+
+@login_required
+def limpiar_cache_migracion(request):
+    """Vista AJAX para limpiar el cache de migración y permitir continuar"""
+    if not tiene_permisos_datos_archivados(request.user):
+        return JsonResponse({'error': 'Sin permisos'}, status=403)
+    
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
+    
+    try:
+        from django.core.cache import cache
+        from .models import MigracionLog
+        from django.utils import timezone
+        
+        # Limpiar cache de progreso de migración
+        cache.delete('migracion_progreso')
+        
+        # Buscar migraciones en estado de error y marcarlas como "reiniciables"
+        migraciones_error = MigracionLog.objects.filter(
+            estado='error',
+            fecha_inicio__gte=timezone.now() - timezone.timedelta(hours=2)  # Últimas 2 horas
+        )
+        
+        for migracion in migraciones_error:
+            # Agregar nota de que se limpió el cache
+            if migracion.errores:
+                migracion.errores += f' | Cache limpiado por {request.user.username} el {timezone.now()}'
+            else:
+                migracion.errores = f'Cache limpiado por {request.user.username} el {timezone.now()}'
+            migracion.save()
+        
+        logger.info(f"Cache de migración limpiado por usuario {request.user.username}")
+        
+        return JsonResponse({
+            'success': True,
+            'mensaje': 'Cache de migración limpiado correctamente. Puede intentar continuar la migración.'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error limpiando cache de migración: {str(e)}")
+        
+        return JsonResponse({
+            'error': 'Error al limpiar el cache de migración',
+            'mensaje': str(e)
+        }, status=500)
 
 @login_required
 def exportar_excel(request, pk):
@@ -1872,8 +2242,8 @@ def combinar_datos_archivados(request):
             
             # Inicializar progreso en cache
             def actualizar_progreso(paso_actual, pasos_completados, pasos_totales=11, **kwargs):
-                # Calcular porcentaje de progreso
-                porcentaje_progreso = min(int((pasos_completados / pasos_totales) * 100), 95) if pasos_totales > 0 else 0
+                # Calcular porcentaje de progreso real (sin limitación artificial)
+                porcentaje_progreso = min(int((pasos_completados / pasos_totales) * 100), 100) if pasos_totales > 0 else 0
                 
                 progreso = {
                     'paso_actual': paso_actual,
@@ -1895,7 +2265,7 @@ def combinar_datos_archivados(request):
                     'tiempo_transcurrido': kwargs.get('tiempo_transcurrido', ''),
                     'tipo_combinacion': 'completa'
                 }
-                cache.set('combinacion_en_progreso', progreso, timeout=600)  # 10 minutos
+                cache.set('combinacion_en_progreso', progreso, timeout=1800)  # Aumentado a 30 minutos
                 logger.info(f"Progreso actualizado: {paso_actual} ({pasos_completados}/{pasos_totales}) - {porcentaje_progreso}%")
                 if kwargs.get('campos_agregados', 0) > 0:
                     logger.info(f"📊 Campos agregados hasta ahora: {kwargs.get('campos_agregados', 0)}")
@@ -2955,10 +3325,33 @@ def estado_combinacion_ajax(request):
         progreso = cache.get('combinacion_en_progreso')
         
         if progreso:
+            # Verificar si el progreso está "trabado" (sin cambios por mucho tiempo)
+            fecha_inicio_str = progreso.get('fecha_inicio')
+            if fecha_inicio_str:
+                try:
+                    from dateutil import parser
+                    fecha_inicio = parser.parse(fecha_inicio_str)
+                    tiempo_transcurrido = timezone.now() - fecha_inicio
+                    
+                    # Si han pasado más de 20 minutos, considerar el proceso trabado
+                    if tiempo_transcurrido.total_seconds() > 1200:  # 20 minutos
+                        logger.warning(f"Proceso de combinación trabado por {tiempo_transcurrido.total_seconds()} segundos")
+                        # Limpiar cache y marcar como error
+                        cache.delete('combinacion_en_progreso')
+                        cache.set('combinacion_error', {
+                            'mensaje': f'El proceso se trabó después de {int(tiempo_transcurrido.total_seconds()/60)} minutos. Esto puede deberse a un gran volumen de datos o problemas de conectividad.',
+                            'fecha_error': timezone.now().isoformat(),
+                            'tiempo_transcurrido': str(tiempo_transcurrido)
+                        }, timeout=300)
+                        progreso = None
+                except Exception as e:
+                    logger.error(f"Error verificando tiempo transcurrido: {e}")
+        
+        if progreso:
             # Calcular progreso real basado en pasos completados
             pasos_completados = progreso.get('pasos_completados', 0)
             pasos_totales = progreso.get('pasos_totales', 8)
-            progreso_real = min(int((pasos_completados / pasos_totales) * 100), 95)
+            progreso_real = min(int((pasos_completados / pasos_totales) * 100), 100) if pasos_totales > 0 else 0
             
             data = {
                 'en_progreso': True,
