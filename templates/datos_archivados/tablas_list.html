@@ -2,6 +2,12 @@
 
 {% block content %}
 <style>
+/* Clase para ocultar elementos - con mayor especificidad que Tailwind */
+.hidden {
+    display: none !important;
+    visibility: hidden !important;
+}
+
 /* Estilos específicos para mantener texto blanco en hover */
 #btnSeleccionarYCombinar:hover,
 #btnConfirmarSeleccionCombinacion:hover {
@@ -707,6 +713,10 @@
                         <button type="button" class="glass-button glass-button-primary hidden" id="btnSeleccionarYCombinar">
                             <span class="material-icons mr-2">merge_type</span>
                             Seleccionar y Combinar
+                        </button>
+                        <button type="button" class="glass-button glass-button-success hidden" id="btnSeleccionarTodas">
+                            <span class="material-icons mr-2">select_all</span>
+                            Seleccionar Todas
                         </button>
                         <button type="button" class="glass-button glass-button-danger opacity-50 hidden" id="btnEliminar">
                             <span class="material-icons mr-2">delete</span>
@@ -2447,6 +2457,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.modoSeleccion = modoSeleccion;
     const btnModoSeleccion = document.getElementById('btnModoSeleccion');
     const btnEliminar = document.getElementById('btnEliminar');
+    const btnSeleccionarTodas = document.getElementById('btnSeleccionarTodas');
     const btnSeleccionarYCombinar = document.getElementById('btnSeleccionarYCombinar');
     const contadorSeleccionadas = document.getElementById('contadorSeleccionadas');
     const checkboxes = document.querySelectorAll('.tabla-checkbox');
@@ -2506,6 +2517,7 @@ document.addEventListener('DOMContentLoaded', function() {
             btnModoSeleccion.classList.remove('glass-button-info');
             btnModoSeleccion.classList.add('glass-button-secondary');
             btnEliminar.classList.remove('hidden');
+            btnSeleccionarTodas.classList.remove('hidden'); // Mostrar botón seleccionar todas
             btnSeleccionarYCombinar.classList.remove('hidden'); // Mostrar botón de seleccionar y combinar
             
             // Mostrar checkboxes
@@ -2536,6 +2548,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Ocultar botones de acción (solo el botón eliminar)
             btnEliminar.classList.add('hidden');
+            btnSeleccionarTodas.classList.add('hidden'); // Ocultar botón seleccionar todas
             
             // El botón "Seleccionar y Combinar" debe volver a su estado inicial: VISIBLE y ACTIVO
             btnSeleccionarYCombinar.classList.remove('hidden'); // Mostrar (estado inicial)
@@ -2642,6 +2655,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 btnEliminar.classList.add('hidden');
                 btnEliminar.classList.add('opacity-50');
                 
+                // Resetear botón "Seleccionar todas"
+                if (btnSeleccionarTodas) {
+                    btnSeleccionarTodas.innerHTML = '<span class="material-icons mr-2">select_all</span>Seleccionar Todas';
+                }
+                
             }, 100);
         }
     });
@@ -2683,6 +2701,40 @@ document.addEventListener('DOMContentLoaded', function() {
             
             actualizarContador();
         });
+    });
+    
+    // Event listener para el botón "Seleccionar todas"
+    btnSeleccionarTodas.addEventListener('click', function() {
+        const checkboxes = document.querySelectorAll('.tabla-checkbox');
+        const todasSeleccionadas = Array.from(checkboxes).every(cb => cb.checked);
+        
+        // Deshabilitar temporalmente los event listeners para evitar conflictos
+        const tempDisabled = true;
+        
+        if (todasSeleccionadas) {
+            // Si todas están seleccionadas, deseleccionar todas
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+                // Remover clases visuales
+                const card = checkbox.closest('.tabla-card');
+                if (card) {
+                    card.classList.remove('seleccionada');
+                }
+            });
+        } else {
+            // Si no todas están seleccionadas, seleccionar todas
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+                // Agregar clases visuales
+                const card = checkbox.closest('.tabla-card');
+                if (card) {
+                    card.classList.add('seleccionada');
+                }
+            });
+        }
+        
+        // Actualizar contador una sola vez al final
+        actualizarContador();
     });
     
     // Permitir seleccionar haciendo clic en la tarjeta (solo en modo selección)
@@ -2767,7 +2819,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Actualizar contador y estado del botón eliminar
     function actualizarContador() {
+        const checkboxes = document.querySelectorAll('.tabla-checkbox');
         const seleccionadas = document.querySelectorAll('.tabla-checkbox:checked').length;
+        const totalTablas = checkboxes.length;
         
         // Buscar el contador directamente por ID
         const contadorElement = document.getElementById('contadorSeleccionadas');
@@ -2800,6 +2854,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     console.warn('⚠️ No se pudo encontrar span del contador - Evitando reconstrucción HTML');
                 }
+            }
+        }
+        
+        // Actualizar el texto del botón "Seleccionar todas"
+        if (btnSeleccionarTodas) {
+            if (seleccionadas === totalTablas && totalTablas > 0) {
+                btnSeleccionarTodas.innerHTML = '<span class="material-icons mr-2">deselect</span>Deseleccionar Todas';
+            } else {
+                btnSeleccionarTodas.innerHTML = '<span class="material-icons mr-2">select_all</span>Seleccionar Todas';
             }
         }
         
