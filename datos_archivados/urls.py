@@ -19,6 +19,9 @@ urlpatterns = [
     # Migración automática
     path('migracion/configurar/', views.configurar_migracion_view, name='configurar_migracion'),
     path('migracion/estado/', views.estado_migracion_ajax, name='estado_migracion'),
+    path('migracion/cancelar/', views.cancelar_migracion_ajax, name='cancelar_migracion'),
+    path('migracion/continuar/', views.continuar_migracion_ajax, name='continuar_migracion'),
+    path('migracion/limpiar-cache/', views.limpiar_cache_migracion, name='limpiar_cache_migracion'),
     
     # Combinación de datos
     path('combinacion/estado/', views.estado_combinacion_ajax, name='estado_combinacion'),
