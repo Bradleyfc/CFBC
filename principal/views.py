@@ -45,7 +45,7 @@ class UsuariosRegistradosView(LoginRequiredMixin, UserPassesTestMixin, ListView)
     context_object_name = 'registros'
 
     def test_func(self):
-        return self.request.user.groups.filter(name='Secretaria').exists()
+        return self.request.user.groups.filter(name='Secretaría').exists()
 
     def get_queryset(self):
         queryset = Registro.objects.all().select_related('user').prefetch_related('user__groups')
@@ -919,7 +919,7 @@ class LoginRedirectView(LoginRequiredMixin, TemplateView):
                     del request.session['usuario_creado_desde']
             
             # Redirección normal según el grupo del usuario
-            if user.groups.filter(name='Profesores').exists() or user.groups.filter(name='Administracion').exists() or user.groups.filter(name='Secretaria').exists():
+            if user.groups.filter(name='Profesores').exists() or user.groups.filter(name='Administración').exists() or user.groups.filter(name='Secretaría').exists():
                 return redirect('principal:profile')  # Redirige a la página de perfil del profesor o el admin
             else:
                 return redirect('principal:cursos')  # Redirige a la página de cursos para otros usuarios
@@ -1004,7 +1004,7 @@ class ProfileView(BaseContextMixin, TemplateView):
             else:
                 context['enrolled_courses'] = Curso.objects.none()
                 context['pending_courses'] = Curso.objects.none()
-        elif group_name in ['Administracion', 'Secretaria']:
+        elif group_name in ['Administración', 'Secretaría']:
             curso_academico_activo = CursoAcademico.objects.filter(activo=True).first()
             if curso_academico_activo:
                 all_courses = Curso.objects.filter(curso_academico=curso_academico_activo)
@@ -1369,8 +1369,8 @@ class CourseUpdateView(BaseContextMixin, UpdateView):
 # Vista para eliminar un curso
 @login_required
 def eliminar_curso(request, curso_id):
-    # Verificar si el usuario pertenece al grupo 'Secretaria'
-    if request.user.groups.filter(name='Secretaria').exists():
+    # Verificar si el usuario pertenece al grupo 'Secretaría'
+    if request.user.groups.filter(name='Secretaría').exists():
         try:
             # Obtener el curso
             curso = Curso.objects.get(id=curso_id)
@@ -1968,10 +1968,10 @@ def undo_last_asistencia(request, course_id):
 
 class SecretariaRequiredMixin(UserPassesTestMixin):
     """
-    Mixin que verifica que el usuario pertenezca al grupo Secretaria.
+    Mixin que verifica que el usuario pertenezca al grupo Secretaría.
     """
     def test_func(self):
-        return self.request.user.groups.filter(name='Secretaria').exists()
+        return self.request.user.groups.filter(name='Secretaría').exists()
 
 class ProfesorRequiredMixin(UserPassesTestMixin):
     """
@@ -1982,7 +1982,7 @@ class ProfesorRequiredMixin(UserPassesTestMixin):
 
 class FormularioAplicacionListView(LoginRequiredMixin, SecretariaRequiredMixin, ListView):
     """
-    Vista para listar los formularios de aplicación creados por el grupo secretaria.
+    Vista para listar los formularios de aplicación creados por el grupo secretaría.
     """
     model = FormularioAplicacion
     template_name = 'formularios/formulario_list.html'
@@ -2638,8 +2638,8 @@ def guardar_pregunta_y_redirigir(request, formulario_id):
     """
     Vista para guardar una pregunta y redirigir a la página de opciones.
     """
-    # Verificar que el usuario pertenezca al grupo 'Secretaria'
-    if not request.user.groups.filter(name='Secretaria').exists():
+    # Verificar que el usuario pertenezca al grupo 'Secretaría'
+    if not request.user.groups.filter(name='Secretaría').exists():
         messages.error(request, 'No tienes permisos para realizar esta acción.')
         return redirect('principal:formulario_list')
     
@@ -2706,8 +2706,8 @@ def eliminar_formulario(request, pk):
     """
     Vista para eliminar un formulario de aplicación.
     """
-    # Verificar que el usuario pertenezca al grupo Secretaria
-    if not request.user.groups.filter(name='Secretaria').exists():
+    # Verificar que el usuario pertenezca al grupo Secretaría
+    if not request.user.groups.filter(name='Secretaría').exists():
         messages.error(request, 'No tienes permisos para realizar esta acción.')
         return redirect('principal:cursos')
     
@@ -2934,8 +2934,8 @@ def exportar_solicitud_excel(request, solicitud_id):
     Vista para exportar los datos de una solicitud individual a Excel.
     Incluye información del estudiante, solicitud y respuestas del formulario.
     """
-    # Verificar permisos - solo profesores y secretarias pueden exportar
-    if not request.user.groups.filter(name__in=['Profesores', 'Secretaria']).exists():
+    # Verificar permisos - solo profesores y secretarías pueden exportar
+    if not request.user.groups.filter(name__in=['Profesores', 'Secretaría']).exists():
         messages.error(request, 'No tienes permisos para exportar esta solicitud.')
         return redirect('principal:solicitudes_list')
     

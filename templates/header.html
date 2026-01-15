@@ -3,9 +3,9 @@
 <div class="container">
   {% elif group_name == 'Profesores' %}
   <div class="container">
-    {% elif group_name == 'Administracion' %}
+    {% elif group_name == 'Administración' %}
     <div class="container">
-      {% elif group_name == 'Secretaria' %}
+      {% elif group_name == 'Secretaría' %}
       <div class="container">
         {% else %}
         <div class="container">
@@ -326,11 +326,11 @@
 
               <ul class="flex flex-wrap justify-center space-x-4 mb-2 md:mb-0 flex-grow mx-4">
                 <li><a href="{% url 'principal:home' %}" class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Inicio</a></li>
-                {% if group_name == 'Secretaria' %}
+                {% if group_name == 'Secretaría' %}
                 <li><a href="{% url 'principal:cursos' %}" class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Administrar Cursos</a></li>
                 <li><a href="{% url 'principal:registro_respuestas_general' %}"
                     class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Registro de Respuestas</a></li>
-                {% elif group_name == 'Administracion' %}
+                {% elif group_name == 'Administración' %}
                 <li><a href="{% url 'principal:cursos' %}" class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Nuestros Cursos</a></li>
                 {% elif group_name == 'Profesores' %}
                 <li><a href="{% url 'principal:cursos' %}" class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Nuestros Cursos</a></li>

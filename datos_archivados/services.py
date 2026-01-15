@@ -941,7 +941,7 @@ class MigracionService:
         cursor = self.connection.cursor(dictionary=True)
         try:
             # Obtener todos los registros de la tabla
-            query = f"SELECT * FROM {nombre_tabla} ORDER BY id DESC LIMIT 1000"  # Limitar para evitar sobrecarga
+            query = f"SELECT * FROM {nombre_tabla} ORDER BY id DESC"  # Sin límite para migrar todos los registros
             cursor.execute(query)
             registros = cursor.fetchall()
             

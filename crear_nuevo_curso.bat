@@ -14,7 +14,7 @@ echo ======================================================
 echo Proceso completado!
 echo ======================================================
 echo.
-echo Recuerde que puede gestionar los cursos academicos desde el panel de administracion.
+echo Recuerde que puede gestionar los cursos academicos desde el panel de administración.
 echo - Activar/desactivar cursos
 echo - Archivar cursos antiguos
 echo - Ver historico de cursos

@@ -146,7 +146,7 @@ Este proyecto cuenta con la siguiente documentación importante:
    - Uso: `python setup_blog_data.py`
 
 4. **setup_editores.py**
-   - Configura editores del sistema
+   - Configura editor del sistema
    - Uso: `python setup_editores.py`
 
 5. **setup_test_data.py**

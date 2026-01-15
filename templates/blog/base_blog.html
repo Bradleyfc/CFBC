@@ -394,10 +394,10 @@
                             <div class="py-1">
                                 {% if user.groups.all|length > 0 %}
                                     {% for group in user.groups.all %}
-                                        {% if group.name == 'Editores' %}
+                                        {% if group.name == 'Editor' %}
                                             <a href="{% url 'blog:panel_editores' %}">
                                                 <span class="material-icons mr-2 text-sm">edit</span>
-                                                Panel de Editores
+                                                Panel de Editor
                                             </a>
                                         {% endif %}
                                     {% endfor %}
@@ -463,9 +463,9 @@
                             <span class="block text-blue-200 px-3 py-1 text-sm">{{ user.username }}</span>
                             {% if user.groups.all|length > 0 %}
                                 {% for group in user.groups.all %}
-                                    {% if group.name == 'Editores' %}
+                                    {% if group.name == 'Editor' %}
                                         <a href="{% url 'blog:panel_editores' %}" class="block glass-nav-link text-center mt-2">
-                                            Panel de Editores
+                                            Panel de Editor
                                         </a>
                                     {% endif %}
                                 {% endfor %}

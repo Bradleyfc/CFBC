@@ -125,15 +125,15 @@ def noticias_por_categoria(request, slug):
 # Función para verificar si el usuario es editor
 def es_editor(user):
     return user.is_authenticated and (
-        user.groups.filter(name='Editores').exists() or 
+        user.groups.filter(name='Editor').exists() or 
         user.is_staff or 
         user.is_superuser
     )
 
-# Vista para el panel de editores
+# Vista para el panel de editor
 @user_passes_test(es_editor)
 def panel_editores(request):
-    """Panel principal para editores"""
+    """Panel principal para editor"""
     # Estadísticas
     total_noticias = Noticia.objects.count()
     noticias_publicadas = Noticia.objects.filter(estado='publicado').count()

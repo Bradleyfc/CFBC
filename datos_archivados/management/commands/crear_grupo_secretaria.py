@@ -3,29 +3,29 @@ from django.contrib.auth.models import Group, User
 
 
 class Command(BaseCommand):
-    help = 'Crea el grupo Secretaria y opcionalmente asigna usuarios'
+    help = 'Crea el grupo Secretaría y opcionalmente asigna usuarios'
 
     def add_arguments(self, parser):
         parser.add_argument(
             '--usuario',
-            help='Username del usuario a agregar al grupo Secretaria'
+            help='Username del usuario a agregar al grupo Secretaría'
         )
         parser.add_argument(
             '--listar',
             action='store_true',
-            help='Lista todos los usuarios del grupo Secretaria'
+            help='Lista todos los usuarios del grupo Secretaría'
         )
 
     def handle(self, *args, **options):
-        # Crear o obtener el grupo Secretaria
-        grupo_secretaria, created = Group.objects.get_or_create(name='Secretaria')
+        # Crear o obtener el grupo Secretaría
+        grupo_secretaria, created = Group.objects.get_or_create(name='Secretaría')
         
         if created:
             self.stdout.write(
-                self.style.SUCCESS('Grupo "Secretaria" creado exitosamente')
+                self.style.SUCCESS('Grupo "Secretaría" creado exitosamente')
             )
         else:
-            self.stdout.write('El grupo "Secretaria" ya existe')
+            self.stdout.write('El grupo "Secretaría" ya existe')
 
         # Si se especifica un usuario, agregarlo al grupo
         if options['usuario']:
@@ -34,7 +34,7 @@ class Command(BaseCommand):
                 usuario.groups.add(grupo_secretaria)
                 self.stdout.write(
                     self.style.SUCCESS(
-                        f'Usuario "{usuario.username}" agregado al grupo Secretaria'
+                        f'Usuario "{usuario.username}" agregado al grupo Secretaría'
                     )
                 )
             except User.DoesNotExist:
@@ -48,20 +48,20 @@ class Command(BaseCommand):
         if options['listar']:
             usuarios_secretaria = User.objects.filter(groups=grupo_secretaria)
             if usuarios_secretaria.exists():
-                self.stdout.write('\nUsuarios en el grupo Secretaria:')
+                self.stdout.write('\nUsuarios en el grupo Secretaría:')
                 for usuario in usuarios_secretaria:
                     self.stdout.write(f'  - {usuario.username} ({usuario.get_full_name()})')
             else:
-                self.stdout.write('No hay usuarios en el grupo Secretaria')
+                self.stdout.write('No hay usuarios en el grupo Secretaría')
 
         # Mostrar información adicional
         total_usuarios = User.objects.filter(groups=grupo_secretaria).count()
-        self.stdout.write(f'\nTotal de usuarios en el grupo Secretaria: {total_usuarios}')
+        self.stdout.write(f'\nTotal de usuarios en el grupo Secretaría: {total_usuarios}')
         
         if total_usuarios == 0:
             self.stdout.write(
                 self.style.WARNING(
-                    '\nPara agregar un usuario al grupo Secretaria, ejecute:'
+                    '\nPara agregar un usuario al grupo Secretaría, ejecute:'
                 )
             )
             self.stdout.write('python manage.py crear_grupo_secretaria --usuario <username>')

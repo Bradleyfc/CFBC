@@ -48,7 +48,7 @@ urlpatterns = [
     path('verify_email/', views.verify_email, name='verify_email'),
     
     # Rutas para el sistema de formularios de aplicación a cursos
-    # Rutas para secretaria
+    # Rutas para secretaría
     path('formularios/', views.FormularioAplicacionListView.as_view(), name='formulario_list'),
     path('formularios/crear/', views.FormularioAplicacionCreateView.as_view(), name='formulario_create'),
     path('formularios/<int:pk>/editar/', views.FormularioAplicacionUpdateView.as_view(), name='formulario_update'),

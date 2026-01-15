@@ -9,6 +9,10 @@ from .models import Registro, User
 @receiver(post_save, sender=Registro)
 def add_user_to_students_group(sender, instance, created, **kwargs):
     if created:
+        # No agregar superusuarios al grupo Estudiantes
+        if instance.user.is_superuser:
+            return
+            
         try:
             students = Group.objects.get(name='Estudiantes')  # nombre del grupo
         except Group.DoesNotExist:

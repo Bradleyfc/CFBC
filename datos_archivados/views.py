@@ -14,12 +14,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 def es_secretaria(user):
-    """Verifica si el usuario pertenece al grupo Secretaria"""
-    return user.groups.filter(name='Secretaria').exists()
+    """Verifica si el usuario pertenece al grupo Secretaría"""
+    return user.groups.filter(name='Secretaría').exists()
 
 def tiene_permisos_datos_archivados(user):
-    """Verifica si el usuario tiene permisos para acceder a datos archivados (Administracion o Admin)"""
-    return (user.groups.filter(name='Administracion').exists() or 
+    """Verifica si el usuario tiene permisos para acceder a datos archivados (Administración o Admin)"""
+    return (user.groups.filter(name='Administración').exists() or 
             user.is_superuser or 
             user.is_staff)
 
@@ -37,7 +37,7 @@ def permisos_datos_archivados_required(view_func):
     return wrapper
 
 class PermisosDataArchivadosRequiredMixin:
-    """Mixin que verifica permisos para datos archivados (Secretaria o Admin)"""
+    """Mixin que verifica permisos para datos archivados (Secretaría o Admin)"""
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             from django.contrib.auth.views import redirect_to_login

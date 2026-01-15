@@ -59,7 +59,7 @@ python manage.py migrate datos_archivados
 
 1. **Acceder al Dashboard**:
    - Ir a `/datos-archivados/`
-   - Solo usuarios del grupo "Secretaria" tienen acceso
+   - Solo usuarios del grupo "Secretaría" tienen acceso
 
 2. **Configurar Migración**:
    - Hacer clic en "Configurar Migración"
@@ -138,7 +138,7 @@ tablas_interes = [t for t in tablas if not t.startswith('django_')
 ## 🚨 Consideraciones de Seguridad
 
 - **Credenciales**: Nunca hardcodear credenciales en el código
-- **Acceso**: Solo usuarios autorizados (grupo "Secretaria") pueden ejecutar migraciones
+- **Acceso**: Solo usuarios autorizados (grupo "Secretaría") pueden ejecutar migraciones
 - **Logs**: Todas las migraciones quedan registradas con usuario y timestamp
 - **Validación**: Se valida la conexión antes de iniciar la migración
 
@@ -151,7 +151,7 @@ tablas_interes = [t for t in tablas if not t.startswith('django_')
 
 ### Error de Permisos
 - Asegurar que el usuario tenga permisos de lectura en todas las tablas
-- Verificar que el usuario Django pertenezca al grupo "Secretaria"
+- Verificar que el usuario Django pertenezca al grupo "Secretaría"
 
 ### Migración Incompleta
 - Revisar logs en el modelo MigracionLog

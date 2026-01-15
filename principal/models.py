@@ -286,7 +286,7 @@ def update_calificaciones_average(sender, instance, **kwargs):
 
 class FormularioAplicacion(models.Model):
     """
-    Modelo para almacenar los formularios de aplicación creados por el grupo secretaria.
+    Modelo para almacenar los formularios de aplicación creados por el grupo secretaría.
     Cada curso puede tener un formulario de aplicación personalizado.
     """
     curso = models.OneToOneField(Curso, on_delete=models.CASCADE, related_name='formulario_aplicacion', verbose_name='Curso')
