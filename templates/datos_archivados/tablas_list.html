@@ -599,6 +599,15 @@
     background: #4b5563;
 }
 
+.glass-button-danger {
+    background: #ef4444;
+    color: white;
+}
+
+.glass-button-danger:hover {
+    background: #dc2626;
+}
+
 /* Scrollbar personalizado para el modal */
 .modal-content-large::-webkit-scrollbar {
     width: 8px;
@@ -1093,9 +1102,13 @@
                 <h4 class="text-lg font-semibold text-gray-800 mb-3">Progreso de Combinación:</h4>
                 <div class="glass-progress-container">
                     <div id="progressBar" class="glass-progress-bar" style="width: 0%">
-                        <span class="glass-progress-text">0%</span>
+                        <div class="glass-progress-content">
+                            <span class="glass-progress-text">0%</span>
+                        </div>
+                        <div class="glass-progress-glow"></div>
                     </div>
                 </div>
+                
                 <div id="progressMessage" class="text-center">
                     <small class="text-gray-600">Iniciando proceso...</small>
                 </div>
@@ -1105,6 +1118,10 @@
             <button type="button" class="glass-button glass-button-secondary" id="btnCancelarCombinacion">
                 <span class="material-icons mr-2">cancel</span>
                 Cancelar
+            </button>
+            <button type="button" class="glass-button glass-button-danger hidden" id="btnInterrumpirCombinacion">
+                <span class="material-icons mr-2">stop</span>
+                Interrumpir Combinación de Datos
             </button>
             <button type="button" class="glass-button glass-button-success" id="btnConfirmarCombinacion">
                 <span class="material-icons mr-2">swap_vert</span>
@@ -1235,9 +1252,13 @@
                 <h4 class="text-lg font-semibold text-gray-800 mb-3">Progreso de Combinación Selectiva:</h4>
                 <div class="glass-progress-container">
                     <div id="progressBarSelectivo" class="glass-progress-bar" style="width: 0%">
-                        <span class="glass-progress-text">0%</span>
+                        <div class="glass-progress-content">
+                            <span class="glass-progress-text">0%</span>
+                        </div>
+                        <div class="glass-progress-glow"></div>
                     </div>
                 </div>
+                
                 <div id="progressMessageSelectivo" class="text-center">
                     <small class="text-gray-600">Iniciando proceso...</small>
                 </div>
@@ -1247,6 +1268,10 @@
             <button type="button" class="glass-button glass-button-secondary" id="btnCancelarSeleccionCombinacion">
                 <span class="material-icons mr-2">cancel</span>
                 Cancelar
+            </button>
+            <button type="button" class="glass-button glass-button-danger hidden" id="btnInterrumpirSeleccionCombinacion">
+                <span class="material-icons mr-2">stop</span>
+                Interrumpir Combinación de Datos
             </button>
             <button type="button" class="glass-button glass-button-primary" id="btnConfirmarSeleccionCombinacion" disabled>
                 <span class="material-icons mr-2">merge_type</span>
@@ -1447,6 +1472,133 @@
         </div>
         <div class="modal-footer">
             <button type="button" class="glass-button glass-button-success" id="btnCerrarModalMigracion">
+                <span class="material-icons mr-2">check</span>
+                Entendido
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Combinación Completada -->
+<div id="modalCombinacionCompletada" class="modal-overlay hidden">
+    <div class="modal-content-large">
+        <div class="modal-header-success">
+            <h3 class="modal-title">
+                <span class="material-icons mr-2">check_circle</span>
+                ¡Combinación Completada Exitosamente!
+            </h3>
+            <button type="button" class="modal-close-btn" id="closeModalCombinacionCompletada">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="glass-alert glass-alert-success mb-6">
+                <span class="material-icons mr-2">celebration</span>
+                <div>
+                    <strong>¡Proceso completado!</strong> Los datos han sido combinados exitosamente con su sistema actual.
+                    <div class="mt-2 text-sm">
+                        <span class="material-icons mr-1 text-sm">schedule</span>
+                        <strong>Tiempo total:</strong> <span id="tiempoCombinacion">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estadísticas de la combinación -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <!-- Registros Combinados -->
+                <div class="glass-card-small">
+                    <div class="glass-content p-4 text-center">
+                        <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-3">
+                            <span class="material-icons text-2xl text-blue-600">merge_type</span>
+                        </div>
+                        <h4 class="text-2xl font-bold text-gray-800 mb-1" id="totalRegistrosCombinados">0</h4>
+                        <p class="text-sm text-gray-600">Registros Combinados</p>
+                    </div>
+                </div>
+
+                <!-- Tablas Procesadas -->
+                <div class="glass-card-small">
+                    <div class="glass-content p-4 text-center">
+                        <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3">
+                            <span class="material-icons text-2xl text-green-600">table_view</span>
+                        </div>
+                        <h4 class="text-2xl font-bold text-gray-800 mb-1" id="tablasProcesadas">0</h4>
+                        <p class="text-sm text-gray-600">Tablas Procesadas</p>
+                    </div>
+                </div>
+
+                <!-- Usuarios Actualizados -->
+                <div class="glass-card-small">
+                    <div class="glass-content p-4 text-center">
+                        <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-3">
+                            <span class="material-icons text-2xl text-purple-600">people</span>
+                        </div>
+                        <h4 class="text-2xl font-bold text-gray-800 mb-1" id="usuariosActualizados">0</h4>
+                        <p class="text-sm text-gray-600">Usuarios Actualizados</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información adicional -->
+            <div class="glass-card mb-4">
+                <div class="glass-content p-4">
+                    <h5 class="font-semibold text-gray-800 mb-3 flex items-center">
+                        <span class="material-icons mr-2">info</span>
+                        Detalles de la Combinación
+                    </h5>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <div class="flex justify-between py-1">
+                                <span class="text-gray-600">Tipo de combinación:</span>
+                                <span class="font-medium" id="tipoCombinacion">--</span>
+                            </div>
+                            <div class="flex justify-between py-1">
+                                <span class="text-gray-600">Grupos creados:</span>
+                                <span class="font-medium" id="gruposCreados">--</span>
+                            </div>
+                            <div class="flex justify-between py-1">
+                                <span class="text-gray-600">Registros exitosos:</span>
+                                <span class="font-medium text-green-600" id="registrosExitosos">--</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between py-1">
+                                <span class="text-gray-600">Registros omitidos:</span>
+                                <span class="font-medium text-yellow-600" id="registrosOmitidos">--</span>
+                            </div>
+                            <div class="flex justify-between py-1">
+                                <span class="text-gray-600">Errores encontrados:</span>
+                                <span class="font-medium text-red-600" id="erroresEncontrados">--</span>
+                            </div>
+                            <div class="flex justify-between py-1">
+                                <span class="text-gray-600">Velocidad promedio:</span>
+                                <span class="font-medium" id="velocidadPromedio">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mensaje de siguiente paso -->
+            <div class="glass-alert glass-alert-info">
+                <span class="material-icons mr-2">lightbulb</span>
+                <div>
+                    <strong>¿Qué sigue?</strong> Los datos han sido integrados exitosamente. Puede revisar los usuarios actualizados en el panel de administración.
+                    <div class="mt-3 flex gap-2">
+                        <a href="/admin/accounts/registro/" class="glass-button glass-button-primary glass-button-sm">
+                            <span class="material-icons mr-1">admin_panel_settings</span>
+                            Ver Usuarios
+                        </a>
+                        <a href="{% url 'datos_archivados:dashboard' %}" class="glass-button glass-button-secondary glass-button-sm">
+                            <span class="material-icons mr-1">dashboard</span>
+                            Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="glass-button glass-button-success" id="btnCerrarModalCombinacion">
                 <span class="material-icons mr-2">check</span>
                 Entendido
             </button>
@@ -1669,6 +1821,28 @@
             rgba(55, 65, 81, 0.15) 100%);
         border-color: rgba(107, 114, 128, 0.5);
         color: #1f2937;
+    }
+
+    .glass-button-danger {
+        background: linear-gradient(135deg, 
+            rgba(239, 68, 68, 0.25) 0%, 
+            rgba(220, 38, 38, 0.15) 50%, 
+            rgba(185, 28, 28, 0.1) 100%);
+        color: #dc2626;
+        border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .glass-button-danger .glass-button-glow {
+        background: radial-gradient(circle, rgba(239, 68, 68, 0.2) 0%, transparent 70%);
+    }
+
+    .glass-button-danger:hover {
+        background: linear-gradient(135deg, 
+            rgba(239, 68, 68, 0.35) 0%, 
+            rgba(220, 38, 38, 0.25) 50%, 
+            rgba(185, 28, 28, 0.15) 100%);
+        border-color: rgba(239, 68, 68, 0.5);
+        color: #b91c1c;
     }
 
     .glass-button-success {
@@ -2038,79 +2212,364 @@
         opacity: 0.5;
     }
 
-    /* Glass Progress Bar */
+    /* Glass Progress Bar - Efectos traslúcidos avanzados como migración */
     .glass-progress-container {
+        position: relative;
         width: 100%;
         height: 32px;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.25) 0%, 
+            rgba(255, 255, 255, 0.1) 50%, 
+            rgba(255, 255, 255, 0.05) 100%
+        );
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
         border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
         box-shadow: 
-            0 4px 16px rgba(0, 0, 0, 0.1),
-            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            0 4px 16px rgba(0, 0, 0, 0.05),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.1);
         overflow: hidden;
-        position: relative;
         margin-bottom: 0.5rem;
     }
 
     .glass-progress-bar {
+        position: relative;
         height: 100%;
         background: linear-gradient(135deg, 
-            rgba(34, 197, 94, 0.8), 
-            rgba(22, 163, 74, 0.9),
-            rgba(21, 128, 61, 0.8)
+            rgba(59, 130, 246, 0.9) 0%, 
+            rgba(37, 99, 235, 0.95) 25%, 
+            rgba(29, 78, 216, 0.9) 50%, 
+            rgba(37, 99, 235, 0.95) 75%, 
+            rgba(59, 130, 246, 0.9) 100%
         );
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
         border-radius: 16px;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         display: flex;
         align-items: center;
         justify-content: center;
-        position: relative;
         box-shadow: 
-            0 2px 8px rgba(34, 197, 94, 0.3),
-            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            0 4px 20px rgba(59, 130, 246, 0.4),
+            0 2px 8px rgba(59, 130, 246, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.1);
         
-        /* Animated gradient effect */
-        background-size: 200% 100%;
-        animation: progressShimmer 2s ease-in-out infinite;
+        /* Efectos de animación avanzados */
+        background-size: 300% 100%;
+        animation: progressShimmerAdvanced 3s ease-in-out infinite;
+        
+        /* Efecto de brillo interno */
+        &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.3), 
+                transparent
+            );
+            animation: progressGlow 2s ease-in-out infinite;
+        }
+    }
+
+    /* Estados de progreso con efectos traslúcidos avanzados */
+    .glass-progress-bar.completed {
+        background: linear-gradient(135deg, 
+            rgba(34, 197, 94, 0.95) 0%, 
+            rgba(22, 163, 74, 0.98) 25%, 
+            rgba(21, 128, 61, 0.95) 50%, 
+            rgba(22, 163, 74, 0.98) 75%, 
+            rgba(34, 197, 94, 0.95) 100%
+        );
+        box-shadow: 
+            0 6px 24px rgba(34, 197, 94, 0.5),
+            0 3px 12px rgba(34, 197, 94, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.5),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+        animation: completedPulseAdvanced 2s ease-in-out;
+    }
+
+    /* Estado de error con efectos traslúcidos */
+    .glass-progress-bar.error {
+        background: linear-gradient(135deg, 
+            rgba(239, 68, 68, 0.9) 0%, 
+            rgba(220, 38, 38, 0.95) 25%, 
+            rgba(185, 28, 28, 0.9) 50%, 
+            rgba(220, 38, 38, 0.95) 75%, 
+            rgba(239, 68, 68, 0.9) 100%
+        );
+        box-shadow: 
+            0 6px 24px rgba(239, 68, 68, 0.4),
+            0 3px 12px rgba(239, 68, 68, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+        animation: errorShakeAdvanced 0.6s ease-in-out;
+    }
+
+    /* Estado inicial con efectos traslúcidos */
+    .glass-progress-bar.initial {
+        background: linear-gradient(135deg, 
+            rgba(107, 114, 128, 0.7) 0%, 
+            rgba(75, 85, 99, 0.8) 25%, 
+            rgba(55, 65, 81, 0.7) 50%, 
+            rgba(75, 85, 99, 0.8) 75%, 
+            rgba(107, 114, 128, 0.7) 100%
+        );
+        box-shadow: 
+            0 4px 16px rgba(107, 114, 128, 0.3),
+            0 2px 8px rgba(107, 114, 128, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+        animation: none;
     }
 
     .glass-progress-text {
         color: white;
         font-size: 0.875rem;
-        font-weight: 600;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-        z-index: 1;
+        font-weight: 700;
+        text-shadow: 
+            0 2px 4px rgba(0, 0, 0, 0.4),
+            0 1px 2px rgba(0, 0, 0, 0.2);
+        z-index: 10;
+        position: relative;
+        letter-spacing: 0.025em;
     }
 
-    /* Progress bar shimmer animation */
-    @keyframes progressShimmer {
+    /* Contenido de la barra de progreso */
+    .glass-progress-content {
+        position: relative;
+        z-index: 3;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+    }
+
+    /* Efecto de brillo interno */
+    .glass-progress-glow {
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, 
+            transparent 0%, 
+            rgba(255, 255, 255, 0.4) 50%, 
+            transparent 100%
+        );
+        border-radius: 16px;
+        animation: progressGlowSweep 3s ease-in-out infinite;
+        z-index: 2;
+    }
+
+    /* Animaciones avanzadas para efectos traslúcidos */
+    @keyframes progressShimmerAdvanced {
         0% {
-            background-position: -200% 0;
+            background-position: -300% 0;
+            transform: scale(1);
         }
         50% {
-            background-position: 200% 0;
+            background-position: 300% 0;
+            transform: scale(1.01);
         }
         100% {
-            background-position: -200% 0;
+            background-position: -300% 0;
+            transform: scale(1);
         }
     }
 
-    /* Enhanced progress bar when completed */
-    .glass-progress-bar.completed {
+    @keyframes progressGlow {
+        0% {
+            left: -100%;
+            opacity: 0;
+        }
+        50% {
+            left: 0%;
+            opacity: 1;
+        }
+        100% {
+            left: 100%;
+            opacity: 0;
+        }
+    }
+
+    @keyframes progressGlowSweep {
+        0% {
+            left: -100%;
+            opacity: 0;
+        }
+        20% {
+            opacity: 0.6;
+        }
+        50% {
+            left: 0%;
+            opacity: 1;
+        }
+        80% {
+            opacity: 0.6;
+        }
+        100% {
+            left: 100%;
+            opacity: 0;
+        }
+    }
+
+    @keyframes completedPulseAdvanced {
+        0% {
+            transform: scale(1);
+            box-shadow: 
+                0 6px 24px rgba(34, 197, 94, 0.5),
+                0 3px 12px rgba(34, 197, 94, 0.3);
+        }
+        25% {
+            transform: scale(1.02);
+            box-shadow: 
+                0 8px 32px rgba(34, 197, 94, 0.7),
+                0 4px 16px rgba(34, 197, 94, 0.5);
+        }
+        50% {
+            transform: scale(1.03);
+            box-shadow: 
+                0 10px 40px rgba(34, 197, 94, 0.8),
+                0 5px 20px rgba(34, 197, 94, 0.6);
+        }
+        75% {
+            transform: scale(1.02);
+            box-shadow: 
+                0 8px 32px rgba(34, 197, 94, 0.7),
+                0 4px 16px rgba(34, 197, 94, 0.5);
+        }
+        100% {
+            transform: scale(1);
+            box-shadow: 
+                0 6px 24px rgba(34, 197, 94, 0.5),
+                0 3px 12px rgba(34, 197, 94, 0.3);
+        }
+    }
+
+    @keyframes errorShakeAdvanced {
+        0%, 100% { 
+            transform: translateX(0) scale(1); 
+            box-shadow: 
+                0 6px 24px rgba(239, 68, 68, 0.4),
+                0 3px 12px rgba(239, 68, 68, 0.2);
+        }
+        10% { 
+            transform: translateX(-8px) scale(1.01); 
+            box-shadow: 
+                0 8px 32px rgba(239, 68, 68, 0.6),
+                0 4px 16px rgba(239, 68, 68, 0.4);
+        }
+        20% { 
+            transform: translateX(8px) scale(1.01); 
+        }
+        30% { 
+            transform: translateX(-6px) scale(1.01); 
+        }
+        40% { 
+            transform: translateX(6px) scale(1.01); 
+        }
+        50% { 
+            transform: translateX(-4px) scale(1.01); 
+        }
+        60% { 
+            transform: translateX(4px) scale(1.01); 
+        }
+        70% { 
+            transform: translateX(-2px) scale(1.005); 
+        }
+        80% { 
+            transform: translateX(2px) scale(1.005); 
+        }
+        90% { 
+            transform: translateX(-1px) scale(1.002); 
+        }
+    }
+
+    /* Estilos para progreso dinámico por porcentaje con efectos traslúcidos */
+    .glass-progress-bar.progress-low {
+        /* Rojo para progreso bajo (0-25%) */
         background: linear-gradient(135deg, 
-            rgba(34, 197, 94, 0.8), 
-            rgba(22, 163, 74, 0.9),
-            rgba(21, 128, 61, 0.8)
+            rgba(239, 68, 68, 0.9) 0%, 
+            rgba(220, 38, 38, 0.95) 25%, 
+            rgba(185, 28, 28, 0.9) 50%, 
+            rgba(220, 38, 38, 0.95) 75%, 
+            rgba(239, 68, 68, 0.9) 100%
         );
         box-shadow: 
-            0 2px 8px rgba(34, 197, 94, 0.3),
-            inset 0 1px 0 rgba(255, 255, 255, 0.3);
-        animation: none;
+            0 4px 20px rgba(239, 68, 68, 0.4),
+            0 2px 10px rgba(239, 68, 68, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    .glass-progress-bar.progress-medium {
+        /* Naranja para progreso medio (26-50%) */
+        background: linear-gradient(135deg, 
+            rgba(245, 158, 11, 0.9) 0%, 
+            rgba(217, 119, 6, 0.95) 25%, 
+            rgba(180, 83, 9, 0.9) 50%, 
+            rgba(217, 119, 6, 0.95) 75%, 
+            rgba(245, 158, 11, 0.9) 100%
+        );
+        box-shadow: 
+            0 4px 20px rgba(245, 158, 11, 0.4),
+            0 2px 10px rgba(245, 158, 11, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    .glass-progress-bar.progress-high {
+        /* Amarillo para progreso alto (51-75%) */
+        background: linear-gradient(135deg, 
+            rgba(234, 179, 8, 0.9) 0%, 
+            rgba(202, 138, 4, 0.95) 25%, 
+            rgba(161, 98, 7, 0.9) 50%, 
+            rgba(202, 138, 4, 0.95) 75%, 
+            rgba(234, 179, 8, 0.9) 100%
+        );
+        box-shadow: 
+            0 4px 20px rgba(234, 179, 8, 0.4),
+            0 2px 10px rgba(234, 179, 8, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    /* Efecto hover para la barra de progreso */
+    .glass-progress-container:hover .glass-progress-bar {
+        transform: scale(1.02);
+        box-shadow: 
+            0 8px 32px rgba(59, 130, 246, 0.5),
+            0 4px 16px rgba(59, 130, 246, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.5),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Animación de pulso para cuando está activa */
+    .glass-progress-bar.progress-active {
+        animation: progressPulseActive 2.5s ease-in-out infinite;
+    }
+
+    @keyframes progressPulseActive {
+        0%, 100% {
+            box-shadow: 
+                0 4px 20px rgba(59, 130, 246, 0.4),
+                0 2px 8px rgba(59, 130, 246, 0.2);
+        }
+        50% {
+            box-shadow: 
+                0 6px 28px rgba(59, 130, 246, 0.6),
+                0 3px 12px rgba(59, 130, 246, 0.4);
+        }
     }
 
     /* Professional Dashboard Links */
@@ -3120,6 +3579,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnCombinar = document.getElementById('btnCombinar');
     const btnConfirmarCombinacion = document.getElementById('btnConfirmarCombinacion');
     const btnCancelarCombinacion = document.getElementById('btnCancelarCombinacion');
+    const btnInterrumpirCombinacion = document.getElementById('btnInterrumpirCombinacion');
     const progressContainer = document.getElementById('progressContainer');
     const progressBar = document.getElementById('progressBar');
     const progressMessage = document.getElementById('progressMessage');
@@ -3142,6 +3602,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Deshabilitar botones
         btnConfirmarCombinacion.disabled = true;
         btnCancelarCombinacion.disabled = true;
+        // Mostrar botón de interrupción y ocultar botón de cancelar
+        btnCancelarCombinacion.classList.add('hidden');
+        btnInterrumpirCombinacion.classList.remove('hidden');
         btnConfirmarCombinacion.innerHTML = '<span class="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>Procesando...';
         
         // Mostrar barra de progreso
@@ -3152,9 +3615,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (progressText) {
             progressText.textContent = '0%';
         }
+        updateProgressBar(progressBar, 0, 'initial');
         
         // Iniciar monitoreo de progreso (optimizado para reducir carga del servidor)
         window.tiempoInicioMonitoreo = Date.now();
+        iniciarContadorTiempo(false); // Iniciar contador de tiempo
         let intervalId = setInterval(verificarEstadoCombinacion, 3000); // Aumentado a 3 segundos para reducir carga
         
         console.log('🚀 Iniciando combinación completa - Timestamp:', new Date().toISOString());
@@ -3190,28 +3655,28 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 // Error al iniciar
                 clearInterval(intervalId);
+                detenerContadorTiempo(false); // Detener contador de tiempo
+                updateProgressBar(progressBar, 0, 'error');
                 progressMessage.innerHTML = `
                     <div class="glass-alert glass-alert-warning mt-4">
                         <span class="material-icons mr-2">warning</span>
                         <strong>Error:</strong> ${data.error || 'Error desconocido'}
                     </div>
                 `;
-                btnConfirmarCombinacion.disabled = false;
-                btnCancelarCombinacion.disabled = false;
-                btnConfirmarCombinacion.innerHTML = '<span class="material-icons mr-2">swap_vert</span>Reintentar';
+                restaurarBotonesCombinacion(false, 'Reintentar');
             }
         })
         .catch(error => {
             clearInterval(intervalId);
+            detenerContadorTiempo(false); // Detener contador de tiempo
+            updateProgressBar(progressBar, 0, 'error');
             progressMessage.innerHTML = `
                 <div class="glass-alert glass-alert-warning mt-4">
                     <span class="material-icons mr-2">warning</span>
                     <strong>Error de conexión:</strong> ${error.message}
                 </div>
             `;
-            btnConfirmarCombinacion.disabled = false;
-            btnCancelarCombinacion.disabled = false;
-            btnConfirmarCombinacion.innerHTML = '<span class="material-icons mr-2">swap_vert</span>Reintentar';
+            restaurarBotonesCombinacion(false, 'Reintentar');
         });
         
         // Función para verificar estado de combinación (con logging mejorado)
@@ -3226,12 +3691,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.log('📊 Estado actual:', data);
                     
                     if (data.en_progreso) {
-                        // Actualizar progreso
+                        // Actualizar progreso con colores dinámicos
                         const progreso = data.progreso_real || 0;
-                        progressBar.style.width = progreso + '%';
-                        const progressText = progressBar.querySelector('.glass-progress-text');
-                        if (progressText) {
-                            progressText.textContent = progreso + '%';
+                        updateProgressBar(progressBar, progreso, 'progress');
+                        
+                        // Actualizar contador de registros combinados
+                        if (data.total_combinados !== undefined) {
+                            actualizarContadorRegistros(data.total_combinados, false);
                         }
                         
                         // Actualizar mensaje de estado con información detallada y diagnóstico
@@ -3277,12 +3743,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Combinación completada (detectada por completada_recientemente o progreso 100%)
                         console.log('✅ Combinación completa terminada - deteniendo polling');
                         clearInterval(intervalId);
-                        progressBar.style.width = '100%';
-                        progressBar.classList.add('completed');
-                        const progressText = progressBar.querySelector('.glass-progress-text');
-                        if (progressText) {
-                            progressText.textContent = '100%';
-                        }
+                        detenerContadorTiempo(false); // Detener contador de tiempo
+                        updateProgressBar(progressBar, 100, 'completed');
                         
                         progressMessage.innerHTML = `
                             <div class="glass-alert glass-alert-success mt-4">
@@ -3299,22 +3761,52 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         `;
                         
-                        // Recargar página después de 3 segundos
+                        // Mostrar modal de combinación completada después de 2 segundos
                         setTimeout(() => {
-                            window.location.reload();
-                        }, 3000);
+                            const tiempoTotal = Date.now() - tiempoInicioCombinacion;
+                            const datosEstadisticas = {
+                                total_combinados: data.total_combinados || data.registros_combinados || 0,
+                                tablas_procesadas: data.tablas_procesadas || 0,
+                                usuarios_actualizados: data.usuarios_combinados || 0,
+                                tipo_combinacion: 'Completa',
+                                grupos_creados: data.grupos_creados || 0,
+                                registros_exitosos: data.registros_exitosos || data.total_combinados || 0,
+                                registros_omitidos: data.registros_omitidos || 0,
+                                errores_encontrados: data.errores_encontrados || 0,
+                                tiempo_total: tiempoTotal
+                            };
+                            mostrarModalCombinacionCompletada(datosEstadisticas);
+                        }, 2000);
+                        
+                        // Recargar página después de cerrar el modal (opcional)
+                        // setTimeout(() => {
+                        //     window.location.reload();
+                        // }, 10000);
                     } else if (data.estado === 'error') {
                         // Error en la combinación
                         clearInterval(intervalId);
+                        detenerContadorTiempo(false); // Detener contador de tiempo
+                        updateProgressBar(progressBar, 0, 'error');
                         progressMessage.innerHTML = `
                             <div class="glass-alert glass-alert-warning mt-4">
                                 <span class="material-icons mr-2">warning</span>
                                 <strong>Error en la combinación:</strong> ${data.mensaje || 'Error desconocido'}
                             </div>
                         `;
-                        btnConfirmarCombinacion.disabled = false;
-                        btnCancelarCombinacion.disabled = false;
-                        btnConfirmarCombinacion.innerHTML = '<span class="material-icons mr-2">swap_vert</span>Reintentar';
+                        restaurarBotonesCombinacion(false, 'Reintentar');
+                    } else if (data.estado === 'interrumpida') {
+                        // Combinación interrumpida por el usuario
+                        clearInterval(intervalId);
+                        detenerContadorTiempo(false); // Detener contador de tiempo
+                        updateProgressBar(progressBar, 0, 'error');
+                        progressMessage.innerHTML = `
+                            <div class="glass-alert glass-alert-info mt-4">
+                                <span class="material-icons mr-2">info</span>
+                                <strong>Combinación interrumpida</strong> por ${data.interrumpida_por || 'el usuario'}
+                                <div class="text-sm mt-1">La combinación fue detenida exitosamente.</div>
+                            </div>
+                        `;
+                        restaurarBotonesCombinacion(false, 'Nueva Combinación');
                     } else {
                         // Estado desconocido o sin combinaciones
                         
@@ -3344,9 +3836,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     </div>
                                 </div>
                             `;
-                            btnConfirmarCombinacion.disabled = false;
-                            btnCancelarCombinacion.disabled = false;
-                            btnConfirmarCombinacion.innerHTML = '<span class="material-icons mr-2">swap_vert</span>Reintentar';
+                            restaurarBotonesCombinacion(false, 'Reintentar');
                         }
                     }
                 })
@@ -3470,6 +3960,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Manejar botón "Seleccionar y Combinar"
     const btnConfirmarSeleccionCombinacion = document.getElementById('btnConfirmarSeleccionCombinacion');
     const btnCancelarSeleccionCombinacion = document.getElementById('btnCancelarSeleccionCombinacion');
+    const btnInterrumpirSeleccionCombinacion = document.getElementById('btnInterrumpirSeleccionCombinacion');
     const progressContainerSelectivo = document.getElementById('progressContainerSelectivo');
     const progressBarSelectivo = document.getElementById('progressBarSelectivo');
     const progressMessageSelectivo = document.getElementById('progressMessageSelectivo');
@@ -4323,6 +4814,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Deshabilitar botones
         btnConfirmarSeleccionCombinacion.disabled = true;
         btnCancelarSeleccionCombinacion.disabled = true;
+        // Mostrar botón de interrupción y ocultar botón de cancelar
+        btnCancelarSeleccionCombinacion.classList.add('hidden');
+        btnInterrumpirSeleccionCombinacion.classList.remove('hidden');
         btnConfirmarSeleccionCombinacion.innerHTML = '<span class="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>Procesando...';
         
         // Mostrar barra de progreso
@@ -4333,9 +4827,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (progressText) {
             progressText.textContent = '0%';
         }
+        updateProgressBar(progressBarSelectivo, 0, 'initial');
         
         // Iniciar monitoreo de progreso (optimizado para reducir carga del servidor)
         window.tiempoInicioMonitoreoSelectivo = Date.now();
+        iniciarContadorTiempo(true); // Iniciar contador de tiempo selectivo
         let intervalId = setInterval(verificarEstadoCombinacionSelectiva, 3000); // Aumentado a 3 segundos para reducir carga
         
         console.log('🚀 Iniciando combinación selectiva - Tablas:', tablasSeleccionadas, '- Timestamp:', new Date().toISOString());
@@ -4374,28 +4870,28 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 // Error al iniciar
                 clearInterval(intervalId);
+                detenerContadorTiempo(true); // Detener contador de tiempo selectivo
+                updateProgressBar(progressBarSelectivo, 0, 'error');
                 progressMessageSelectivo.innerHTML = `
                     <div class="glass-alert glass-alert-warning mt-4">
                         <span class="material-icons mr-2">warning</span>
                         <strong>Error:</strong> ${data.error || 'Error desconocido'}
                     </div>
                 `;
-                btnConfirmarSeleccionCombinacion.disabled = false;
-                btnCancelarSeleccionCombinacion.disabled = false;
-                btnConfirmarSeleccionCombinacion.innerHTML = '<span class="material-icons mr-2">merge_type</span>Reintentar';
+                restaurarBotonesCombinacion(true, 'Reintentar');
             }
         })
         .catch(error => {
             clearInterval(intervalId);
+            detenerContadorTiempo(true); // Detener contador de tiempo selectivo
+            updateProgressBar(progressBarSelectivo, 0, 'error');
             progressMessageSelectivo.innerHTML = `
                 <div class="glass-alert glass-alert-warning mt-4">
                     <span class="material-icons mr-2">warning</span>
                     <strong>Error de conexión:</strong> ${error.message}
                 </div>
             `;
-            btnConfirmarSeleccionCombinacion.disabled = false;
-            btnCancelarSeleccionCombinacion.disabled = false;
-            btnConfirmarSeleccionCombinacion.innerHTML = '<span class="material-icons mr-2">merge_type</span>Reintentar';
+            restaurarBotonesCombinacion(true, 'Reintentar');
         });
         
         // Función para verificar estado de combinación selectiva (con logging mejorado)
@@ -4417,13 +4913,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     if (data.en_progreso) {
                         // Actualizar progreso usando progreso_real del servidor
+                        // Actualizar progreso con colores dinámicos
                         const progreso = Math.min(data.progreso_real || 0, 100);
                         console.log('📊 Actualizando barra de progreso selectiva:', progreso + '%');
-                        progressBarSelectivo.style.width = progreso + '%';
-                        const progressText = progressBarSelectivo.querySelector('.glass-progress-text');
-                        if (progressText) {
-                            progressText.textContent = progreso + '%';
-                        }
+                        updateProgressBar(progressBarSelectivo, progreso, 'progress');
+                        
+                        // Actualizar contador de registros combinados
+                        const totalRegistros = data.registros_combinados || 0;
+                        console.log('📊 Actualizando contador de registros selectivo:', totalRegistros);
+                        actualizarContadorRegistros(totalRegistros, true);
                         
                         // Actualizar mensaje de estado con información detallada y diagnóstico
                         const tiempoTranscurrido = Math.round((Date.now() - window.tiempoInicioMonitoreoSelectivo) / 1000);
@@ -4432,6 +4930,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         const tiempoFormateado = minutosTranscurridos > 0 ? 
                             `${minutosTranscurridos}m ${segundosRestantes}s` : 
                             `${segundosRestantes}s`;
+                        
+                        console.log('📊 Datos de progreso selectivo:', {
+                            usuarios_combinados: data.usuarios_combinados,
+                            registros_combinados: data.registros_combinados,
+                            total_combinados: data.total_combinados,
+                            pasos_completados: data.pasos_completados,
+                            pasos_totales: data.pasos_totales
+                        });
                         
                         // Diagnóstico de rendimiento específico para combinación selectiva
                         let diagnostico = '';
@@ -4455,13 +4961,22 @@ document.addEventListener('DOMContentLoaded', function() {
                                     </div>
                                     <div class="text-sm">
                                         <strong>Progreso:</strong> Paso ${(data && data.pasos_completados) || 0}/${(data && data.pasos_totales) || 0}
-                                        <br><strong>Tablas seleccionadas:</strong> ${tablasSeleccionadas.length} (${Math.round(tiempoPorTabla)}s promedio por tabla)
-                                        ${(data && data.usuarios_combinados > 0) ? `<br><strong>Usuarios procesados:</strong> ${data.usuarios_combinados}` : ''}
-                                        ${(data && data.registros_combinados > 0) ? `<br><strong>Registros procesados:</strong> ${data.registros_combinados}` : ''}
+                                        <br><strong>Tablas seleccionadas:</strong> ${tablasSeleccionadas.length}
+                                        ${(data && data.tabla_actual_procesando) ? `<br><strong>Tabla actual:</strong> ${data.tabla_actual_procesando}` : ''}
+                                        ${(data && data.registros_procesados_tabla && data.total_registros_tabla) ? 
+                                            `<br><strong>Progreso tabla:</strong> ${data.registros_procesados_tabla.toLocaleString()}/${data.total_registros_tabla.toLocaleString()} registros (${data.porcentaje_tabla || 0}%)` : 
+                                            ''
+                                        }
+                                        ${(data && data.usuarios_combinados > 0) ? `<br><strong>Usuarios procesados:</strong> ${data.usuarios_combinados.toLocaleString()}` : ''}
+                                        ${(data && data.registros_combinados > 0) ? `<br><strong>Registros combinados:</strong> ${data.registros_combinados.toLocaleString()}` : ''}
                                     </div>
                                     ${diagnostico}
                                     <div class="mt-2 text-xs text-gray-600 bg-green-50 p-2 rounded">
                                         💡 <strong>Combinación selectiva en progreso:</strong> Procesando solo las tablas que seleccionó.
+                                        ${(data && data.registros_procesados_tabla && data.total_registros_tabla) ? 
+                                            `<br>📊 <strong>Progreso en tiempo real:</strong> Actualizando cada ${data.registros_procesados_tabla < 100 ? '5-10' : '10'} registros procesados.` : 
+                                            ''
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -4470,12 +4985,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Combinación completada (detectada por completada_recientemente o progreso 100%)
                         console.log('✅ Combinación selectiva completada - deteniendo polling');
                         clearInterval(intervalId);
-                        progressBarSelectivo.style.width = '100%';
-                        progressBarSelectivo.classList.add('completed');
-                        const progressText = progressBarSelectivo.querySelector('.glass-progress-text');
-                        if (progressText) {
-                            progressText.textContent = '100%';
-                        }
+                        detenerContadorTiempo(true); // Detener contador de tiempo selectivo
+                        updateProgressBar(progressBarSelectivo, 100, 'completed');
                         
                         progressMessageSelectivo.innerHTML = `
                             <div class="glass-alert glass-alert-success mt-4">
@@ -4493,28 +5004,57 @@ document.addEventListener('DOMContentLoaded', function() {
                         `;
                         
                         // Reactivar botones
-                        btnConfirmarSeleccionCombinacion.disabled = false;
-                        btnCancelarSeleccionCombinacion.disabled = false;
-                        btnConfirmarSeleccionCombinacion.innerHTML = '<span class="material-icons mr-2">merge_type</span>Nueva Combinación';
+                        restaurarBotonesCombinacion(true, 'Nueva Combinación');
                         
-                        // Recargar página después de 3 segundos para mostrar los datos actualizados
+                        // Mostrar modal de combinación completada después de 2 segundos
                         setTimeout(() => {
-                            console.log('🔄 Recargando página para mostrar datos actualizados');
-                            window.location.reload();
-                        }, 3000);
+                            const tiempoTotal = Date.now() - window.tiempoInicioMonitoreoSelectivo;
+                            const datosEstadisticas = {
+                                total_combinados: data.total_combinados || data.registros_combinados || 0,
+                                tablas_procesadas: tablasSeleccionadas.length,
+                                usuarios_actualizados: data.usuarios_combinados || 0,
+                                tipo_combinacion: 'Selectiva',
+                                grupos_creados: data.grupos_creados || 0,
+                                registros_exitosos: data.registros_exitosos || data.total_combinados || 0,
+                                registros_omitidos: data.registros_omitidos || 0,
+                                errores_encontrados: data.errores_encontrados || 0,
+                                tiempo_total: tiempoTotal
+                            };
+                            mostrarModalCombinacionCompletada(datosEstadisticas);
+                        }, 2000);
+                        
+                        // Recargar página después de cerrar el modal (opcional)
+                        // setTimeout(() => {
+                        //     console.log('🔄 Recargando página para mostrar datos actualizados');
+                        //     window.location.reload();
+                        // }, 10000);
                     } else if (data.estado === 'error') {
                         // Error en la combinación selectiva
                         console.log('❌ Error en combinación selectiva - deteniendo polling');
                         clearInterval(intervalId);
+                        detenerContadorTiempo(true); // Detener contador de tiempo selectivo
+                        updateProgressBar(progressBarSelectivo, 0, 'error');
                         progressMessageSelectivo.innerHTML = `
                             <div class="glass-alert glass-alert-warning mt-4">
                                 <span class="material-icons mr-2">warning</span>
                                 <strong>Error en la combinación selectiva:</strong> ${data.mensaje || 'Error desconocido'}
                             </div>
                         `;
-                        btnConfirmarSeleccionCombinacion.disabled = false;
-                        btnCancelarSeleccionCombinacion.disabled = false;
-                        btnConfirmarSeleccionCombinacion.innerHTML = '<span class="material-icons mr-2">merge_type</span>Reintentar';
+                        restaurarBotonesCombinacion(true, 'Reintentar');
+                    } else if (data.estado === 'interrumpida') {
+                        // Combinación selectiva interrumpida por el usuario
+                        console.log('🛑 Combinación selectiva interrumpida - deteniendo polling');
+                        clearInterval(intervalId);
+                        detenerContadorTiempo(true); // Detener contador de tiempo selectivo
+                        updateProgressBar(progressBarSelectivo, 0, 'error');
+                        progressMessageSelectivo.innerHTML = `
+                            <div class="glass-alert glass-alert-info mt-4">
+                                <span class="material-icons mr-2">info</span>
+                                <strong>Combinación selectiva interrumpida</strong> por ${data.interrumpida_por || 'el usuario'}
+                                <div class="text-sm mt-1">La combinación fue detenida exitosamente.</div>
+                            </div>
+                        `;
+                        restaurarBotonesCombinacion(true, 'Nueva Combinación');
                     } else {
                         // Verificar timeout (aumentado a 5 minutos para procesos largos)
                         const tiempoTranscurrido = Date.now() - window.tiempoInicioMonitoreoSelectivo;
@@ -4538,9 +5078,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     </div>
                                 </div>
                             `;
-                            btnConfirmarSeleccionCombinacion.disabled = false;
-                            btnCancelarSeleccionCombinacion.disabled = false;
-                            btnConfirmarSeleccionCombinacion.innerHTML = '<span class="material-icons mr-2">merge_type</span>Reintentar';
+                            restaurarBotonesCombinacion(true, 'Reintentar');
                         }
                     }
                 })
@@ -4563,6 +5101,17 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('btnCancelarCombinacion').addEventListener('click', () => {
         console.log('🔄 Cancelar combinación - Ejecutando reset completo...');
         resetCompleteSystem();
+    });
+    
+    // Event listeners para botones de interrupción
+    document.getElementById('btnInterrumpirCombinacion').addEventListener('click', () => {
+        console.log('🛑 Botón interrumpir combinación presionado');
+        interrumpirCombinacion(false);
+    });
+    
+    document.getElementById('btnInterrumpirSeleccionCombinacion').addEventListener('click', () => {
+        console.log('🛑 Botón interrumpir combinación selectiva presionado');
+        interrumpirCombinacion(true);
     });
     
     document.getElementById('btnCancelarEliminacion').addEventListener('click', () => hideModal('modalConfirmacionEliminacion'));
@@ -4869,7 +5418,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const dependencies = [];
             const config = this.detectedRelations.get(tableName);
             
-            if (config && config.parent) {
+            // IMPORTANTE: Obtener solo tablas disponibles desde MariaDB
+            const availableTables = getAvailableTablesFromMariaDB();
+            
+            if (config && config.parent && availableTables.includes(config.parent)) { // FILTRAR: Solo padres migrados
                 dependencies.push(config.parent);
                 // Recursivamente obtener dependencias del padre
                 const parentDeps = this.getAllDependencies(config.parent, visited);
@@ -5394,6 +5946,9 @@ document.addEventListener('DOMContentLoaded', function() {
         findChildTables(parentTableName, relationshipDetector) {
             const childTables = [];
             
+            // IMPORTANTE: Obtener solo tablas disponibles desde MariaDB
+            const availableTables = getAvailableTablesFromMariaDB();
+            
             // Buscar en las relaciones predefinidas
             const relationshipMap = relationshipDetector.relationshipMap || relationshipDetector.detectedRelations;
             
@@ -5401,12 +5956,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Método 1: Buscar en la configuración de la tabla padre
                 const parentConfig = relationshipMap.get(parentTableName);
                 if (parentConfig && parentConfig.children) {
-                    childTables.push(...parentConfig.children);
+                    // FILTRAR: Solo incluir tablas que realmente fueron migradas desde MariaDB
+                    const validChildren = parentConfig.children.filter(child => availableTables.includes(child));
+                    childTables.push(...validChildren);
                 }
                 
                 // Método 2: Buscar todas las tablas que tienen esta como padre
                 for (const [tableName, config] of relationshipMap.entries()) {
-                    if (config.parent === parentTableName && !childTables.includes(tableName)) {
+                    if (config.parent === parentTableName && 
+                        !childTables.includes(tableName) && 
+                        availableTables.includes(tableName)) { // FILTRAR: Solo tablas migradas
                         childTables.push(tableName);
                     }
                 }
@@ -5417,7 +5976,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const predefinedConfig = relationshipDetector.predefinedRelations[parentTableName];
                 if (predefinedConfig && predefinedConfig.children) {
                     for (const child of predefinedConfig.children) {
-                        if (!childTables.includes(child)) {
+                        if (!childTables.includes(child) && availableTables.includes(child)) { // FILTRAR: Solo tablas migradas
                             childTables.push(child);
                         }
                     }
@@ -5425,13 +5984,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Buscar en todas las relaciones predefinidas
                 for (const [tableName, config] of Object.entries(relationshipDetector.predefinedRelations)) {
-                    if (config.parent === parentTableName && !childTables.includes(tableName)) {
+                    if (config.parent === parentTableName && 
+                        !childTables.includes(tableName) && 
+                        availableTables.includes(tableName)) { // FILTRAR: Solo tablas migradas
                         childTables.push(tableName);
                     }
                 }
             }
             
-            console.log(`🔍 Tablas hijas encontradas para ${parentTableName}:`, childTables);
+            console.log(`🔍 Tablas hijas encontradas para ${parentTableName} (solo MariaDB):`, childTables);
             return childTables;
         }
 
@@ -7055,9 +7616,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     await this.configManager.resetToDefaults();
                     
                     // Reinicializar el sistema
-                    const availableTables = Array.from(document.querySelectorAll('.tabla-card')).map(card => 
-                        card.getAttribute('data-tabla')
-                    ).filter(tabla => tabla);
+                    const availableTables = getAvailableTablesFromMariaDB();
                     
                     await this.initialize(availableTables);
                     
@@ -7153,9 +7712,7 @@ document.addEventListener('DOMContentLoaded', function() {
             modal.id = 'addRelationshipModal';
             
             // Obtener tablas disponibles
-            const availableTables = Array.from(document.querySelectorAll('.tabla-card')).map(card => 
-                card.getAttribute('data-tabla')
-            ).filter(tabla => tabla);
+            const availableTables = getAvailableTablesFromMariaDB();
             
             modal.innerHTML = `
                 <div class="modal-content-large">
@@ -7562,9 +8119,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             try {
                 // Obtener tablas disponibles
-                const availableTables = Array.from(document.querySelectorAll('.tabla-card')).map(card => 
-                    card.getAttribute('data-tabla')
-                ).filter(tabla => tabla);
+                const availableTables = getAvailableTablesFromMariaDB();
                 
                 console.log('📋 Tablas disponibles:', availableTables);
                 
@@ -7694,9 +8249,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return null;
             }
             
-            const availableTables = Array.from(document.querySelectorAll('.tabla-card')).map(card => 
-                card.getAttribute('data-tabla')
-            ).filter(tabla => tabla);
+            const availableTables = getAvailableTablesFromMariaDB();
             
             console.log('🔍 Analizando patrones para:', childTableName);
             console.log('📋 Tablas disponibles para comparar:', availableTables);
@@ -7824,9 +8377,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const relatedTables = [];
             
             // Obtener tablas disponibles
-            const availableTables = Array.from(document.querySelectorAll('.tabla-card')).map(card => 
-                card.getAttribute('data-tabla')
-            ).filter(tabla => tabla && tabla !== excludeTable);
+            const availableTables = getAvailableTablesFromMariaDB(excludeTable);
             
             console.log('📋 Buscando en tablas disponibles:', availableTables);
             
@@ -8273,9 +8824,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log(`💾 Guardando relación: ${parentTable} -> ${childTable}`);
                 
                 // Validar que las tablas existan
-                const availableTables = Array.from(document.querySelectorAll('.tabla-card')).map(card => 
-                    card.getAttribute('data-tabla')
-                ).filter(tabla => tabla);
+                const availableTables = getAvailableTablesFromMariaDB();
                 
                 if (!availableTables.includes(parentTable)) {
                     throw new Error(`Tabla padre "${parentTable}" no encontrada`);
@@ -9106,9 +9655,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Genera sugerencias para tablas faltantes
         generateTableSuggestions(missingTable) {
             // Obtener tablas disponibles
-            const availableTables = Array.from(document.querySelectorAll('.tabla-card')).map(card => 
-                card.getAttribute('data-tabla')
-            ).filter(tabla => tabla);
+            const availableTables = getAvailableTablesFromMariaDB();
 
             // Buscar tablas similares
             const suggestions = [];
@@ -9194,9 +9741,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Muestra tablas disponibles
         showAvailableTables() {
-            const availableTables = Array.from(document.querySelectorAll('.tabla-card')).map(card => 
-                card.getAttribute('data-tabla')
-            ).filter(tabla => tabla);
+            const availableTables = getAvailableTablesFromMariaDB();
 
             const modal = document.createElement('div');
             modal.className = 'modal-overlay';
@@ -10111,13 +10656,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // Inicializar el sistema de relaciones
     let relationshipManager = null;
 
+    // Función centralizada para obtener solo tablas migradas desde MariaDB
+    function getAvailableTablesFromMariaDB(excludeTable = null) {
+        return Array.from(document.querySelectorAll('.tabla-card')).map(card => 
+            card.getAttribute('data-tabla')
+        ).filter(tabla => tabla && 
+            // Excluir tablas que no son de MariaDB (tablas locales de Django)
+            tabla !== 'accounts_registro' &&
+            !tabla.startsWith('django_session') && // Ejemplo de otras tablas locales si las hay
+            // Excluir tabla específica si se proporciona
+            (excludeTable ? tabla !== excludeTable : true)
+        );
+    }
+
     // Función para inicializar el sistema de relaciones
     async function initializeRelationshipSystem() {
         try {
-            // Obtener tablas disponibles
-            const availableTables = Array.from(document.querySelectorAll('.tabla-card')).map(card => 
-                card.getAttribute('data-tabla')
-            ).filter(tabla => tabla);
+            // Obtener tablas disponibles - SOLO tablas migradas desde MariaDB
+            const availableTables = getAvailableTablesFromMariaDB();
             
             console.log('Inicializando sistema de relaciones con tablas:', availableTables);
             
@@ -10442,7 +10998,275 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// Funciones auxiliares para manejar botones de interrupción
+function mostrarBotonInterrupcion(esSelectivo = false) {
+    if (esSelectivo) {
+        btnCancelarSeleccionCombinacion.classList.add('hidden');
+        btnInterrumpirSeleccionCombinacion.classList.remove('hidden');
+    } else {
+        btnCancelarCombinacion.classList.add('hidden');
+        btnInterrumpirCombinacion.classList.remove('hidden');
+    }
+}
+
+function ocultarBotonInterrupcion(esSelectivo = false) {
+    if (esSelectivo) {
+        btnInterrumpirSeleccionCombinacion.classList.add('hidden');
+        btnCancelarSeleccionCombinacion.classList.remove('hidden');
+    } else {
+        btnInterrumpirCombinacion.classList.add('hidden');
+        btnCancelarCombinacion.classList.remove('hidden');
+    }
+}
+
+// Función para interrumpir la combinación
+function interrumpirCombinacion(esSelectivo = false) {
+    console.log(`🛑 Interrumpiendo combinación ${esSelectivo ? 'selectiva' : 'completa'}...`);
+    
+    // Hacer petición para interrumpir el proceso en el servidor
+    fetch('{% url "datos_archivados:interrumpir_combinacion" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            'tipo': esSelectivo ? 'selectiva' : 'completa'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('✅ Respuesta de interrupción:', data);
+        
+        // Detener contadores
+        detenerContadorTiempo(esSelectivo);
+        
+        // Actualizar UI
+        const progressBar = esSelectivo ? progressBarSelectivo : document.getElementById('progressBar');
+        const progressMessage = esSelectivo ? progressMessageSelectivo : document.getElementById('progressMessage');
+        
+        updateProgressBar(progressBar, 0, 'error');
+        
+        progressMessage.innerHTML = `
+            <div class="glass-alert glass-alert-warning mt-4">
+                <span class="material-icons mr-2">stop</span>
+                <strong>Combinación interrumpida:</strong> El proceso ha sido detenido por el usuario.
+            </div>
+        `;
+        
+        // Restaurar botones
+        restaurarBotonesCombinacion(esSelectivo, 'Reiniciar Combinación');
+    })
+    .catch(error => {
+        console.error('❌ Error al interrumpir combinación:', error);
+        
+        // Aún así, detener la UI local
+        detenerContadorTiempo(esSelectivo);
+        restaurarBotonesCombinacion(esSelectivo, 'Reintentar');
+        
+        const progressMessage = esSelectivo ? progressMessageSelectivo : document.getElementById('progressMessage');
+        progressMessage.innerHTML = `
+            <div class="glass-alert glass-alert-warning mt-4">
+                <span class="material-icons mr-2">warning</span>
+                <strong>Error al interrumpir:</strong> ${error.message}. El proceso puede continuar en segundo plano.
+            </div>
+        `;
+    });
+}
+
+function restaurarBotonesCombinacion(esSelectivo = false, textoBoton = 'Reintentar') {
+    if (esSelectivo) {
+        btnConfirmarSeleccionCombinacion.disabled = false;
+        btnCancelarSeleccionCombinacion.disabled = false;
+        btnConfirmarSeleccionCombinacion.innerHTML = `<span class="material-icons mr-2">merge_type</span>${textoBoton}`;
+        ocultarBotonInterrupcion(true);
+    } else {
+        btnConfirmarCombinacion.disabled = false;
+        btnCancelarCombinacion.disabled = false;
+        btnConfirmarCombinacion.innerHTML = `<span class="material-icons mr-2">swap_vert</span>${textoBoton}`;
+        ocultarBotonInterrupcion(false);
+    }
+}
+
+// Función auxiliar para actualizar barras de progreso con efectos traslúcidos avanzados
+function updateProgressBar(progressBar, percentage, state = 'progress') {
+    // Actualizar ancho
+    progressBar.style.width = percentage + '%';
+    
+    // Actualizar texto
+    const progressText = progressBar.querySelector('.glass-progress-text');
+    if (progressText) {
+        progressText.textContent = percentage + '%';
+    }
+    
+    // Limpiar clases anteriores
+    progressBar.classList.remove('initial', 'completed', 'error', 'progress-low', 'progress-medium', 'progress-high', 'progress-active');
+    
+    // Aplicar clase según el estado
+    switch (state) {
+        case 'initial':
+            progressBar.classList.add('initial');
+            // Resetear estilos inline para usar CSS
+            progressBar.style.background = '';
+            progressBar.style.boxShadow = '';
+            break;
+        case 'progress':
+            progressBar.classList.add('progress-active');
+            // Cambiar color según el porcentaje con efectos traslúcidos mejorados
+            if (percentage <= 25) {
+                progressBar.classList.add('progress-low');
+            } else if (percentage <= 50) {
+                progressBar.classList.add('progress-medium');
+            } else if (percentage <= 75) {
+                progressBar.classList.add('progress-high');
+            } else {
+                // Azul para progreso muy alto (76-99%) - usar estilos por defecto
+                progressBar.style.background = '';
+                progressBar.style.boxShadow = '';
+            }
+            break;
+        case 'completed':
+            progressBar.classList.add('completed');
+            // Resetear estilos inline para usar CSS
+            progressBar.style.background = '';
+            progressBar.style.boxShadow = '';
+            break;
+        case 'error':
+            progressBar.classList.add('error');
+            // Resetear estilos inline para usar CSS
+            progressBar.style.background = '';
+            progressBar.style.boxShadow = '';
+            break;
+    }
+}
+
+// Variables globales para contadores
+let tiempoInicioCombinacion = null;
+let intervalTiempo = null;
+let intervalTiempoSelectivo = null;
+
+// Función para iniciar el contador de tiempo
+function iniciarContadorTiempo(esSelectivo = false) {
+    tiempoInicioCombinacion = Date.now();
+    
+    const interval = setInterval(() => {
+        const tiempoTranscurrido = Date.now() - tiempoInicioCombinacion;
+        const minutos = Math.floor(tiempoTranscurrido / 60000);
+        const segundos = Math.floor((tiempoTranscurrido % 60000) / 1000);
+        
+        const tiempoFormateado = `${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
+        
+        // Los contadores de tiempo ahora solo se muestran en las estadísticas principales
+        // No hay elementos individuales que actualizar
+        
+    }, 1000);
+    
+    if (esSelectivo) {
+        intervalTiempoSelectivo = interval;
+    } else {
+        intervalTiempo = interval;
+    }
+}
+
+// Función para detener el contador de tiempo
+function detenerContadorTiempo(esSelectivo = false) {
+    if (esSelectivo && intervalTiempoSelectivo) {
+        clearInterval(intervalTiempoSelectivo);
+        intervalTiempoSelectivo = null;
+    } else if (!esSelectivo && intervalTiempo) {
+        clearInterval(intervalTiempo);
+        intervalTiempo = null;
+    }
+}
+
+// Función para actualizar el contador de registros
+function actualizarContadorRegistros(cantidad, esSelectivo = false) {
+    // Los contadores de registros ahora solo se muestran en las estadísticas principales
+    // Esta función se mantiene para compatibilidad pero no actualiza elementos individuales
+    return;
+}
+
+// Función para mostrar el modal de combinación completada
+function mostrarModalCombinacionCompletada(datosEstadisticas) {
+    const modal = document.getElementById('modalCombinacionCompletada');
+    
+    // Actualizar estadísticas
+    if (datosEstadisticas) {
+        // Estadísticas principales
+        document.getElementById('totalRegistrosCombinados').textContent = (datosEstadisticas.total_combinados || 0).toLocaleString();
+        document.getElementById('tablasProcesadas').textContent = datosEstadisticas.tablas_procesadas || 0;
+        document.getElementById('usuariosActualizados').textContent = (datosEstadisticas.usuarios_actualizados || 0).toLocaleString();
+        
+        // Detalles de la combinación
+        document.getElementById('tipoCombinacion').textContent = datosEstadisticas.tipo_combinacion || 'Completa';
+        document.getElementById('gruposCreados').textContent = datosEstadisticas.grupos_creados || 0;
+        document.getElementById('registrosExitosos').textContent = (datosEstadisticas.registros_exitosos || 0).toLocaleString();
+        document.getElementById('registrosOmitidos').textContent = (datosEstadisticas.registros_omitidos || 0).toLocaleString();
+        document.getElementById('erroresEncontrados').textContent = datosEstadisticas.errores_encontrados || 0;
+        
+        // Calcular velocidad promedio
+        const tiempoTotal = datosEstadisticas.tiempo_total || 1;
+        const velocidad = Math.round((datosEstadisticas.total_combinados || 0) / (tiempoTotal / 1000));
+        document.getElementById('velocidadPromedio').textContent = `${velocidad} reg/seg`;
+        
+        // Tiempo total
+        const minutos = Math.floor(tiempoTotal / 60000);
+        const segundos = Math.floor((tiempoTotal % 60000) / 1000);
+        document.getElementById('tiempoCombinacion').textContent = `${minutos}m ${segundos}s`;
+    }
+    
+    // Mostrar modal con animación
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+}
+
+// Event listeners para el modal de combinación completada
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('modalCombinacionCompletada');
+    const closeBtn = document.getElementById('closeModalCombinacionCompletada');
+    const cerrarBtn = document.getElementById('btnCerrarModalCombinacion');
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        });
+    }
+    
+    if (cerrarBtn) {
+        cerrarBtn.addEventListener('click', () => {
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        });
+    }
+    
+    // Cerrar modal al hacer clic fuera
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+    });
+});
+
 // Hacer la función disponible globalmente
 window.mostrarModalMigracionCompletada = mostrarModalMigracionCompletada;
+window.mostrarModalCombinacionCompletada = mostrarModalCombinacionCompletada;
+window.iniciarContadorTiempo = iniciarContadorTiempo;
+window.detenerContadorTiempo = detenerContadorTiempo;
+window.actualizarContadorRegistros = actualizarContadorRegistros;
+window.interrumpirCombinacion = interrumpirCombinacion;
+window.mostrarBotonInterrupcion = mostrarBotonInterrupcion;
+window.ocultarBotonInterrupcion = ocultarBotonInterrupcion;
+window.restaurarBotonesCombinacion = restaurarBotonesCombinacion;
+window.updateProgressBar = updateProgressBar;
 </script>
 {% endblock %}

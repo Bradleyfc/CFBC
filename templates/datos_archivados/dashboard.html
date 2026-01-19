@@ -1269,7 +1269,19 @@ function actualizarIndicadoresMigracion(data) {
     const tablaActualTexto = document.getElementById('tablaActualTexto');
     if (tablaActualTexto) {
         if (data.tabla_actual) {
-            tablaActualTexto.innerHTML = `<span class="material-icons text-xs mr-1">table_view</span>Procesando: <strong>${data.tabla_actual}</strong>`;
+            // Mostrar progreso de la tabla actual si está disponible
+            if (data.registros_procesados_tabla && data.total_registros_tabla) {
+                const porcentajeTabla = data.porcentaje_tabla || 0;
+                tablaActualTexto.innerHTML = `
+                    <span class="material-icons text-xs mr-1">table_view</span>
+                    Procesando: <strong>${data.tabla_actual}</strong>
+                    <span class="ml-2 text-sm text-blue-600">
+                        ${data.registros_procesados_tabla.toLocaleString()}/${data.total_registros_tabla.toLocaleString()} registros (${porcentajeTabla}%)
+                    </span>
+                `;
+            } else {
+                tablaActualTexto.innerHTML = `<span class="material-icons text-xs mr-1">table_view</span>Procesando: <strong>${data.tabla_actual}</strong>`;
+            }
         } else {
             tablaActualTexto.innerHTML = `<span class="material-icons text-xs mr-1">search</span>Inspeccionando estructura de base de datos...`;
         }
@@ -1369,7 +1381,22 @@ function actualizarIndicadoresMigracion(data) {
     // Actualizar estadísticas en tiempo real
     const registrosMigrados = document.getElementById('registrosMigrados');
     if (registrosMigrados) {
-        registrosMigrados.textContent = (data.total_migrados || data.registros_migrados || 0).toLocaleString();
+        const nuevoValor = data.total_migrados || data.registros_migrados || 0;
+        const valorActual = parseInt(registrosMigrados.textContent.replace(/,/g, '')) || 0;
+        
+        // Solo actualizar si el valor cambió
+        if (nuevoValor !== valorActual) {
+            // Animación de actualización
+            registrosMigrados.style.transform = 'scale(1.1)';
+            registrosMigrados.style.color = '#10b981'; // Verde
+            
+            setTimeout(() => {
+                registrosMigrados.style.transform = 'scale(1)';
+                registrosMigrados.style.color = '#2563eb'; // Azul original
+            }, 300);
+        }
+        
+        registrosMigrados.textContent = nuevoValor.toLocaleString();
     }
     
     const tablasConDatos = document.getElementById('tablasConDatos');

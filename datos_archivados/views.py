@@ -135,6 +135,14 @@ def configurar_migracion_view(request):
         try:
             # Importar servicio aquí para evitar problemas de importación
             from .services import MigracionService
+            from django.core.cache import cache
+            
+            # Limpiar cualquier flag de interrupción residual que pueda interferir
+            cache.delete('combinacion_interrumpida')
+            cache.delete('combinacion_estado_interrupcion')
+            cache.delete('combinacion_interrumpida_info')
+            cache.delete('combinacion_estado')
+            logger.info("🧹 Cache de interrupción limpiado antes de iniciar migración")
             
             # Crear servicio de migración
             servicio = MigracionService(host, database, user, password, int(port))
@@ -539,6 +547,12 @@ def estado_migracion_ajax(request):
                     'fecha_inicio': progreso_cache.get('fecha_inicio', timezone.now().isoformat()),
                     'host_origen': progreso_cache.get('host_origen', 'Cache en tiempo real'),
                     'base_datos_origen': progreso_cache.get('base_datos_origen', 'Migración activa'),
+                    # Campos adicionales para progreso en tiempo real de tabla
+                    'registros_procesados_tabla': progreso_cache.get('registros_procesados_tabla', 0),
+                    'total_registros_tabla': progreso_cache.get('total_registros_tabla', 0),
+                    'porcentaje_tabla': progreso_cache.get('porcentaje_tabla', 0),
+                    'registros_migrados_tabla': progreso_cache.get('registros_migrados_tabla', 0),
+                    'estado_detalle': progreso_cache.get('estado_detalle', 'Procesando...'),
                 }
                 return JsonResponse(data)
             except Exception as e:
@@ -2240,8 +2254,20 @@ def combinar_datos_archivados(request):
             from django.core.cache import cache
             from django.utils import timezone
             
+            # Limpiar cualquier flag de interrupción residual al inicio
+            cache.delete('combinacion_interrumpida')
+            cache.delete('combinacion_estado_interrupcion')
+            cache.delete('combinacion_interrumpida_info')
+            logger.info("🧹 Cache de interrupción limpiado al inicio de combinación")
+            
             # Inicializar progreso en cache
             def actualizar_progreso(paso_actual, pasos_completados, pasos_totales=11, **kwargs):
+                # Verificar si la combinación ha sido interrumpida
+                if cache.get('combinacion_interrumpida'):
+                    logger.info("🛑 Combinación interrumpida por el usuario - deteniendo proceso")
+                    cache.set('combinacion_estado', 'interrumpida', timeout=300)
+                    raise InterruptedError("Combinación interrumpida por el usuario")
+                
                 # Calcular porcentaje de progreso real (sin limitación artificial)
                 porcentaje_progreso = min(int((pasos_completados / pasos_totales) * 100), 100) if pasos_totales > 0 else 0
                 
@@ -2376,6 +2402,27 @@ def combinar_datos_archivados(request):
                                 valor = None
                             elif isinstance(valor, str) and valor.lower() in ['true', 'false']:
                                 valor = valor.lower() == 'true'
+                            elif campo in ['last_login', 'date_joined'] and valor:
+                                # Manejar campos de fecha con timezone
+                                from django.utils import timezone
+                                from datetime import datetime
+                                try:
+                                    if isinstance(valor, str):
+                                        # Parsear la fecha string
+                                        fecha_naive = datetime.fromisoformat(valor.replace('Z', ''))
+                                    elif isinstance(valor, datetime):
+                                        fecha_naive = valor
+                                    else:
+                                        fecha_naive = None
+                                    
+                                    if fecha_naive and timezone.is_naive(fecha_naive):
+                                        valor = timezone.make_aware(fecha_naive)
+                                    elif fecha_naive:
+                                        valor = fecha_naive
+                                except Exception as e:
+                                    if logger:
+                                        logger.warning(f"Error convirtiendo fecha {campo}: {e}")
+                                    valor = None
                             
                             setattr(objeto_destino, campo, valor)
                             campos_copiados += 1
@@ -2509,6 +2556,11 @@ def combinar_datos_archivados(request):
                         
                         transaction.savepoint_commit(sid)
                         
+                    except InterruptedError:
+                        # Interrupción por el usuario - detener completamente el procesamiento
+                        transaction.savepoint_rollback(sid)
+                        logger.info("🛑 Procesamiento de usuarios interrumpido por el usuario")
+                        raise  # Re-lanzar la excepción para detener toda la combinación
                     except Exception as e:
                         transaction.savepoint_rollback(sid)
                         error_msg = f"Error procesando usuario {username}: {str(e)}"
@@ -2596,6 +2648,11 @@ def combinar_datos_archivados(request):
                         
                         transaction.savepoint_commit(sid)
                         
+                    except InterruptedError:
+                        # Interrupción por el usuario - detener completamente el procesamiento
+                        transaction.savepoint_rollback(sid)
+                        logger.info("🛑 Procesamiento de profesores interrumpido por el usuario")
+                        raise  # Re-lanzar la excepción para detener toda la combinación
                     except Exception as e:
                         transaction.savepoint_rollback(sid)
                         error_msg = f"Error procesando profesor: {str(e)}"
@@ -2675,6 +2732,11 @@ def combinar_datos_archivados(request):
                         
                         transaction.savepoint_commit(sid)
                         
+                    except InterruptedError:
+                        # Interrupción por el usuario - detener completamente el procesamiento
+                        transaction.savepoint_rollback(sid)
+                        logger.info("🛑 Procesamiento de estudiantes interrumpido por el usuario")
+                        raise  # Re-lanzar la excepción para detener toda la combinación
                     except Exception as e:
                         transaction.savepoint_rollback(sid)
                         error_msg = f"Error procesando estudiante: {str(e)}"
@@ -2739,8 +2801,50 @@ def combinar_datos_archivados(request):
             actualizar_progreso('Combinando grupos de usuarios...', 3, **estadisticas)
             logger.info("=== Combinando grupos de usuarios ===")
             
+            # Primero, procesar la tabla auth_group para crear los grupos con sus nombres reales
+            datos_auth_group = DatoArchivadoDinamico.objects.filter(tabla_origen='auth_group')
+            logger.info(f"Encontrados {datos_auth_group.count()} grupos archivados")
+            
+            mapeo_grupos = {}  # Para mapear IDs originales a grupos nuevos
+            
+            with transaction.atomic():
+                for dato in datos_auth_group:
+                    try:
+                        sid = transaction.savepoint()
+                        datos = dato.datos_originales
+                        group_id_original = datos.get('id')
+                        group_name = datos.get('name')
+                        
+                        if not group_name:
+                            logger.warning(f"Grupo sin nombre, usando nombre genérico: Grupo_{group_id_original}")
+                            group_name = f'Grupo_{group_id_original}'
+                        
+                        from django.contrib.auth.models import Group
+                        
+                        # Verificar si ya existe un grupo con este nombre
+                        grupo_existente = Group.objects.filter(name=group_name).first()
+                        
+                        if grupo_existente:
+                            # Si el grupo ya existe, usarlo (no crear duplicado)
+                            mapeo_grupos[group_id_original] = grupo_existente
+                            logger.info(f"Grupo existente reutilizado: {group_name} (ID original: {group_id_original})")
+                        else:
+                            # Si no existe, crearlo
+                            grupo = Group.objects.create(name=group_name)
+                            mapeo_grupos[group_id_original] = grupo
+                            logger.info(f"Grupo creado: {group_name} (ID original: {group_id_original})")
+                        
+                        estadisticas['grupos_creados'] = estadisticas.get('grupos_creados', 0) + 1
+                        transaction.savepoint_commit(sid)
+                        
+                    except Exception as e:
+                        transaction.savepoint_rollback(sid)
+                        logger.error(f"Error procesando grupo: {e}")
+                        continue
+            
+            # Luego, procesar auth_user_groups para asignar usuarios a grupos
             datos_grupos = DatoArchivadoDinamico.objects.filter(tabla_origen='auth_user_groups')
-            logger.info(f"Encontrados {datos_grupos.count()} grupos de usuarios archivados")
+            logger.info(f"Encontrados {datos_grupos.count()} relaciones usuario-grupo archivadas")
             
             with transaction.atomic():
                 for dato in datos_grupos:
@@ -2750,33 +2854,73 @@ def combinar_datos_archivados(request):
                         user_id_original = datos.get('user_id')
                         group_id_original = datos.get('group_id')
                         
-                        if user_id_original in mapeo_usuarios:
+                        if user_id_original in mapeo_usuarios and group_id_original in mapeo_grupos:
                             usuario = mapeo_usuarios[user_id_original]
+                            grupo = mapeo_grupos[group_id_original]
                             
-                            # Buscar grupo por ID o crear si no existe
-                            from django.contrib.auth.models import Group
-                            try:
-                                # Intentar encontrar el grupo por nombre común
-                                if group_id_original == 1:
-                                    grupo, _ = Group.objects.get_or_create(name='Estudiantes')
-                                elif group_id_original == 2:
-                                    grupo, _ = Group.objects.get_or_create(name='Profesores')
-                                else:
-                                    grupo, _ = Group.objects.get_or_create(name=f'Grupo_{group_id_original}')
-                                
-                                usuario.groups.add(grupo)
-                                logger.info(f"Usuario {usuario.username} agregado al grupo {grupo.name}")
-                                estadisticas['otras_tablas'] += 1
-                                
-                            except Exception as e:
-                                logger.warning(f"Error asignando grupo: {e}")
+                            usuario.groups.add(grupo)
+                            logger.info(f"Usuario {usuario.username} agregado al grupo {grupo.name}")
+                            estadisticas['relaciones_usuario_grupo'] = estadisticas.get('relaciones_usuario_grupo', 0) + 1
+                        else:
+                            if user_id_original not in mapeo_usuarios:
+                                logger.warning(f"Usuario con ID {user_id_original} no encontrado en mapeo")
+                            if group_id_original not in mapeo_grupos:
+                                logger.warning(f"Grupo con ID {group_id_original} no encontrado en mapeo")
                         
                         transaction.savepoint_commit(sid)
                         
                     except Exception as e:
                         transaction.savepoint_rollback(sid)
-                        logger.error(f"Error procesando grupo de usuario: {e}")
+                        logger.error(f"Error procesando relación usuario-grupo: {e}")
                         continue
+            
+            # PASO 3.5: COMBINAR PERMISOS DIRECTOS DE USUARIOS
+            actualizar_progreso('Combinando permisos directos de usuarios...', 3.5, **estadisticas)
+            logger.info("=== Combinando permisos directos de usuarios ===")
+            
+            datos_user_permissions = DatoArchivadoDinamico.objects.filter(tabla_origen='auth_user_user_permissions')
+            logger.info(f"Encontrados {datos_user_permissions.count()} permisos directos de usuario archivados")
+            
+            if datos_user_permissions.exists():
+                with transaction.atomic():
+                    for dato in datos_user_permissions:
+                        try:
+                            sid = transaction.savepoint()
+                            datos = dato.datos_originales
+                            user_id_original = datos.get('user_id')
+                            permission_id_original = datos.get('permission_id')
+                            
+                            if user_id_original in mapeo_usuarios:
+                                usuario = mapeo_usuarios[user_id_original]
+                                
+                                # Buscar el permiso por ID (los permisos se crean automáticamente por Django)
+                                from django.contrib.auth.models import Permission
+                                try:
+                                    # Intentar encontrar el permiso por ID original
+                                    # Nota: Los IDs de permisos pueden cambiar entre sistemas
+                                    # Por eso es mejor buscar por codename si está disponible
+                                    permission = Permission.objects.filter(id=permission_id_original).first()
+                                    
+                                    if permission:
+                                        usuario.user_permissions.add(permission)
+                                        logger.info(f"Permiso {permission.codename} asignado directamente a usuario {usuario.username}")
+                                        estadisticas['permisos_directos_asignados'] = estadisticas.get('permisos_directos_asignados', 0) + 1
+                                    else:
+                                        logger.warning(f"Permiso con ID {permission_id_original} no encontrado")
+                                        
+                                except Exception as e:
+                                    logger.warning(f"Error asignando permiso directo: {e}")
+                            else:
+                                logger.warning(f"Usuario con ID {user_id_original} no encontrado en mapeo")
+                            
+                            transaction.savepoint_commit(sid)
+                            
+                        except Exception as e:
+                            transaction.savepoint_rollback(sid)
+                            logger.error(f"Error procesando permiso directo de usuario: {e}")
+                            continue
+            else:
+                logger.info("No hay permisos directos de usuario para migrar")
             
             # PASO 4: COMBINAR CURSOS ACADÉMICOS
             actualizar_progreso('Combinando cursos académicos...', 4, **estadisticas)
@@ -3224,7 +3368,7 @@ def combinar_datos_archivados(request):
             
             # Obtener todas las tablas que no hemos procesado específicamente
             tablas_procesadas = {
-                'auth_user', 'auth_user_groups', 
+                'auth_user', 'auth_user_groups', 'auth_group', 'auth_user_user_permissions',
                 'Docencia_studentpersonalinformation', 'Docencia_teacherpersonalinformation', 'accounts_registro'
             }
             
@@ -3274,6 +3418,20 @@ def combinar_datos_archivados(request):
             logger.info(f"Notas individuales combinadas: {estadisticas['notas_combinadas']}")
             logger.info(f"Otras tablas procesadas: {estadisticas['otras_tablas']}")
                 
+        except InterruptedError as e:
+            # Combinación interrumpida por el usuario
+            logger.info(f"🛑 Combinación interrumpida: {str(e)}")
+            
+            cache.delete('combinacion_en_progreso')
+            
+            # Guardar estado de interrupción en cache
+            interrupcion_info = {
+                'estado': 'interrumpida',
+                'mensaje': 'Combinación interrumpida por el usuario',
+                'fecha_interrupcion': timezone.now().isoformat()
+            }
+            cache.set('combinacion_interrumpida_info', interrupcion_info, timeout=300)
+            
         except Exception as e:
             # En caso de error, limpiar cache y registrar error
             logger.error(f"Error en combinación real: {str(e)}")
@@ -3324,6 +3482,25 @@ def estado_combinacion_ajax(request):
         # Buscar combinación en progreso
         progreso = cache.get('combinacion_en_progreso')
         
+        # Verificar si la combinación fue interrumpida
+        interrumpida = cache.get('combinacion_interrumpida')
+        estado_interrupcion = cache.get('combinacion_estado_interrupcion')
+        
+        if interrumpida:
+            # Limpiar cache de progreso si está interrumpida
+            cache.delete('combinacion_en_progreso')
+            
+            data = {
+                'en_progreso': False,
+                'completada_recientemente': False,
+                'estado': 'interrumpida',
+                'progreso_real': 0,
+                'mensaje': 'Combinación interrumpida por el usuario',
+                'interrumpida_por': estado_interrupcion.get('interrumpida_por', 'Usuario') if estado_interrupcion else 'Usuario',
+                'timestamp_interrupcion': estado_interrupcion.get('timestamp') if estado_interrupcion else timezone.now().isoformat()
+            }
+            return JsonResponse(data)
+        
         if progreso:
             # Verificar si el progreso está "trabado" (sin cambios por mucho tiempo)
             fecha_inicio_str = progreso.get('fecha_inicio')
@@ -3360,6 +3537,7 @@ def estado_combinacion_ajax(request):
                 'fecha_inicio': progreso.get('fecha_inicio'),
                 'usuarios_combinados': progreso.get('usuarios_combinados', 0),
                 'registros_combinados': progreso.get('registros_combinados', 0),
+                'total_combinados': progreso.get('registros_combinados', 0),  # Alias para compatibilidad
                 'cursos_academicos_combinados': progreso.get('cursos_academicos_combinados', 0),
                 'cursos_combinados': progreso.get('cursos_combinados', 0),
                 'matriculas_combinadas': progreso.get('matriculas_combinadas', 0),
@@ -3369,6 +3547,11 @@ def estado_combinacion_ajax(request):
                 'otras_tablas': progreso.get('otras_tablas', 0),
                 'pasos_completados': pasos_completados,
                 'pasos_totales': pasos_totales,
+                # Campos adicionales para progreso en tiempo real
+                'tabla_actual_procesando': progreso.get('tabla_actual_procesando', ''),
+                'registros_procesados_tabla': progreso.get('registros_procesados_tabla', 0),
+                'total_registros_tabla': progreso.get('total_registros_tabla', 0),
+                'porcentaje_tabla': progreso.get('porcentaje_tabla', 0),
             }
         else:
             # Verificar si hay una combinación completada recientemente (últimos 10 minutos)
@@ -3394,6 +3577,7 @@ def estado_combinacion_ajax(request):
                     'fecha_fin': resultado_final.get('fecha_fin'),
                     'usuarios_combinados': resultado_final.get('usuarios_combinados', 0),
                     'registros_combinados': resultado_final.get('registros_combinados', 0),
+                    'total_combinados': resultado_final.get('registros_combinados', 0),  # Alias para compatibilidad
                     'cursos_academicos_combinados': resultado_final.get('cursos_academicos_combinados', 0),
                     'cursos_combinados': resultado_final.get('cursos_combinados', 0),
                     'matriculas_combinadas': resultado_final.get('matriculas_combinadas', 0),
@@ -3402,6 +3586,11 @@ def estado_combinacion_ajax(request):
                     'notas_combinadas': resultado_final.get('notas_combinadas', 0),
                     'otras_tablas': resultado_final.get('otras_tablas', 0),
                     'campos_agregados': resultado_final.get('campos_agregados', 0),
+                    # Campos de progreso final
+                    'tabla_actual_procesando': 'Completada',
+                    'registros_procesados_tabla': resultado_final.get('registros_combinados', 0),
+                    'total_registros_tabla': resultado_final.get('registros_combinados', 0),
+                    'porcentaje_tabla': 100,
                 }
             else:
                 data = {
@@ -3430,6 +3619,69 @@ def estado_combinacion_ajax(request):
             'progreso_real': 0,
             'mensaje': 'Error al obtener estado de combinación'
         })
+
+
+@login_required
+def interrumpir_combinacion_ajax(request):
+    """Vista AJAX para interrumpir la combinación en curso"""
+    if not tiene_permisos_datos_archivados(request.user):
+        return JsonResponse({
+            'success': False,
+            'error': 'No tienes permisos para interrumpir combinaciones'
+        }, status=403)
+    
+    if request.method != 'POST':
+        return JsonResponse({
+            'success': False,
+            'error': 'Método no permitido'
+        }, status=405)
+    
+    try:
+        import json
+        import logging
+        from django.utils import timezone
+        
+        logger = logging.getLogger(__name__)
+        data = json.loads(request.body)
+        tipo_combinacion = data.get('tipo', 'completa')
+        
+        # Limpiar el cache de combinación para detener el proceso
+        from django.core.cache import cache
+        
+        # Marcar como interrumpida
+        cache.set('combinacion_interrumpida', True, 300)  # 5 minutos
+        cache.set('combinacion_estado_interrupcion', {
+            'interrumpida_por': request.user.username,
+            'timestamp': timezone.now().isoformat(),
+            'tipo': tipo_combinacion
+        }, 300)
+        
+        # Limpiar estados de progreso
+        cache.delete('combinacion_en_progreso')
+        cache.delete('combinacion_progreso')
+        cache.delete('combinacion_estado')
+        cache.delete('combinacion_completada')
+        
+        logger.info(f"🛑 Combinación {tipo_combinacion} interrumpida por usuario {request.user.username}")
+        
+        return JsonResponse({
+            'success': True,
+            'mensaje': f'Combinación {tipo_combinacion} interrumpida exitosamente',
+            'interrumpida_por': request.user.username,
+            'timestamp': timezone.now().isoformat()
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Datos JSON inválidos'
+        }, status=400)
+    except Exception as e:
+        logger.error(f"❌ Error al interrumpir combinación: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f'Error interno: {str(e)}'
+        }, status=500)
 
 
 @login_required
@@ -3489,8 +3741,20 @@ def combinar_datos_seleccionadas(request):
             from django.core.cache import cache
             from django.utils import timezone
             
+            # Limpiar cualquier flag de interrupción residual al inicio
+            cache.delete('combinacion_interrumpida')
+            cache.delete('combinacion_estado_interrupcion')
+            cache.delete('combinacion_interrumpida_info')
+            logger.info("🧹 Cache de interrupción limpiado al inicio de combinación selectiva")
+            
             # Inicializar progreso en cache (usar clave diferente para no interferir)
             def actualizar_progreso_selectivo(paso_actual, pasos_completados, pasos_totales, **kwargs):
+                # Verificar si la combinación ha sido interrumpida
+                if cache.get('combinacion_interrumpida'):
+                    logger.info("🛑 Combinación selectiva interrumpida por el usuario - deteniendo proceso")
+                    cache.set('combinacion_estado', 'interrumpida', timeout=300)
+                    raise InterruptedError("Combinación selectiva interrumpida por el usuario")
+                
                 progreso = {
                     'paso_actual': paso_actual,
                     'pasos_completados': pasos_completados,
@@ -3510,6 +3774,44 @@ def combinar_datos_seleccionadas(request):
                 }
                 cache.set('combinacion_en_progreso', progreso, timeout=300)  # 5 minutos
                 logger.info(f"Progreso selectivo actualizado: {paso_actual} ({pasos_completados}/{pasos_totales})")
+            
+            # Función helper para actualizar progreso en tiempo real durante procesamiento de registros
+            def actualizar_progreso_tiempo_real(tabla_actual, registros_procesados, total_registros, **kwargs):
+                # Verificar interrupción
+                if cache.get('combinacion_interrumpida'):
+                    logger.info("🛑 Combinación selectiva interrumpida por el usuario - deteniendo proceso")
+                    cache.set('combinacion_estado', 'interrumpida', timeout=300)
+                    raise InterruptedError("Combinación selectiva interrumpida por el usuario")
+                
+                # Calcular porcentaje de la tabla actual
+                porcentaje_tabla = int((registros_procesados / total_registros) * 100) if total_registros > 0 else 0
+                
+                # Crear progreso detallado
+                progreso_detallado = {
+                    'paso_actual': f'Procesando {tabla_actual}: {registros_procesados}/{total_registros} registros ({porcentaje_tabla}%)',
+                    'pasos_completados': kwargs.get('pasos_completados', 0),
+                    'pasos_totales': kwargs.get('pasos_totales', 8),
+                    'fecha_inicio': kwargs.get('fecha_inicio', timezone.now().isoformat()),
+                    'usuarios_combinados': kwargs.get('usuarios_combinados', 0),
+                    'registros_combinados': kwargs.get('registros_combinados', 0),
+                    'cursos_academicos_combinados': kwargs.get('cursos_academicos_combinados', 0),
+                    'cursos_combinados': kwargs.get('cursos_combinados', 0),
+                    'matriculas_combinadas': kwargs.get('matriculas_combinadas', 0),
+                    'asistencias_combinadas': kwargs.get('asistencias_combinadas', 0),
+                    'calificaciones_combinadas': kwargs.get('calificaciones_combinadas', 0),
+                    'notas_combinadas': kwargs.get('notas_combinadas', 0),
+                    'otras_tablas': kwargs.get('otras_tablas', 0),
+                    'tablas_seleccionadas': tablas_seleccionadas,
+                    'tipo_combinacion': 'selectiva',
+                    # Campos específicos de progreso en tiempo real
+                    'tabla_actual_procesando': tabla_actual,
+                    'registros_procesados_tabla': registros_procesados,
+                    'total_registros_tabla': total_registros,
+                    'porcentaje_tabla': porcentaje_tabla,
+                }
+                
+                cache.set('combinacion_en_progreso', progreso_detallado, timeout=300)
+                logger.info(f"📊 Progreso tiempo real: {tabla_actual} {registros_procesados}/{total_registros} ({porcentaje_tabla}%) - Total combinados: {kwargs.get('registros_combinados', 0)}")
             
             # Función para mapear campos de inglés a español
             def mapear_campos_ingles_espanol(datos_origen, logger=None):
@@ -3561,6 +3863,33 @@ def combinar_datos_seleccionadas(request):
                     
                     try:
                         if hasattr(objeto_destino, campo):
+                            # Convertir valores especiales
+                            if valor == 'NULL' or valor == 'null':
+                                valor = None
+                            elif isinstance(valor, str) and valor.lower() in ['true', 'false']:
+                                valor = valor.lower() == 'true'
+                            elif campo in ['last_login', 'date_joined'] and valor:
+                                # Manejar campos de fecha con timezone
+                                from django.utils import timezone
+                                from datetime import datetime
+                                try:
+                                    if isinstance(valor, str):
+                                        # Parsear la fecha string
+                                        fecha_naive = datetime.fromisoformat(valor.replace('Z', ''))
+                                    elif isinstance(valor, datetime):
+                                        fecha_naive = valor
+                                    else:
+                                        fecha_naive = None
+                                    
+                                    if fecha_naive and timezone.is_naive(fecha_naive):
+                                        valor = timezone.make_aware(fecha_naive)
+                                    elif fecha_naive:
+                                        valor = fecha_naive
+                                except Exception as e:
+                                    if logger:
+                                        logger.warning(f"Error convirtiendo fecha {campo}: {e}")
+                                    valor = None
+                            
                             setattr(objeto_destino, campo, valor)
                             campos_copiados += 1
                             if logger:
@@ -3586,6 +3915,9 @@ def combinar_datos_seleccionadas(request):
             
             # Mapeo de usuarios archivados a usuarios actuales
             mapeo_usuarios = {}
+            
+            # Variables para progreso en tiempo real
+            fecha_inicio_proceso = timezone.now().isoformat()
             
             # Calcular pasos totales basado en tablas seleccionadas
             pasos_totales = len(tablas_seleccionadas) + 1  # +1 para finalización
@@ -3643,8 +3975,11 @@ def combinar_datos_seleccionadas(request):
                 
                 if tabla == 'auth_user':
                     # PROCESAR USUARIOS
+                    total_usuarios = len(datos_tabla)
+                    logger.info(f"📊 Iniciando procesamiento de {total_usuarios} usuarios")
+                    
                     with transaction.atomic():
-                        for dato in datos_tabla:
+                        for i, dato in enumerate(datos_tabla, 1):
                             try:
                                 sid = transaction.savepoint()
                                 datos = dato.datos_originales
@@ -3683,6 +4018,7 @@ def combinar_datos_seleccionadas(request):
                                     mapeo_usuarios[user_id_real] = usuario_existente
                                     logger.info(f"✅ Usuario {username} mapeado con ID real: {user_id_real}")
                                     estadisticas['usuarios_combinados'] += 1
+                                    estadisticas['registros_combinados'] += 1
                                     
                                 else:
                                     logger.info(f"Creando nuevo usuario: {username}")
@@ -3703,17 +4039,33 @@ def combinar_datos_seleccionadas(request):
                                             logger.info(f"Contraseña en texto plano hasheada para {username}")
                                     else:
                                         nuevo_usuario.set_unusable_password()
-                                        logger.info(f"Contraseña no utilizable asignada para {username}")
-                                    
-                                    nuevo_usuario.save()
-                                    # USAR EL ID REAL DE LOS DATOS ORIGINALES
-                                    user_id_real = datos.get('id')  # ID real de la tabla auth_user
-                                    mapeo_usuarios[user_id_real] = nuevo_usuario
-                                    logger.info(f"✅ Usuario {username} mapeado con ID real: {user_id_real}")
-                                    estadisticas['usuarios_combinados'] += 1
+                                
+                                # Actualizar progreso en tiempo real cada 10 registros o al final
+                                if i % 10 == 0 or i == total_usuarios:
+                                    actualizar_progreso_tiempo_real(
+                                        tabla_actual='auth_user',
+                                        registros_procesados=i,
+                                        total_registros=total_usuarios,
+                                        pasos_completados=paso_actual,
+                                        pasos_totales=pasos_totales,
+                                        fecha_inicio=fecha_inicio_proceso,
+                                        **estadisticas
+                                    )
+                                
+                                nuevo_usuario.save()
+                                # USAR EL ID REAL DE LOS DATOS ORIGINALES
+                                user_id_real = datos.get('id')  # ID real de la tabla auth_user
+                                mapeo_usuarios[user_id_real] = nuevo_usuario
+                                logger.info(f"✅ Usuario {username} mapeado con ID real: {user_id_real}")
+                                estadisticas['usuarios_combinados'] += 1
                                 
                                 transaction.savepoint_commit(sid)
                                 
+                            except InterruptedError:
+                                # Interrupción por el usuario - detener completamente el procesamiento
+                                transaction.savepoint_rollback(sid)
+                                logger.info("🛑 Procesamiento selectivo de usuarios interrumpido por el usuario")
+                                raise  # Re-lanzar la excepción para detener toda la combinación
                             except Exception as e:
                                 transaction.savepoint_rollback(sid)
                                 error_msg = f"Error procesando usuario {username}: {str(e)}"
@@ -3725,8 +4077,11 @@ def combinar_datos_seleccionadas(request):
                     logger.info("Procesando información de profesores...")
                     grupo_profesores, _ = Group.objects.get_or_create(name='Profesores')
                     
+                    total_profesores = len(datos_tabla)
+                    logger.info(f"📊 Iniciando procesamiento de {total_profesores} profesores")
+                    
                     with transaction.atomic():
-                        for dato in datos_tabla:
+                        for i, dato in enumerate(datos_tabla, 1):
                             try:
                                 sid = transaction.savepoint()
                                 datos = dato.datos_originales
@@ -3765,6 +4120,23 @@ def combinar_datos_seleccionadas(request):
                                 
                                 transaction.savepoint_commit(sid)
                                 
+                                # Actualizar progreso en tiempo real cada 5 registros o al final
+                                if i % 5 == 0 or i == total_profesores:
+                                    actualizar_progreso_tiempo_real(
+                                        tabla_actual='Docencia_teacherpersonalinformation',
+                                        registros_procesados=i,
+                                        total_registros=total_profesores,
+                                        pasos_completados=paso_actual,
+                                        pasos_totales=pasos_totales,
+                                        fecha_inicio=fecha_inicio_proceso,
+                                        **estadisticas
+                                    )
+                                
+                            except InterruptedError:
+                                # Interrupción por el usuario - detener completamente el procesamiento
+                                transaction.savepoint_rollback(sid)
+                                logger.info("🛑 Procesamiento selectivo de profesores interrumpido por el usuario")
+                                raise  # Re-lanzar la excepción para detener toda la combinación
                             except Exception as e:
                                 transaction.savepoint_rollback(sid)
                                 error_msg = f"Error procesando profesor: {str(e)}"
@@ -3776,8 +4148,11 @@ def combinar_datos_seleccionadas(request):
                     logger.info("Procesando información de estudiantes...")
                     grupo_estudiantes, _ = Group.objects.get_or_create(name='Estudiantes')
                     
+                    total_estudiantes = len(datos_tabla)
+                    logger.info(f"📊 Iniciando procesamiento de {total_estudiantes} estudiantes")
+                    
                     with transaction.atomic():
-                        for dato in datos_tabla:
+                        for i, dato in enumerate(datos_tabla, 1):
                             try:
                                 sid = transaction.savepoint()
                                 datos = dato.datos_originales
@@ -3816,6 +4191,23 @@ def combinar_datos_seleccionadas(request):
                                 
                                 transaction.savepoint_commit(sid)
                                 
+                                # Actualizar progreso en tiempo real cada 10 registros o al final
+                                if i % 10 == 0 or i == total_estudiantes:
+                                    actualizar_progreso_tiempo_real(
+                                        tabla_actual='Docencia_studentpersonalinformation',
+                                        registros_procesados=i,
+                                        total_registros=total_estudiantes,
+                                        pasos_completados=paso_actual,
+                                        pasos_totales=pasos_totales,
+                                        fecha_inicio=fecha_inicio_proceso,
+                                        **estadisticas
+                                    )
+                                
+                            except InterruptedError:
+                                # Interrupción por el usuario - detener completamente el procesamiento
+                                transaction.savepoint_rollback(sid)
+                                logger.info("🛑 Procesamiento selectivo de estudiantes interrumpido por el usuario")
+                                raise  # Re-lanzar la excepción para detener toda la combinación
                             except Exception as e:
                                 transaction.savepoint_rollback(sid)
                                 error_msg = f"Error procesando estudiante: {str(e)}"
@@ -3887,23 +4279,16 @@ def combinar_datos_seleccionadas(request):
                                     if user_id_original in mapeo_usuarios:
                                         usuario = mapeo_usuarios[user_id_original]
                                         
-                                        # Buscar grupo por ID o crear si no existe
-                                        from django.contrib.auth.models import Group
-                                        try:
-                                            # Intentar encontrar el grupo por nombre común
-                                            if group_id_original == 1:
-                                                grupo, _ = Group.objects.get_or_create(name='Estudiantes')
-                                            elif group_id_original == 2:
-                                                grupo, _ = Group.objects.get_or_create(name='Profesores')
-                                            else:
-                                                grupo, _ = Group.objects.get_or_create(name=f'Grupo_{group_id_original}')
-                                            
+                                        # USAR EL MAPEO DE GRUPOS CREADO ANTERIORMENTE
+                                        if group_id_original in mapeo_grupos:
+                                            grupo = mapeo_grupos[group_id_original]
                                             usuario.groups.add(grupo)
                                             logger.info(f"Usuario {usuario.username} agregado al grupo {grupo.name}")
                                             estadisticas['otras_tablas'] += 1
-                                            
-                                        except Exception as e:
-                                            logger.warning(f"Error asignando grupo: {e}")
+                                        else:
+                                            logger.warning(f"Grupo con ID {group_id_original} no encontrado en mapeo")
+                                    else:
+                                        logger.warning(f"Usuario con ID {user_id_original} no encontrado en mapeo")
                                     
                                     transaction.savepoint_commit(sid)
                                     
@@ -4328,6 +4713,21 @@ def combinar_datos_seleccionadas(request):
             logger.info(f"Notas individuales combinadas: {estadisticas['notas_combinadas']}")
             logger.info(f"Otras tablas procesadas: {estadisticas['otras_tablas']}")
                 
+        except InterruptedError as e:
+            # Combinación selectiva interrumpida por el usuario
+            logger.info(f"🛑 Combinación selectiva interrumpida: {str(e)}")
+            
+            cache.delete('combinacion_en_progreso')
+            
+            # Guardar estado de interrupción en cache
+            interrupcion_info = {
+                'estado': 'interrumpida',
+                'mensaje': 'Combinación selectiva interrumpida por el usuario',
+                'fecha_interrupcion': timezone.now().isoformat(),
+                'tipo_combinacion': 'selectiva'
+            }
+            cache.set('combinacion_interrumpida_info', interrupcion_info, timeout=300)
+            
         except Exception as e:
             # En caso de error, limpiar cache y registrar error
             logger.error(f"Error en combinación selectiva: {str(e)}")

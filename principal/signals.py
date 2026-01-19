@@ -73,7 +73,11 @@ def crear_grupos_por_defecto(sender, **kwargs):
 def crear_grupos_al_crear_superusuario(sender, instance, created, **kwargs):
     """
     Crea grupos automáticamente cuando se crea un superusuario
+    DESACTIVADO: Para permitir que la migración de MariaDB cree los grupos correctamente
     """
+    # DESACTIVADO: No crear grupos automáticamente para evitar conflictos con migración
+    return
+    
     if not created or not instance.is_superuser:
         return
     

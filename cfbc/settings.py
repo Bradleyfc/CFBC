@@ -194,3 +194,9 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Configuración del remitente por defecto
 DEFAULT_FROM_EMAIL = 'Centro Fray Bartolome de las Casas <noreply@cfbc.edu.ni>'
+
+# Configuración para manejar grandes cantidades de datos en formularios
+# Aumentar límites para evitar errores al procesar muchos registros
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000  # Por defecto es 1000
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB (por defecto es 2.5MB)
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB (por defecto es 2.5MB)
