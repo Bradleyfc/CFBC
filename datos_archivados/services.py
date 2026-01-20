@@ -9,6 +9,13 @@ import logging
 import json
 from datetime import datetime, date
 from decimal import Decimal
+from .config_migracion import (
+    LOTE_ACTUALIZACION_PROGRESO, 
+    LOTE_CONTEO_REGISTROS,
+    TIMEOUT_MIGRACION_MINUTOS,
+    LOG_CADA_N_REGISTROS,
+    USAR_TRANSACCIONES_ATOMICAS
+)
 
 logger = logging.getLogger(__name__)
 
@@ -898,18 +905,19 @@ class MigracionService:
                     self.migration_log.tablas_con_datos = tablas_con_datos
                     self.migration_log.tablas_vacias = tablas_vacias
                     
-                    # Contar registros migrados hasta ahora
-                    from .models import DatoArchivadoDinamico
-                    try:
-                        registros_actuales = DatoArchivadoDinamico.objects.filter(
-                            fecha_migracion__gte=self.migration_log.fecha_inicio
-                        ).count()
-                        self.migration_log.usuarios_migrados = registros_actuales
-                        registros_nuevos_migrados = registros_actuales
-                        self.migration_log.save()
-                    except Exception as e:
-                        logger.error(f"Error contando registros migrados: {e}")
-                        # Continuar sin actualizar el conteo
+                    # Contar registros migrados hasta ahora - usar configuración optimizada
+                    if i % LOTE_CONTEO_REGISTROS == 0 or i == total_tablas:
+                        from .models import DatoArchivadoDinamico
+                        try:
+                            registros_actuales = DatoArchivadoDinamico.objects.filter(
+                                fecha_migracion__gte=self.migration_log.fecha_inicio
+                            ).count()
+                            self.migration_log.usuarios_migrados = registros_actuales
+                            registros_nuevos_migrados = registros_actuales
+                            self.migration_log.save()
+                        except Exception as e:
+                            logger.error(f"Error contando registros migrados: {e}")
+                            # Continuar sin actualizar el conteo
                     
                     # Actualizar progreso después de procesar la tabla
                     actualizar_progreso_migracion(nombre_tabla, i, total_tablas, registros_nuevos_migrados, estado_tabla)
@@ -996,7 +1004,7 @@ class MigracionService:
             logger.info(f"📊 Iniciando migración de {nombre_tabla}: {total_registros_origen} registros")
             
             # Procesar registros en lotes para actualizaciones en tiempo real
-            lote_size = 50  # Actualizar progreso cada 50 registros
+            lote_size = LOTE_ACTUALIZACION_PROGRESO  # Usar configuración optimizada
             
             for i, registro in enumerate(registros, 1):
                 try:
@@ -1017,6 +1025,10 @@ class MigracionService:
                             )
                         
                         logger.info(f"📈 {nombre_tabla}: {i}/{total_registros_origen} procesados ({migrados} nuevos)")
+                        
+                        # Log menos frecuente para bases de datos grandes
+                        if i % LOG_CADA_N_REGISTROS == 0 or i == total_registros_origen:
+                            logger.info(f"📊 Progreso {nombre_tabla}: {i}/{total_registros_origen} registros procesados")
                         
                 except Exception as e:
                     logger.error(f"Error migrando registro {registro.get('id', 'N/A')} de {nombre_tabla}: {e}")

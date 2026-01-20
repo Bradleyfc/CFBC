@@ -289,7 +289,7 @@ class TablasArchivadosListView(TemplateView):
 
 @method_decorator(login_required, name='dispatch')
 class DatosArchivadosListView(TemplateView):
-    """Vista para listar datos archivados de una tabla específica"""
+    """Vista para listar datos archivados de una tabla específica con paginación"""
     template_name = 'datos_archivados/datos_list.html'
     
     def dispatch(self, request, *args, **kwargs):
@@ -302,6 +302,7 @@ class DatosArchivadosListView(TemplateView):
         
         try:
             from .models import DatoArchivadoDinamico
+            from django.core.paginator import Paginator
             
             # Obtener la tabla desde la URL
             tabla = kwargs.get('tabla')
@@ -341,30 +342,44 @@ class DatosArchivadosListView(TemplateView):
                 # Ordenamiento por defecto
                 queryset = queryset.order_by('-fecha_migracion')
             
+            # Configurar paginación - 100 registros por página
+            paginator = Paginator(queryset, 100)
+            page_number = self.request.GET.get('page')
+            page_obj = paginator.get_page(page_number)
+            
             # Para ordenamiento por nombre, necesitamos ordenar después de obtener los datos
             # porque nombre_registro puede ser None y necesitamos usar obtener_nombre_legible()
             if order_by == 'nombre':
-                datos_list = list(queryset)
+                # Obtener todos los datos de la página actual
+                datos_list = list(page_obj.object_list)
                 datos_list.sort(
                     key=lambda x: (x.obtener_nombre_legible() or '').lower(),
                     reverse=(order_direction == 'desc')
                 )
+                # Crear un objeto similar a page_obj pero con datos ordenados
                 context['datos'] = datos_list
+                context['page_obj'] = page_obj
+                context['is_paginated'] = page_obj.has_other_pages()
             else:
-                context['datos'] = queryset
+                context['datos'] = page_obj.object_list
+                context['page_obj'] = page_obj
+                context['is_paginated'] = page_obj.has_other_pages()
             
             context.update({
                 'tabla_actual': tabla,
-                'total_registros': queryset.count(),
+                'total_registros': paginator.count,
                 'search_query': search or '',
                 'order_by': order_by,
                 'order_direction': order_direction,
+                'paginator': paginator,
             })
             
         except Exception as e:
             context['datos'] = []
             context['tabla_actual'] = None
             context['total_registros'] = 0
+            context['page_obj'] = None
+            context['is_paginated'] = False
         
         return context
 
