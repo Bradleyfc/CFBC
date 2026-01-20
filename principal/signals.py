@@ -70,58 +70,51 @@ def crear_grupos_por_defecto(sender, **kwargs):
         logger.error(f"Error general configurando grupos en post_migrate: {e}")
 
 @receiver(post_save, sender=User)
-def crear_grupos_al_crear_superusuario(sender, instance, created, **kwargs):
+def agregar_superusuario_a_administracion(sender, instance, created, **kwargs):
     """
-    Crea grupos automáticamente cuando se crea un superusuario
-    DESACTIVADO: Para permitir que la migración de MariaDB cree los grupos correctamente
+    Agrega automáticamente el superusuario al grupo Administración cuando se crea
     """
-    # DESACTIVADO: No crear grupos automáticamente para evitar conflictos con migración
-    return
-    
     if not created or not instance.is_superuser:
         return
     
     try:
-        logger.info(f"Superusuario '{instance.username}' creado, verificando grupos...")
+        from django.db import transaction
         
-        grupos_creados = 0
-        grupos_existentes = 0
-        
-        for config_grupo in GRUPOS_SISTEMA:
-            nombre_grupo = config_grupo['nombre']
+        with transaction.atomic():
+            # Crear o obtener el grupo Administración
+            grupo_admin, created_grupo = Group.objects.get_or_create(name='Administración')
             
-            try:
-                # Verificar si el grupo ya existe
-                grupo, created_grupo = Group.objects.get_or_create(name=nombre_grupo)
+            if created_grupo:
+                logger.info(f"✓ Grupo 'Administración' creado automáticamente")
                 
-                if created_grupo:
-                    grupos_creados += 1
-                    logger.info(f"✓ Grupo '{nombre_grupo}' creado automáticamente")
-                    
-                    # Configurar permisos
-                    try:
-                        configurar_permisos_grupo(grupo, config_grupo)
-                        logger.info(f"  → Permisos configurados para '{nombre_grupo}'")
-                    except Exception as e:
-                        logger.warning(f"Error configurando permisos para {nombre_grupo}: {e}")
-                else:
-                    grupos_existentes += 1
-                    
-            except Exception as e:
-                logger.error(f"Error procesando grupo '{nombre_grupo}': {e}")
-        
-        if grupos_creados > 0:
-            logger.info(f"🎉 Superusuario creado: {grupos_creados} grupos configurados automáticamente")
-            print(f"\n{'='*60}")
-            print("🎉 ¡GRUPOS CONFIGURADOS AUTOMÁTICAMENTE!")
-            print(f"✓ {grupos_creados} grupos creados")
-            print(f"○ {grupos_existentes} grupos ya existían")
-            print(f"📊 Total: {len(GRUPOS_SISTEMA)} grupos disponibles")
-            print("\n📋 Grupos configurados:")
-            for config_grupo in GRUPOS_SISTEMA:
-                print(f"  • {config_grupo['nombre']}: {config_grupo['descripcion']}")
-            print(f"\n🔗 Admin: http://localhost:8000/admin/auth/group/")
-            print(f"{'='*60}")
+                # Configurar permisos del grupo Administración
+                try:
+                    from principal.config_grupos import obtener_config_grupo, configurar_permisos_grupo
+                    config_admin = obtener_config_grupo('Administración')
+                    if config_admin:
+                        configurar_permisos_grupo(grupo_admin, config_admin)
+                        logger.info("  → Permisos del grupo Administración configurados")
+                except Exception as e:
+                    logger.warning(f"Error configurando permisos para Administración: {e}")
+            
+            # Verificar si el usuario ya está en el grupo
+            if not instance.groups.filter(name='Administración').exists():
+                # Agregar el superusuario al grupo Administración
+                instance.groups.add(grupo_admin)
+                logger.info(f"✓ Superusuario '{instance.username}' agregado al grupo Administración")
+                
+                # Mostrar mensaje de confirmación
+                print(f"\n{'='*60}")
+                print("🎉 ¡SUPERUSUARIO AGREGADO AL GRUPO ADMINISTRACIÓN!")
+                print(f"👤 Usuario: {instance.username}")
+                print(f"👥 Grupo: Administración")
+                print(f"🔧 Permisos: Configurados automáticamente")
+                print(f"\n🔗 Verificar en: http://localhost:8000/admin/auth/group/")
+                print(f"{'='*60}\n")
+            else:
+                logger.info(f"○ Superusuario '{instance.username}' ya está en el grupo Administración")
         
     except Exception as e:
-        logger.error(f"Error configurando grupos para superusuario: {e}")
+        logger.error(f"Error agregando superusuario al grupo Administración: {e}")
+        import traceback
+        logger.error(f"Detalles: {traceback.format_exc()}")
