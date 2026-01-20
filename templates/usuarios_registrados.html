@@ -1,7 +1,11 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block content %}
+<!-- Cargar CSS y JS para barra de desplazamiento horizontal -->
+<link rel="stylesheet" href="{% static 'admin/css/registro_admin.css' %}">
+<script src="{% static 'admin/js/registro_admin.js' %}"></script>
 <!-- Background Section with Gradient -->
 <div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12">
     <!-- Background Pattern -->
@@ -11,7 +15,25 @@
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         <!-- Page Title -->
-        <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Listado de Estudiantes Registrados</h2>
+        <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Listado de Usuarios Registrados</h2>
+
+        <!-- Estadísticas rápidas -->
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
+            <div class="glass-card">
+                <div class="glass-content text-center py-3">
+                    <div class="text-2xl font-bold text-blue-600">{{ total_usuarios }}</div>
+                    <div class="text-sm text-gray-600">Total Usuarios</div>
+                </div>
+            </div>
+            {% for grupo in grupos_disponibles %}
+            <div class="glass-card">
+                <div class="glass-content text-center py-3">
+                    <div class="text-2xl font-bold text-green-600">{{ estadisticas_grupos|get_item:grupo.name }}</div>
+                    <div class="text-sm text-gray-600">{{ grupo.name }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
 
         <!-- Filters Card -->
         <div class="glass-card mb-6">
@@ -24,9 +46,20 @@
             <div class="glass-content">
                 <form method="GET" action="{% url 'principal:usuarios_registrados' %}">
                     <div class="flex flex-wrap gap-3 mb-4 items-end">
+                        <div class="flex-1 min-w-48">
+                            <label for="grupo" class="block text-xs font-medium text-gray-600 mb-1">Filtrar por Grupo:</label>
+                            <select name="grupo" id="grupo" class="glass-input-compact">
+                                <option value="todos" {% if grupo_seleccionado == 'todos' %}selected{% endif %}>Todos los usuarios</option>
+                                {% for grupo in grupos_disponibles %}
+                                <option value="{{ grupo.name }}" {% if grupo_seleccionado == grupo.name %}selected{% endif %}>
+                                    {{ grupo.name }} ({{ estadisticas_grupos|get_item:grupo.name }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
                         <div class="flex-1 min-w-64">
                             <label for="search" class="block text-xs font-medium text-gray-600 mb-1">Buscar:</label>
-                            <input type="text" name="search" id="search" class="glass-input-compact" placeholder="Nombre o apellido..." value="{{ request.GET.search }}">
+                            <input type="text" name="search" id="search" class="glass-input-compact" placeholder="Nombre, apellido, usuario, email o carnet..." value="{{ request.GET.search }}">
                         </div>
                     </div>
 
@@ -56,7 +89,7 @@
         {% if registros %}
         <!-- Table Card -->
         <div class="glass-card mb-6">
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto results">
                 <table class="glass-table resizable-table" id="usuariosTable">
                     <thead>
                         <tr>
@@ -202,42 +235,105 @@
 
         <!-- Pagination -->
         {% if is_paginated %}
-        <nav aria-label="Page navigation" class="flex justify-center">
-            <ul class="glass-pagination">
-                {% if page_obj.has_previous %}
-                <li>
-                    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
-                        class="glass-page-link">
-                        Anterior
-                    </a>
-                </li>
-                {% endif %}
+        <div class="glass-card">
+            <div class="glass-content">
+                <!-- Información de paginación -->
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
+                    <div class="text-sm text-gray-600">
+                        Mostrando 
+                        <span class="font-semibold">{{ page_obj.start_index }}</span>
+                        -
+                        <span class="font-semibold">{{ page_obj.end_index }}</span>
+                        de
+                        <span class="font-semibold">{{ page_obj.paginator.count }}</span>
+                        usuarios registrados
+                    </div>
+                    
+                    <!-- Selector de página -->
+                    <div class="flex items-center gap-2">
+                        <label for="page-select" class="text-sm text-gray-600">Ir a página:</label>
+                        <select id="page-select" class="glass-input-compact w-20" onchange="goToPage(this.value)">
+                            {% for i in page_obj.paginator.page_range %}
+                            <option value="{{ i }}" {% if page_obj.number == i %}selected{% endif %}>{{ i }}</option>
+                            {% endfor %}
+                        </select>
+                        <span class="text-sm text-gray-600">de {{ page_obj.paginator.num_pages }}</span>
+                    </div>
+                </div>
+                
+                <!-- Navegación de páginas -->
+                <nav aria-label="Page navigation" class="flex justify-center">
+                    <ul class="glass-pagination">
+                        {% if page_obj.has_previous %}
+                        <li>
+                            <a href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}"
+                                class="glass-page-link" title="Primera página">
+                                <span class="icon material-icons">first_page</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}"
+                                class="glass-page-link" title="Página anterior">
+                                <span class="icon material-icons">chevron_left</span>
+                                Anterior
+                            </a>
+                        </li>
+                        {% endif %}
 
-                {% for i in page_obj.paginator.page_range %}
-                {% if page_obj.number == i %}
-                <li>
-                    <span class="glass-page-link glass-page-link-active">{{ i }}</span>
-                </li>
-                {% else %}
-                <li>
-                    <a href="?page={{ i }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
-                        class="glass-page-link">
-                        {{ i }}
-                    </a>
-                </li>
-                {% endif %}
-                {% endfor %}
+                        <!-- Páginas numeradas con elipsis -->
+                        {% for i in page_obj.paginator.page_range %}
+                            {% if page_obj.number == i %}
+                            <li>
+                                <span class="glass-page-link glass-page-link-active">{{ i }}</span>
+                            </li>
+                            {% elif i <= 3 or i >= page_obj.paginator.num_pages|add:"-2" or i >= page_obj.number|add:"-2" and i <= page_obj.number|add:"2" %}
+                            <li>
+                                <a href="?page={{ i }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}"
+                                    class="glass-page-link">
+                                    {{ i }}
+                                </a>
+                            </li>
+                            {% elif i == 4 and page_obj.number > 6 %}
+                            <li>
+                                <span class="glass-page-link glass-page-ellipsis">...</span>
+                            </li>
+                            {% elif i == page_obj.paginator.num_pages|add:"-3" and page_obj.number < page_obj.paginator.num_pages|add:"-5" %}
+                            <li>
+                                <span class="glass-page-link glass-page-ellipsis">...</span>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
 
-                {% if page_obj.has_next %}
-                <li>
-                    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
-                        class="glass-page-link">
-                        Siguiente
-                    </a>
-                </li>
-                {% endif %}
-            </ul>
-        </nav>
+                        {% if page_obj.has_next %}
+                        <li>
+                            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}"
+                                class="glass-page-link" title="Página siguiente">
+                                Siguiente
+                                <span class="icon material-icons">chevron_right</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}"
+                                class="glass-page-link" title="Última página">
+                                <span class="icon material-icons">last_page</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+        {% else %}
+        <!-- Información cuando no hay paginación -->
+        {% if registros %}
+        <div class="glass-card">
+            <div class="glass-content text-center">
+                <div class="text-sm text-gray-600">
+                    Mostrando todos los <span class="font-semibold">{{ registros|length }}</span> usuarios registrados
+                </div>
+            </div>
+        </div>
+        {% endif %}
         {% endif %}
         {% else %}
         <!-- Empty State -->
@@ -368,7 +464,8 @@
         width: 100%;
         border-collapse: separate;
         border-spacing: 0;
-        table-layout: fixed;
+        table-layout: auto; /* Cambiar a auto para anchos dinámicos */
+        min-width: 1800px; /* Aumentar para acomodar todas las columnas con límites */
     }
 
     .glass-table thead tr {
@@ -384,7 +481,8 @@
         border-bottom: 2px solid rgba(59, 130, 246, 0.3);
         font-size: 0.9rem;
         position: relative;
-        min-width: 80px;
+        min-width: 60px; /* Ancho mínimo general */
+        white-space: nowrap; /* Evitar que los headers se corten */
     }
 
     /* Resizable Table Styles */
@@ -418,32 +516,158 @@
     }
 
     .resizable-td {
+        position: relative;
+        vertical-align: middle;
+    }
+
+    /* Aplicar ellipsis solo a columnas específicas que pueden ser muy largas */
+    .resizable-td[data-column="email"],
+    .resizable-td[data-column="direccion"],
+    .resizable-td[data-column="titulo"] {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        position: relative;
     }
 
-    /* Default column widths */
-    .resizable-th[data-column="foto"], .resizable-td[data-column="foto"] { width: 80px; }
-    .resizable-th[data-column="nombre"], .resizable-td[data-column="nombre"] { width: 120px; }
-    .resizable-th[data-column="apellidos"], .resizable-td[data-column="apellidos"] { width: 120px; }
-    .resizable-th[data-column="email"], .resizable-td[data-column="email"] { width: 200px; }
-    .resizable-th[data-column="nacionalidad"], .resizable-td[data-column="nacionalidad"] { width: 100px; }
-    .resizable-th[data-column="carnet"], .resizable-td[data-column="carnet"] { width: 100px; }
-    .resizable-th[data-column="carnet-doc"], .resizable-td[data-column="carnet-doc"] { width: 100px; }
-    .resizable-th[data-column="sexo"], .resizable-td[data-column="sexo"] { width: 80px; }
-    .resizable-th[data-column="direccion"], .resizable-td[data-column="direccion"] { width: 150px; }
-    .resizable-th[data-column="municipio"], .resizable-td[data-column="municipio"] { width: 100px; }
-    .resizable-th[data-column="provincia"], .resizable-td[data-column="provincia"] { width: 100px; }
-    .resizable-th[data-column="movil"], .resizable-td[data-column="movil"] { width: 100px; }
-    .resizable-th[data-column="grado"], .resizable-td[data-column="grado"] { width: 120px; }
-    .resizable-th[data-column="ocupacion"], .resizable-td[data-column="ocupacion"] { width: 120px; }
-    .resizable-th[data-column="religioso"], .resizable-td[data-column="religioso"] { width: 80px; }
-    .resizable-th[data-column="titulo"], .resizable-td[data-column="titulo"] { width: 150px; }
-    .resizable-th[data-column="titulo-doc"], .resizable-td[data-column="titulo-doc"] { width: 100px; }
-    .resizable-th[data-column="grupo"], .resizable-td[data-column="grupo"] { width: 100px; }
-    .resizable-th[data-column="registro"], .resizable-td[data-column="registro"] { width: 100px; }
+    /* Columnas dinámicas - se ajustan al contenido */
+    .resizable-th, .resizable-td {
+        white-space: nowrap; /* Evitar que el texto se corte */
+        padding: 0.875rem 1rem;
+        overflow: visible; /* Permitir que el contenido determine el ancho */
+        box-sizing: border-box; /* Incluir padding en el ancho */
+    }
+
+    /* Anchos mínimos para columnas específicas */
+    .resizable-th[data-column="foto"], .resizable-td[data-column="foto"] { 
+        min-width: 80px; 
+        width: 80px; /* Foto siempre fija */
+    }
+    
+    .resizable-th[data-column="nombre"], .resizable-td[data-column="nombre"] { 
+        min-width: 100px;
+        max-width: 150px; /* Limitar nombres muy largos */
+    }
+    
+    .resizable-th[data-column="apellidos"], .resizable-td[data-column="apellidos"] { 
+        min-width: 120px;
+        max-width: 180px; /* Limitar apellidos muy largos */
+    }
+    
+    .resizable-th[data-column="nacionalidad"], .resizable-td[data-column="nacionalidad"] { 
+        min-width: 100px;
+        max-width: 120px; /* Limitar nacionalidad para evitar espacios grandes */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .resizable-th[data-column="carnet"], .resizable-td[data-column="carnet"] { 
+        min-width: 120px;
+        max-width: 140px; /* Limitar carnet ID */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .resizable-th[data-column="municipio"], .resizable-td[data-column="municipio"] { 
+        min-width: 100px;
+        max-width: 130px; /* Limitar municipios largos */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .resizable-th[data-column="provincia"], .resizable-td[data-column="provincia"] { 
+        min-width: 100px;
+        max-width: 120px; /* Limitar provincias largas */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .resizable-th[data-column="movil"], .resizable-td[data-column="movil"] { 
+        min-width: 100px;
+        max-width: 120px; /* Limitar números de móvil */
+    }
+    
+    .resizable-th[data-column="grado"], .resizable-td[data-column="grado"] { 
+        min-width: 100px;
+        max-width: 140px; /* Limitar grados académicos */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .resizable-th[data-column="ocupacion"], .resizable-td[data-column="ocupacion"] { 
+        min-width: 120px;
+        max-width: 160px; /* Limitar ocupaciones largas */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .resizable-th[data-column="grupo"], .resizable-td[data-column="grupo"] { 
+        min-width: 100px;
+        max-width: 120px; /* Limitar nombres de grupo */
+        text-align: center;
+    }
+    
+    .resizable-th[data-column="registro"], .resizable-td[data-column="registro"] { 
+        min-width: 100px;
+        max-width: 110px; /* Limitar fechas de registro */
+        text-align: center;
+    }
+    
+    .resizable-th[data-column="email"], .resizable-td[data-column="email"] { 
+        min-width: 180px;
+        max-width: 250px; /* Limitar emails muy largos */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .resizable-th[data-column="direccion"], .resizable-td[data-column="direccion"] { 
+        min-width: 120px;
+        max-width: 200px; /* Limitar direcciones muy largas */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .resizable-th[data-column="titulo"], .resizable-td[data-column="titulo"] { 
+        min-width: 100px;
+        max-width: 180px; /* Limitar títulos muy largos */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    /* Columnas de documentos - ancho ajustado para "No disponible" */
+    .resizable-th[data-column="carnet-doc"], .resizable-td[data-column="carnet-doc"],
+    .resizable-th[data-column="titulo-doc"], .resizable-td[data-column="titulo-doc"] { 
+        width: 120px;
+        min-width: 120px;
+        max-width: 120px;
+        text-align: center;
+        white-space: nowrap;
+    }
+    
+    /* Asegurar que las celdas con badges tengan espacio suficiente */
+    .resizable-td[data-column="carnet-doc"] .glass-badge,
+    .resizable-td[data-column="titulo-doc"] .glass-badge {
+        display: block;
+        margin: 0 auto;
+        max-width: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    /* Columnas de estado - ancho pequeño */
+    .resizable-th[data-column="sexo"], .resizable-td[data-column="sexo"],
+    .resizable-th[data-column="religioso"], .resizable-td[data-column="religioso"] { 
+        min-width: 70px;
+        text-align: center;
+    }
 
     .glass-table tbody tr {
         background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
@@ -462,9 +686,7 @@
         padding: 0.875rem 1rem;
         color: #374151;
         font-size: 0.9rem;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        vertical-align: middle; /* Alineación vertical mejorada */
     }
 
     /* Glass Badge */
@@ -481,6 +703,8 @@
         border: 1px solid rgba(255, 255, 255, 0.2);
         text-decoration: none;
         transition: all 0.3s ease;
+        white-space: nowrap; /* Evitar que el texto del badge se corte */
+        min-width: fit-content; /* Asegurar que el badge tenga el ancho necesario */
     }
 
     .glass-badge:hover {
@@ -532,6 +756,18 @@
         background: linear-gradient(135deg, rgba(59, 130, 246, 0.4), rgba(37, 99, 235, 0.3));
         color: #1e40af;
         border-color: rgba(59, 130, 246, 0.5);
+    }
+
+    .glass-page-ellipsis {
+        background: transparent !important;
+        color: #9ca3af !important;
+        cursor: default !important;
+        border: none !important;
+    }
+
+    .glass-page-ellipsis:hover {
+        transform: none !important;
+        box-shadow: none !important;
     }
 
     /* Glass Alert */
@@ -746,6 +982,13 @@
         }
         
         currentColumn = null;
+    }
+
+    // Función para ir a una página específica
+    function goToPage(pageNumber) {
+        const currentUrl = new URL(window.location);
+        currentUrl.searchParams.set('page', pageNumber);
+        window.location.href = currentUrl.toString();
     }
 
     // Verificar si hay usuarios antes de exportar

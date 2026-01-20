@@ -43,29 +43,52 @@ class UsuariosRegistradosView(LoginRequiredMixin, UserPassesTestMixin, ListView)
     model = Registro
     template_name = 'usuarios_registrados.html'
     context_object_name = 'registros'
-
+    paginate_by = 100  # Mostrar 100 usuarios por página como en el admin de Django
+    
     def test_func(self):
         return self.request.user.groups.filter(name='Secretaría').exists()
 
     def get_queryset(self):
         queryset = Registro.objects.all().select_related('user').prefetch_related('user__groups')
-        # Eliminar o comentar las siguientes líneas si ya no necesitas el filtro por grupo desde la URL
-        # grupo = self.request.GET.get('grupo')
+        
+        # Obtener parámetros de filtro
+        grupo = self.request.GET.get('grupo')
         search = self.request.GET.get('search')
 
-        # Asegurarse de que solo se muestren los estudiantes
-        queryset = queryset.filter(user__groups__name='Estudiantes')
+        # Filtrar por grupo si se especifica
+        if grupo and grupo != 'todos':
+            queryset = queryset.filter(user__groups__name=grupo)
 
-        # if grupo:
-        #     queryset = queryset.filter(user__groups__name=grupo)
-
+        # Filtrar por búsqueda de texto
         if search:
             queryset = queryset.filter(
                 Q(user__first_name__icontains=search) |
-                Q(user__last_name__icontains=search)
+                Q(user__last_name__icontains=search) |
+                Q(user__username__icontains=search) |
+                Q(user__email__icontains=search) |
+                Q(carnet__icontains=search)
             )
 
-        return queryset
+        return queryset.distinct()
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Agregar grupos disponibles para el filtro
+        from django.contrib.auth.models import Group
+        context['grupos_disponibles'] = Group.objects.all().order_by('name')
+        context['grupo_seleccionado'] = self.request.GET.get('grupo', 'todos')
+        
+        # Agregar estadísticas por grupo
+        context['estadisticas_grupos'] = {}
+        for grupo in context['grupos_disponibles']:
+            count = Registro.objects.filter(user__groups=grupo).count()
+            context['estadisticas_grupos'][grupo.name] = count
+        
+        # Total de todos los usuarios
+        context['total_usuarios'] = Registro.objects.count()
+        
+        return context
 
 
 @login_required
