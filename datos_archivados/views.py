@@ -3931,6 +3931,9 @@ def combinar_datos_seleccionadas(request):
             # Mapeo de usuarios archivados a usuarios actuales
             mapeo_usuarios = {}
             
+            # Mapeo de grupos archivados a grupos actuales
+            mapeo_grupos = {}
+            
             # Variables para progreso en tiempo real
             fecha_inicio_proceso = timezone.now().isoformat()
             
@@ -3945,9 +3948,14 @@ def combinar_datos_seleccionadas(request):
             tablas_dependientes = ['Docencia_studentpersonalinformation', 'Docencia_teacherpersonalinformation', 'accounts_registro']
             necesita_usuarios = any(tabla in tablas_dependientes for tabla in tablas_seleccionadas)
             
+            # ASEGURAR QUE auth_group SE PROCESE PRIMERO SI HAY auth_user_groups
+            necesita_grupos = 'auth_user_groups' in tablas_seleccionadas
+            
             # FORZAR ORDEN CORRECTO DE PROCESAMIENTO SIEMPRE
             orden_correcto = [
+                'auth_group',  # Grupos primero
                 'auth_user',
+                'auth_user_groups',  # Relaciones usuario-grupo después de usuarios y grupos
                 'Docencia_teacherpersonalinformation',  # Profesores primero
                 'Docencia_studentpersonalinformation',  # Estudiantes después
                 'accounts_registro'
@@ -3960,6 +3968,11 @@ def combinar_datos_seleccionadas(request):
             if necesita_usuarios and 'auth_user' not in tablas_seleccionadas:
                 tablas_a_procesar.append('auth_user')
                 logger.info("✅ Se agregó auth_user automáticamente porque hay tablas que dependen de usuarios")
+            
+            # PASO 1.5: Si necesita grupos pero auth_group no está seleccionado, agregarlo automáticamente
+            if necesita_grupos and 'auth_group' not in tablas_seleccionadas:
+                tablas_a_procesar.append('auth_group')
+                logger.info("✅ Se agregó auth_group automáticamente porque se seleccionó auth_user_groups")
             
             # PASO 2: Agregar tablas en el orden correcto SOLO si están seleccionadas
             for tabla_ordenada in orden_correcto:
@@ -4084,6 +4097,63 @@ def combinar_datos_seleccionadas(request):
                             except Exception as e:
                                 transaction.savepoint_rollback(sid)
                                 error_msg = f"Error procesando usuario {username}: {str(e)}"
+                                logger.error(error_msg)
+                                continue
+                
+                elif tabla == 'auth_group':
+                    # PROCESAR GRUPOS
+                    total_grupos = len(datos_tabla)
+                    logger.info(f"📊 Iniciando procesamiento de {total_grupos} grupos")
+                    
+                    with transaction.atomic():
+                        for i, dato in enumerate(datos_tabla, 1):
+                            try:
+                                sid = transaction.savepoint()
+                                datos = dato.datos_originales
+                                group_id_original = datos.get('id')
+                                group_name = datos.get('name')
+                                
+                                if not group_name:
+                                    logger.warning(f"Grupo sin nombre, usando nombre genérico: Grupo_{group_id_original}")
+                                    group_name = f'Grupo_{group_id_original}'
+                                
+                                # Verificar si ya existe un grupo con este nombre
+                                grupo_existente = Group.objects.filter(name=group_name).first()
+                                
+                                if grupo_existente:
+                                    # Si el grupo ya existe, usarlo (no crear duplicado)
+                                    mapeo_grupos[group_id_original] = grupo_existente
+                                    logger.info(f"Grupo existente reutilizado: {group_name} (ID original: {group_id_original})")
+                                else:
+                                    # Si no existe, crearlo
+                                    grupo = Group.objects.create(name=group_name)
+                                    mapeo_grupos[group_id_original] = grupo
+                                    logger.info(f"Grupo creado: {group_name} (ID original: {group_id_original})")
+                                
+                                estadisticas['otras_tablas'] += 1
+                                
+                                # Actualizar progreso en tiempo real cada 5 registros o al final
+                                if i % 5 == 0 or i == total_grupos:
+                                    actualizar_progreso_tiempo_real(
+                                        tabla_actual='auth_group',
+                                        registros_procesados=i,
+                                        total_registros=total_grupos,
+                                        pasos_completados=paso_actual,
+                                        pasos_totales=pasos_totales,
+                                        fecha_inicio=fecha_inicio_proceso,
+                                        **estadisticas
+                                    )
+                                
+                                transaction.savepoint_commit(sid)
+                                
+                            except InterruptedError:
+                                # Interrupción por el usuario - detener completamente el procesamiento
+                                transaction.savepoint_rollback(sid)
+                                logger.info("🛑 Procesamiento selectivo de grupos interrumpido por el usuario")
+                                raise  # Re-lanzar la excepción para detener toda la combinación
+                            except Exception as e:
+                                transaction.savepoint_rollback(sid)
+                                error_msg = f"Error procesando grupo: {str(e)}"
                                 logger.error(error_msg)
                                 continue
                 
@@ -4274,6 +4344,52 @@ def combinar_datos_seleccionadas(request):
                                 logger.error(error_msg)
                                 continue
                 
+                elif tabla == 'auth_user_groups':
+                    # PROCESAR GRUPOS DE USUARIOS (igual que función principal)
+                    total_relaciones = len(datos_tabla)
+                    logger.info(f"📊 Iniciando procesamiento de {total_relaciones} relaciones usuario-grupo")
+                    
+                    with transaction.atomic():
+                        for i, dato in enumerate(datos_tabla, 1):
+                            try:
+                                sid = transaction.savepoint()
+                                datos = dato.datos_originales
+                                user_id_original = datos.get('user_id')
+                                group_id_original = datos.get('group_id')
+                                
+                                if user_id_original in mapeo_usuarios:
+                                    usuario = mapeo_usuarios[user_id_original]
+                                    
+                                    # USAR EL MAPEO DE GRUPOS CREADO ANTERIORMENTE
+                                    if group_id_original in mapeo_grupos:
+                                        grupo = mapeo_grupos[group_id_original]
+                                        usuario.groups.add(grupo)
+                                        logger.info(f"Usuario {usuario.username} agregado al grupo {grupo.name}")
+                                        estadisticas['otras_tablas'] += 1
+                                    else:
+                                        logger.warning(f"Grupo con ID {group_id_original} no encontrado en mapeo")
+                                else:
+                                    logger.warning(f"Usuario con ID {user_id_original} no encontrado en mapeo")
+                                
+                                # Actualizar progreso en tiempo real cada 10 registros o al final
+                                if i % 10 == 0 or i == total_relaciones:
+                                    actualizar_progreso_tiempo_real(
+                                        tabla_actual='auth_user_groups',
+                                        registros_procesados=i,
+                                        total_registros=total_relaciones,
+                                        pasos_completados=paso_actual,
+                                        pasos_totales=pasos_totales,
+                                        fecha_inicio=fecha_inicio_proceso,
+                                        **estadisticas
+                                    )
+                                
+                                transaction.savepoint_commit(sid)
+                                
+                            except Exception as e:
+                                transaction.savepoint_rollback(sid)
+                                logger.error(f"Error procesando grupo de usuario: {e}")
+                                continue
+                
                 else:
                     # PROCESAR OTRAS TABLAS CON EL MISMO MAPEO QUE LA FUNCIÓN PRINCIPAL
                     logger.info(f"Procesando tabla: {tabla}")
@@ -4281,38 +4397,7 @@ def combinar_datos_seleccionadas(request):
                     # Mapeo de cursos (usando ID real de los datos)
                     mapeo_cursos = {}
                     
-                    if tabla == 'auth_user_groups':
-                        # PROCESAR GRUPOS DE USUARIOS (igual que función principal)
-                        with transaction.atomic():
-                            for dato in datos_tabla:
-                                try:
-                                    sid = transaction.savepoint()
-                                    datos = dato.datos_originales
-                                    user_id_original = datos.get('user_id')
-                                    group_id_original = datos.get('group_id')
-                                    
-                                    if user_id_original in mapeo_usuarios:
-                                        usuario = mapeo_usuarios[user_id_original]
-                                        
-                                        # USAR EL MAPEO DE GRUPOS CREADO ANTERIORMENTE
-                                        if group_id_original in mapeo_grupos:
-                                            grupo = mapeo_grupos[group_id_original]
-                                            usuario.groups.add(grupo)
-                                            logger.info(f"Usuario {usuario.username} agregado al grupo {grupo.name}")
-                                            estadisticas['otras_tablas'] += 1
-                                        else:
-                                            logger.warning(f"Grupo con ID {group_id_original} no encontrado en mapeo")
-                                    else:
-                                        logger.warning(f"Usuario con ID {user_id_original} no encontrado en mapeo")
-                                    
-                                    transaction.savepoint_commit(sid)
-                                    
-                                except Exception as e:
-                                    transaction.savepoint_rollback(sid)
-                                    logger.error(f"Error procesando grupo de usuario: {e}")
-                                    continue
-                    
-                    elif (tabla.lower().find('academicyear') != -1 or 
+                    if (tabla.lower().find('academicyear') != -1 or 
                           tabla.lower().find('curso_academico') != -1 or 
                           tabla == 'Docencia_academicyear'):
                         # PROCESAR CURSOS ACADÉMICOS (igual que función principal)
