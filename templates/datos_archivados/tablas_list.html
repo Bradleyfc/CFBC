@@ -6866,7 +6866,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (corrections.added.length > 0) {
                 const suggestionElement = document.createElement('div');
                 suggestionElement.id = 'auto-correct-suggestion';
-                suggestionElement.className = 'fixed bottom-4 right-4 z-50 max-w-sm bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg shadow-lg';
+                suggestionElement.className = 'fixed bottom-4 right-4 z-50 max-w-sm border-2 border-orange-600 p-4 rounded-lg shadow-xl';
+                suggestionElement.style.backgroundColor = '#fed7aa';
+                suggestionElement.style.opacity = '1';
                 
                 suggestionElement.innerHTML = `
                     <div class="flex items-start">
