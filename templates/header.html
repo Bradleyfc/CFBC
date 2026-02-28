@@ -1,17 +1,17 @@
 {% if user.is_authenticated %}
 {% if group_name == 'Estudiantes' %}
-<div class="container">
+<div>
   {% elif group_name == 'Profesores' %}
-  <div class="container">
+  <div>
     {% elif group_name == 'Administración' %}
-    <div class="container">
+    <div>
       {% elif group_name == 'Secretaría' %}
-      <div class="container">
+      <div>
         {% else %}
-        <div class="container">
+        <div>
           {% endif %}
           {% else %}
-          <div class="container">
+          <div>
             {% endif %}
 
             <style>
@@ -82,8 +82,8 @@
                 box-shadow: 
                   0 2px 8px rgba(0, 0, 0, 0.1),
                   inset 0 1px 0 rgba(147, 197, 253, 0.2);
-                padding: 0.4rem 0.8rem !important;
-                font-size: 0.875rem !important;
+                padding: 0.75rem 1.25rem !important;
+                font-size: 1rem !important;
               }
 
               .glass-nav-link::before, .nav-link::before {
@@ -137,7 +137,7 @@
                   0 6px 20px rgba(0, 0, 0, 0.3),
                   inset 0 1px 0 rgba(147, 197, 253, 0.7);
                 padding: 0.4rem 1rem !important;
-                font-size: 0.875rem !important;
+                font-size: 1rem !important;
               }
 
               .glass-button-oval::before {
@@ -184,7 +184,7 @@
                   0 6px 20px rgba(0, 0, 0, 0.15),
                   inset 0 1px 0 rgba(255, 255, 255, 0.5);
                 padding: 0.4rem 1rem !important;
-                font-size: 0.875rem !important;
+                font-size: 1rem !important;
               }
 
               .glass-button-oval-solid::before {
@@ -237,7 +237,7 @@
                 box-shadow: 
                   0 2px 8px rgba(0, 0, 0, 0.15),
                   inset 0 1px 0 rgba(147, 197, 253, 0.3);
-                padding: 0.4rem 0.8rem !important;
+                padding: 0.75rem 1.25rem !important;
               }
 
               .glass-logo:hover {
@@ -287,7 +287,7 @@
 
               /* Mover botones un poco a la izquierda */
               .flex-shrink-0 {
-                margin-right: 20px;
+                margin-right: 0px;
               }
 
               /* Separar el botón de iniciar sesión más a la izquierda */
@@ -304,8 +304,8 @@
                 
                 .glass-nav-link, .nav-link {
                   border-radius: 8px;
-                  padding: 0.3rem 0.6rem !important;
-                  font-size: 0.8rem !important;
+                  padding: 0.5rem 1rem !important;
+                  font-size: 0.95rem !important;
                 }
                 
                 .glass-button-oval, .glass-button-oval-solid {
@@ -314,7 +314,7 @@
 
                 .glass-logo {
                   border-radius: 10px;
-                  padding: 0.3rem 0.6rem !important;
+                  padding: 0.5rem 1rem !important;
                 }
 
 
@@ -324,7 +324,7 @@
               class="glass-header-container flex flex-wrap items-center justify-between py-4 mb-4 mx-4 mt-3">
 
 
-              <ul class="flex flex-wrap justify-center space-x-4 mb-2 md:mb-0 flex-grow mx-4">
+              <ul class="flex flex-wrap justify-center space-x-4 mb-2 md:mb-0 flex-grow">
                 <li><a href="{% url 'principal:home' %}" class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Inicio</a></li>
                 {% if group_name == 'Secretaría' %}
                 <li><a href="{% url 'principal:cursos' %}" class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Administrar Cursos</a></li>
@@ -340,7 +340,7 @@
                 <li><a href="{% url 'blog:lista_noticias' %}" class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Noticias</a></li>
                 <li><a href="#" class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Acerca de</a></li>
               </ul>
-              <div class="flex items-center justify-end flex-shrink-0">
+              <div class="flex items-center justify-end flex-shrink-0" style="padding-right: 2rem;">
                 {% if request.user.is_authenticated %}
                 <div class="list-none">
                   <a class="glass-nav-link text-white px-4 py-2 no-underline font-semibold text-base" href="{% url 'principal:profile' %}">{{group_name}} |
