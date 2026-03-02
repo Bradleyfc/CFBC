@@ -1,0 +1,465 @@
+INFO:__main__:=== INICIANDO GUARDADO DE DATOS DE DOCENCIA EN HISTORIAL ===
+INFO:__main__:Tablas a procesar: ['Docencia_area', 'Docencia_coursecategory', 'Docencia_courseinformation', 'Docencia_courseinformation_adminteachers', 'Docencia_subjectinformation', 'Docencia_edition', 'Docencia_enrollmentapplication', 'Docencia_accountnumber', 'Docencia_enrollmentpay', 'Docencia_enrollment', 'Docencia_application']
+INFO:__main__:
+--- Procesando tabla: Docencia_area ---
+INFO:__main__:Encontrados 6 registros en Docencia_area
+INFO:__main__:✅ Docencia_area: 6 registros guardados en historial
+INFO:__main__:
+--- Procesando tabla: Docencia_coursecategory ---
+INFO:__main__:Encontrados 4 registros en Docencia_coursecategory
+INFO:__main__:✅ Docencia_coursecategory: 4 registros guardados en historial
+INFO:__main__:
+--- Procesando tabla: Docencia_courseinformation ---
+INFO:__main__:Encontrados 50 registros en Docencia_courseinformation
+INFO:__main__:✅ Docencia_courseinformation: 50 registros guardados en historial
+INFO:__main__:
+--- Procesando tabla: Docencia_courseinformation_adminteachers ---
+INFO:__main__:Encontrados 149 registros en Docencia_courseinformation_adminteachers
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+WARNING:__main__:Profesor ID no encontrado
+INFO:__main__:✅ Docencia_courseinformation_adminteachers: 0 registros guardados en historial
+INFO:__main__:
+--- Procesando tabla: Docencia_subjectinformation ---
+INFO:__main__:Encontrados 190 registros en Docencia_subjectinformation
+INFO:__main__:✅ Docencia_subjectinformation: 190 registros guardados en historial
+INFO:__main__:
+--- Procesando tabla: Docencia_edition ---
+INFO:__main__:Encontrados 6 registros en Docencia_edition
+INFO:__main__:✅ Docencia_edition: 6 registros guardados en historial
+INFO:__main__:
+--- Procesando tabla: Docencia_enrollmentapplication ---
+INFO:__main__:Encontrados 32 registros en Docencia_enrollmentapplication
+INFO:__main__:✅ Docencia_enrollmentapplication: 32 registros guardados en historial
+INFO:__main__:
+--- Procesando tabla: Docencia_accountnumber ---
+INFO:__main__:Encontrados 2 registros en Docencia_accountnumber
+INFO:__main__:✅ Docencia_accountnumber: 2 registros guardados en historial
+INFO:__main__:
+--- Procesando tabla: Docencia_enrollmentpay ---
+INFO:__main__:Encontrados 61 registros en Docencia_enrollmentpay
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+ERROR:__main__:Error procesando pago: name 'id_original' is not defined
+INFO:__main__:✅ Docencia_enrollmentpay: 0 registros guardados en historial
+INFO:__main__:
+--- Procesando tabla: Docencia_enrollment ---
+INFO:__main__:Encontrados 184 registros en Docencia_enrollment
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+ERROR:__main__:Error procesando inscripción: name 'id_original' is not defined
+INFO:__main__:✅ Docencia_enrollment: 0 registros guardados en historial
+INFO:__main__:
+--- Procesando tabla: Docencia_application ---
+INFO:__main__:Encontrados 8282 registros en Docencia_application
+INFO:__main__:✅ Docencia_application: 8282 registros guardados en historial
+INFO:__main__:
+=== GUARDADO EN HISTORIAL COMPLETADO EXITOSAMENTE ===
+INFO:__main__:Total de registros guardados: 8572
+INFO:__main__:Tablas procesadas: 11
+
+================================================================================
+PRUEBA DE GUARDADO EN HISTORIAL
+================================================================================
+
+
+================================================================================
+RESULTADO
+================================================================================
+Total registros guardados: 8572
+Tablas procesadas: 11
+
+================================================================================
+VERIFICACIÓN
+================================================================================
+HistoricalArea: 36 registros
+HistoricalCourseCategory: 24 registros
+HistoricalCourseInformation: 300 registros
+HistoricalEnrollmentApplication: 192 registros
+
+✅ ¡PRUEBA COMPLETADA!

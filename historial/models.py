@@ -8,14 +8,33 @@ class HistoricalArea(models.Model):
 
     Almacena registros históricos de áreas de docencia cuando se realizan
     combinaciones de tablas en la sección "datos archivados dinámicos" del admin.
-    Replica exactamente la estructura de Docencia_area sin campos adicionales
-    de auditoría.
+    Replica exactamente la estructura de Docencia_area con campos adicionales
+    de auditoría para rastrear el origen de los datos.
 
-    Campos:
+    Campos de auditoría:
+        id_original: ID original del registro en la tabla de origen
+        tabla_origen: Nombre de la tabla de origen
+        fecha_consolidacion: Fecha y hora de consolidación
+        dato_archivado: Referencia al registro archivado original
+
+    Campos de datos:
         nombre: Nombre del área de docencia
         descripcion: Descripción detallada del área
         codigo: Código único identificador del área
     """
+    # Campos de auditoría
+    id_original = models.IntegerField()
+    tabla_origen = models.CharField(max_length=255)
+    fecha_consolidacion = models.DateTimeField(auto_now_add=True)
+    dato_archivado = models.ForeignKey(
+        'datos_archivados.DatoArchivadoDinamico',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='historical_areas'
+    )
+
+    # Campos de datos
     nombre = models.CharField(max_length=255)
     descripcion = models.TextField(blank=True, null=True)
     codigo = models.CharField(max_length=50, blank=True, null=True)
@@ -49,6 +68,19 @@ class HistoricalCourseCategory(models.Model):
         registro_abierto: Indica si el registro está abierto
         visible: Indica si la categoría es visible
     """
+    # Campos de auditoría
+    id_original = models.IntegerField()
+    tabla_origen = models.CharField(max_length=255)
+    fecha_consolidacion = models.DateTimeField(auto_now_add=True)
+    dato_archivado = models.ForeignKey(
+        'datos_archivados.DatoArchivadoDinamico',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='historical_course_categories'
+    )
+    
+    # Campos de datos
     nombre = models.CharField(max_length=255)
     descripcion = models.TextField(blank=True, null=True)
     parent = models.ForeignKey(
@@ -107,6 +139,19 @@ class HistoricalCourseInformation(models.Model):
         area: Foreign key a HistoricalArea
         categoria: Foreign key a HistoricalCourseCategory
     """
+    # Campos de auditoría
+    id_original = models.IntegerField()
+    tabla_origen = models.CharField(max_length=255)
+    fecha_consolidacion = models.DateTimeField(auto_now_add=True)
+    dato_archivado = models.ForeignKey(
+        'datos_archivados.DatoArchivadoDinamico',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='historical_course_informations'
+    )
+    
+    # Campos de datos
     nombre = models.CharField(max_length=255)
     descripcion = models.TextField(blank=True, null=True)
     codigo = models.CharField(max_length=50, blank=True, null=True)
@@ -149,6 +194,19 @@ class HistoricalCourseInformationAdminTeachers(models.Model):
     Nota: Mantiene la relación con auth_user sin cambios, como se especifica
     en los requisitos.
     """
+    # Campos de auditoría
+    id_original = models.IntegerField()
+    tabla_origen = models.CharField(max_length=255)
+    fecha_consolidacion = models.DateTimeField(auto_now_add=True)
+    dato_archivado = models.ForeignKey(
+        'datos_archivados.DatoArchivadoDinamico',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='historical_course_information_admin_teachers'
+    )
+    
+    # Campos de datos
     curso = models.ForeignKey(
         HistoricalCourseInformation,
         on_delete=models.CASCADE,
@@ -173,17 +231,30 @@ class HistoricalCourseInformationAdminTeachers(models.Model):
 class HistoricalEnrollmentApplication(models.Model):
     """
     Modelo histórico para Docencia_enrollmentapplication.
-    
+
     Almacena registros históricos de solicitudes de inscripción cuando se realizan
     combinaciones de tablas en la sección "datos archivados dinámicos" del admin.
     Preserva la información de solicitudes de estudiantes a cursos.
-    
+
     Campos:
         fecha_solicitud: Fecha y hora de la solicitud
         estado: Estado actual de la solicitud
         curso: Foreign key a HistoricalCourseInformation
         usuario: Foreign key a User (auth_user)
     """
+    # Campos de auditoría
+    id_original = models.IntegerField()
+    tabla_origen = models.CharField(max_length=255)
+    fecha_consolidacion = models.DateTimeField(auto_now_add=True)
+    dato_archivado = models.ForeignKey(
+        'datos_archivados.DatoArchivadoDinamico',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='historical_enrollment_applications'
+    )
+
+    # Campos de datos
     fecha_solicitud = models.DateTimeField()
     estado = models.CharField(max_length=50, blank=True, null=True)
     curso = models.ForeignKey(
@@ -223,6 +294,19 @@ class HistoricalAccountNumber(models.Model):
         banco: Nombre del banco
         usuario: Foreign key a User (auth_user)
     """
+    # Campos de auditoría
+    id_original = models.IntegerField()
+    tabla_origen = models.CharField(max_length=255)
+    fecha_consolidacion = models.DateTimeField(auto_now_add=True)
+    dato_archivado = models.ForeignKey(
+        'datos_archivados.DatoArchivadoDinamico',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='historical_account_numbers'
+    )
+    
+    # Campos de datos
     numero_cuenta = models.CharField(max_length=100)
     banco = models.CharField(max_length=255, blank=True, null=True)
     usuario = models.ForeignKey(
@@ -261,6 +345,19 @@ class HistoricalEnrollmentPay(models.Model):
     monto = models.DecimalField(max_digits=10, decimal_places=2)
     fecha_pago = models.DateTimeField()
     metodo_pago = models.CharField(max_length=100, blank=True, null=True)
+    # Campos de auditoría
+    id_original = models.IntegerField()
+    tabla_origen = models.CharField(max_length=255)
+    fecha_consolidacion = models.DateTimeField(auto_now_add=True)
+    dato_archivado = models.ForeignKey(
+        'datos_archivados.DatoArchivadoDinamico',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='historical_enrollment_pays'
+    )
+    
+    # Campos de datos
     solicitud = models.ForeignKey(
         HistoricalEnrollmentApplication,
         on_delete=models.CASCADE,
@@ -300,6 +397,19 @@ class HistoricalSubjectInformation(models.Model):
         codigo: Código único identificador
         curso: Foreign key a HistoricalCourseInformation
     """
+    # Campos de auditoría
+    id_original = models.IntegerField()
+    tabla_origen = models.CharField(max_length=255)
+    fecha_consolidacion = models.DateTimeField(auto_now_add=True)
+    dato_archivado = models.ForeignKey(
+        'datos_archivados.DatoArchivadoDinamico',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='historical_subject_informations'
+    )
+    
+    # Campos de datos
     nombre = models.CharField(max_length=255)
     descripcion = models.TextField(blank=True, null=True)
     codigo = models.CharField(max_length=50, blank=True, null=True)
@@ -338,6 +448,19 @@ class HistoricalEdition(models.Model):
     nombre = models.CharField(max_length=255)
     fecha_inicio = models.DateField(blank=True, null=True)
     fecha_fin = models.DateField(blank=True, null=True)
+    # Campos de auditoría
+    id_original = models.IntegerField()
+    tabla_origen = models.CharField(max_length=255)
+    fecha_consolidacion = models.DateTimeField(auto_now_add=True)
+    dato_archivado = models.ForeignKey(
+        'datos_archivados.DatoArchivadoDinamico',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='historical_editions'
+    )
+    
+    # Campos de datos
     curso = models.ForeignKey(
         HistoricalCourseInformation,
         on_delete=models.CASCADE,
@@ -382,6 +505,19 @@ class HistoricalEnrollment(models.Model):
         nota_final: Nota final del estudiante
     """
     fecha_inscripcion = models.DateTimeField()
+    # Campos de auditoría
+    id_original = models.IntegerField()
+    tabla_origen = models.CharField(max_length=255)
+    fecha_consolidacion = models.DateTimeField(auto_now_add=True)
+    dato_archivado = models.ForeignKey(
+        'datos_archivados.DatoArchivadoDinamico',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='historical_enrollments'
+    )
+    
+    # Campos de datos
     estado = models.CharField(max_length=50, blank=True, null=True)
     curso = models.ForeignKey(
         HistoricalSubjectInformation,
@@ -463,6 +599,19 @@ class HistoricalApplication(models.Model):
         null=True,
         related_name='applications'
     )
+    # Campos de auditoría
+    id_original = models.IntegerField()
+    tabla_origen = models.CharField(max_length=255)
+    fecha_consolidacion = models.DateTimeField(auto_now_add=True)
+    dato_archivado = models.ForeignKey(
+        'datos_archivados.DatoArchivadoDinamico',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='historical_applications'
+    )
+    
+    # Campos de datos
     usuario = models.ForeignKey(
         User,
         on_delete=models.CASCADE,

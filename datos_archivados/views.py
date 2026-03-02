@@ -3734,7 +3734,7 @@ def combinar_datos_seleccionadas(request):
         return JsonResponse({'success': False, 'error': f'Error procesando solicitud: {str(e)}'})
     
     # Ejecutar combinación en hilo separado para no bloquear la respuesta
-    def ejecutar_combinacion_seleccionada():
+    def ejecutar_combinacion_seleccionada(tablas_seleccionadas):
         import logging
         logger = logging.getLogger(__name__)
         
@@ -3761,6 +3761,127 @@ def combinar_datos_seleccionadas(request):
             cache.delete('combinacion_estado_interrupcion')
             cache.delete('combinacion_interrumpida_info')
             logger.info("🧹 Cache de interrupción limpiado al inicio de combinación selectiva")
+            
+            # ============================================================
+            # SEPARAR TABLAS EN GRUPOS: DOCENCIA Y NO-DOCENCIA (USUARIOS)
+            # ============================================================
+            from .historical_data_saver import es_tabla_docencia, guardar_datos_docencia_en_historial
+            
+            # Separar tablas en dos grupos
+            tablas_docencia = [tabla for tabla in tablas_seleccionadas if es_tabla_docencia(tabla)]
+            tablas_usuarios = [tabla for tabla in tablas_seleccionadas if not es_tabla_docencia(tabla)]
+            
+            logger.info("=" * 70)
+            logger.info("📊 ANÁLISIS DE TABLAS SELECCIONADAS")
+            logger.info("=" * 70)
+            logger.info(f"Total de tablas seleccionadas: {len(tablas_seleccionadas)}")
+            logger.info(f"Tablas de docencia (→ historial): {len(tablas_docencia)}")
+            logger.info(f"Tablas de usuarios (→ combinación): {len(tablas_usuarios)}")
+            
+            if tablas_docencia:
+                logger.info(f"\n📚 Tablas de docencia detectadas:")
+                for tabla in tablas_docencia:
+                    logger.info(f"  • {tabla}")
+            
+            if tablas_usuarios:
+                logger.info(f"\n👥 Tablas de usuarios detectadas:")
+                for tabla in tablas_usuarios:
+                    logger.info(f"  • {tabla}")
+            
+            logger.info("=" * 70)
+            
+            # Estadísticas combinadas de ambos procesos
+            estadisticas_totales = {
+                'docencia_guardadas': 0,
+                'usuarios_combinados': 0,
+                'tipo_procesamiento': None
+            }
+            
+            # ============================================================
+            # ESCENARIO 1: SOLO TABLAS DE DOCENCIA
+            # ============================================================
+            if tablas_docencia and not tablas_usuarios:
+                logger.info("\n🎯 ESCENARIO 1: Solo tablas de docencia")
+                logger.info("Acción: Guardar en modelos históricos de la app historial")
+                
+                try:
+                    # Guardar en historial
+                    estadisticas_docencia = guardar_datos_docencia_en_historial(tablas_docencia, logger)
+                    estadisticas_totales['docencia_guardadas'] = estadisticas_docencia.get('total_registros_guardados', 0)
+                    estadisticas_totales['tipo_procesamiento'] = 'solo_docencia'
+                    
+                    # Marcar como completado
+                    resultado_final = {
+                        'fecha_inicio': timezone.now().isoformat(),
+                        'fecha_fin': timezone.now().isoformat(),
+                        'tipo_combinacion': 'guardar_historial_docencia',
+                        'tablas_procesadas': tablas_docencia,
+                        **estadisticas_docencia
+                    }
+                    cache.set('ultima_combinacion_completada', resultado_final, timeout=300)
+                    cache.delete('combinacion_en_progreso')
+                    
+                    logger.info("\n" + "=" * 70)
+                    logger.info("✅ GUARDADO EN HISTORIAL COMPLETADO EXITOSAMENTE")
+                    logger.info("=" * 70)
+                    logger.info(f"Total de registros guardados: {estadisticas_totales['docencia_guardadas']}")
+                    
+                    return  # Salir sin ejecutar combinación
+                    
+                except Exception as e:
+                    logger.error(f"❌ Error guardando datos de docencia en historial: {str(e)}", exc_info=True)
+                    error_info = {
+                        'estado': 'error',
+                        'mensaje': f'Error guardando en historial: {str(e)}',
+                        'fecha_error': timezone.now().isoformat(),
+                        'tipo_combinacion': 'guardar_historial_docencia'
+                    }
+                    cache.set('combinacion_error', error_info, timeout=300)
+                    cache.delete('combinacion_en_progreso')
+                    raise
+            
+            # ============================================================
+            # ESCENARIO 2: SOLO TABLAS DE USUARIOS
+            # ============================================================
+            elif tablas_usuarios and not tablas_docencia:
+                logger.info("\n👥 ESCENARIO 2: Solo tablas de usuarios")
+                logger.info("Acción: Usar proceso de combinación existente para usuarios de Django")
+                estadisticas_totales['tipo_procesamiento'] = 'solo_usuarios'
+                # Continuar con el proceso normal de combinación (código existente)
+            
+            # ============================================================
+            # ESCENARIO 3: TABLAS MIXTAS (DOCENCIA + USUARIOS)
+            # ============================================================
+            elif tablas_docencia and tablas_usuarios:
+                logger.info("\n🔀 ESCENARIO 3: Tablas mixtas (docencia + usuarios)")
+                logger.info("Acción: Procesar ambos grupos de forma independiente")
+                estadisticas_totales['tipo_procesamiento'] = 'mixto'
+                
+                # PASO 1: Guardar tablas de docencia en historial
+                logger.info("\n" + "-" * 70)
+                logger.info("PASO 1/2: Guardando tablas de docencia en historial...")
+                logger.info("-" * 70)
+                
+                try:
+                    estadisticas_docencia = guardar_datos_docencia_en_historial(tablas_docencia, logger)
+                    estadisticas_totales['docencia_guardadas'] = estadisticas_docencia.get('total_registros_guardados', 0)
+                    
+                    logger.info(f"✅ Tablas de docencia guardadas: {estadisticas_totales['docencia_guardadas']} registros")
+                    
+                except Exception as e:
+                    logger.error(f"❌ Error guardando tablas de docencia: {str(e)}", exc_info=True)
+                    # Continuar con las tablas de usuarios aunque falle docencia
+                
+                # PASO 2: Procesar tablas de usuarios con combinación normal
+                logger.info("\n" + "-" * 70)
+                logger.info("PASO 2/2: Procesando tablas de usuarios con combinación...")
+                logger.info("-" * 70)
+                
+                # Actualizar tablas_seleccionadas para que solo contenga tablas de usuarios
+                # El resto del código procesará solo estas tablas
+                tablas_seleccionadas = tablas_usuarios
+                logger.info(f"Tablas de usuarios a combinar: {tablas_usuarios}")
+                # Continuar con el proceso normal de combinación para usuarios
             
             # Inicializar progreso en cache (usar clave diferente para no interferir)
             def actualizar_progreso_selectivo(paso_actual, pasos_completados, pasos_totales, **kwargs):
@@ -4789,11 +4910,24 @@ def combinar_datos_seleccionadas(request):
             # PASO FINAL: COMPLETAR
             actualizar_progreso_selectivo('Combinación selectiva completada exitosamente', pasos_totales, pasos_totales, **estadisticas)
             
+            # ============================================================
+            # CONSOLIDAR ESTADÍSTICAS FINALES (INCLUYE ESCENARIO MIXTO)
+            # ============================================================
+            
+            # Si fue escenario mixto, agregar estadísticas de docencia
+            if estadisticas_totales.get('tipo_procesamiento') == 'mixto':
+                estadisticas['docencia_guardadas'] = estadisticas_totales.get('docencia_guardadas', 0)
+                logger.info("\n" + "=" * 70)
+                logger.info("📊 RESUMEN DE PROCESAMIENTO MIXTO")
+                logger.info("=" * 70)
+                logger.info(f"Tablas de docencia guardadas en historial: {estadisticas['docencia_guardadas']} registros")
+                logger.info(f"Tablas de usuarios combinadas: {estadisticas['usuarios_combinados']} usuarios")
+            
             # Marcar como completado
             resultado_final = {
                 'fecha_inicio': timezone.now().isoformat(),
                 'fecha_fin': timezone.now().isoformat(),
-                'tipo_combinacion': 'selectiva',
+                'tipo_combinacion': estadisticas_totales.get('tipo_procesamiento', 'selectiva'),
                 'tablas_procesadas': tablas_seleccionadas,
                 **estadisticas,
                 'campos_agregados': 0  # Por ahora no agregamos campos dinámicamente
@@ -4801,12 +4935,19 @@ def combinar_datos_seleccionadas(request):
             cache.set('ultima_combinacion_completada', resultado_final, timeout=300)
             cache.delete('combinacion_en_progreso')
             
-            logger.info("=== COMBINACIÓN SELECTIVA COMPLETADA EXITOSAMENTE ===")
+            logger.info("\n" + "=" * 70)
+            logger.info("✅ COMBINACIÓN SELECTIVA COMPLETADA EXITOSAMENTE")
+            logger.info("=" * 70)
+            logger.info(f"Tipo de procesamiento: {estadisticas_totales.get('tipo_procesamiento', 'selectiva')}")
             logger.info(f"Tablas procesadas: {tablas_seleccionadas}")
-            logger.info(f"Usuarios combinados: {estadisticas['usuarios_combinados']}")
-            logger.info(f"Registros combinados: {estadisticas['registros_combinados']}")
-            logger.info(f"Cursos académicos combinados: {estadisticas['cursos_academicos_combinados']}")
-            logger.info(f"Cursos combinados: {estadisticas['cursos_combinados']}")
+            
+            if estadisticas.get('docencia_guardadas', 0) > 0:
+                logger.info(f"📚 Registros de docencia guardados en historial: {estadisticas['docencia_guardadas']}")
+            
+            logger.info(f"👥 Usuarios combinados: {estadisticas['usuarios_combinados']}")
+            logger.info(f"📝 Registros combinados: {estadisticas['registros_combinados']}")
+            logger.info(f"📅 Cursos académicos combinados: {estadisticas['cursos_academicos_combinados']}")
+            logger.info(f"📖 Cursos combinados: {estadisticas['cursos_combinados']}")
             logger.info(f"Matrículas combinadas: {estadisticas['matriculas_combinadas']}")
             logger.info(f"Asistencias combinadas: {estadisticas['asistencias_combinadas']}")
             logger.info(f"Calificaciones combinadas: {estadisticas['calificaciones_combinadas']}")
@@ -4852,7 +4993,7 @@ def combinar_datos_seleccionadas(request):
     def wrapper():
         # Pequeña pausa para asegurar que la respuesta se envíe primero
         time.sleep(0.1)
-        ejecutar_combinacion_seleccionada()
+        ejecutar_combinacion_seleccionada(tablas_seleccionadas)
     
     thread = threading.Thread(target=wrapper)
     thread.daemon = True

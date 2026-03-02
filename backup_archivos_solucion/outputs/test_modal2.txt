@@ -1,0 +1,245 @@
+INFO:datos_archivados.views:=== INICIANDO COMBINACIÓN SELECTIVA DE DATOS ===
+INFO:datos_archivados.views:Tablas seleccionadas: ['Docencia_area', 'Docencia_coursecategory', 'Docencia_courseinformation', 'Docencia_courseinformation_adminteachers', 'Docencia_subjectinformation', 'Docencia_edition', 'Docencia_enrollmentapplication', 'Docencia_accountnumber', 'Docencia_enrollmentpay', 'Docencia_enrollment', 'Docencia_application']
+INFO:datos_archivados.views:🧹 Cache de interrupción limpiado al inicio de combinación selectiva
+INFO:datos_archivados.views:======================================================================
+INFO:datos_archivados.views:📊 ANÁLISIS DE TABLAS SELECCIONADAS
+INFO:datos_archivados.views:======================================================================
+INFO:datos_archivados.views:Total de tablas seleccionadas: 11
+INFO:datos_archivados.views:Tablas de docencia (→ historial): 11
+INFO:datos_archivados.views:Tablas de usuarios (→ combinación): 0
+INFO:datos_archivados.views:
+📚 Tablas de docencia detectadas:
+INFO:datos_archivados.views:  • Docencia_area
+INFO:datos_archivados.views:  • Docencia_coursecategory
+INFO:datos_archivados.views:  • Docencia_courseinformation
+INFO:datos_archivados.views:  • Docencia_courseinformation_adminteachers
+INFO:datos_archivados.views:  • Docencia_subjectinformation
+INFO:datos_archivados.views:  • Docencia_edition
+INFO:datos_archivados.views:  • Docencia_enrollmentapplication
+INFO:datos_archivados.views:  • Docencia_accountnumber
+INFO:datos_archivados.views:  • Docencia_enrollmentpay
+INFO:datos_archivados.views:  • Docencia_enrollment
+INFO:datos_archivados.views:  • Docencia_application
+INFO:datos_archivados.views:======================================================================
+INFO:datos_archivados.views:
+🎯 ESCENARIO 1: Solo tablas de docencia
+INFO:datos_archivados.views:Acción: Guardar en modelos históricos de la app historial
+INFO:datos_archivados.views:=== INICIANDO GUARDADO DE DATOS DE DOCENCIA EN HISTORIAL ===
+INFO:datos_archivados.views:Tablas a procesar: ['Docencia_area', 'Docencia_coursecategory', 'Docencia_courseinformation', 'Docencia_courseinformation_adminteachers', 'Docencia_subjectinformation', 'Docencia_edition', 'Docencia_enrollmentapplication', 'Docencia_accountnumber', 'Docencia_enrollmentpay', 'Docencia_enrollment', 'Docencia_application']
+INFO:datos_archivados.views:
+--- Procesando tabla: Docencia_area ---
+INFO:datos_archivados.views:Encontrados 6 registros en Docencia_area
+INFO:datos_archivados.views:✅ Docencia_area: 6 registros guardados en historial
+INFO:datos_archivados.views:
+--- Procesando tabla: Docencia_coursecategory ---
+INFO:datos_archivados.views:Encontrados 4 registros en Docencia_coursecategory
+INFO:datos_archivados.views:✅ Docencia_coursecategory: 4 registros guardados en historial
+INFO:datos_archivados.views:
+--- Procesando tabla: Docencia_courseinformation ---
+INFO:datos_archivados.views:Encontrados 50 registros en Docencia_courseinformation
+INFO:datos_archivados.views:✅ Docencia_courseinformation: 50 registros guardados en historial
+INFO:datos_archivados.views:
+--- Procesando tabla: Docencia_courseinformation_adminteachers ---
+INFO:datos_archivados.views:Encontrados 149 registros en Docencia_courseinformation_adminteachers
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+WARNING:datos_archivados.views:Profesor ID no encontrado
+INFO:datos_archivados.views:✅ Docencia_courseinformation_adminteachers: 0 registros guardados en historial
+INFO:datos_archivados.views:
+--- Procesando tabla: Docencia_subjectinformation ---
+INFO:datos_archivados.views:Encontrados 190 registros en Docencia_subjectinformation
+INFO:datos_archivados.views:✅ Docencia_subjectinformation: 190 registros guardados en historial
+INFO:datos_archivados.views:
+--- Procesando tabla: Docencia_edition ---
+INFO:datos_archivados.views:Encontrados 6 registros en Docencia_edition
+INFO:datos_archivados.views:✅ Docencia_edition: 6 registros guardados en historial
+INFO:datos_archivados.views:
+--- Procesando tabla: Docencia_enrollmentapplication ---
+INFO:datos_archivados.views:Encontrados 32 registros en Docencia_enrollmentapplication
+INFO:datos_archivados.views:✅ Docencia_enrollmentapplication: 32 registros guardados en historial
+INFO:datos_archivados.views:
+--- Procesando tabla: Docencia_accountnumber ---
+INFO:datos_archivados.views:Encontrados 2 registros en Docencia_accountnumber
+INFO:datos_archivados.views:✅ Docencia_accountnumber: 2 registros guardados en historial
+INFO:datos_archivados.views:
+--- Procesando tabla: Docencia_enrollmentpay ---
+INFO:datos_archivados.views:Encontrados 61 registros en Docencia_enrollmentpay
+INFO:datos_archivados.views:✅ Docencia_enrollmentpay: 61 registros guardados en historial
+INFO:datos_archivados.views:
+--- Procesando tabla: Docencia_enrollment ---
+INFO:datos_archivados.views:Encontrados 184 registros en Docencia_enrollment
+INFO:datos_archivados.views:✅ Docencia_enrollment: 184 registros guardados en historial
+INFO:datos_archivados.views:
+--- Procesando tabla: Docencia_application ---
+INFO:datos_archivados.views:Encontrados 8282 registros en Docencia_application
+
+================================================================================
+SIMULACIÓN DEL MODAL DE COMBINACIÓN SELECTIVA
+================================================================================
+
+Enviando petición POST con 11 tablas de docencia...
+Tablas: ['Docencia_area', 'Docencia_coursecategory', 'Docencia_courseinformation', 'Docencia_courseinformation_adminteachers', 'Docencia_subjectinformation', 'Docencia_edition', 'Docencia_enrollmentapplication', 'Docencia_accountnumber', 'Docencia_enrollmentpay', 'Docencia_enrollment', 'Docencia_application']
+
+Status Code: 200
+Response: {'success': True, 'message': 'Combinación selectiva iniciada para 11 tablas. Puede seguir el progreso en tiempo real.', 'tablas_seleccionadas': ['Docencia_area', 'Docencia_coursecategory', 'Docencia_courseinformation', 'Docencia_courseinformation_adminteachers', 'Docencia_subjectinformation', 'Docencia_edition', 'Docencia_enrollmentapplication', 'Docencia_accountnumber', 'Docencia_enrollmentpay', 'Docencia_enrollment', 'Docencia_application']}
+
+✅ La petición fue exitosa
+⏳ Esperando 30 segundos para que el proceso en segundo plano termine...
+
+================================================================================
+VERIFICACIÓN DE RESULTADOS
+================================================================================
+HistoricalArea: 6 registros
+HistoricalCourseCategory: 4 registros
+HistoricalCourseInformation: 50 registros
+HistoricalEnrollmentApplication: 32 registros
+
+⚠️ No hay resultado en cache
+
+================================================================================
