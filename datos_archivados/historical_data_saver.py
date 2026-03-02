@@ -267,59 +267,70 @@ def guardar_datos_docencia_en_historial(tablas_seleccionadas, logger=None):
             # Procesar según la tabla
             if tabla == 'Docencia_area':
                 registros_guardados = _procesar_areas(
-                    datos_tabla, ModeloHistorico, mapeo_areas, logger
+                    datos_tabla, ModeloHistorico, mapeo_areas, logger,
+                    estadisticas, tablas_seleccionadas, tabla
                 )
 
             
             elif tabla == 'Docencia_coursecategory':
                 registros_guardados = _procesar_categorias(
-                    datos_tabla, ModeloHistorico, mapeo_categorias, logger
+                    datos_tabla, ModeloHistorico, mapeo_categorias, logger,
+                    estadisticas, tablas_seleccionadas, tabla
                 )
             
             elif tabla == 'Docencia_courseinformation':
                 registros_guardados = _procesar_cursos(
                     datos_tabla, ModeloHistorico, mapeo_cursos, 
-                    mapeo_areas, mapeo_categorias, logger
+                    mapeo_areas, mapeo_categorias, logger,
+                    estadisticas, tablas_seleccionadas, tabla
                 )
             
             elif tabla == 'Docencia_courseinformation_adminteachers':
                 registros_guardados = _procesar_admin_teachers(
-                    datos_tabla, ModeloHistorico, mapeo_cursos, logger
+                    datos_tabla, ModeloHistorico, mapeo_cursos, logger,
+                    estadisticas, tablas_seleccionadas, tabla
                 )
             
             elif tabla == 'Docencia_subjectinformation':
                 registros_guardados = _procesar_asignaturas(
-                    datos_tabla, ModeloHistorico, mapeo_asignaturas, mapeo_cursos, logger
+                    datos_tabla, ModeloHistorico, mapeo_asignaturas, mapeo_cursos, logger,
+                    estadisticas, tablas_seleccionadas, tabla
                 )
             
             elif tabla == 'Docencia_edition':
                 registros_guardados = _procesar_ediciones(
-                    datos_tabla, ModeloHistorico, mapeo_ediciones, mapeo_cursos, logger
+                    datos_tabla, ModeloHistorico, mapeo_ediciones, mapeo_cursos, logger,
+                    estadisticas, tablas_seleccionadas, tabla
                 )
             
             elif tabla == 'Docencia_enrollmentapplication':
                 registros_guardados = _procesar_solicitudes(
-                    datos_tabla, ModeloHistorico, mapeo_solicitudes, mapeo_cursos, logger
+                    datos_tabla, ModeloHistorico, mapeo_solicitudes, mapeo_cursos, logger,
+                    estadisticas, tablas_seleccionadas, tabla
                 )
             
             elif tabla == 'Docencia_accountnumber':
                 registros_guardados = _procesar_cuentas(
-                    datos_tabla, ModeloHistorico, mapeo_cuentas, logger
+                    datos_tabla, ModeloHistorico, mapeo_cuentas, logger,
+                    estadisticas, tablas_seleccionadas, tabla
                 )
             
             elif tabla == 'Docencia_enrollmentpay':
                 registros_guardados = _procesar_pagos(
-                    datos_tabla, ModeloHistorico, mapeo_solicitudes, mapeo_cuentas, logger
+                    datos_tabla, ModeloHistorico, mapeo_solicitudes, mapeo_cuentas, logger,
+                    estadisticas, tablas_seleccionadas, tabla
                 )
             
             elif tabla == 'Docencia_enrollment':
                 registros_guardados = _procesar_inscripciones(
-                    datos_tabla, ModeloHistorico, mapeo_asignaturas, mapeo_ediciones, logger
+                    datos_tabla, ModeloHistorico, mapeo_asignaturas, mapeo_ediciones, logger,
+                    estadisticas, tablas_seleccionadas, tabla
                 )
             
             elif tabla == 'Docencia_application':
                 registros_guardados = _procesar_aplicaciones(
-                    datos_tabla, ModeloHistorico, mapeo_cursos, mapeo_ediciones, logger
+                    datos_tabla, ModeloHistorico, mapeo_cursos, mapeo_ediciones, logger,
+                    estadisticas, tablas_seleccionadas, tabla
                 )
             
             # Actualizar estadísticas
@@ -329,8 +340,14 @@ def guardar_datos_docencia_en_historial(tablas_seleccionadas, logger=None):
             
             logger.info(f"✅ {tabla}: {registros_guardados} registros guardados en historial")
             
-            # Actualizar progreso en cache
-            _actualizar_progreso_cache(tabla, estadisticas, tablas_seleccionadas)
+            # Actualizar progreso en cache con información de la tabla completada
+            _actualizar_progreso_cache(
+                tabla, 
+                estadisticas, 
+                tablas_seleccionadas,
+                registros_procesados=total_registros,  # Tabla completada
+                total_registros=total_registros
+            )
         
         logger.info("\n=== GUARDADO EN HISTORIAL COMPLETADO EXITOSAMENTE ===")
         logger.info(f"Total de registros guardados: {estadisticas['total_registros_guardados']}")
@@ -346,12 +363,16 @@ def guardar_datos_docencia_en_historial(tablas_seleccionadas, logger=None):
 
 
 
-def _procesar_areas(datos_tabla, ModeloHistorico, mapeo_areas, logger):
+def _procesar_areas(datos_tabla, ModeloHistorico, mapeo_areas, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
     """Procesa y guarda áreas en HistoricalArea."""
     registros_guardados = 0
     
+    
+    # Obtener total de registros para progreso
+    total_registros = len(datos_tabla)
+    
     with transaction.atomic():
-        for dato in datos_tabla:
+        for i, dato in enumerate(datos_tabla, 1):
             try:
                 sid = transaction.savepoint()
                 datos = dato.datos_originales
@@ -375,6 +396,16 @@ def _procesar_areas(datos_tabla, ModeloHistorico, mapeo_areas, logger):
                 registros_guardados += 1
                 
                 transaction.savepoint_commit(sid)
+                
+                # Actualizar progreso cada 100 registros o al final
+                if estadisticas and tablas_seleccionadas and tabla_actual and (i % 100 == 0 or i == total_registros):
+                    _actualizar_progreso_cache(
+                        tabla_actual,
+                        estadisticas,
+                        tablas_seleccionadas,
+                        registros_procesados=i,
+                        total_registros=total_registros
+                    )
                 logger.debug(f"Área guardada: {area.nombre} (ID original: {id_original})")
                 
             except Exception as e:
@@ -385,15 +416,18 @@ def _procesar_areas(datos_tabla, ModeloHistorico, mapeo_areas, logger):
     return registros_guardados
 
 
-def _procesar_categorias(datos_tabla, ModeloHistorico, mapeo_categorias, logger):
+def _procesar_categorias(datos_tabla, ModeloHistorico, mapeo_categorias, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
     """Procesa y guarda categorías en HistoricalCourseCategory."""
     registros_guardados = 0
     
     # Primer paso: crear todas las categorías sin parent
     categorias_pendientes = []
     
+    # Obtener total de registros para progreso
+    total_registros = len(datos_tabla)
+
     with transaction.atomic():
-        for dato in datos_tabla:
+        for i, dato in enumerate(datos_tabla, 1):
             try:
                 sid = transaction.savepoint()
                 datos = dato.datos_originales
@@ -426,6 +460,16 @@ def _procesar_categorias(datos_tabla, ModeloHistorico, mapeo_categorias, logger)
                     categorias_pendientes.append((categoria, parent_id))
                 
                 transaction.savepoint_commit(sid)
+                
+                # Actualizar progreso cada 100 registros o al final
+                if estadisticas and tablas_seleccionadas and tabla_actual and (i % 100 == 0 or i == total_registros):
+                    _actualizar_progreso_cache(
+                        tabla_actual,
+                        estadisticas,
+                        tablas_seleccionadas,
+                        registros_procesados=i,
+                        total_registros=total_registros
+                    )
                 logger.debug(f"Categoría guardada: {categoria.nombre} (ID original: {id_original})")
                 
             except Exception as e:
@@ -450,12 +494,16 @@ def _procesar_categorias(datos_tabla, ModeloHistorico, mapeo_categorias, logger)
 
 
 
-def _procesar_cursos(datos_tabla, ModeloHistorico, mapeo_cursos, mapeo_areas, mapeo_categorias, logger):
+def _procesar_cursos(datos_tabla, ModeloHistorico, mapeo_cursos, mapeo_areas, mapeo_categorias, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
     """Procesa y guarda cursos en HistoricalCourseInformation."""
     registros_guardados = 0
     
+    
+    # Obtener total de registros para progreso
+    total_registros = len(datos_tabla)
+    
     with transaction.atomic():
-        for dato in datos_tabla:
+        for i, dato in enumerate(datos_tabla, 1):
             try:
                 sid = transaction.savepoint()
                 datos = dato.datos_originales
@@ -493,6 +541,16 @@ def _procesar_cursos(datos_tabla, ModeloHistorico, mapeo_cursos, mapeo_areas, ma
                 registros_guardados += 1
                 
                 transaction.savepoint_commit(sid)
+                
+                # Actualizar progreso cada 100 registros o al final
+                if estadisticas and tablas_seleccionadas and tabla_actual and (i % 100 == 0 or i == total_registros):
+                    _actualizar_progreso_cache(
+                        tabla_actual,
+                        estadisticas,
+                        tablas_seleccionadas,
+                        registros_procesados=i,
+                        total_registros=total_registros
+                    )
                 logger.debug(f"Curso guardado: {curso.nombre} (ID original: {id_original})")
                 
             except Exception as e:
@@ -503,12 +561,16 @@ def _procesar_cursos(datos_tabla, ModeloHistorico, mapeo_cursos, mapeo_areas, ma
     return registros_guardados
 
 
-def _procesar_admin_teachers(datos_tabla, ModeloHistorico, mapeo_cursos, logger):
+def _procesar_admin_teachers(datos_tabla, ModeloHistorico, mapeo_cursos, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
     """Procesa y guarda relaciones curso-profesor en HistoricalCourseInformationAdminTeachers."""
     registros_guardados = 0
     
+    
+    # Obtener total de registros para progreso
+    total_registros = len(datos_tabla)
+    
     with transaction.atomic():
-        for dato in datos_tabla:
+        for i, dato in enumerate(datos_tabla, 1):
             try:
                 sid = transaction.savepoint()
                 datos = dato.datos_originales
@@ -556,6 +618,16 @@ def _procesar_admin_teachers(datos_tabla, ModeloHistorico, mapeo_cursos, logger)
                 
                 transaction.savepoint_commit(sid)
                 
+                # Actualizar progreso cada 100 registros o al final
+                if estadisticas and tablas_seleccionadas and tabla_actual and (i % 100 == 0 or i == total_registros):
+                    _actualizar_progreso_cache(
+                        tabla_actual,
+                        estadisticas,
+                        tablas_seleccionadas,
+                        registros_procesados=i,
+                        total_registros=total_registros
+                    )
+                
             except Exception as e:
                 transaction.savepoint_rollback(sid)
                 logger.error(f"Error procesando admin teacher: {str(e)}")
@@ -566,12 +638,16 @@ def _procesar_admin_teachers(datos_tabla, ModeloHistorico, mapeo_cursos, logger)
 
 
 
-def _procesar_asignaturas(datos_tabla, ModeloHistorico, mapeo_asignaturas, mapeo_cursos, logger):
+def _procesar_asignaturas(datos_tabla, ModeloHistorico, mapeo_asignaturas, mapeo_cursos, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
     """Procesa y guarda asignaturas en HistoricalSubjectInformation."""
     registros_guardados = 0
     
+    
+    # Obtener total de registros para progreso
+    total_registros = len(datos_tabla)
+    
     with transaction.atomic():
-        for dato in datos_tabla:
+        for i, dato in enumerate(datos_tabla, 1):
             try:
                 sid = transaction.savepoint()
                 datos = dato.datos_originales
@@ -605,6 +681,16 @@ def _procesar_asignaturas(datos_tabla, ModeloHistorico, mapeo_asignaturas, mapeo
                 registros_guardados += 1
                 
                 transaction.savepoint_commit(sid)
+                
+                # Actualizar progreso cada 100 registros o al final
+                if estadisticas and tablas_seleccionadas and tabla_actual and (i % 100 == 0 or i == total_registros):
+                    _actualizar_progreso_cache(
+                        tabla_actual,
+                        estadisticas,
+                        tablas_seleccionadas,
+                        registros_procesados=i,
+                        total_registros=total_registros
+                    )
                 logger.debug(f"Asignatura guardada: {asignatura.nombre} (ID original: {id_original})")
                 
             except Exception as e:
@@ -615,12 +701,16 @@ def _procesar_asignaturas(datos_tabla, ModeloHistorico, mapeo_asignaturas, mapeo
     return registros_guardados
 
 
-def _procesar_ediciones(datos_tabla, ModeloHistorico, mapeo_ediciones, mapeo_cursos, logger):
+def _procesar_ediciones(datos_tabla, ModeloHistorico, mapeo_ediciones, mapeo_cursos, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
     """Procesa y guarda ediciones en HistoricalEdition."""
     registros_guardados = 0
     
+    
+    # Obtener total de registros para progreso
+    total_registros = len(datos_tabla)
+    
     with transaction.atomic():
-        for dato in datos_tabla:
+        for i, dato in enumerate(datos_tabla, 1):
             try:
                 sid = transaction.savepoint()
                 datos = dato.datos_originales
@@ -662,6 +752,16 @@ def _procesar_ediciones(datos_tabla, ModeloHistorico, mapeo_ediciones, mapeo_cur
                 registros_guardados += 1
                 
                 transaction.savepoint_commit(sid)
+                
+                # Actualizar progreso cada 100 registros o al final
+                if estadisticas and tablas_seleccionadas and tabla_actual and (i % 100 == 0 or i == total_registros):
+                    _actualizar_progreso_cache(
+                        tabla_actual,
+                        estadisticas,
+                        tablas_seleccionadas,
+                        registros_procesados=i,
+                        total_registros=total_registros
+                    )
                 logger.debug(f"Edición guardada: {edicion.nombre} (ID original: {id_original})")
                 
             except Exception as e:
@@ -674,12 +774,16 @@ def _procesar_ediciones(datos_tabla, ModeloHistorico, mapeo_ediciones, mapeo_cur
 
 
 
-def _procesar_solicitudes(datos_tabla, ModeloHistorico, mapeo_solicitudes, mapeo_cursos, logger):
+def _procesar_solicitudes(datos_tabla, ModeloHistorico, mapeo_solicitudes, mapeo_cursos, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
     """Procesa y guarda solicitudes de inscripción en HistoricalEnrollmentApplication."""
     registros_guardados = 0
     
+    
+    # Obtener total de registros para progreso
+    total_registros = len(datos_tabla)
+    
     with transaction.atomic():
-        for dato in datos_tabla:
+        for i, dato in enumerate(datos_tabla, 1):
             try:
                 sid = transaction.savepoint()
                 datos = dato.datos_originales
@@ -721,6 +825,16 @@ def _procesar_solicitudes(datos_tabla, ModeloHistorico, mapeo_solicitudes, mapeo
                 registros_guardados += 1
                 
                 transaction.savepoint_commit(sid)
+                
+                # Actualizar progreso cada 100 registros o al final
+                if estadisticas and tablas_seleccionadas and tabla_actual and (i % 100 == 0 or i == total_registros):
+                    _actualizar_progreso_cache(
+                        tabla_actual,
+                        estadisticas,
+                        tablas_seleccionadas,
+                        registros_procesados=i,
+                        total_registros=total_registros
+                    )
                 logger.debug(f"Solicitud guardada (ID original: {id_original})")
                 
             except Exception as e:
@@ -731,12 +845,16 @@ def _procesar_solicitudes(datos_tabla, ModeloHistorico, mapeo_solicitudes, mapeo
     return registros_guardados
 
 
-def _procesar_cuentas(datos_tabla, ModeloHistorico, mapeo_cuentas, logger):
+def _procesar_cuentas(datos_tabla, ModeloHistorico, mapeo_cuentas, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
     """Procesa y guarda cuentas bancarias en HistoricalAccountNumber."""
     registros_guardados = 0
     
+    
+    # Obtener total de registros para progreso
+    total_registros = len(datos_tabla)
+    
     with transaction.atomic():
-        for dato in datos_tabla:
+        for i, dato in enumerate(datos_tabla, 1):
             try:
                 sid = transaction.savepoint()
                 datos = dato.datos_originales
@@ -774,6 +892,16 @@ def _procesar_cuentas(datos_tabla, ModeloHistorico, mapeo_cuentas, logger):
                 registros_guardados += 1
                 
                 transaction.savepoint_commit(sid)
+                
+                # Actualizar progreso cada 100 registros o al final
+                if estadisticas and tablas_seleccionadas and tabla_actual and (i % 100 == 0 or i == total_registros):
+                    _actualizar_progreso_cache(
+                        tabla_actual,
+                        estadisticas,
+                        tablas_seleccionadas,
+                        registros_procesados=i,
+                        total_registros=total_registros
+                    )
                 logger.debug(f"Cuenta guardada: {cuenta.numero_cuenta} (ID original: {id_original})")
                 
             except Exception as e:
@@ -786,12 +914,16 @@ def _procesar_cuentas(datos_tabla, ModeloHistorico, mapeo_cuentas, logger):
 
 
 
-def _procesar_pagos(datos_tabla, ModeloHistorico, mapeo_solicitudes, mapeo_cuentas, logger):
+def _procesar_pagos(datos_tabla, ModeloHistorico, mapeo_solicitudes, mapeo_cuentas, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
     """Procesa y guarda pagos en HistoricalEnrollmentPay."""
     registros_guardados = 0
     
+    
+    # Obtener total de registros para progreso
+    total_registros = len(datos_tabla)
+    
     with transaction.atomic():
-        for dato in datos_tabla:
+        for i, dato in enumerate(datos_tabla, 1):
             try:
                 sid = transaction.savepoint()
                 datos = dato.datos_originales
@@ -826,6 +958,16 @@ def _procesar_pagos(datos_tabla, ModeloHistorico, mapeo_solicitudes, mapeo_cuent
                 registros_guardados += 1
                 
                 transaction.savepoint_commit(sid)
+                
+                # Actualizar progreso cada 100 registros o al final
+                if estadisticas and tablas_seleccionadas and tabla_actual and (i % 100 == 0 or i == total_registros):
+                    _actualizar_progreso_cache(
+                        tabla_actual,
+                        estadisticas,
+                        tablas_seleccionadas,
+                        registros_procesados=i,
+                        total_registros=total_registros
+                    )
                 logger.debug(f"Pago guardado: {pago.monto}")
                 
             except Exception as e:
@@ -836,12 +978,16 @@ def _procesar_pagos(datos_tabla, ModeloHistorico, mapeo_solicitudes, mapeo_cuent
     return registros_guardados
 
 
-def _procesar_inscripciones(datos_tabla, ModeloHistorico, mapeo_asignaturas, mapeo_ediciones, logger):
+def _procesar_inscripciones(datos_tabla, ModeloHistorico, mapeo_asignaturas, mapeo_ediciones, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
     """Procesa y guarda inscripciones en HistoricalEnrollment."""
     registros_guardados = 0
     
+    
+    # Obtener total de registros para progreso
+    total_registros = len(datos_tabla)
+    
     with transaction.atomic():
-        for dato in datos_tabla:
+        for i, dato in enumerate(datos_tabla, 1):
             try:
                 sid = transaction.savepoint()
                 datos = dato.datos_originales
@@ -884,6 +1030,16 @@ def _procesar_inscripciones(datos_tabla, ModeloHistorico, mapeo_asignaturas, map
                 registros_guardados += 1
                 
                 transaction.savepoint_commit(sid)
+                
+                # Actualizar progreso cada 100 registros o al final
+                if estadisticas and tablas_seleccionadas and tabla_actual and (i % 100 == 0 or i == total_registros):
+                    _actualizar_progreso_cache(
+                        tabla_actual,
+                        estadisticas,
+                        tablas_seleccionadas,
+                        registros_procesados=i,
+                        total_registros=total_registros
+                    )
                 logger.debug(f"Inscripción guardada")
                 
             except Exception as e:
@@ -896,12 +1052,16 @@ def _procesar_inscripciones(datos_tabla, ModeloHistorico, mapeo_asignaturas, map
 
 
 
-def _procesar_aplicaciones(datos_tabla, ModeloHistorico, mapeo_cursos, mapeo_ediciones, logger):
+def _procesar_aplicaciones(datos_tabla, ModeloHistorico, mapeo_cursos, mapeo_ediciones, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
     """Procesa y guarda aplicaciones en HistoricalApplication."""
     registros_guardados = 0
     
+    
+    # Obtener total de registros para progreso
+    total_registros = len(datos_tabla)
+    
     with transaction.atomic():
-        for dato in datos_tabla:
+        for i, dato in enumerate(datos_tabla, 1):
             try:
                 sid = transaction.savepoint()
                 datos = dato.datos_originales
@@ -944,6 +1104,16 @@ def _procesar_aplicaciones(datos_tabla, ModeloHistorico, mapeo_cursos, mapeo_edi
                 registros_guardados += 1
                 
                 transaction.savepoint_commit(sid)
+                
+                # Actualizar progreso cada 100 registros o al final
+                if estadisticas and tablas_seleccionadas and tabla_actual and (i % 100 == 0 or i == total_registros):
+                    _actualizar_progreso_cache(
+                        tabla_actual,
+                        estadisticas,
+                        tablas_seleccionadas,
+                        registros_procesados=i,
+                        total_registros=total_registros
+                    )
                 logger.debug(f"Aplicación guardada")
                 
             except Exception as e:
@@ -954,8 +1124,11 @@ def _procesar_aplicaciones(datos_tabla, ModeloHistorico, mapeo_cursos, mapeo_edi
     return registros_guardados
 
 
-def _actualizar_progreso_cache(tabla_actual, estadisticas, tablas_seleccionadas):
+def _actualizar_progreso_cache(tabla_actual, estadisticas, tablas_seleccionadas, registros_procesados=0, total_registros=0):
     """Actualiza el progreso en cache para mostrar en el frontend."""
+    # Calcular porcentaje de la tabla actual
+    porcentaje_tabla = int((registros_procesados / total_registros) * 100) if total_registros > 0 else 0
+    
     progreso = {
         'paso_actual': f'Guardando {tabla_actual} en historial',
         'pasos_completados': estadisticas['tablas_procesadas'],
@@ -963,6 +1136,11 @@ def _actualizar_progreso_cache(tabla_actual, estadisticas, tablas_seleccionadas)
         'fecha_inicio': timezone.now().isoformat(),
         'tipo_operacion': 'guardar_historial',
         'tablas_seleccionadas': tablas_seleccionadas,
+        # Campos para progreso en tiempo real
+        'tabla_actual_procesando': tabla_actual,
+        'registros_procesados_tabla': registros_procesados,
+        'total_registros_tabla': total_registros,
+        'porcentaje_tabla': porcentaje_tabla,
         **estadisticas
     }
     cache.set('combinacion_en_progreso', progreso, timeout=300)

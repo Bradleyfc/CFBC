@@ -3810,12 +3810,17 @@ def combinar_datos_seleccionadas(request):
                     estadisticas_totales['docencia_guardadas'] = estadisticas_docencia.get('total_registros_guardados', 0)
                     estadisticas_totales['tipo_procesamiento'] = 'solo_docencia'
                     
-                    # Marcar como completado
+                    # Marcar como completado - mapear campos para el frontend
                     resultado_final = {
                         'fecha_inicio': timezone.now().isoformat(),
                         'fecha_fin': timezone.now().isoformat(),
                         'tipo_combinacion': 'guardar_historial_docencia',
-                        'tablas_procesadas': tablas_docencia,
+                        'tablas_procesadas': len(tablas_docencia),
+                        # Mapear campos para que el frontend los entienda
+                        'registros_combinados': estadisticas_docencia.get('total_registros_guardados', 0),
+                        'total_combinados': estadisticas_docencia.get('total_registros_guardados', 0),
+                        'usuarios_combinados': 0,  # No se combinan usuarios en historial
+                        'tablas_procesadas_lista': tablas_docencia,
                         **estadisticas_docencia
                     }
                     cache.set('ultima_combinacion_completada', resultado_final, timeout=300)
@@ -4189,8 +4194,8 @@ def combinar_datos_seleccionadas(request):
                                     else:
                                         nuevo_usuario.set_unusable_password()
                                 
-                                # Actualizar progreso en tiempo real cada 10 registros o al final
-                                if i % 10 == 0 or i == total_usuarios:
+                                # Actualizar progreso en tiempo real cada 100 registros o al final
+                                if i % 100 == 0 or i == total_usuarios:
                                     actualizar_progreso_tiempo_real(
                                         tabla_actual='auth_user',
                                         registros_procesados=i,
@@ -4253,8 +4258,8 @@ def combinar_datos_seleccionadas(request):
                                 
                                 estadisticas['otras_tablas'] += 1
                                 
-                                # Actualizar progreso en tiempo real cada 5 registros o al final
-                                if i % 5 == 0 or i == total_grupos:
+                                # Actualizar progreso en tiempo real cada 100 registros o al final
+                                if i % 100 == 0 or i == total_grupos:
                                     actualizar_progreso_tiempo_real(
                                         tabla_actual='auth_group',
                                         registros_procesados=i,
@@ -4326,8 +4331,8 @@ def combinar_datos_seleccionadas(request):
                                 
                                 transaction.savepoint_commit(sid)
                                 
-                                # Actualizar progreso en tiempo real cada 5 registros o al final
-                                if i % 5 == 0 or i == total_profesores:
+                                # Actualizar progreso en tiempo real cada 100 registros o al final
+                                if i % 100 == 0 or i == total_profesores:
                                     actualizar_progreso_tiempo_real(
                                         tabla_actual='Docencia_teacherpersonalinformation',
                                         registros_procesados=i,
@@ -4397,8 +4402,8 @@ def combinar_datos_seleccionadas(request):
                                 
                                 transaction.savepoint_commit(sid)
                                 
-                                # Actualizar progreso en tiempo real cada 10 registros o al final
-                                if i % 10 == 0 or i == total_estudiantes:
+                                # Actualizar progreso en tiempo real cada 100 registros o al final
+                                if i % 100 == 0 or i == total_estudiantes:
                                     actualizar_progreso_tiempo_real(
                                         tabla_actual='Docencia_studentpersonalinformation',
                                         registros_procesados=i,
@@ -4492,8 +4497,8 @@ def combinar_datos_seleccionadas(request):
                                 else:
                                     logger.warning(f"Usuario con ID {user_id_original} no encontrado en mapeo")
                                 
-                                # Actualizar progreso en tiempo real cada 10 registros o al final
-                                if i % 10 == 0 or i == total_relaciones:
+                                # Actualizar progreso en tiempo real cada 100 registros o al final
+                                if i % 100 == 0 or i == total_relaciones:
                                     actualizar_progreso_tiempo_real(
                                         tabla_actual='auth_user_groups',
                                         registros_procesados=i,

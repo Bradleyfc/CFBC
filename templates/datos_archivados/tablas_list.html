@@ -3764,17 +3764,32 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Mostrar modal de combinación completada después de 2 segundos
                         setTimeout(() => {
                             const tiempoTotal = Date.now() - tiempoInicioCombinacion;
+                            
+                            console.log('📊 Datos recibidos del backend:', data);
+                            
                             const datosEstadisticas = {
-                                total_combinados: data.total_combinados || data.registros_combinados || 0,
-                                tablas_procesadas: data.tablas_procesadas || 0,
+                                // Usar los campos correctos del backend
+                                total_combinados: data.registros_combinados || data.total_combinados || 0,
+                                registros_combinados: data.registros_combinados || 0,
+                                tablas_procesadas: (data.tablas_procesadas && Array.isArray(data.tablas_procesadas)) ? 
+                                    data.tablas_procesadas.length : 
+                                    (data.pasos_completados || 0),
                                 usuarios_actualizados: data.usuarios_combinados || 0,
-                                tipo_combinacion: 'Completa',
-                                grupos_creados: data.grupos_creados || 0,
-                                registros_exitosos: data.registros_exitosos || data.total_combinados || 0,
+                                usuarios_combinados: data.usuarios_combinados || 0,
+                                tipo_combinacion: data.tipo_combinacion || 'Completa',
+                                grupos_creados: data.grupos_creados || data.otras_tablas || 0,
+                                registros_exitosos: data.registros_combinados || data.total_combinados || 0,
                                 registros_omitidos: data.registros_omitidos || 0,
-                                errores_encontrados: data.errores_encontrados || 0,
-                                tiempo_total: tiempoTotal
+                                errores_encontrados: data.errores_encontrados || data.errores || 0,
+                                tiempo_total: tiempoTotal,
+                                // Campos adicionales
+                                cursos_combinados: data.cursos_combinados || 0,
+                                matriculas_combinadas: data.matriculas_combinadas || 0,
+                                asistencias_combinadas: data.asistencias_combinadas || 0,
+                                calificaciones_combinadas: data.calificaciones_combinadas || 0
                             };
+                            
+                            console.log('📊 Estadísticas preparadas para el modal:', datosEstadisticas);
                             mostrarModalCombinacionCompletada(datosEstadisticas);
                         }, 2000);
                         
@@ -4974,7 +4989,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <div class="mt-2 text-xs text-gray-600 bg-green-50 p-2 rounded">
                                         💡 <strong>Combinación selectiva en progreso:</strong> Procesando solo las tablas que seleccionó.
                                         ${(data && data.registros_procesados_tabla && data.total_registros_tabla) ? 
-                                            `<br>📊 <strong>Progreso en tiempo real:</strong> Actualizando cada ${data.registros_procesados_tabla < 100 ? '5-10' : '10'} registros procesados.` : 
+                                            `<br>📊 <strong>Progreso en tiempo real:</strong> Actualizando cada 100 registros procesados.` : 
                                             ''
                                         }
                                     </div>
@@ -5009,10 +5024,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Mostrar modal de combinación completada después de 2 segundos
                         setTimeout(() => {
                             const tiempoTotal = Date.now() - window.tiempoInicioMonitoreoSelectivo;
+                            
+                            console.log('📊 Datos recibidos del backend (selectiva):', data);
+                            
                             const datosEstadisticas = {
-                                total_combinados: data.total_combinados || data.registros_combinados || 0,
+                                total_combinados: data.registros_combinados || data.total_combinados || data.total_registros_guardados || 0,
+                                registros_combinados: data.registros_combinados || data.total_registros_guardados || 0,
                                 tablas_procesadas: tablasSeleccionadas.length,
                                 usuarios_actualizados: data.usuarios_combinados || 0,
+                                usuarios_combinados: data.usuarios_combinados || 0,
                                 tipo_combinacion: 'Selectiva',
                                 grupos_creados: data.grupos_creados || 0,
                                 registros_exitosos: data.registros_exitosos || data.total_combinados || 0,
@@ -11190,33 +11210,52 @@ function actualizarContadorRegistros(cantidad, esSelectivo = false) {
 
 // Función para mostrar el modal de combinación completada
 function mostrarModalCombinacionCompletada(datosEstadisticas) {
+    console.log('📊 Mostrando modal de combinación completada con datos:', datosEstadisticas);
+    
     const modal = document.getElementById('modalCombinacionCompletada');
     
     // Actualizar estadísticas
     if (datosEstadisticas) {
-        // Estadísticas principales
-        document.getElementById('totalRegistrosCombinados').textContent = (datosEstadisticas.total_combinados || 0).toLocaleString();
-        document.getElementById('tablasProcesadas').textContent = datosEstadisticas.tablas_procesadas || 0;
-        document.getElementById('usuariosActualizados').textContent = (datosEstadisticas.usuarios_actualizados || 0).toLocaleString();
+        // Estadísticas principales - usar los campos correctos del backend
+        const totalCombinados = datosEstadisticas.registros_combinados || datosEstadisticas.total_combinados || 0;
+        const usuariosCombinados = datosEstadisticas.usuarios_combinados || 0;
+        
+        // Actualizar elementos del DOM de forma segura
+        const updateElement = (id, value) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value;
+            } else {
+                console.warn(`Elemento no encontrado: ${id}`);
+            }
+        };
+        
+        updateElement('totalRegistrosCombinados', totalCombinados.toLocaleString());
+        updateElement('tablasProcesadas', datosEstadisticas.tablas_procesadas || datosEstadisticas.pasos_completados || 0);
+        updateElement('usuariosActualizados', usuariosCombinados.toLocaleString());
         
         // Detalles de la combinación
-        document.getElementById('tipoCombinacion').textContent = datosEstadisticas.tipo_combinacion || 'Completa';
-        document.getElementById('gruposCreados').textContent = datosEstadisticas.grupos_creados || 0;
-        document.getElementById('registrosExitosos').textContent = (datosEstadisticas.registros_exitosos || 0).toLocaleString();
-        document.getElementById('registrosOmitidos').textContent = (datosEstadisticas.registros_omitidos || 0).toLocaleString();
-        document.getElementById('erroresEncontrados').textContent = datosEstadisticas.errores_encontrados || 0;
-        
+        updateElement('tipoCombinacion', datosEstadisticas.tipo_combinacion || 'Selectiva');
+        updateElement('gruposCreados', datosEstadisticas.grupos_creados || 0);
+        updateElement('registrosExitosos', totalCombinados.toLocaleString());
+        updateElement('registrosOmitidos', (datosEstadisticas.registros_omitidos || 0).toLocaleString());
+        updateElement('erroresEncontrados', datosEstadisticas.errores_encontrados || 0);
+
         // Calcular velocidad promedio
         const tiempoTotal = datosEstadisticas.tiempo_total || 1;
-        const velocidad = Math.round((datosEstadisticas.total_combinados || 0) / (tiempoTotal / 1000));
-        document.getElementById('velocidadPromedio').textContent = `${velocidad} reg/seg`;
-        
+        const velocidad = Math.round(totalCombinados / (tiempoTotal / 1000));
+        updateElement('velocidadPromedio', `${velocidad} reg/seg`);
+
         // Tiempo total
         const minutos = Math.floor(tiempoTotal / 60000);
         const segundos = Math.floor((tiempoTotal % 60000) / 1000);
-        document.getElementById('tiempoCombinacion').textContent = `${minutos}m ${segundos}s`;
+        updateElement('tiempoCombinacion', `${minutos}m ${segundos}s`);
+        
+        console.log('✅ Estadísticas actualizadas en el modal');
+    } else {
+        console.warn('⚠️ No se recibieron datos de estadísticas');
     }
-    
+
     // Mostrar modal con animación
     modal.classList.remove('hidden');
     setTimeout(() => {
