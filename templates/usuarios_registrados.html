@@ -1288,6 +1288,10 @@
     // Función para mostrar el historial en el modal
     // Función para mostrar el historial en el modal
     function mostrarHistorial(data) {
+        console.log('=== DATOS RECIBIDOS EN mostrarHistorial ===');
+        console.log('Categorías:', data.categorias);
+        console.log('Total categorías:', data.categorias ? data.categorias.length : 0);
+        
         const content = document.getElementById('historialContent');
         let html = '';
         
@@ -1456,6 +1460,11 @@
         );
         
         // 11. Categorías
+        console.log('Generando sección de categorías...');
+        console.log('data.categorias:', data.categorias);
+        console.log('Es array?:', Array.isArray(data.categorias));
+        console.log('Length:', data.categorias ? data.categorias.length : 'undefined');
+        
         html += generarSeccionHistorial(
             'Categorías de Cursos',
             'label',

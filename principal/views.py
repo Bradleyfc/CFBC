@@ -3393,6 +3393,9 @@ def obtener_historial_usuario(request, user_id):
     for app in aplicaciones:
         if app.curso and app.curso.categoria:
             categorias_ids.add(app.curso.categoria.id)
+    for curso in cursos_admin:
+        if curso.categoria:
+            categorias_ids.add(curso.categoria.id)
     
     if categorias_ids:
         categorias = HistoricalCourseCategory.objects.filter(id__in=categorias_ids)
