@@ -3153,3 +3153,261 @@ def exportar_solicitud_excel(request, solicitud_id):
     wb.save(response)
     
     return response
+@login_required
+@login_required
+def obtener_historial_usuario(request, user_id):
+    """
+    Vista AJAX para obtener el historial COMPLETO de un usuario.
+    Retorna datos de TODAS las 11 tablas históricas de Docencia.
+    """
+    from historial.models import (
+        HistoricalArea,
+        HistoricalCourseCategory,
+        HistoricalCourseInformation,
+        HistoricalCourseInformationAdminTeachers,
+        HistoricalEnrollmentApplication,
+        HistoricalAccountNumber,
+        HistoricalEnrollmentPay,
+        HistoricalSubjectInformation,
+        HistoricalEdition,
+        HistoricalEnrollment,
+        HistoricalApplication
+    )
+    
+    # Verificar que el usuario sea secretaria
+    if not request.user.groups.filter(name='Secretaría').exists():
+        return JsonResponse({'error': 'No tiene permisos para ver esta información'}, status=403)
+    
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'Usuario no encontrado'}, status=404)
+    
+    # Estructura completa de datos históricos
+    historial_data = {
+        'usuario': {
+            'nombre': user.get_full_name() or user.username,
+            'email': user.email,
+            'username': user.username,
+        },
+        'aplicaciones': [],
+        'matriculas': [],
+        'solicitudes_inscripcion': [],
+        'cuentas_bancarias': [],
+        'pagos': [],
+        'cursos_como_profesor': [],
+        'cursos_administrados': [],
+        'ediciones': [],
+        'asignaturas': [],
+        'areas': [],
+        'categorias': []
+    }
+    
+    # 1. APLICACIONES (Docencia_application)
+    aplicaciones = HistoricalApplication.objects.filter(usuario=user).select_related(
+        'curso', 'edicion', 'curso__area', 'curso__categoria'
+    )
+    for app in aplicaciones:
+        historial_data['aplicaciones'].append({
+            'id': app.id,
+            'curso': app.curso.nombre if app.curso else 'N/A',
+            'curso_codigo': app.curso.codigo if app.curso else 'N/A',
+            'area': app.curso.area.nombre if app.curso and app.curso.area else 'N/A',
+            'categoria': app.curso.categoria.nombre if app.curso and app.curso.categoria else 'N/A',
+            'edicion': app.edicion.nombre if app.edicion else 'N/A',
+            'edicion_fecha_inicio': app.edicion.fecha_inicio.strftime('%d/%m/%Y') if app.edicion and app.edicion.fecha_inicio else 'N/A',
+            'edicion_fecha_fin': app.edicion.fecha_fin.strftime('%d/%m/%Y') if app.edicion and app.edicion.fecha_fin else 'N/A',
+            'fecha_solicitud': app.fecha_solicitud.strftime('%d/%m/%Y') if app.fecha_solicitud else 'N/A',
+            'estado': app.estado or 'N/A',
+            'beca': 'Sí' if app.beca else 'No',
+            'pagado': 'Sí' if app.pagado else 'No',
+            'nota_primaria': app.nota_primaria,
+            'nota_secundaria': app.nota_secundaria,
+            'nota_final': app.nota_final,
+            'nota_extra': app.nota_extra,
+            'comentarios': app.comentarios or 'Sin comentarios',
+            'tabla_origen': app.tabla_origen,
+            'fecha_consolidacion': app.fecha_consolidacion.strftime('%d/%m/%Y %H:%M'),
+        })
+    
+    # 2. MATRÍCULAS (Docencia_enrollment)
+    matriculas = HistoricalEnrollment.objects.filter(usuario=user).select_related(
+        'edicion', 'edicion__curso', 'curso'
+    )
+    for mat in matriculas:
+        historial_data['matriculas'].append({
+            'id': mat.id,
+            'curso': mat.edicion.curso.nombre if mat.edicion and mat.edicion.curso else (mat.curso.nombre if mat.curso else 'N/A'),
+            'edicion': mat.edicion.nombre if mat.edicion else 'N/A',
+            'fecha_inscripcion': mat.fecha_inscripcion.strftime('%d/%m/%Y %H:%M'),
+            'estado': mat.estado or 'N/A',
+            'ausencias': mat.ausencias,
+            'intento': mat.intento,
+            'nota_primaria': mat.nota_primaria if hasattr(mat, 'nota_primaria') else 'N/A',
+            'nota_secundaria': mat.nota_secundaria if hasattr(mat, 'nota_secundaria') else 'N/A',
+            'nota_final': mat.nota_final,
+            'nota_extra': mat.nota_extra if hasattr(mat, 'nota_extra') else 'N/A',
+            'slug': mat.slug if hasattr(mat, 'slug') else 'N/A',
+            'tabla_origen': mat.tabla_origen,
+            'fecha_consolidacion': mat.fecha_consolidacion.strftime('%d/%m/%Y %H:%M'),
+        })
+    
+    # 3. SOLICITUDES DE INSCRIPCIÓN (Docencia_enrollmentapplication)
+    solicitudes = HistoricalEnrollmentApplication.objects.filter(usuario=user).select_related('curso')
+    for sol in solicitudes:
+        historial_data['solicitudes_inscripcion'].append({
+            'id': sol.id,
+            'curso': sol.curso.nombre if sol.curso else 'N/A',
+            'curso_codigo': sol.curso.codigo if sol.curso else 'N/A',
+            'fecha_solicitud': sol.fecha_solicitud.strftime('%d/%m/%Y %H:%M'),
+            'estado': sol.estado or 'N/A',
+            'tabla_origen': sol.tabla_origen,
+            'fecha_consolidacion': sol.fecha_consolidacion.strftime('%d/%m/%Y %H:%M'),
+        })
+    
+    # 4. CUENTAS BANCARIAS (Docencia_accountnumber)
+    cuentas = HistoricalAccountNumber.objects.filter(usuario=user)
+    for cuenta in cuentas:
+        historial_data['cuentas_bancarias'].append({
+            'id': cuenta.id,
+            'numero_cuenta': cuenta.numero_cuenta,
+            'banco': cuenta.banco or 'N/A',
+            'tabla_origen': cuenta.tabla_origen,
+            'fecha_consolidacion': cuenta.fecha_consolidacion.strftime('%d/%m/%Y %H:%M'),
+        })
+    
+    # 5. PAGOS (Docencia_enrollmentpay)
+    # Obtener pagos relacionados con aplicaciones del usuario
+    aplicaciones_ids = [app.id_original for app in aplicaciones]
+    if aplicaciones_ids:
+        from datos_archivados.models import DatoArchivadoDinamico
+        pagos_data = DatoArchivadoDinamico.objects.filter(
+            tabla_origen='Docencia_enrollmentpay',
+            datos_originales__app_id__in=aplicaciones_ids
+        )
+        for pago_dato in pagos_data:
+            datos = pago_dato.datos_originales
+            historial_data['pagos'].append({
+                'id': datos.get('id'),
+                'monto': datos.get('amount', 'N/A'),
+                'fecha': datos.get('date', 'N/A'),
+                'metodo': datos.get('method', 'N/A'),
+                'referencia': datos.get('reference', 'N/A'),
+                'tabla_origen': 'Docencia_enrollmentpay',
+            })
+    
+    # 6. CURSOS COMO PROFESOR (Docencia_courseinformation_adminteachers)
+    cursos_profesor = HistoricalCourseInformationAdminTeachers.objects.filter(
+        profesor=user
+    ).select_related('curso', 'curso__area', 'curso__categoria')
+    for cp in cursos_profesor:
+        historial_data['cursos_como_profesor'].append({
+            'id': cp.id,
+            'curso': cp.curso.nombre if cp.curso else 'N/A',
+            'curso_codigo': cp.curso.codigo if cp.curso else 'N/A',
+            'area': cp.curso.area.nombre if cp.curso and cp.curso.area else 'N/A',
+            'categoria': cp.curso.categoria.nombre if cp.curso and cp.curso.categoria else 'N/A',
+            'tabla_origen': cp.tabla_origen,
+            'fecha_consolidacion': cp.fecha_consolidacion.strftime('%d/%m/%Y %H:%M'),
+        })
+    
+    # 7. CURSOS ADMINISTRADOS - Obtener cursos donde el usuario es admin
+    cursos_admin = HistoricalCourseInformation.objects.filter(
+        admin_teachers__profesor=user
+    ).distinct()
+    for curso in cursos_admin:
+        historial_data['cursos_administrados'].append({
+            'id': curso.id,
+            'nombre': curso.nombre,
+            'codigo': curso.codigo if hasattr(curso, 'codigo') else 'N/A',
+            'descripcion': curso.descripcion if hasattr(curso, 'descripcion') else 'N/A',
+            'area': curso.area.nombre if curso.area else 'N/A',
+            'categoria': curso.categoria.nombre if curso.categoria else 'N/A',
+            'tabla_origen': curso.tabla_origen,
+            'fecha_consolidacion': curso.fecha_consolidacion.strftime('%d/%m/%Y %H:%M'),
+        })
+    
+    # 8. EDICIONES - Ediciones de cursos donde el usuario participó
+    ediciones_ids = set()
+    for app in aplicaciones:
+        if app.edicion:
+            ediciones_ids.add(app.edicion.id)
+    for mat in matriculas:
+        if mat.edicion:
+            ediciones_ids.add(mat.edicion.id)
+    
+    if ediciones_ids:
+        ediciones = HistoricalEdition.objects.filter(id__in=ediciones_ids).select_related('curso')
+        for ed in ediciones:
+            historial_data['ediciones'].append({
+                'id': ed.id,
+                'nombre': ed.nombre,
+                'curso': ed.curso.nombre if ed.curso else 'N/A',
+                'fecha_inicio': ed.fecha_inicio.strftime('%d/%m/%Y') if ed.fecha_inicio else 'N/A',
+                'fecha_fin': ed.fecha_fin.strftime('%d/%m/%Y') if ed.fecha_fin else 'N/A',
+                'tabla_origen': ed.tabla_origen,
+                'fecha_consolidacion': ed.fecha_consolidacion.strftime('%d/%m/%Y %H:%M'),
+            })
+    
+    # 9. ASIGNATURAS - Asignaturas de los cursos del usuario
+    cursos_ids = set()
+    for app in aplicaciones:
+        if app.curso:
+            cursos_ids.add(app.curso.id)
+    
+    if cursos_ids:
+        asignaturas = HistoricalSubjectInformation.objects.filter(
+            curso_id__in=cursos_ids
+        ).select_related('curso')
+        for asig in asignaturas:
+            historial_data['asignaturas'].append({
+                'id': asig.id,
+                'nombre': asig.nombre,
+                'codigo': asig.codigo if hasattr(asig, 'codigo') else 'N/A',
+                'curso': asig.curso.nombre if asig.curso else 'N/A',
+                'descripcion': asig.descripcion if hasattr(asig, 'descripcion') else 'N/A',
+                'tabla_origen': asig.tabla_origen,
+                'fecha_consolidacion': asig.fecha_consolidacion.strftime('%d/%m/%Y %H:%M'),
+            })
+    
+    # 10. ÁREAS - Áreas de los cursos del usuario
+    areas_ids = set()
+    for app in aplicaciones:
+        if app.curso and app.curso.area:
+            areas_ids.add(app.curso.area.id)
+    
+    if areas_ids:
+        areas = HistoricalArea.objects.filter(id__in=areas_ids)
+        for area in areas:
+            historial_data['areas'].append({
+                'id': area.id,
+                'nombre': area.nombre,
+                'codigo': area.codigo if hasattr(area, 'codigo') else 'N/A',
+                'descripcion': area.descripcion or 'Sin descripción',
+                'tabla_origen': area.tabla_origen,
+                'fecha_consolidacion': area.fecha_consolidacion.strftime('%d/%m/%Y %H:%M'),
+            })
+    
+    # 11. CATEGORÍAS - Categorías de los cursos del usuario
+    categorias_ids = set()
+    for app in aplicaciones:
+        if app.curso and app.curso.categoria:
+            categorias_ids.add(app.curso.categoria.id)
+    
+    if categorias_ids:
+        categorias = HistoricalCourseCategory.objects.filter(id__in=categorias_ids)
+        for cat in categorias:
+            historial_data['categorias'].append({
+                'id': cat.id,
+                'nombre': cat.nombre,
+                'codigo': cat.codigo if hasattr(cat, 'codigo') else 'N/A',
+                'descripcion': cat.descripcion or 'Sin descripción',
+                'precio': str(cat.precio) if hasattr(cat, 'precio') and cat.precio else 'N/A',
+                'es_servicio': 'Sí' if hasattr(cat, 'es_servicio') and cat.es_servicio else 'No',
+                'registro_abierto': 'Sí' if hasattr(cat, 'registro_abierto') and cat.registro_abierto else 'No',
+                'tabla_origen': cat.tabla_origen,
+                'fecha_consolidacion': cat.fecha_consolidacion.strftime('%d/%m/%Y %H:%M'),
+            })
+    
+    return JsonResponse(historial_data)
+

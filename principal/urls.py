@@ -90,4 +90,7 @@ urlpatterns = [
     
     # Ruta para exportar solicitud individual
     path('exportar-respuestas-excel-solicitud/<int:solicitud_id>/', views.exportar_solicitud_excel, name='exportar_solicitud_excel'),
+    
+    # Ruta para obtener historial de usuario
+    path('historial-usuario/<int:user_id>/', views.obtener_historial_usuario, name='historial_usuario'),
 ]

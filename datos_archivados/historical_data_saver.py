@@ -789,7 +789,7 @@ def _procesar_solicitudes(datos_tabla, ModeloHistorico, mapeo_solicitudes, mapeo
                 datos = dato.datos_originales
                 id_original = datos.get('id')
                 curso_id = datos.get('curso_id', datos.get('course_id'))
-                usuario_id = datos.get('usuario_id', datos.get('user_id'))
+                usuario_id = datos.get('usuario_id', datos.get('user_id', datos.get('student_id')))
                 
                 # Aplicar mapeo de campos
                 datos_mapeados = aplicar_mapeo_campos(datos, 'Docencia_enrollmentapplication')
@@ -859,7 +859,7 @@ def _procesar_cuentas(datos_tabla, ModeloHistorico, mapeo_cuentas, logger, estad
                 sid = transaction.savepoint()
                 datos = dato.datos_originales
                 id_original = datos.get('id')
-                usuario_id = datos.get('usuario_id', datos.get('user_id'))
+                usuario_id = datos.get('usuario_id', datos.get('user_id', datos.get('student_id')))
                 
                 # Aplicar mapeo de campos
                 datos_mapeados = aplicar_mapeo_campos(datos, 'Docencia_accountnumber')
@@ -993,7 +993,7 @@ def _procesar_inscripciones(datos_tabla, ModeloHistorico, mapeo_asignaturas, map
                 datos = dato.datos_originales
                 id_original = datos.get('id')
                 curso_id = datos.get('curso_id', datos.get('course_id'))
-                usuario_id = datos.get('usuario_id', datos.get('user_id'))
+                usuario_id = datos.get('usuario_id', datos.get('user_id', datos.get('student_id')))
                 edicion_id = datos.get('edicion_id', datos.get('edition_id'))
                 
                 # Aplicar mapeo de campos
@@ -1067,7 +1067,7 @@ def _procesar_aplicaciones(datos_tabla, ModeloHistorico, mapeo_cursos, mapeo_edi
                 datos = dato.datos_originales
                 id_original = datos.get('id')
                 curso_id = datos.get('curso_id', datos.get('course_id'))
-                usuario_id = datos.get('usuario_id', datos.get('user_id'))
+                usuario_id = datos.get('usuario_id', datos.get('user_id', datos.get('student_id')))
                 edicion_id = datos.get('edicion_id', datos.get('edition_id'))
                 
                 # Aplicar mapeo de campos
