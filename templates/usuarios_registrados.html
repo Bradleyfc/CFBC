@@ -383,6 +383,16 @@
         Cerrar
       </button>
     </div>
+
+    <!-- Handles para redimensionar -->
+    <div class="resize-handle resize-handle-n"></div>
+    <div class="resize-handle resize-handle-s"></div>
+    <div class="resize-handle resize-handle-e"></div>
+    <div class="resize-handle resize-handle-w"></div>
+    <div class="resize-handle resize-handle-ne"></div>
+    <div class="resize-handle resize-handle-nw"></div>
+    <div class="resize-handle resize-handle-se"></div>
+    <div class="resize-handle resize-handle-sw"></div>
   </div>
 </div>
 
@@ -847,6 +857,7 @@
         opacity: 0;
         visibility: hidden;
         transition: all 0.3s ease;
+        overflow: auto;
     }
 
     .error-modal.show {
@@ -885,6 +896,12 @@
         padding: 2rem 2rem 1rem;
         text-align: center;
         border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: move;
+        user-select: none;
+    }
+
+    .error-modal-header:active {
+        cursor: grabbing;
     }
 
     .error-modal-icon {
@@ -960,7 +977,10 @@
 
     /* Historial Modal Styles */
     .historial-modal-content {
-        position: relative;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.9);
         background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
         backdrop-filter: blur(20px);
         border-radius: 20px;
@@ -969,15 +989,13 @@
         max-width: 900px;
         width: 90%;
         max-height: 80vh;
-        margin: 5% auto;
-        transform: scale(0.9);
         transition: transform 0.3s ease;
         display: flex;
         flex-direction: column;
     }
 
     .error-modal.show .historial-modal-content {
-        transform: scale(1);
+        transform: translate(-50%, -50%) scale(1);
     }
 
     .historial-modal-icon {
@@ -1010,9 +1028,111 @@
         transition: color 0.3s ease;
     }
 
+    .modal-close-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: #6b7280;
+        transition: color 0.3s ease;
+        z-index: 10;
+    }
+
     .modal-close-btn:hover {
         color: #374151;
     }
+
+    /* Estilos para hacer el modal redimensionable */
+    .historial-modal-content.resizable {
+        resize: both;
+        overflow: hidden;
+        min-width: 400px;
+        min-height: 300px;
+    }
+
+    .resize-handle {
+        position: absolute;
+        background: transparent;
+        z-index: 5;
+    }
+
+    .resize-handle-n {
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 8px;
+        cursor: n-resize;
+    }
+
+    .resize-handle-s {
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 8px;
+        cursor: s-resize;
+    }
+
+    .resize-handle-e {
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 8px;
+        cursor: e-resize;
+    }
+
+    .resize-handle-w {
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 8px;
+        cursor: w-resize;
+    }
+
+    .resize-handle-ne {
+        top: 0;
+        right: 0;
+        width: 15px;
+        height: 15px;
+        cursor: ne-resize;
+    }
+
+    .resize-handle-nw {
+        top: 0;
+        left: 0;
+        width: 15px;
+        height: 15px;
+        cursor: nw-resize;
+    }
+
+    .resize-handle-se {
+        bottom: 0;
+        right: 0;
+        width: 15px;
+        height: 15px;
+        cursor: se-resize;
+    }
+
+    .resize-handle-se::after {
+        content: '';
+        position: absolute;
+        right: 3px;
+        bottom: 3px;
+        width: 10px;
+        height: 10px;
+        border-right: 2px solid rgba(107, 114, 128, 0.4);
+        border-bottom: 2px solid rgba(107, 114, 128, 0.4);
+    }
+
+    .resize-handle-sw {
+        bottom: 0;
+        left: 0;
+        width: 15px;
+        height: 15px;
+        cursor: sw-resize;
+    }
+
 
     .loading-spinner {
         text-align: center;
@@ -1255,6 +1375,9 @@
         // Mostrar modal con loading
         modal.classList.remove('hidden');
         modal.classList.add('show');
+
+        // Inicializar redimensionamiento del modal
+        setTimeout(() => inicializarRedimensionamiento(), 100);
         
         // Mostrar spinner de carga
         content.innerHTML = `
@@ -1520,6 +1643,150 @@
         html += '</div>';
         return html;
     }
+
+
+
+    // Funcionalidad de redimensionamiento y arrastre del modal
+    function inicializarRedimensionamiento() {
+        const modal = document.getElementById('historialModal');
+        const modalContent = document.querySelector('.historial-modal-content');
+        const modalHeader = modalContent.querySelector('.error-modal-header');
+        
+        if (!modalContent) return;
+
+        // Resetear estilos al abrir el modal
+        modalContent.style.position = 'absolute';
+        modalContent.style.top = '50%';
+        modalContent.style.left = '50%';
+        modalContent.style.transform = 'translate(-50%, -50%)';
+        modalContent.style.width = '900px';
+        modalContent.style.maxWidth = '90vw';
+        modalContent.style.height = 'auto';
+        modalContent.style.maxHeight = '80vh';
+
+        // Funcionalidad de arrastre (drag) desde el header
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+
+        modalHeader.addEventListener('mousedown', function(e) {
+            // No iniciar drag si se hace clic en el botón de cerrar
+            if (e.target.closest('.modal-close-btn')) return;
+            
+            isDragging = true;
+            
+            const rect = modalContent.getBoundingClientRect();
+            initialX = e.clientX - rect.left;
+            initialY = e.clientY - rect.top;
+            
+            modalContent.style.transform = 'none';
+            modalHeader.style.cursor = 'grabbing';
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            
+            e.preventDefault();
+            
+            currentX = e.clientX - initialX;
+            currentY = e.clientY - initialY;
+            
+            modalContent.style.left = currentX + 'px';
+            modalContent.style.top = currentY + 'px';
+        });
+
+        document.addEventListener('mouseup', function() {
+            if (isDragging) {
+                isDragging = false;
+                modalHeader.style.cursor = 'move';
+            }
+        });
+
+        // Funcionalidad de redimensionamiento
+        const handles = {
+            'resize-handle-n': { cursor: 'n-resize', edges: { top: true } },
+            'resize-handle-s': { cursor: 's-resize', edges: { bottom: true } },
+            'resize-handle-e': { cursor: 'e-resize', edges: { right: true } },
+            'resize-handle-w': { cursor: 'w-resize', edges: { left: true } },
+            'resize-handle-ne': { cursor: 'ne-resize', edges: { top: true, right: true } },
+            'resize-handle-nw': { cursor: 'nw-resize', edges: { top: true, left: true } },
+            'resize-handle-se': { cursor: 'se-resize', edges: { bottom: true, right: true } },
+            'resize-handle-sw': { cursor: 'sw-resize', edges: { bottom: true, left: true } }
+        };
+
+        Object.keys(handles).forEach(handleClass => {
+            const handle = modalContent.querySelector('.' + handleClass);
+            if (!handle) return;
+
+            handle.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const rect = modalContent.getBoundingClientRect();
+                const startWidth = rect.width;
+                const startHeight = rect.height;
+                const startLeft = rect.left;
+                const startTop = rect.top;
+
+                const edges = handles[handleClass].edges;
+
+                // Asegurar que el transform esté en none para posicionamiento absoluto
+                modalContent.style.transform = 'none';
+
+                function onMouseMove(e) {
+                    const deltaX = e.clientX - startX;
+                    const deltaY = e.clientY - startY;
+
+                    if (edges.right) {
+                        const newWidth = startWidth + deltaX;
+                        if (newWidth >= 400) {
+                            modalContent.style.width = newWidth + 'px';
+                            modalContent.style.maxWidth = 'none';
+                        }
+                    }
+
+                    if (edges.left) {
+                        const newWidth = startWidth - deltaX;
+                        if (newWidth >= 400) {
+                            modalContent.style.width = newWidth + 'px';
+                            modalContent.style.maxWidth = 'none';
+                            modalContent.style.left = (startLeft + deltaX) + 'px';
+                        }
+                    }
+
+                    if (edges.bottom) {
+                        const newHeight = startHeight + deltaY;
+                        if (newHeight >= 300) {
+                            modalContent.style.height = newHeight + 'px';
+                            modalContent.style.maxHeight = 'none';
+                        }
+                    }
+
+                    if (edges.top) {
+                        const newHeight = startHeight - deltaY;
+                        if (newHeight >= 300) {
+                            modalContent.style.height = newHeight + 'px';
+                            modalContent.style.maxHeight = 'none';
+                            modalContent.style.top = (startTop + deltaY) + 'px';
+                        }
+                    }
+                }
+
+                function onMouseUp() {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                }
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+        });
+    }
+
 
     // Función para cerrar el modal de historial
     function cerrarHistorialModal() {
