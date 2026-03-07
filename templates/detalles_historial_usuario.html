@@ -1,0 +1,421 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12">
+    <div class="absolute inset-0 opacity-30"
+        style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;">
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        <!-- Page Title -->
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-3xl font-bold text-gray-800">Detalles del Historial de Usuario</h2>
+            <div class="flex gap-3">
+            <a href="{% url 'principal:exportar_detalles_historial_pdf' usuario_historial.id %}" class="glass-button glass-button-success">
+                <span class="icon material-icons mr-2">picture_as_pdf</span>
+                Exportar PDF
+            </a>
+            <a href="{% url 'principal:usuarios_registrados' %}" class="glass-button glass-button-secondary">
+                <span class="icon material-icons mr-2">arrow_back</span>
+                Volver al Listado
+            </a>
+        </div>
+        </div>
+
+        <!-- Información del Usuario -->
+        <div class="glass-card mb-6">
+            <div class="glass-header">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <span class="icon material-icons mr-2">person</span>
+                    Información del Usuario
+                </h3>
+            </div>
+            <div class="glass-content">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <span class="font-semibold text-gray-700">Nombre:</span>
+                        <span class="text-gray-600 ml-2">{{ historial.usuario.nombre }}</span>
+                    </div>
+                    <div>
+                        <span class="font-semibold text-gray-700">Usuario:</span>
+                        <span class="text-gray-600 ml-2">{{ historial.usuario.username }}</span>
+                    </div>
+                    <div>
+                        <span class="font-semibold text-gray-700">Email:</span>
+                        <span class="text-gray-600 ml-2">{{ historial.usuario.email }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 1. Aplicaciones a Cursos -->
+        <div class="glass-card mb-6">
+            <div class="glass-header">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <span class="icon material-icons mr-2">description</span>
+                    Aplicaciones a Cursos ({{ historial.aplicaciones|length }})
+                </h3>
+            </div>
+            <div class="glass-content">
+                {% if historial.aplicaciones %}
+                    {% for app in historial.aplicaciones %}
+                    <div class="historial-item mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <div><span class="font-semibold">Curso:</span> {{ app.curso }}</div>
+                            <div><span class="font-semibold">Código:</span> {{ app.curso_codigo }}</div>
+                            <div><span class="font-semibold">Área:</span> {{ app.area }}</div>
+                            <div><span class="font-semibold">Categoría:</span> {{ app.categoria }}</div>
+                            <div><span class="font-semibold">Edición:</span> {{ app.edicion }}</div>
+                            <div><span class="font-semibold">Inicio Edición:</span> {{ app.edicion_fecha_inicio }}</div>
+                            <div><span class="font-semibold">Fin Edición:</span> {{ app.edicion_fecha_fin }}</div>
+                            <div><span class="font-semibold">Fecha Solicitud:</span> {{ app.fecha_solicitud }}</div>
+                            <div><span class="font-semibold">Estado:</span> {{ app.estado }}</div>
+                            <div><span class="font-semibold">Beca:</span> {{ app.beca }}</div>
+                            <div><span class="font-semibold">Pagado:</span> {{ app.pagado }}</div>
+                            <div><span class="font-semibold">Nota Primaria:</span> {{ app.nota_primaria }}</div>
+                            <div><span class="font-semibold">Nota Secundaria:</span> {{ app.nota_secundaria }}</div>
+                            <div><span class="font-semibold">Nota Final:</span> {{ app.nota_final }}</div>
+                            <div><span class="font-semibold">Nota Extra:</span> {{ app.nota_extra }}</div>
+                            <div class="col-span-full"><span class="font-semibold">Comentarios:</span> {{ app.comentarios }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-gray-500 italic">No hay registros</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 2. Matrículas -->
+        <div class="glass-card mb-6">
+            <div class="glass-header">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <span class="icon material-icons mr-2">school</span>
+                    Matrículas ({{ historial.matriculas|length }})
+                </h3>
+            </div>
+            <div class="glass-content">
+                {% if historial.matriculas %}
+                    {% for mat in historial.matriculas %}
+                    <div class="historial-item mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <div><span class="font-semibold">Curso:</span> {{ mat.curso }}</div>
+                            <div><span class="font-semibold">Edición:</span> {{ mat.edicion }}</div>
+                            <div><span class="font-semibold">Fecha Inscripción:</span> {{ mat.fecha_inscripcion }}</div>
+                            <div><span class="font-semibold">Estado:</span> {{ mat.estado }}</div>
+                            <div><span class="font-semibold">Ausencias:</span> {{ mat.ausencias }}</div>
+                            <div><span class="font-semibold">Intento:</span> {{ mat.intento }}</div>
+                            <div><span class="font-semibold">Nota Primaria:</span> {{ mat.nota_primaria }}</div>
+                            <div><span class="font-semibold">Nota Secundaria:</span> {{ mat.nota_secundaria }}</div>
+                            <div><span class="font-semibold">Nota Final:</span> {{ mat.nota_final }}</div>
+                            <div><span class="font-semibold">Nota Extra:</span> {{ mat.nota_extra }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-gray-500 italic">No hay registros</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 3. Solicitudes de Inscripción -->
+        <div class="glass-card mb-6">
+            <div class="glass-header">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <span class="icon material-icons mr-2">assignment</span>
+                    Solicitudes de Inscripción ({{ historial.solicitudes_inscripcion|length }})
+                </h3>
+            </div>
+            <div class="glass-content">
+                {% if historial.solicitudes_inscripcion %}
+                    {% for sol in historial.solicitudes_inscripcion %}
+                    <div class="historial-item mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <div><span class="font-semibold">Curso:</span> {{ sol.curso }}</div>
+                            <div><span class="font-semibold">Código:</span> {{ sol.curso_codigo }}</div>
+                            <div><span class="font-semibold">Fecha:</span> {{ sol.fecha_solicitud }}</div>
+                            <div><span class="font-semibold">Estado:</span> {{ sol.estado }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-gray-500 italic">No hay registros</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 4. Pagos -->
+        <div class="glass-card mb-6">
+            <div class="glass-header">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <span class="icon material-icons mr-2">payment</span>
+                    Pagos ({{ historial.pagos|length }})
+                </h3>
+            </div>
+            <div class="glass-content">
+                {% if historial.pagos %}
+                    {% for pago in historial.pagos %}
+                    <div class="historial-item mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div><span class="font-semibold">Monto:</span> {{ pago.monto }}</div>
+                            <div><span class="font-semibold">Fecha:</span> {{ pago.fecha }}</div>
+                            <div><span class="font-semibold">Método:</span> {{ pago.metodo }}</div>
+                            <div><span class="font-semibold">Referencia:</span> {{ pago.referencia }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-gray-500 italic">No hay registros</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 5. Cuentas Bancarias -->
+        <div class="glass-card mb-6">
+            <div class="glass-header">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <span class="icon material-icons mr-2">account_balance</span>
+                    Cuentas Bancarias ({{ historial.cuentas_bancarias|length }})
+                </h3>
+            </div>
+            <div class="glass-content">
+                {% if historial.cuentas_bancarias %}
+                    {% for cuenta in historial.cuentas_bancarias %}
+                    <div class="historial-item mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div><span class="font-semibold">Número de Cuenta:</span> {{ cuenta.numero_cuenta }}</div>
+                            <div><span class="font-semibold">Banco:</span> {{ cuenta.banco }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-gray-500 italic">No hay registros</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 6. Cursos como Profesor -->
+        <div class="glass-card mb-6">
+            <div class="glass-header">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <span class="icon material-icons mr-2">person</span>
+                    Cursos como Profesor ({{ historial.cursos_como_profesor|length }})
+                </h3>
+            </div>
+            <div class="glass-content">
+                {% if historial.cursos_como_profesor %}
+                    {% for cp in historial.cursos_como_profesor %}
+                    <div class="historial-item mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div><span class="font-semibold">Curso:</span> {{ cp.curso }}</div>
+                            <div><span class="font-semibold">Código:</span> {{ cp.curso_codigo }}</div>
+                            <div><span class="font-semibold">Área:</span> {{ cp.area }}</div>
+                            <div><span class="font-semibold">Categoría:</span> {{ cp.categoria }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-gray-500 italic">No hay registros</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 7. Cursos Administrados -->
+        <div class="glass-card mb-6">
+            <div class="glass-header">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <span class="icon material-icons mr-2">admin_panel_settings</span>
+                    Cursos Administrados ({{ historial.cursos_administrados|length }})
+                </h3>
+            </div>
+            <div class="glass-content">
+                {% if historial.cursos_administrados %}
+                    {% for curso in historial.cursos_administrados %}
+                    <div class="historial-item mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <div><span class="font-semibold">Nombre:</span> {{ curso.nombre }}</div>
+                            <div><span class="font-semibold">Código:</span> {{ curso.codigo }}</div>
+                            <div><span class="font-semibold">Área:</span> {{ curso.area }}</div>
+                            <div><span class="font-semibold">Categoría:</span> {{ curso.categoria }}</div>
+                            <div class="col-span-full"><span class="font-semibold">Descripción:</span> {{ curso.descripcion }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-gray-500 italic">No hay registros</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 8. Ediciones de Cursos -->
+        <div class="glass-card mb-6">
+            <div class="glass-header">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <span class="icon material-icons mr-2">event</span>
+                    Ediciones de Cursos ({{ historial.ediciones|length }})
+                </h3>
+            </div>
+            <div class="glass-content">
+                {% if historial.ediciones %}
+                    {% for ed in historial.ediciones %}
+                    <div class="historial-item mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div><span class="font-semibold">Nombre:</span> {{ ed.nombre }}</div>
+                            <div><span class="font-semibold">Curso:</span> {{ ed.curso }}</div>
+                            <div><span class="font-semibold">Fecha Inicio:</span> {{ ed.fecha_inicio }}</div>
+                            <div><span class="font-semibold">Fecha Fin:</span> {{ ed.fecha_fin }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-gray-500 italic">No hay registros</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 9. Asignaturas -->
+        <div class="glass-card mb-6">
+            <div class="glass-header">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <span class="icon material-icons mr-2">book</span>
+                    Asignaturas ({{ historial.asignaturas|length }})
+                </h3>
+            </div>
+            <div class="glass-content">
+                {% if historial.asignaturas %}
+                    {% for asig in historial.asignaturas %}
+                    <div class="historial-item mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <div><span class="font-semibold">Nombre:</span> {{ asig.nombre }}</div>
+                            <div><span class="font-semibold">Código:</span> {{ asig.codigo }}</div>
+                            <div><span class="font-semibold">Curso:</span> {{ asig.curso }}</div>
+                            <div class="col-span-full"><span class="font-semibold">Descripción:</span> {{ asig.descripcion }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-gray-500 italic">No hay registros</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 10. Áreas de Conocimiento -->
+        <div class="glass-card mb-6">
+            <div class="glass-header">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <span class="icon material-icons mr-2">category</span>
+                    Áreas de Conocimiento ({{ historial.areas|length }})
+                </h3>
+            </div>
+            <div class="glass-content">
+                {% if historial.areas %}
+                    {% for area in historial.areas %}
+                    <div class="historial-item mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <div><span class="font-semibold">Nombre:</span> {{ area.nombre }}</div>
+                            <div><span class="font-semibold">Código:</span> {{ area.codigo }}</div>
+                            <div class="col-span-full"><span class="font-semibold">Descripción:</span> {{ area.descripcion }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-gray-500 italic">No hay registros</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 11. Categorías de Cursos -->
+        <div class="glass-card mb-6">
+            <div class="glass-header">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <span class="icon material-icons mr-2">label</span>
+                    Categorías de Cursos ({{ historial.categorias|length }})
+                </h3>
+            </div>
+            <div class="glass-content">
+                {% if historial.categorias %}
+                    {% for cat in historial.categorias %}
+                    <div class="historial-item mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <div><span class="font-semibold">Nombre:</span> {{ cat.nombre }}</div>
+                            <div><span class="font-semibold">Código:</span> {{ cat.codigo }}</div>
+                            <div><span class="font-semibold">Precio:</span> {{ cat.precio }}</div>
+                            <div><span class="font-semibold">Es Servicio:</span> {{ cat.es_servicio }}</div>
+                            <div><span class="font-semibold">Registro Abierto:</span> {{ cat.registro_abierto }}</div>
+                            <div class="col-span-full"><span class="font-semibold">Descripción:</span> {{ cat.descripcion }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-gray-500 italic">No hay registros</p>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .glass-card {
+        position: relative;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 4px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-header {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .glass-content {
+        padding: 2rem;
+    }
+
+    .glass-button {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.625rem 1.25rem;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .glass-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .glass-button-secondary {
+        background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
+        color: #374151;
+    }
+
+    .glass-button-success {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+        color: #14532d;
+    }
+
+    .historial-item {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        padding: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+</style>
+{% endblock %}

@@ -173,8 +173,11 @@
                                 Historial
                                 <div class="resize-handle"></div>
                             </th>
+                            <th class="resizable-th" data-column="detalles">
+                                Detalles
+                                <div class="resize-handle"></div>
+                            </th>
                         </tr>
-                    </thead>
                     <tbody>
                         {% for registro in registros %}
                         <tr>
@@ -234,6 +237,11 @@
                                 <button onclick="verHistorial({{ registro.user.id }})" class="glass-badge glass-badge-success text-xs cursor-pointer">
                                     <span class="icon material-icons mr-1">history</span>Ver Historial
                                 </button>
+                            </td>
+                            <td class="resizable-td" data-column="detalles">
+                                <a href="{% url 'principal:detalles_historial_usuario' registro.user.id %}" class="glass-badge glass-badge-primary text-xs">
+                                    <span class="icon material-icons mr-1">visibility</span>Ver
+                                </a>
                             </td>
                         </tr>
                         {% endfor %}
@@ -674,6 +682,12 @@
         text-align: center;
     }
 
+    .resizable-th[data-column="detalles"], .resizable-td[data-column="detalles"] {
+        min-width: 100px;
+        max-width: 120px;
+        text-align: center;
+    }
+
     
     .resizable-th[data-column="email"], .resizable-td[data-column="email"] { 
         min-width: 180px;
@@ -772,6 +786,11 @@
     .glass-badge-success {
         background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
         color: #14532d;
+    }
+
+    .glass-badge-primary {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        color: #1e40af;
     }
 
     .glass-badge-secondary {

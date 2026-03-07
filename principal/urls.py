@@ -93,4 +93,6 @@ urlpatterns = [
     
     # Ruta para obtener historial de usuario
     path('historial-usuario/<int:user_id>/', views.obtener_historial_usuario, name='historial_usuario'),
+    path('detalles-historial-usuario/<int:user_id>/', views.ver_detalles_historial_usuario, name='detalles_historial_usuario'),
+    path('exportar-detalles-historial-pdf/<int:user_id>/', views.exportar_detalles_historial_pdf, name='exportar_detalles_historial_pdf'),
 ]
