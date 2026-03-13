@@ -819,7 +819,7 @@
                             Seleccionar Todas
                         </button>
                         <button type="button" class="glass-button glass-button-warning hidden" id="btnAutoSeleccionarDocencia" 
-                                title="Selecciona automáticamente todas las 11 tablas de Docencia (área, categoría, información de cursos, inscripciones, etc.)">
+                                title="Selecciona automáticamente todas las 13 tablas de Docencia (área, categoría, información de cursos, inscripciones, etc.)">
                             <span class="material-icons mr-2">school</span>
                             Auto-seleccionar Docencia
                         </button>
@@ -3209,7 +3209,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     'Docencia_area', 'Docencia_coursecategory', 'Docencia_courseinformation_adminteachers',
                     'Docencia_courseinformation', 'Docencia_enrollmentapplication', 'Docencia_enrollmentpay',
                     'Docencia_accountnumber', 'Docencia_enrollment', 'Docencia_subjectinformation',
-                    'Docencia_edition', 'Docencia_application'
+                    'Docencia_edition', 'Docencia_application',
+            'Docencia_class',
+            'Docencia_class_studentView'
                 ];
                 
                 const checkboxes = document.querySelectorAll('.tabla-checkbox');
@@ -3473,7 +3475,11 @@ document.addEventListener('DOMContentLoaded', function() {
             'Docencia_enrollment',
             'Docencia_subjectinformation',
             'Docencia_edition',
-            'Docencia_application'
+            'Docencia_application',
+            'Docencia_class',
+            'Docencia_class_studentView',
+            'Docencia_class',
+            'Docencia_class_studentView'
         ];
         
         // Obtener TODOS los checkboxes disponibles
@@ -3576,7 +3582,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Docencia_area', 'Docencia_coursecategory', 'Docencia_courseinformation_adminteachers',
                 'Docencia_courseinformation', 'Docencia_enrollmentapplication', 'Docencia_enrollmentpay',
                 'Docencia_accountnumber', 'Docencia_enrollment', 'Docencia_subjectinformation',
-                'Docencia_edition', 'Docencia_application'
+                'Docencia_edition', 'Docencia_application',
+            'Docencia_class',
+            'Docencia_class_studentView'
             ];
             
             let docenciaSeleccionadas = 0;
@@ -3759,7 +3767,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Docencia_enrollment',
                 'Docencia_subjectinformation',
                 'Docencia_edition',
-                'Docencia_application'
+                'Docencia_application',
+            'Docencia_class',
+            'Docencia_class_studentView'
             ];
             
             // Contar cuántas tablas de Docencia están seleccionadas

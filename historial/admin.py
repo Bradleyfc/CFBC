@@ -411,28 +411,35 @@ class HistoricalClassAdmin(admin.ModelAdmin):
     """
 
     # list_display: Campos mostrados en la vista de lista del admin
-    # - id: Identificador único del registro histórico
     # - name: Nombre de la clase
     # - subject: Asignatura a la que pertenece la clase
     # - uploaddate: Fecha de carga de la clase
     # - datepub: Fecha de publicación de la clase
     # - dateend: Fecha de finalización de la clase
-    list_display = ['id', 'name', 'subject', 'uploaddate', 'datepub', 'dateend']
+    # - fecha_consolidacion: Fecha de consolidación en historial
+    list_display = ['name', 'subject', 'uploaddate', 'datepub', 'dateend', 'fecha_consolidacion']
 
     # search_fields: Campos habilitados para búsqueda de texto
     # Permite buscar por nombre, slug, contenido de la clase o nombre de la asignatura
     search_fields = ['name', 'slug', 'classbody', 'subject__nombre']
 
     # list_filter: Filtros laterales en la interfaz del admin
-    # - subject: Filtrar por asignatura específica
+    # NOTA: No se incluye 'subject' porque con muchos registros causa problemas de rendimiento
+    # Se mantienen los filtros de fecha que son más eficientes
     # - uploaddate: Filtrar por fecha de carga
     # - datepub: Filtrar por fecha de publicación
     # - dateend: Filtrar por fecha de finalización
-    list_filter = ['subject', 'uploaddate', 'datepub', 'dateend']
+    list_filter = ['uploaddate', 'datepub', 'dateend']
 
     # raw_id_fields: Usa widget de búsqueda para foreign keys con muchos registros
     # - subject: Puede haber muchas asignaturas en el sistema
     raw_id_fields = ['subject']
+    
+    # list_per_page: Número de registros por página para mejorar rendimiento
+    list_per_page = 50
+    
+    # list_select_related: Optimiza queries usando select_related para FK
+    list_select_related = ['subject']
 
 
 @admin.register(HistoricalClassStudentView)
@@ -447,10 +454,10 @@ class HistoricalClassStudentViewAdmin(admin.ModelAdmin):
     """
 
     # list_display: Campos mostrados en la vista de lista del admin
-    # - id: Identificador único del registro histórico
     # - class_field: Clase asociada
     # - application: Aplicación del estudiante asociada
-    list_display = ['id', 'class_field', 'application']
+    # - fecha_consolidacion: Fecha de consolidación en historial
+    list_display = ['class_field', 'application', 'fecha_consolidacion']
 
     # search_fields: Campos habilitados para búsqueda de texto
     # Permite buscar por nombre/slug de la clase o username/email del estudiante de la aplicación
@@ -458,11 +465,19 @@ class HistoricalClassStudentViewAdmin(admin.ModelAdmin):
     search_fields = ['class_field__name', 'class_field__slug', 'application__usuario__username', 'application__usuario__email']
 
     # list_filter: Filtros laterales en la interfaz del admin
-    # - class_field: Filtrar por clase específica
-    # - application: Filtrar por aplicación específica
-    list_filter = ['class_field', 'application']
+    # NOTA: No se incluyen class_field ni application porque con muchos registros
+    # Django intenta cargar todos los valores únicos y causa problemas de rendimiento
+    # Se incluye fecha_consolidacion que es eficiente para filtrar
+    # En su lugar de FK, usar search_fields para buscar registros específicos
+    list_filter = ['fecha_consolidacion']
 
     # raw_id_fields: Usa widget de búsqueda para foreign keys con muchos registros
     # - class_field: Puede haber muchas clases en el sistema
     # - application: Puede haber muchas aplicaciones en el sistema
     raw_id_fields = ['class_field', 'application']
+    
+    # list_per_page: Número de registros por página para mejorar rendimiento
+    list_per_page = 50
+    
+    # list_select_related: Optimiza queries usando select_related para FK
+    list_select_related = ['class_field', 'application']
