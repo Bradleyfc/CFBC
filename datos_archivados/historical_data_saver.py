@@ -227,6 +227,7 @@ def guardar_datos_docencia_en_historial(tablas_seleccionadas, logger=None):
     mapeo_solicitudes = {}
     mapeo_cuentas = {}
     mapeo_clases = {}
+    mapeo_aplicaciones = {}
     
     # Orden de procesamiento para respetar dependencias FK
     orden_procesamiento = [
@@ -338,7 +339,7 @@ def guardar_datos_docencia_en_historial(tablas_seleccionadas, logger=None):
             
             elif tabla == 'Docencia_application':
                 registros_guardados = _procesar_aplicaciones(
-                    datos_tabla, ModeloHistorico, mapeo_cursos, mapeo_ediciones, logger,
+                    datos_tabla, ModeloHistorico, mapeo_cursos, mapeo_ediciones, mapeo_aplicaciones, logger,
                     estadisticas, tablas_seleccionadas, tabla
                 )
             elif tabla == 'Docencia_class':
@@ -349,7 +350,7 @@ def guardar_datos_docencia_en_historial(tablas_seleccionadas, logger=None):
 
             elif tabla == 'Docencia_class_studentView':
                 registros_guardados = _procesar_clases_studentview(
-                    datos_tabla, ModeloHistorico, mapeo_clases, mapeo_solicitudes, logger,
+                    datos_tabla, ModeloHistorico, mapeo_clases, mapeo_aplicaciones, logger,
                     estadisticas, tablas_seleccionadas, tabla
                 )
 
@@ -1073,7 +1074,7 @@ def _procesar_inscripciones(datos_tabla, ModeloHistorico, mapeo_asignaturas, map
 
 
 
-def _procesar_aplicaciones(datos_tabla, ModeloHistorico, mapeo_cursos, mapeo_ediciones, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
+def _procesar_aplicaciones(datos_tabla, ModeloHistorico, mapeo_cursos, mapeo_ediciones, mapeo_aplicaciones, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
     """Procesa y guarda aplicaciones en HistoricalApplication."""
     registros_guardados = 0
     
@@ -1124,6 +1125,9 @@ def _procesar_aplicaciones(datos_tabla, ModeloHistorico, mapeo_cursos, mapeo_edi
                 aplicacion.save()
                 registros_guardados += 1
                 
+                # Guardar en mapeo para referencias futuras
+                mapeo_aplicaciones[id_original] = aplicacion
+                
                 transaction.savepoint_commit(sid)
                 
                 # Actualizar progreso cada 100 registros o al final
@@ -1171,7 +1175,7 @@ def _procesar_clases(datos_tabla, ModeloHistorico, mapeo_clases, mapeo_asignatur
     with transaction.atomic():
         for idx, dato in enumerate(datos_tabla, 1):
             try:
-                datos = dato.datos
+                datos = dato.datos_originales
                 id_original = datos.get('id')
                 
                 # Obtener subject_id (FK a HistoricalSubjectInformation)
@@ -1228,7 +1232,7 @@ def _procesar_clases(datos_tabla, ModeloHistorico, mapeo_clases, mapeo_asignatur
     return registros_guardados
 
 
-def _procesar_clases_studentview(datos_tabla, ModeloHistorico, mapeo_clases, mapeo_solicitudes, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
+def _procesar_clases_studentview(datos_tabla, ModeloHistorico, mapeo_clases, mapeo_aplicaciones, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
     """
     Procesa y guarda registros de Docencia_class_studentView en HistoricalClassStudentView.
     
@@ -1253,7 +1257,7 @@ def _procesar_clases_studentview(datos_tabla, ModeloHistorico, mapeo_clases, map
     with transaction.atomic():
         for idx, dato in enumerate(datos_tabla, 1):
             try:
-                datos = dato.datos
+                datos = dato.datos_originales
                 id_original = datos.get('id')
                 
                 # Obtener class_id (FK a HistoricalClass)
@@ -1269,10 +1273,20 @@ def _procesar_clases_studentview(datos_tabla, ModeloHistorico, mapeo_clases, map
                 application_id_original = datos.get('application_id')
                 application = None
                 
-                if application_id_original and mapeo_solicitudes:
-                    application = mapeo_solicitudes.get(application_id_original)
+                if application_id_original and mapeo_aplicaciones:
+                    application = mapeo_aplicaciones.get(application_id_original)
                     if not application:
                         logger.warning(f"No se encontró application con ID original {application_id_original} para studentview {id_original}")
+                # Validar que ambos FK existan (son obligatorios)
+                if not clase:
+                    logger.warning(f"⚠️ Saltando studentview {id_original}: class_field es None (class_id={class_id_original})")
+                    continue
+                
+                if not application:
+                    logger.warning(f"⚠️ Saltando studentview {id_original}: application es None (application_id={application_id_original})")
+                    continue
+
+
                 
                 # Crear registro histórico
                 studentview_historica = ModeloHistorico(

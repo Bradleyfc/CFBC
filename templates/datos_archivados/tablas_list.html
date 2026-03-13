@@ -3549,7 +3549,37 @@ document.addEventListener('DOMContentLoaded', function() {
             
             console.log(`${debeSeleccionar ? '✅' : '❌'} ${tableName}: checked = ${checkbox.checked}`);
         });
-        
+
+        // Si estamos seleccionando, también seleccionar auth_user y sus dependencias
+        if (debeSeleccionar) {
+            console.log('🔗 Seleccionando auth_user y sus dependencias...');
+            
+            // Buscar el checkbox de auth_user
+            const authUserCheckbox = document.querySelector('.tabla-checkbox[data-tabla="auth_user"]');
+            if (authUserCheckbox && !authUserCheckbox.checked) {
+                authUserCheckbox.checked = true;
+                const authCard = authUserCheckbox.closest('.tabla-card');
+                if (authCard) {
+                    authCard.classList.add('seleccionada');
+                }
+                console.log('✅ auth_user seleccionado');
+                
+                // Usar RelationshipManager para seleccionar dependencias automáticamente
+                if (window.relationshipManager && window.relationshipManager.isInitialized) {
+                    try {
+                        const result = window.relationshipManager.handleTableSelection('auth_user', true, true);
+                        if (result.autoSelected && result.autoSelected.length > 0) {
+                            console.log(`✅ Dependencias de auth_user auto-seleccionadas: ${result.autoSelected.join(', ')}`);
+                        }
+                    } catch (error) {
+                        console.warn('⚠️ Error al auto-seleccionar dependencias de auth_user:', error);
+                    }
+                } else {
+                    console.warn('⚠️ RelationshipManager no disponible, solo se seleccionó auth_user');
+                }
+            }
+        }
+
         // Después de cambiar todos los checkboxes, actualizar el contador y sistema
         setTimeout(() => {
             // Actualizar el contador manualmente
