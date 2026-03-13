@@ -219,7 +219,7 @@ class HistoricalCourseInformationAdminTeachers(models.Model):
     )
 
     class Meta:
-        db_table = 'Docencia_courseinformation_adminteachers'
+        db_table = 'historial_docenciacourseinformation_adminteachers'
         verbose_name = 'Historical Course Information Admin Teacher'
         verbose_name_plural = 'Historical Course Information Admin Teachers'
         unique_together = (('curso', 'profesor'),)
@@ -627,3 +627,105 @@ class HistoricalApplication(models.Model):
 
     def __str__(self):
         return f"{self.usuario.username if self.usuario else 'Unknown'} - {self.curso.nombre if self.curso else 'Unknown'}"
+
+
+class HistoricalClass(models.Model):
+    """
+    Modelo histórico para Docencia_class.
+
+    Almacena registros históricos de clases cuando se realizan
+    combinaciones de tablas en la sección "datos archivados dinámicos" del admin.
+    Preserva información de clases asociadas a asignaturas.
+
+    Campos principales:
+        name: Nombre de la clase
+        classbody: Contenido de la clase
+        uploaddate: Fecha de carga
+        datepub: Fecha de publicación
+        dateend: Fecha de finalización
+        slug: Slug único para la clase
+        subject: Foreign key a HistoricalSubjectInformation
+    """
+    # Campos de auditoría
+    id_original = models.IntegerField()
+    tabla_origen = models.CharField(max_length=255)
+    fecha_consolidacion = models.DateTimeField(auto_now_add=True)
+    dato_archivado = models.ForeignKey(
+        'datos_archivados.DatoArchivadoDinamico',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='historical_classes'
+    )
+
+    # Campos de datos
+    name = models.CharField(max_length=100)
+    classbody = models.TextField()
+    uploaddate = models.DateField()
+    datepub = models.DateTimeField()
+    dateend = models.DateTimeField()
+    slug = models.CharField(max_length=250)
+    subject = models.ForeignKey(
+        HistoricalSubjectInformation,
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+        related_name='classes'
+    )
+
+    class Meta:
+        db_table = 'historial_docenciaclass'
+        verbose_name = 'Historical Class'
+        verbose_name_plural = 'Historical Classes'
+
+    def __str__(self):
+        return self.name
+
+
+class HistoricalClassStudentView(models.Model):
+    """
+    Modelo histórico para Docencia_class_studentView.
+
+    Almacena registros históricos de la relación many-to-many entre clases y
+    aplicaciones de estudiantes. Se utiliza cuando se realizan combinaciones de
+    tablas en la sección "datos archivados dinámicos" del admin.
+
+    Campos:
+        class_field: Foreign key a HistoricalClass (renombrado de class_id para evitar conflicto con palabra reservada)
+        application: Foreign key a HistoricalApplication
+
+    Nota: Mantiene la relación entre clases y aplicaciones de estudiantes.
+    """
+    # Campos de auditoría
+    id_original = models.IntegerField()
+    tabla_origen = models.CharField(max_length=255)
+    fecha_consolidacion = models.DateTimeField(auto_now_add=True)
+    dato_archivado = models.ForeignKey(
+        'datos_archivados.DatoArchivadoDinamico',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='historical_class_student_views'
+    )
+
+    # Campos de datos
+    class_field = models.ForeignKey(
+        HistoricalClass,
+        on_delete=models.CASCADE,
+        related_name='student_views',
+        db_column='class_id'
+    )
+    application = models.ForeignKey(
+        HistoricalApplication,
+        on_delete=models.CASCADE,
+        related_name='class_views'
+    )
+
+    class Meta:
+        db_table = 'historial_docenciaclass_studentview'
+        verbose_name = 'Historical Class Student View'
+        verbose_name_plural = 'Historical Class Student Views'
+        unique_together = (('class_field', 'application'),)
+
+    def __str__(self):
+        return f"{self.class_field.name} - {self.application.usuario.username if self.application.usuario else 'Unknown'}"

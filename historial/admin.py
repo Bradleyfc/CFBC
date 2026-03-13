@@ -11,6 +11,8 @@ from .models import (
     HistoricalSubjectInformation,
     HistoricalEdition,
     HistoricalApplication,
+    HistoricalClass,
+    HistoricalClassStudentView,
 )
 
 
@@ -396,3 +398,71 @@ class HistoricalApplicationAdmin(admin.ModelAdmin):
     # - edicion: Puede haber muchas ediciones en el sistema
     # - usuario: Puede haber muchos usuarios en el sistema
     raw_id_fields = ['curso', 'edicion', 'usuario']
+
+
+@admin.register(HistoricalClass)
+class HistoricalClassAdmin(admin.ModelAdmin):
+    """
+    Configuración de Django Admin para HistoricalClass.
+
+    Proporciona interfaz administrativa para visualizar y gestionar registros
+    históricos de clases. Incluye filtros por asignatura y fechas,
+    y permite búsqueda por nombre, slug y contenido de la clase.
+    """
+
+    # list_display: Campos mostrados en la vista de lista del admin
+    # - id: Identificador único del registro histórico
+    # - name: Nombre de la clase
+    # - subject: Asignatura a la que pertenece la clase
+    # - uploaddate: Fecha de carga de la clase
+    # - datepub: Fecha de publicación de la clase
+    # - dateend: Fecha de finalización de la clase
+    list_display = ['id', 'name', 'subject', 'uploaddate', 'datepub', 'dateend']
+
+    # search_fields: Campos habilitados para búsqueda de texto
+    # Permite buscar por nombre, slug, contenido de la clase o nombre de la asignatura
+    search_fields = ['name', 'slug', 'classbody', 'subject__nombre']
+
+    # list_filter: Filtros laterales en la interfaz del admin
+    # - subject: Filtrar por asignatura específica
+    # - uploaddate: Filtrar por fecha de carga
+    # - datepub: Filtrar por fecha de publicación
+    # - dateend: Filtrar por fecha de finalización
+    list_filter = ['subject', 'uploaddate', 'datepub', 'dateend']
+
+    # raw_id_fields: Usa widget de búsqueda para foreign keys con muchos registros
+    # - subject: Puede haber muchas asignaturas en el sistema
+    raw_id_fields = ['subject']
+
+
+@admin.register(HistoricalClassStudentView)
+class HistoricalClassStudentViewAdmin(admin.ModelAdmin):
+    """
+    Configuración de Django Admin para HistoricalClassStudentView.
+
+    Proporciona interfaz administrativa para visualizar y gestionar registros
+    históricos de la relación many-to-many entre clases y aplicaciones de estudiantes.
+    Usa raw_id_fields para class_field y application debido al potencial alto volumen de registros.
+    Permite búsqueda por nombre de clase y datos del estudiante.
+    """
+
+    # list_display: Campos mostrados en la vista de lista del admin
+    # - id: Identificador único del registro histórico
+    # - class_field: Clase asociada
+    # - application: Aplicación del estudiante asociada
+    list_display = ['id', 'class_field', 'application']
+
+    # search_fields: Campos habilitados para búsqueda de texto
+    # Permite buscar por nombre/slug de la clase o username/email del estudiante de la aplicación
+    # Usa __ para acceder a campos de modelos relacionados
+    search_fields = ['class_field__name', 'class_field__slug', 'application__usuario__username', 'application__usuario__email']
+
+    # list_filter: Filtros laterales en la interfaz del admin
+    # - class_field: Filtrar por clase específica
+    # - application: Filtrar por aplicación específica
+    list_filter = ['class_field', 'application']
+
+    # raw_id_fields: Usa widget de búsqueda para foreign keys con muchos registros
+    # - class_field: Puede haber muchas clases en el sistema
+    # - application: Puede haber muchas aplicaciones en el sistema
+    raw_id_fields = ['class_field', 'application']
