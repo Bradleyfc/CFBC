@@ -160,8 +160,9 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                             <div><span class="font-semibold">Monto:</span> {{ pago.monto }}</div>
                             <div><span class="font-semibold">Fecha:</span> {{ pago.fecha }}</div>
-                            <div><span class="font-semibold">Método:</span> {{ pago.metodo }}</div>
-                            <div><span class="font-semibold">Referencia:</span> {{ pago.referencia }}</div>
+                            <div><span class="font-semibold">N° Transferencia:</span> {{ pago.metodo }}</div>
+                            <div><span class="font-semibold">N° Tarjeta:</span> {{ pago.referencia }}</div>
+                            <div><span class="font-semibold">Aceptado:</span> {{ pago.aceptado }}</div>
                         </div>
                     </div>
                     {% endfor %}
@@ -238,7 +239,7 @@
                             <div><span class="font-semibold">Código:</span> {{ curso.codigo }}</div>
                             <div><span class="font-semibold">Área:</span> {{ curso.area }}</div>
                             <div><span class="font-semibold">Categoría:</span> {{ curso.categoria }}</div>
-                            <div class="col-span-full"><span class="font-semibold">Descripción:</span> {{ curso.descripcion }}</div>
+                            <div class="col-span-full"><span class="font-semibold">Descripción:</span> {{ curso.descripcion|safe }}</div>
                         </div>
                     </div>
                     {% endfor %}
@@ -290,7 +291,7 @@
                             <div><span class="font-semibold">Nombre:</span> {{ asig.nombre }}</div>
                             <div><span class="font-semibold">Código:</span> {{ asig.codigo }}</div>
                             <div><span class="font-semibold">Curso:</span> {{ asig.curso }}</div>
-                            <div class="col-span-full"><span class="font-semibold">Descripción:</span> {{ asig.descripcion }}</div>
+                            <div class="col-span-full"><span class="font-semibold">Descripción:</span> {{ asig.descripcion|safe }}</div>
                         </div>
                     </div>
                     {% endfor %}
@@ -315,7 +316,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             <div><span class="font-semibold">Nombre:</span> {{ area.nombre }}</div>
                             <div><span class="font-semibold">Código:</span> {{ area.codigo }}</div>
-                            <div class="col-span-full"><span class="font-semibold">Descripción:</span> {{ area.descripcion }}</div>
+                            <div class="col-span-full"><span class="font-semibold">Descripción:</span> {{ area.descripcion|safe }}</div>
                         </div>
                     </div>
                     {% endfor %}
@@ -343,7 +344,7 @@
                             <div><span class="font-semibold">Precio:</span> {{ cat.precio }}</div>
                             <div><span class="font-semibold">Es Servicio:</span> {{ cat.es_servicio }}</div>
                             <div><span class="font-semibold">Registro Abierto:</span> {{ cat.registro_abierto }}</div>
-                            <div class="col-span-full"><span class="font-semibold">Descripción:</span> {{ cat.descripcion }}</div>
+                            <div class="col-span-full"><span class="font-semibold">Descripción:</span> {{ cat.descripcion|safe }}</div>
                         </div>
                     </div>
                     {% endfor %}
@@ -352,6 +353,35 @@
                 {% endif %}
             </div>
         </div>
+
+        <!-- 12. Clases -->
+        <div class="glass-card mb-6">
+            <div class="glass-header">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <span class="icon material-icons mr-2">class</span>
+                    Clases ({{ historial.clases|length }})
+                </h3>
+            </div>
+            <div class="glass-content">
+                {% if historial.clases %}
+                    {% for clase in historial.clases %}
+                    <div class="historial-item mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <div><span class="font-semibold">Nombre:</span> {{ clase.nombre }}</div>
+                            <div><span class="font-semibold">Asignatura:</span> {{ clase.asignatura }}</div>
+                            <div><span class="font-semibold">Fecha Carga:</span> {{ clase.fecha_carga }}</div>
+                            <div><span class="font-semibold">Fecha Publicación:</span> {{ clase.fecha_publicacion }}</div>
+                            <div><span class="font-semibold">Fecha Fin:</span> {{ clase.fecha_fin }}</div>
+                            <div><span class="font-semibold">Slug:</span> {{ clase.slug }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-gray-500 italic">No hay registros</p>
+                {% endif %}
+            </div>
+        </div>
+
 
     </div>
 </div>
