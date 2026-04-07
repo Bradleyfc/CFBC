@@ -295,6 +295,11 @@ class DatoArchivadoDinamico(models.Model):
     # Campos adicionales para facilitar búsquedas
     nombre_registro = models.CharField(max_length=255, blank=True, null=True, verbose_name='Nombre del Registro')
     tipo_registro = models.CharField(max_length=50, blank=True, null=True, verbose_name='Tipo de Registro')
+
+    # Campos de combinación (indica si el registro fue combinado con la BD activa)
+    combinado = models.BooleanField(default=False, verbose_name='Combinado')
+    fecha_combinacion = models.DateTimeField(null=True, blank=True, verbose_name='Fecha de Combinación')
+    registros_procesados = models.IntegerField(default=0, verbose_name='Registros Procesados')
     
     def __str__(self):
         return f"{self.tabla_origen} - ID {self.id_original} (Migrado: {self.fecha_migracion.strftime('%d/%m/%Y')})"
