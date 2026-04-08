@@ -54,8 +54,12 @@ class UsuariosRegistradosView(LoginRequiredMixin, UserPassesTestMixin, ListView)
         # Obtener parámetros de filtro
         grupo = self.request.GET.get('grupo')
         search = self.request.GET.get('search')
+        anio = self.request.GET.get('anio')
+        fecha_desde = self.request.GET.get('fecha_desde')
+        fecha_hasta = self.request.GET.get('fecha_hasta')
+        orden = self.request.GET.get('orden', 'desc')
 
-        # Filtrar por grupo si se especifica
+        # Filtrar por grupo
         if grupo and grupo != 'todos':
             queryset = queryset.filter(user__groups__name=grupo)
 
@@ -69,25 +73,63 @@ class UsuariosRegistradosView(LoginRequiredMixin, UserPassesTestMixin, ListView)
                 Q(carnet__icontains=search)
             )
 
-        return queryset.distinct()
+        # Filtrar por año de registro
+        if anio:
+            try:
+                queryset = queryset.filter(user__date_joined__year=int(anio))
+            except ValueError:
+                pass
+
+        # Filtrar por rango de fechas
+        if fecha_desde:
+            try:
+                from datetime import datetime
+                queryset = queryset.filter(user__date_joined__date__gte=fecha_desde)
+            except Exception:
+                pass
+        if fecha_hasta:
+            try:
+                queryset = queryset.filter(user__date_joined__date__lte=fecha_hasta)
+            except Exception:
+                pass
+
+        # Ordenar por fecha de registro.
+        # En PostgreSQL, distinct() con order_by sobre campo relacionado causa conflictos.
+        # Solución: obtener IDs únicos primero, luego ordenar.
+        ids = queryset.values_list('id', flat=True).distinct()
+        if orden == 'asc':
+            return Registro.objects.filter(id__in=ids).select_related('user').prefetch_related('user__groups').order_by('user__date_joined', 'id')
+        else:
+            return Registro.objects.filter(id__in=ids).select_related('user').prefetch_related('user__groups').order_by('-user__date_joined', 'id')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Agregar grupos disponibles para el filtro
         from django.contrib.auth.models import Group
         context['grupos_disponibles'] = Group.objects.all().order_by('name')
         context['grupo_seleccionado'] = self.request.GET.get('grupo', 'todos')
         
-        # Agregar estadísticas por grupo
         context['estadisticas_grupos'] = {}
         for grupo in context['grupos_disponibles']:
             count = Registro.objects.filter(user__groups=grupo).count()
             context['estadisticas_grupos'][grupo.name] = count
         
-        # Total de todos los usuarios
         context['total_usuarios'] = Registro.objects.count()
-        
+
+        # Años disponibles para el filtro (años con registros)
+        from django.db.models.functions import ExtractYear
+        anios = (
+            Registro.objects.annotate(anio=ExtractYear('user__date_joined'))
+            .values_list('anio', flat=True)
+            .distinct()
+            .order_by('-anio')
+        )
+        context['anios_disponibles'] = [a for a in anios if a]
+        context['anio_seleccionado'] = self.request.GET.get('anio', '')
+        context['fecha_desde'] = self.request.GET.get('fecha_desde', '')
+        context['fecha_hasta'] = self.request.GET.get('fecha_hasta', '')
+        context['orden'] = self.request.GET.get('orden', 'desc')
+
         return context
 
 
@@ -3207,26 +3249,8 @@ def obtener_historial_usuario(request, user_id):
     }
     
     # 1. APLICACIONES (Docencia_application)
-    # Buscar el id_original del usuario en auth_user archivado (por username)
-    from datos_archivados.models import DatoArchivadoDinamico
-    dato_user_archivado = DatoArchivadoDinamico.objects.filter(
-        tabla_origen='auth_user',
-        datos_originales__username=user.username
-    ).first()
-    usuario_id_original = dato_user_archivado.datos_originales.get('id') if dato_user_archivado else None
-
-    # Buscar aplicaciones por id_original del usuario O por FK usuario
-    if usuario_id_original:
-        aplicaciones = HistoricalApplication.objects.filter(
-            id_original__in=DatoArchivadoDinamico.objects.filter(
-                tabla_origen='Docencia_application',
-                datos_originales__student_id=usuario_id_original
-            ).values_list('id_original', flat=True)
-        ).select_related('curso', 'edicion', 'curso__area', 'curso__categoria')
-    else:
-        aplicaciones = HistoricalApplication.objects.filter(usuario=user).select_related(
-            'curso', 'edicion', 'curso__area', 'curso__categoria'
-        )
+    aplicaciones, usuario_ids_originales = _buscar_aplicaciones_historicas(user)
+    usuario_id_original = usuario_ids_originales[0] if usuario_ids_originales else None
     for app in aplicaciones:
         historial_data['aplicaciones'].append({
             'id': app.id,
@@ -3251,17 +3275,7 @@ def obtener_historial_usuario(request, user_id):
         })
     
     # 2. MATRÍCULAS (Docencia_enrollment)
-    if usuario_id_original:
-        matriculas = HistoricalEnrollment.objects.filter(
-            id_original__in=DatoArchivadoDinamico.objects.filter(
-                tabla_origen='Docencia_enrollment',
-                datos_originales__student_id=usuario_id_original
-            ).values_list('id_original', flat=True)
-        ).select_related('edicion', 'edicion__curso', 'curso')
-    else:
-        matriculas = HistoricalEnrollment.objects.filter(usuario=user).select_related(
-            'edicion', 'edicion__curso', 'curso'
-        )
+    matriculas = _buscar_matriculas_historicas(user, usuario_ids_originales)
     for mat in matriculas:
         historial_data['matriculas'].append({
             'id': mat.id,
@@ -3281,15 +3295,7 @@ def obtener_historial_usuario(request, user_id):
         })
     
     # 3. SOLICITUDES DE INSCRIPCIÓN (Docencia_enrollmentapplication)
-    if usuario_id_original:
-        solicitudes = HistoricalEnrollmentApplication.objects.filter(
-            id_original__in=DatoArchivadoDinamico.objects.filter(
-                tabla_origen='Docencia_enrollmentapplication',
-                datos_originales__name=user.get_full_name()
-            ).values_list('id_original', flat=True)
-        ).select_related('curso')
-    else:
-        solicitudes = HistoricalEnrollmentApplication.objects.filter(usuario=user).select_related('curso')
+    solicitudes = _buscar_solicitudes_historicas(user, usuario_ids_originales)
     for sol in solicitudes:
         historial_data['solicitudes_inscripcion'].append({
             'id': sol.id,
@@ -3302,13 +3308,16 @@ def obtener_historial_usuario(request, user_id):
         })
     
     # 4. CUENTAS BANCARIAS (Docencia_accountnumber)
-    if usuario_id_original:
+    # user_id apunta directamente a auth_user
+    from datos_archivados.models import DatoArchivadoDinamico
+    if usuario_ids_originales:
         cuentas = HistoricalAccountNumber.objects.filter(
             id_original__in=DatoArchivadoDinamico.objects.filter(
                 tabla_origen='Docencia_accountnumber',
-                datos_originales__owner=user.username
+                datos_originales__user_id__in=usuario_ids_originales
             ).values_list('id_original', flat=True)
-        )
+        ) | HistoricalAccountNumber.objects.filter(usuario=user)
+        cuentas = cuentas.distinct()
     else:
         cuentas = HistoricalAccountNumber.objects.filter(usuario=user)
     for cuenta in cuentas:
@@ -3319,14 +3328,23 @@ def obtener_historial_usuario(request, user_id):
             'tabla_origen': cuenta.tabla_origen,
             'fecha_consolidacion': cuenta.fecha_consolidacion.strftime('%d/%m/%Y %H:%M'),
         })
-    
+
     # 5. PAGOS (Docencia_enrollmentpay)
-    # Obtener pagos relacionados con aplicaciones del usuario
-    aplicaciones_ids = [app.id_original for app in aplicaciones]
-    if aplicaciones_ids:
+    # app_id apunta al ID original de Docencia_application en la BD antigua
+    # que está guardado en dato_archivado.datos_originales['id']
+    aplicaciones_ids_originales = []
+    for app in aplicaciones:
+        if app.dato_archivado:
+            orig_id = app.dato_archivado.datos_originales.get('id')
+            if orig_id:
+                aplicaciones_ids_originales.append(orig_id)
+        elif app.id_original:
+            aplicaciones_ids_originales.append(app.id_original)
+
+    if aplicaciones_ids_originales:
         pagos_data = DatoArchivadoDinamico.objects.filter(
             tabla_origen='Docencia_enrollmentpay',
-            datos_originales__app_id__in=aplicaciones_ids
+            datos_originales__app_id__in=aplicaciones_ids_originales
         )
         for pago_dato in pagos_data:
             datos = pago_dato.datos_originales
@@ -3480,6 +3498,140 @@ def obtener_historial_usuario(request, user_id):
     return JsonResponse(historial_data)
 
 
+def _buscar_aplicaciones_historicas(user):
+    """
+    Busca HistoricalApplication para un usuario cubriendo todos los casos.
+
+    La cadena real es:
+        auth_user.id -> Docencia_studentpersonalinformation.user_id
+                     -> Docencia_application.student_id
+
+    También cubre el caso donde se guardó user_id directo, y FK directa.
+    """
+    from datos_archivados.models import DatoArchivadoDinamico
+    from historial.models import HistoricalApplication
+    from django.db.models import Q
+
+    # Paso 1: encontrar el/los IDs del usuario en auth_user archivado
+    datos_user = DatoArchivadoDinamico.objects.filter(
+        tabla_origen='auth_user',
+        datos_originales__username=user.username
+    )
+    if not datos_user.exists() and user.email:
+        datos_user = DatoArchivadoDinamico.objects.filter(
+            tabla_origen='auth_user',
+            datos_originales__email=user.email
+        )
+    usuario_ids_originales = [
+        d.datos_originales.get('id')
+        for d in datos_user
+        if d.datos_originales.get('id')
+    ]
+
+    if not usuario_ids_originales:
+        return HistoricalApplication.objects.filter(usuario=user).select_related(
+            'curso', 'edicion', 'curso__area', 'curso__categoria'
+        ), []
+
+    # Paso 2: encontrar los IDs de Docencia_studentpersonalinformation para este usuario
+    student_info_ids = list(
+        DatoArchivadoDinamico.objects.filter(
+            tabla_origen='Docencia_studentpersonalinformation',
+            datos_originales__user_id__in=usuario_ids_originales
+        ).values_list('id_original', flat=True)
+    )
+
+    # Paso 3: buscar aplicaciones por student_id (cadena correcta),
+    # por user_id directo (algunos registros lo usan), y por FK directa
+    q = Q(usuario=user)
+
+    if student_info_ids:
+        ids_por_student_id = DatoArchivadoDinamico.objects.filter(
+            tabla_origen='Docencia_application',
+            datos_originales__student_id__in=student_info_ids
+        ).values_list('id_original', flat=True)
+        q |= Q(id_original__in=ids_por_student_id)
+
+    # También cubrir si algún registro usó user_id directo de auth_user
+    ids_por_user_id = DatoArchivadoDinamico.objects.filter(
+        tabla_origen='Docencia_application',
+        datos_originales__user_id__in=usuario_ids_originales
+    ).values_list('id_original', flat=True)
+    q |= Q(id_original__in=ids_por_user_id)
+
+    aplicaciones = HistoricalApplication.objects.filter(q).distinct().select_related(
+        'curso', 'edicion', 'curso__area', 'curso__categoria'
+    )
+    return aplicaciones, usuario_ids_originales
+
+
+def _buscar_matriculas_historicas(user, usuario_ids_originales):
+    """
+    Busca HistoricalEnrollment.
+    Cadena: auth_user -> studentpersonalinformation.user_id -> enrollment.student_id
+    """
+    from datos_archivados.models import DatoArchivadoDinamico
+    from historial.models import HistoricalEnrollment
+    from django.db.models import Q
+
+    if not usuario_ids_originales:
+        return HistoricalEnrollment.objects.filter(usuario=user).select_related(
+            'edicion', 'edicion__curso', 'curso'
+        )
+
+    student_info_ids = list(
+        DatoArchivadoDinamico.objects.filter(
+            tabla_origen='Docencia_studentpersonalinformation',
+            datos_originales__user_id__in=usuario_ids_originales
+        ).values_list('id_original', flat=True)
+    )
+
+    q = Q(usuario=user)
+    if student_info_ids:
+        ids_por_student_id = DatoArchivadoDinamico.objects.filter(
+            tabla_origen='Docencia_enrollment',
+            datos_originales__student_id__in=student_info_ids
+        ).values_list('id_original', flat=True)
+        q |= Q(id_original__in=ids_por_student_id)
+
+    ids_por_user_id = DatoArchivadoDinamico.objects.filter(
+        tabla_origen='Docencia_enrollment',
+        datos_originales__user_id__in=usuario_ids_originales
+    ).values_list('id_original', flat=True)
+    q |= Q(id_original__in=ids_por_user_id)
+
+    return HistoricalEnrollment.objects.filter(q).distinct().select_related(
+        'edicion', 'edicion__curso', 'curso'
+    )
+
+
+def _buscar_solicitudes_historicas(user, usuario_ids_originales):
+    """Busca HistoricalEnrollmentApplication cubriendo user_id y student_id."""
+    from datos_archivados.models import DatoArchivadoDinamico
+    from historial.models import HistoricalEnrollmentApplication
+    from django.db.models import Q
+
+    if usuario_ids_originales:
+        ids_por_user_id = DatoArchivadoDinamico.objects.filter(
+            tabla_origen='Docencia_enrollmentapplication',
+            datos_originales__user_id__in=usuario_ids_originales
+        ).values_list('id_original', flat=True)
+        ids_por_student_id = DatoArchivadoDinamico.objects.filter(
+            tabla_origen='Docencia_enrollmentapplication',
+            datos_originales__student_id__in=usuario_ids_originales
+        ).values_list('id_original', flat=True)
+        # También buscar por nombre completo (campo legacy)
+        ids_por_nombre = DatoArchivadoDinamico.objects.filter(
+            tabla_origen='Docencia_enrollmentapplication',
+            datos_originales__name=user.get_full_name()
+        ).values_list('id_original', flat=True) if user.get_full_name() else []
+        todos_ids = set(list(ids_por_user_id) + list(ids_por_student_id) + list(ids_por_nombre))
+        return HistoricalEnrollmentApplication.objects.filter(
+            Q(id_original__in=todos_ids) | Q(usuario=user)
+        ).distinct().select_related('curso')
+    return HistoricalEnrollmentApplication.objects.filter(usuario=user).select_related('curso')
+
+
 @login_required
 def ver_detalles_historial_usuario(request, user_id):
     """
@@ -3535,26 +3687,8 @@ def ver_detalles_historial_usuario(request, user_id):
     }
 
     # 1. APLICACIONES (Docencia_application)
-    # Buscar el id_original del usuario en auth_user archivado (por username)
-    from datos_archivados.models import DatoArchivadoDinamico
-    dato_user_archivado = DatoArchivadoDinamico.objects.filter(
-        tabla_origen='auth_user',
-        datos_originales__username=user.username
-    ).first()
-    usuario_id_original = dato_user_archivado.datos_originales.get('id') if dato_user_archivado else None
-
-    # Buscar aplicaciones por id_original del usuario O por FK usuario
-    if usuario_id_original:
-        aplicaciones = HistoricalApplication.objects.filter(
-            id_original__in=DatoArchivadoDinamico.objects.filter(
-                tabla_origen='Docencia_application',
-                datos_originales__student_id=usuario_id_original
-            ).values_list('id_original', flat=True)
-        ).select_related('curso', 'edicion', 'curso__area', 'curso__categoria')
-    else:
-        aplicaciones = HistoricalApplication.objects.filter(usuario=user).select_related(
-            'curso', 'edicion', 'curso__area', 'curso__categoria'
-        )
+    aplicaciones, usuario_ids_originales = _buscar_aplicaciones_historicas(user)
+    usuario_id_original = usuario_ids_originales[0] if usuario_ids_originales else None
     for app in aplicaciones:
         historial_data['aplicaciones'].append({
             'id': app.id,
@@ -3579,17 +3713,7 @@ def ver_detalles_historial_usuario(request, user_id):
         })
 
     # 2. MATRÍCULAS (Docencia_enrollment)
-    if usuario_id_original:
-        matriculas = HistoricalEnrollment.objects.filter(
-            id_original__in=DatoArchivadoDinamico.objects.filter(
-                tabla_origen='Docencia_enrollment',
-                datos_originales__student_id=usuario_id_original
-            ).values_list('id_original', flat=True)
-        ).select_related('edicion', 'edicion__curso', 'curso')
-    else:
-        matriculas = HistoricalEnrollment.objects.filter(usuario=user).select_related(
-            'edicion', 'edicion__curso', 'curso'
-        )
+    matriculas = _buscar_matriculas_historicas(user, usuario_ids_originales)
     for mat in matriculas:
         historial_data['matriculas'].append({
             'id': mat.id,
@@ -3609,15 +3733,7 @@ def ver_detalles_historial_usuario(request, user_id):
         })
 
     # 3. SOLICITUDES DE INSCRIPCIÓN (Docencia_enrollmentapplication)
-    if usuario_id_original:
-        solicitudes = HistoricalEnrollmentApplication.objects.filter(
-            id_original__in=DatoArchivadoDinamico.objects.filter(
-                tabla_origen='Docencia_enrollmentapplication',
-                datos_originales__name=user.get_full_name()
-            ).values_list('id_original', flat=True)
-        ).select_related('curso')
-    else:
-        solicitudes = HistoricalEnrollmentApplication.objects.filter(usuario=user).select_related('curso')
+    solicitudes = _buscar_solicitudes_historicas(user, usuario_ids_originales)
     for sol in solicitudes:
         historial_data['solicitudes_inscripcion'].append({
             'id': sol.id,
@@ -3630,13 +3746,17 @@ def ver_detalles_historial_usuario(request, user_id):
         })
 
     # 4. CUENTAS BANCARIAS (Docencia_accountnumber)
-    if usuario_id_original:
-        cuentas = HistoricalAccountNumber.objects.filter(
-            id_original__in=DatoArchivadoDinamico.objects.filter(
-                tabla_origen='Docencia_accountnumber',
-                datos_originales__owner=user.username
-            ).values_list('id_original', flat=True)
-        )
+    # user_id apunta directamente a auth_user
+    from datos_archivados.models import DatoArchivadoDinamico
+    if usuario_ids_originales:
+        cuentas = (
+            HistoricalAccountNumber.objects.filter(
+                id_original__in=DatoArchivadoDinamico.objects.filter(
+                    tabla_origen='Docencia_accountnumber',
+                    datos_originales__user_id__in=usuario_ids_originales
+                ).values_list('id_original', flat=True)
+            ) | HistoricalAccountNumber.objects.filter(usuario=user)
+        ).distinct()
     else:
         cuentas = HistoricalAccountNumber.objects.filter(usuario=user)
     for cuenta in cuentas:
@@ -3649,12 +3769,20 @@ def ver_detalles_historial_usuario(request, user_id):
         })
 
     # 5. PAGOS (Docencia_enrollmentpay)
-    # app.id_original = ID original de la aplicacion en Docencia_application
-    aplicaciones_ids = [app.id_original for app in aplicaciones]
-    if aplicaciones_ids:
+    # app_id apunta al ID original de Docencia_application en la BD antigua
+    aplicaciones_ids_originales = []
+    for app in aplicaciones:
+        if app.dato_archivado:
+            orig_id = app.dato_archivado.datos_originales.get('id')
+            if orig_id:
+                aplicaciones_ids_originales.append(orig_id)
+        elif app.id_original:
+            aplicaciones_ids_originales.append(app.id_original)
+
+    if aplicaciones_ids_originales:
         pagos_data = DatoArchivadoDinamico.objects.filter(
             tabla_origen='Docencia_enrollmentpay',
-            datos_originales__app_id__in=aplicaciones_ids
+            datos_originales__app_id__in=aplicaciones_ids_originales
         )
         for pago_dato in pagos_data:
             datos = pago_dato.datos_originales
@@ -3870,9 +3998,8 @@ def exportar_detalles_historial_pdf(request, user_id):
     }
 
     # 1. APLICACIONES
-    aplicaciones = HistoricalApplication.objects.filter(usuario=user).select_related(
-        'curso', 'edicion', 'curso__area', 'curso__categoria'
-    )
+    aplicaciones, usuario_ids_originales = _buscar_aplicaciones_historicas(user)
+    usuario_id_original = usuario_ids_originales[0] if usuario_ids_originales else None
     for app in aplicaciones:
         historial_data['aplicaciones'].append({
             'curso': app.curso.nombre if app.curso else 'N/A',
@@ -3894,17 +4021,7 @@ def exportar_detalles_historial_pdf(request, user_id):
         })
 
     # 2. MATRÍCULAS
-    if usuario_id_original:
-        matriculas = HistoricalEnrollment.objects.filter(
-            id_original__in=DatoArchivadoDinamico.objects.filter(
-                tabla_origen='Docencia_enrollment',
-                datos_originales__student_id=usuario_id_original
-            ).values_list('id_original', flat=True)
-        ).select_related('edicion', 'edicion__curso', 'curso')
-    else:
-        matriculas = HistoricalEnrollment.objects.filter(usuario=user).select_related(
-            'edicion', 'edicion__curso', 'curso'
-        )
+    matriculas = _buscar_matriculas_historicas(user, usuario_ids_originales)
     for mat in matriculas:
         historial_data['matriculas'].append({
             'curso': mat.edicion.curso.nombre if mat.edicion and mat.edicion.curso else (mat.curso.nombre if mat.curso else 'N/A'),
@@ -3920,15 +4037,7 @@ def exportar_detalles_historial_pdf(request, user_id):
         })
 
     # 3. SOLICITUDES DE INSCRIPCIÓN
-    if usuario_id_original:
-        solicitudes = HistoricalEnrollmentApplication.objects.filter(
-            id_original__in=DatoArchivadoDinamico.objects.filter(
-                tabla_origen='Docencia_enrollmentapplication',
-                datos_originales__name=user.get_full_name()
-            ).values_list('id_original', flat=True)
-        ).select_related('curso')
-    else:
-        solicitudes = HistoricalEnrollmentApplication.objects.filter(usuario=user).select_related('curso')
+    solicitudes = _buscar_solicitudes_historicas(user, usuario_ids_originales)
     for sol in solicitudes:
         historial_data['solicitudes_inscripcion'].append({
             'curso': sol.curso.nombre if sol.curso else 'N/A',
@@ -3938,13 +4047,16 @@ def exportar_detalles_historial_pdf(request, user_id):
         })
 
     # 4. CUENTAS BANCARIAS
-    if usuario_id_original:
-        cuentas = HistoricalAccountNumber.objects.filter(
-            id_original__in=DatoArchivadoDinamico.objects.filter(
-                tabla_origen='Docencia_accountnumber',
-                datos_originales__owner=user.username
-            ).values_list('id_original', flat=True)
-        )
+    from datos_archivados.models import DatoArchivadoDinamico
+    if usuario_ids_originales:
+        cuentas = (
+            HistoricalAccountNumber.objects.filter(
+                id_original__in=DatoArchivadoDinamico.objects.filter(
+                    tabla_origen='Docencia_accountnumber',
+                    datos_originales__user_id__in=usuario_ids_originales
+                ).values_list('id_original', flat=True)
+            ) | HistoricalAccountNumber.objects.filter(usuario=user)
+        ).distinct()
     else:
         cuentas = HistoricalAccountNumber.objects.filter(usuario=user)
     for cuenta in cuentas:
@@ -3954,12 +4066,19 @@ def exportar_detalles_historial_pdf(request, user_id):
         })
 
     # 5. PAGOS
-    aplicaciones_ids = [app.id_original for app in aplicaciones]
-    if aplicaciones_ids:
-        from datos_archivados.models import DatoArchivadoDinamico
+    aplicaciones_ids_originales = []
+    for app in aplicaciones:
+        if app.dato_archivado:
+            orig_id = app.dato_archivado.datos_originales.get('id')
+            if orig_id:
+                aplicaciones_ids_originales.append(orig_id)
+        elif app.id_original:
+            aplicaciones_ids_originales.append(app.id_original)
+
+    if aplicaciones_ids_originales:
         pagos_data = DatoArchivadoDinamico.objects.filter(
             tabla_origen='Docencia_enrollmentpay',
-            datos_originales__app_id__in=aplicaciones_ids
+            datos_originales__app_id__in=aplicaciones_ids_originales
         )
         for pago_dato in pagos_data:
             datos = pago_dato.datos_originales

@@ -63,6 +63,34 @@
                         </div>
                     </div>
 
+                    <!-- Filtros de fecha -->
+                    <div class="flex flex-wrap gap-3 mb-4 items-end">
+                        <div class="flex-1 min-w-36">
+                            <label for="anio" class="block text-xs font-medium text-gray-600 mb-1">Año de Registro:</label>
+                            <select name="anio" id="anio" class="glass-input-compact">
+                                <option value="">Todos los años</option>
+                                {% for anio in anios_disponibles %}
+                                <option value="{{ anio }}" {% if anio_seleccionado == anio|stringformat:"s" %}selected{% endif %}>{{ anio }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="flex-1 min-w-40">
+                            <label for="fecha_desde" class="block text-xs font-medium text-gray-600 mb-1">Desde:</label>
+                            <input type="date" name="fecha_desde" id="fecha_desde" class="glass-input-compact" value="{{ fecha_desde }}">
+                        </div>
+                        <div class="flex-1 min-w-40">
+                            <label for="fecha_hasta" class="block text-xs font-medium text-gray-600 mb-1">Hasta:</label>
+                            <input type="date" name="fecha_hasta" id="fecha_hasta" class="glass-input-compact" value="{{ fecha_hasta }}">
+                        </div>
+                        <div class="flex-1 min-w-40">
+                            <label for="orden" class="block text-xs font-medium text-gray-600 mb-1">Ordenar por Registro:</label>
+                            <select name="orden" id="orden" class="glass-input-compact">
+                                <option value="desc" {% if orden == 'desc' %}selected{% endif %}>Más reciente primero</option>
+                                <option value="asc" {% if orden == 'asc' %}selected{% endif %}>Más antiguo primero</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <!-- Action Buttons -->
                     <div class="flex flex-wrap gap-2 justify-end">
                         <button type="submit" class="glass-button glass-button-primary">
@@ -167,6 +195,11 @@
                             </th>
                             <th class="resizable-th" data-column="registro">
                                 Registro
+                                {% if orden == 'asc' %}
+                                <span class="icon material-icons text-blue-500" style="font-size:14px;vertical-align:middle;">arrow_upward</span>
+                                {% else %}
+                                <span class="icon material-icons text-blue-500" style="font-size:14px;vertical-align:middle;">arrow_downward</span>
+                                {% endif %}
                                 <div class="resize-handle"></div>
                             </th>
                             <th class="resizable-th" data-column="historial">
@@ -280,17 +313,16 @@
                 
                 <!-- Navegación de páginas -->
                 <nav aria-label="Page navigation" class="flex justify-center">
+                    {% with qs=request.GET.urlencode %}
                     <ul class="glass-pagination">
                         {% if page_obj.has_previous %}
                         <li>
-                            <a href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}"
-                                class="glass-page-link" title="Primera página">
+                            <a href="?page=1&{{ qs }}" class="glass-page-link" title="Primera página">
                                 <span class="icon material-icons">first_page</span>
                             </a>
                         </li>
                         <li>
-                            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}"
-                                class="glass-page-link" title="Página anterior">
+                            <a href="?page={{ page_obj.previous_page_number }}&{{ qs }}" class="glass-page-link" title="Página anterior">
                                 <span class="icon material-icons">chevron_left</span>
                                 Anterior
                             </a>
@@ -305,38 +337,30 @@
                             </li>
                             {% elif i <= 3 or i >= page_obj.paginator.num_pages|add:"-2" or i >= page_obj.number|add:"-2" and i <= page_obj.number|add:"2" %}
                             <li>
-                                <a href="?page={{ i }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}"
-                                    class="glass-page-link">
-                                    {{ i }}
-                                </a>
+                                <a href="?page={{ i }}&{{ qs }}" class="glass-page-link">{{ i }}</a>
                             </li>
                             {% elif i == 4 and page_obj.number > 6 %}
-                            <li>
-                                <span class="glass-page-link glass-page-ellipsis">...</span>
-                            </li>
+                            <li><span class="glass-page-link glass-page-ellipsis">...</span></li>
                             {% elif i == page_obj.paginator.num_pages|add:"-3" and page_obj.number < page_obj.paginator.num_pages|add:"-5" %}
-                            <li>
-                                <span class="glass-page-link glass-page-ellipsis">...</span>
-                            </li>
+                            <li><span class="glass-page-link glass-page-ellipsis">...</span></li>
                             {% endif %}
                         {% endfor %}
 
                         {% if page_obj.has_next %}
                         <li>
-                            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}"
-                                class="glass-page-link" title="Página siguiente">
+                            <a href="?page={{ page_obj.next_page_number }}&{{ qs }}" class="glass-page-link" title="Página siguiente">
                                 Siguiente
                                 <span class="icon material-icons">chevron_right</span>
                             </a>
                         </li>
                         <li>
-                            <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}"
-                                class="glass-page-link" title="Última página">
+                            <a href="?page={{ page_obj.paginator.num_pages }}&{{ qs }}" class="glass-page-link" title="Última página">
                                 <span class="icon material-icons">last_page</span>
                             </a>
                         </li>
                         {% endif %}
                     </ul>
+                    {% endwith %}
                 </nav>
             </div>
         </div>

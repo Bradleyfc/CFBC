@@ -30,6 +30,241 @@ DOCENCIA_TABLES_MAPPING = {
     'Docencia_class_studentView': 'HistoricalClassStudentView',
 }
 
+# Definición estática de las relaciones FK conocidas entre tablas.
+# Formato: { tabla: { campo_fk: (tabla_destino, campo_destino) } }
+# Esto sirve como base y se enriquece con el análisis dinámico.
+RELACIONES_FK_CONOCIDAS = {
+    'Docencia_application': {
+        'student_id': ('Docencia_studentpersonalinformation', 'id'),
+        'course_id':  ('Docencia_courseinformation', 'id'),
+        'edition_id': ('Docencia_edition', 'id'),
+    },
+    'Docencia_enrollment': {
+        'student_id': ('Docencia_studentpersonalinformation', 'id'),
+        'subject_id': ('Docencia_subjectinformation', 'id'),
+        'edition_id': ('Docencia_edition', 'id'),
+    },
+    'Docencia_studentpersonalinformation': {
+        'user_id': ('auth_user', 'id'),
+    },
+    'Docencia_enrollmentapplication': {
+        'user_id': ('auth_user', 'id'),
+        'course_id': ('Docencia_courseinformation', 'id'),
+    },
+    'Docencia_accountnumber': {
+        'user_id': ('auth_user', 'id'),
+    },
+    'Docencia_enrollmentpay': {
+        'app_id': ('Docencia_application', 'id'),
+        'account_number_id': ('Docencia_accountnumber', 'id'),
+    },
+    'Docencia_subjectinformation': {
+        'course_id': ('Docencia_courseinformation', 'id'),
+    },
+    'Docencia_edition': {
+        'course_id': ('Docencia_courseinformation', 'id'),
+    },
+    'Docencia_courseinformation': {
+        'area_id': ('Docencia_area', 'id'),
+        'category_id': ('Docencia_coursecategory', 'id'),
+    },
+    'Docencia_courseinformation_adminteachers': {
+        'courseinformation_id': ('Docencia_courseinformation', 'id'),
+        'user_id': ('auth_user', 'id'),
+    },
+    'Docencia_class': {
+        'subject_id': ('Docencia_subjectinformation', 'id'),
+    },
+    'Docencia_class_studentView': {
+        'class_id': ('Docencia_class', 'id'),
+        'app_id': ('Docencia_application', 'id'),
+    },
+}
+
+
+def analizar_vinculos_tablas(tablas_seleccionadas, logger=None):
+    """
+    Examina los datos reales archivados para construir automáticamente el mapa
+    de relaciones FK entre tablas. No depende de lógica hardcodeada — detecta
+    los campos _id presentes, los cruza con RELACIONES_FK_CONOCIDAS como base,
+    e infiere los desconocidos por nombre.
+
+    También construye mapeos de IDs (id_original -> objeto) para todas las
+    tablas referenciadas, incluyendo la cadena auth_user -> studentpersonalinformation.
+
+    Se ejecuta ANTES de guardar en historial.
+
+    Returns:
+        dict: {
+            'relaciones': { tabla: { campo_fk: (tabla_destino, campo_destino) } },
+            'mapeos_ids': { tabla: { id_original: objeto_o_user } }
+        }
+    """
+    if logger is None:
+        logger = logging.getLogger(__name__)
+
+    from .models import DatoArchivadoDinamico
+
+    logger.info("=" * 60)
+    logger.info("ANÁLISIS AUTOMÁTICO DE VÍNCULOS ENTRE TABLAS")
+    logger.info("=" * 60)
+
+    tablas_destino_conocidas = set(RELACIONES_FK_CONOCIDAS.keys()) | {
+        'auth_user', 'Docencia_studentpersonalinformation'
+    }
+
+    relaciones = {}
+    advertencias = []
+
+    # PASO 1: detectar campos FK en los datos reales de cada tabla
+    for tabla in tablas_seleccionadas:
+        muestra = list(DatoArchivadoDinamico.objects.filter(
+            tabla_origen=tabla
+        ).values_list('datos_originales', flat=True)[:20])
+
+        if not muestra:
+            logger.warning(f"  [{tabla}] Sin datos para analizar")
+            relaciones[tabla] = RELACIONES_FK_CONOCIDAS.get(tabla, {})
+            continue
+
+        campos_fk_encontrados = set()
+        for registro in muestra:
+            for campo in registro.keys():
+                if campo.endswith('_id') and campo != 'id':
+                    campos_fk_encontrados.add(campo)
+
+        relaciones_conocidas = RELACIONES_FK_CONOCIDAS.get(tabla, {})
+        relaciones_tabla = {}
+
+        logger.info(f"\n  [{tabla}]")
+        logger.info(f"  Campos FK en datos: {sorted(campos_fk_encontrados)}")
+
+        for campo_fk in sorted(campos_fk_encontrados):
+            if campo_fk in relaciones_conocidas:
+                tabla_dest, campo_dest = relaciones_conocidas[campo_fk]
+                relaciones_tabla[campo_fk] = (tabla_dest, campo_dest)
+                logger.info(f"    ✅ {campo_fk} -> {tabla_dest}.{campo_dest}")
+            else:
+                nombre_base = campo_fk[:-3].lower()
+                tabla_inferida = None
+                for t in tablas_destino_conocidas:
+                    if nombre_base in t.lower():
+                        tabla_inferida = t
+                        break
+                if tabla_inferida:
+                    relaciones_tabla[campo_fk] = (tabla_inferida, 'id')
+                    msg = f"    ⚠️  {campo_fk} -> {tabla_inferida}.id (inferido)"
+                else:
+                    relaciones_tabla[campo_fk] = (None, 'id')
+                    msg = f"    ❓ {campo_fk} -> destino desconocido"
+                advertencias.append(f"[{tabla}] {msg.strip()}")
+                logger.warning(msg)
+
+        for campo_doc, (td, cd) in relaciones_conocidas.items():
+            if campo_doc not in campos_fk_encontrados:
+                logger.info(f"    ℹ️  {campo_doc} -> {td}.{cd} (documentado, no en muestra)")
+
+        relaciones[tabla] = relaciones_tabla
+
+    # PASO 2: construir mapeos de IDs para todas las tablas referenciadas
+    tablas_a_mapear = set()
+    for rels in relaciones.values():
+        for _, (tabla_dest, _) in rels.items():
+            if tabla_dest:
+                tablas_a_mapear.add(tabla_dest)
+    tablas_a_mapear.update(tablas_seleccionadas)
+
+    mapeos_ids = {}
+
+    # auth_user: mapear por email y username
+    if 'auth_user' in tablas_a_mapear:
+        usuarios_por_email = {u.email.lower(): u for u in User.objects.all() if u.email}
+        usuarios_por_username = {u.username: u for u in User.objects.all()}
+        mapeo_auth = {}
+        for dato in DatoArchivadoDinamico.objects.filter(tabla_origen='auth_user'):
+            orig_id = dato.datos_originales.get('id')
+            if not orig_id:
+                continue
+            email = dato.datos_originales.get('email', '').lower()
+            username = dato.datos_originales.get('username', '')
+            user_obj = usuarios_por_email.get(email) or usuarios_por_username.get(username)
+            if user_obj:
+                mapeo_auth[int(orig_id)] = user_obj
+        mapeos_ids['auth_user'] = mapeo_auth
+        logger.info(f"\n  auth_user: {len(mapeo_auth)} usuarios mapeados")
+
+    # studentpersonalinformation: mapear id -> User (a través de auth_user)
+    if 'Docencia_studentpersonalinformation' in tablas_a_mapear:
+        mapeo_auth = mapeos_ids.get('auth_user', {})
+        mapeo_student = {}
+        for dato in DatoArchivadoDinamico.objects.filter(
+            tabla_origen='Docencia_studentpersonalinformation'
+        ):
+            orig_id = dato.datos_originales.get('id')
+            user_id = dato.datos_originales.get('user_id')
+            if orig_id and user_id:
+                user_obj = mapeo_auth.get(int(user_id))
+                if user_obj:
+                    mapeo_student[int(orig_id)] = user_obj
+        mapeos_ids['Docencia_studentpersonalinformation'] = mapeo_student
+        logger.info(f"  Docencia_studentpersonalinformation: {len(mapeo_student)} registros mapeados")
+
+    logger.info("\n" + "=" * 60)
+    logger.info(f"  Tablas analizadas: {len(relaciones)}")
+    logger.info(f"  FK detectadas: {sum(len(v) for v in relaciones.values())}")
+    if advertencias:
+        logger.warning(f"  Advertencias: {len(advertencias)}")
+        for adv in advertencias:
+            logger.warning(f"    {adv}")
+    else:
+        logger.info("  Sin advertencias.")
+    logger.info("=" * 60)
+
+    return {'relaciones': relaciones, 'mapeos_ids': mapeos_ids}
+
+
+def resolver_fk(campo_fk, valor_id, tabla_origen, analisis, mapeos_historicos):
+    """
+    Resuelve el valor de una FK usando el mapa construido por analizar_vinculos_tablas.
+    Sigue la cadena automáticamente sin lógica hardcodeada.
+
+    - FK a auth_user -> devuelve User
+    - FK a studentpersonalinformation -> devuelve User (via cadena)
+    - FK a otra tabla Docencia -> devuelve objeto histórico ya guardado
+
+    Args:
+        campo_fk: nombre del campo (ej: 'student_id')
+        valor_id: valor del campo en los datos originales
+        tabla_origen: tabla que contiene el campo FK
+        analisis: resultado de analizar_vinculos_tablas()
+        mapeos_historicos: { tabla: { id_original: objeto_historico } }
+
+    Returns:
+        Objeto resuelto o None
+    """
+    if valor_id is None:
+        return None
+
+    relaciones = analisis.get('relaciones', {})
+    mapeos_ids = analisis.get('mapeos_ids', {})
+
+    destino = relaciones.get(tabla_origen, {}).get(campo_fk)
+    if not destino:
+        return None
+    tabla_dest, _ = destino
+
+    try:
+        valor_id = int(valor_id)
+    except (ValueError, TypeError):
+        return None
+
+    if tabla_dest == 'auth_user':
+        return mapeos_ids.get('auth_user', {}).get(valor_id)
+
+    if tabla_dest == 'Docencia_studentpersonalinformation':
+        return mapeos_ids.get('Docencia_studentpersonalinformation', {}).get(valor_id)
+
+    return mapeos_historicos.get(tabla_dest, {}).get(valor_id)
 
 def es_tabla_docencia(tabla_nombre):
     """
@@ -248,6 +483,26 @@ def guardar_datos_docencia_en_historial(tablas_seleccionadas, logger=None):
     
     logger.info("=== INICIANDO GUARDADO DE DATOS DE DOCENCIA EN HISTORIAL ===")
     logger.info(f"Tablas a procesar: {tablas_seleccionadas}")
+
+    # Analizar vínculos entre tablas ANTES de procesar.
+    # Examina los datos reales, construye el mapa de relaciones FK y los mapeos de IDs.
+    analisis = analizar_vinculos_tablas(tablas_seleccionadas, logger=logger)
+    total_fk = sum(len(v) for v in analisis['relaciones'].values())
+    logger.info(f"Análisis completado. FK detectadas: {total_fk}")
+
+    # mapeos_historicos acumula { tabla: { id_original: objeto_historico } }
+    # para que resolver_fk pueda encontrar objetos ya guardados
+    mapeos_historicos = {
+        'Docencia_area': mapeo_areas,
+        'Docencia_coursecategory': mapeo_categorias,
+        'Docencia_courseinformation': mapeo_cursos,
+        'Docencia_subjectinformation': mapeo_asignaturas,
+        'Docencia_edition': mapeo_ediciones,
+        'Docencia_enrollmentapplication': mapeo_solicitudes,
+        'Docencia_accountnumber': mapeo_cuentas,
+        'Docencia_application': mapeo_aplicaciones,
+        'Docencia_class': mapeo_clases,
+    }
     
     try:
         # Procesar tablas en orden
@@ -340,7 +595,8 @@ def guardar_datos_docencia_en_historial(tablas_seleccionadas, logger=None):
             elif tabla == 'Docencia_application':
                 registros_guardados = _procesar_aplicaciones(
                     datos_tabla, ModeloHistorico, mapeo_cursos, mapeo_ediciones, mapeo_aplicaciones, logger,
-                    estadisticas, tablas_seleccionadas, tabla
+                    estadisticas, tablas_seleccionadas, tabla,
+                    analisis=analisis, mapeos_historicos=mapeos_historicos
                 )
             elif tabla == 'Docencia_class':
                 registros_guardados = _procesar_clases(
@@ -1074,78 +1330,87 @@ def _procesar_inscripciones(datos_tabla, ModeloHistorico, mapeo_asignaturas, map
 
 
 
-def _procesar_aplicaciones(datos_tabla, ModeloHistorico, mapeo_cursos, mapeo_ediciones, mapeo_aplicaciones, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
-    """Procesa y guarda aplicaciones en HistoricalApplication."""
+def _procesar_aplicaciones(datos_tabla, ModeloHistorico, mapeo_cursos, mapeo_ediciones, mapeo_aplicaciones, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None, analisis=None, mapeos_historicos=None):
+    """Procesa y guarda aplicaciones en HistoricalApplication usando resolver_fk."""
     registros_guardados = 0
-    
-    
-    # Obtener total de registros para progreso
     total_registros = len(datos_tabla)
-    
+    tabla = 'Docencia_application'
+
     with transaction.atomic():
         for i, dato in enumerate(datos_tabla, 1):
             try:
                 sid = transaction.savepoint()
                 datos = dato.datos_originales
                 id_original = datos.get('id')
-                curso_id = datos.get('curso_id', datos.get('course_id'))
-                usuario_id = datos.get('usuario_id', datos.get('user_id', datos.get('student_id')))
-                edicion_id = datos.get('edicion_id', datos.get('edition_id'))
-                
-                # Aplicar mapeo de campos
-                datos_mapeados = aplicar_mapeo_campos(datos, 'Docencia_application')
-                
-                # Crear aplicación
+
+                datos_mapeados = aplicar_mapeo_campos(datos, tabla)
+
                 aplicacion = ModeloHistorico(
                     id_original=id_original,
-                    tabla_origen='Docencia_application',
+                    tabla_origen=tabla,
                     dato_archivado=dato
                 )
                 copiar_campos_a_modelo_historico(
-                    aplicacion, datos_mapeados, 
-                    campos_excluir=['id', 'pk', 'curso_id', 'course_id', 'usuario_id', 'user_id', 'edicion_id', 'edition_id', 'curso', 'course', 'usuario', 'user', 'edicion', 'edition'], 
+                    aplicacion, datos_mapeados,
+                    campos_excluir=['id', 'pk', 'curso_id', 'course_id', 'usuario_id',
+                                    'user_id', 'student_id', 'edicion_id', 'edition_id',
+                                    'curso', 'course', 'usuario', 'user', 'edicion', 'edition'],
                     logger=logger
                 )
-                
-                # Asignar relaciones FK
-                if curso_id and curso_id in mapeo_cursos:
-                    aplicacion.curso = mapeo_cursos[curso_id]
-                
-                if usuario_id:
-                    try:
-                        usuario = User.objects.get(id=usuario_id)
-                        aplicacion.usuario = usuario
-                    except User.DoesNotExist:
-                        logger.warning(f"Usuario no encontrado: {usuario_id}")
-                
-                if edicion_id and edicion_id in mapeo_ediciones:
-                    aplicacion.edicion = mapeo_ediciones[edicion_id]
-                
+
+                # Resolver FK usando el análisis automático si está disponible
+                if analisis and mapeos_historicos:
+                    for campo_fk in ('course_id', 'curso_id', 'edition_id', 'edicion_id',
+                                     'student_id', 'user_id', 'usuario_id'):
+                        valor = datos.get(campo_fk)
+                        if valor is None:
+                            continue
+                        obj = resolver_fk(campo_fk, valor, tabla, analisis, mapeos_historicos)
+                        if obj is None:
+                            continue
+                        # Asignar al campo correcto del modelo
+                        if campo_fk in ('course_id', 'curso_id'):
+                            aplicacion.curso = obj
+                        elif campo_fk in ('edition_id', 'edicion_id'):
+                            aplicacion.edicion = obj
+                        elif campo_fk in ('student_id', 'user_id', 'usuario_id'):
+                            # resolver_fk devuelve User para student_id y user_id
+                            if hasattr(obj, 'username'):
+                                aplicacion.usuario = obj
+                else:
+                    # Fallback a lógica anterior
+                    curso_id = datos.get('curso_id', datos.get('course_id'))
+                    usuario_id = datos.get('usuario_id', datos.get('user_id', datos.get('student_id')))
+                    edicion_id = datos.get('edicion_id', datos.get('edition_id'))
+                    if curso_id and curso_id in mapeo_cursos:
+                        aplicacion.curso = mapeo_cursos[curso_id]
+                    if usuario_id:
+                        try:
+                            aplicacion.usuario = User.objects.get(id=usuario_id)
+                        except User.DoesNotExist:
+                            logger.warning(f"Usuario no encontrado: {usuario_id}")
+                    if edicion_id and edicion_id in mapeo_ediciones:
+                        aplicacion.edicion = mapeo_ediciones[edicion_id]
+
                 completar_campos_obligatorios(aplicacion, logger=logger)
                 aplicacion.save()
                 registros_guardados += 1
-                
-                # Guardar en mapeo para referencias futuras
                 mapeo_aplicaciones[id_original] = aplicacion
-                
+                if mapeos_historicos:
+                    mapeos_historicos.setdefault(tabla, {})[id_original] = aplicacion
+
                 transaction.savepoint_commit(sid)
-                
-                # Actualizar progreso cada 100 registros o al final
+
                 if estadisticas and tablas_seleccionadas and tabla_actual and (i % 100 == 0 or i == total_registros):
-                    _actualizar_progreso_cache(
-                        tabla_actual,
-                        estadisticas,
-                        tablas_seleccionadas,
-                        registros_procesados=i,
-                        total_registros=total_registros
-                    )
-                logger.debug(f"Aplicación guardada")
-                
+                    _actualizar_progreso_cache(tabla_actual, estadisticas, tablas_seleccionadas,
+                                               registros_procesados=i, total_registros=total_registros)
+                logger.debug("Aplicación guardada")
+
             except Exception as e:
                 transaction.savepoint_rollback(sid)
                 logger.error(f"Error procesando aplicación: {str(e)}")
                 continue
-    
+
     return registros_guardados
 
 
