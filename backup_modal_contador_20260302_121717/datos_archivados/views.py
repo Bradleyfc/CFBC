@@ -4922,9 +4922,6 @@ def combinar_datos_seleccionadas(request):
             # Si fue escenario mixto, agregar estadísticas de docencia
             if estadisticas_totales.get('tipo_procesamiento') == 'mixto':
                 estadisticas['docencia_guardadas'] = estadisticas_totales.get('docencia_guardadas', 0)
-                # Sumar registros de docencia al total de registros combinados
-                estadisticas['registros_combinados'] += estadisticas['docencia_guardadas']
-                estadisticas['total_combinados'] = estadisticas['registros_combinados']
                 logger.info("\n" + "=" * 70)
                 logger.info("📊 RESUMEN DE PROCESAMIENTO MIXTO")
                 logger.info("=" * 70)

@@ -135,9 +135,23 @@ class InspectorBaseDatos:
         """Crea un modelo Django dinámico basado en la estructura de la tabla"""
         nombre_tabla = estructura_tabla['nombre']
         nombre_modelo = self.convertir_nombre_modelo(nombre_tabla)
-        
+    
+        # Verificar si el modelo ya existe en el registro de apps
+        try:
+            modelo_existente = apps.get_model('datos_archivados', nombre_modelo)
+            if modelo_existente:
+                logger.debug(f"Modelo {nombre_modelo} ya existe, reutilizando...")
+                self.modelos_dinamicos[nombre_tabla] = modelo_existente
+                return modelo_existente
+        except LookupError:
+            # El modelo no existe, continuar con la creación
+            pass
+    
         # Diccionario para almacenar los campos del modelo
         campos = {}
+
+    
+    
         
         # Procesar cada columna
         for columna in estructura_tabla['columnas']:

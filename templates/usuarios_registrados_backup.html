@@ -63,34 +63,6 @@
                         </div>
                     </div>
 
-                    <!-- Filtros de fecha -->
-                    <div class="flex flex-wrap gap-3 mb-4 items-end">
-                        <div class="flex-1 min-w-36">
-                            <label for="anio" class="block text-xs font-medium text-gray-600 mb-1">Año de Registro:</label>
-                            <select name="anio" id="anio" class="glass-input-compact">
-                                <option value="">Todos los años</option>
-                                {% for anio in anios_disponibles %}
-                                <option value="{{ anio }}" {% if anio_seleccionado == anio|stringformat:"s" %}selected{% endif %}>{{ anio }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="flex-1 min-w-40">
-                            <label for="fecha_desde" class="block text-xs font-medium text-gray-600 mb-1">Desde:</label>
-                            <input type="date" name="fecha_desde" id="fecha_desde" class="glass-input-compact" value="{{ fecha_desde }}">
-                        </div>
-                        <div class="flex-1 min-w-40">
-                            <label for="fecha_hasta" class="block text-xs font-medium text-gray-600 mb-1">Hasta:</label>
-                            <input type="date" name="fecha_hasta" id="fecha_hasta" class="glass-input-compact" value="{{ fecha_hasta }}">
-                        </div>
-                        <div class="flex-1 min-w-40">
-                            <label for="orden" class="block text-xs font-medium text-gray-600 mb-1">Ordenar por Registro:</label>
-                            <select name="orden" id="orden" class="glass-input-compact">
-                                <option value="desc" {% if orden == 'desc' %}selected{% endif %}>Más reciente primero</option>
-                                <option value="asc" {% if orden == 'asc' %}selected{% endif %}>Más antiguo primero</option>
-                            </select>
-                        </div>
-                    </div>
-
                     <!-- Action Buttons -->
                     <div class="flex flex-wrap gap-2 justify-end">
                         <button type="submit" class="glass-button glass-button-primary">
@@ -195,22 +167,10 @@
                             </th>
                             <th class="resizable-th" data-column="registro">
                                 Registro
-                                {% if orden == 'asc' %}
-                                <span class="icon material-icons text-blue-500" style="font-size:14px;vertical-align:middle;">arrow_upward</span>
-                                {% else %}
-                                <span class="icon material-icons text-blue-500" style="font-size:14px;vertical-align:middle;">arrow_downward</span>
-                                {% endif %}
-                                <div class="resize-handle"></div>
-                            </th>
-                            <th class="resizable-th" data-column="historial">
-                                Historial
-                                <div class="resize-handle"></div>
-                            </th>
-                            <th class="resizable-th" data-column="detalles">
-                                Detalles
                                 <div class="resize-handle"></div>
                             </th>
                         </tr>
+                    </thead>
                     <tbody>
                         {% for registro in registros %}
                         <tr>
@@ -266,16 +226,6 @@
                             </td>
                             <td class="resizable-td" data-column="grupo">{{ registro.user.groups.first.name|default:"Sin grupo" }}</td>
                             <td class="resizable-td" data-column="registro">{{ registro.user.date_joined|date:"d/m/Y" }}</td>
-                            <td class="resizable-td" data-column="historial">
-                                <button onclick="verHistorial({{ registro.user.id }})" class="glass-badge glass-badge-success text-xs cursor-pointer">
-                                    <span class="icon material-icons mr-1">history</span>Ver Historial
-                                </button>
-                            </td>
-                            <td class="resizable-td" data-column="detalles">
-                                <a href="{% url 'principal:detalles_historial_usuario' registro.user.id %}" class="glass-badge glass-badge-primary text-xs">
-                                    <span class="icon material-icons mr-1">visibility</span>Ver
-                                </a>
-                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -313,16 +263,17 @@
                 
                 <!-- Navegación de páginas -->
                 <nav aria-label="Page navigation" class="flex justify-center">
-                    {% with qs=request.GET.urlencode %}
                     <ul class="glass-pagination">
                         {% if page_obj.has_previous %}
                         <li>
-                            <a href="?page=1&{{ qs }}" class="glass-page-link" title="Primera página">
+                            <a href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}"
+                                class="glass-page-link" title="Primera página">
                                 <span class="icon material-icons">first_page</span>
                             </a>
                         </li>
                         <li>
-                            <a href="?page={{ page_obj.previous_page_number }}&{{ qs }}" class="glass-page-link" title="Página anterior">
+                            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}"
+                                class="glass-page-link" title="Página anterior">
                                 <span class="icon material-icons">chevron_left</span>
                                 Anterior
                             </a>
@@ -337,30 +288,38 @@
                             </li>
                             {% elif i <= 3 or i >= page_obj.paginator.num_pages|add:"-2" or i >= page_obj.number|add:"-2" and i <= page_obj.number|add:"2" %}
                             <li>
-                                <a href="?page={{ i }}&{{ qs }}" class="glass-page-link">{{ i }}</a>
+                                <a href="?page={{ i }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}"
+                                    class="glass-page-link">
+                                    {{ i }}
+                                </a>
                             </li>
                             {% elif i == 4 and page_obj.number > 6 %}
-                            <li><span class="glass-page-link glass-page-ellipsis">...</span></li>
+                            <li>
+                                <span class="glass-page-link glass-page-ellipsis">...</span>
+                            </li>
                             {% elif i == page_obj.paginator.num_pages|add:"-3" and page_obj.number < page_obj.paginator.num_pages|add:"-5" %}
-                            <li><span class="glass-page-link glass-page-ellipsis">...</span></li>
+                            <li>
+                                <span class="glass-page-link glass-page-ellipsis">...</span>
+                            </li>
                             {% endif %}
                         {% endfor %}
 
                         {% if page_obj.has_next %}
                         <li>
-                            <a href="?page={{ page_obj.next_page_number }}&{{ qs }}" class="glass-page-link" title="Página siguiente">
+                            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}"
+                                class="glass-page-link" title="Página siguiente">
                                 Siguiente
                                 <span class="icon material-icons">chevron_right</span>
                             </a>
                         </li>
                         <li>
-                            <a href="?page={{ page_obj.paginator.num_pages }}&{{ qs }}" class="glass-page-link" title="Última página">
+                            <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}"
+                                class="glass-page-link" title="Última página">
                                 <span class="icon material-icons">last_page</span>
                             </a>
                         </li>
                         {% endif %}
                     </ul>
-                    {% endwith %}
                 </nav>
             </div>
         </div>
@@ -385,47 +344,6 @@
         {% endif %}
 
     </div>
-</div>
-
-
-<!-- Modal de Historial de Usuario -->
-<div id="historialModal" class="error-modal hidden">
-  <div class="error-modal-overlay" onclick="cerrarHistorialModal()"></div>
-  <div class="historial-modal-content">
-    <div class="error-modal-header">
-      <div class="historial-modal-icon">
-        <span class="icon material-icons text-blue-600">history</span>
-      </div>
-      <h3 class="error-modal-title">Historial del Usuario</h3>
-      <button onclick="cerrarHistorialModal()" class="modal-close-btn">
-        <span class="icon material-icons">close</span>
-      </button>
-    </div>
-
-    <div class="historial-modal-body" id="historialContent">
-      <div class="loading-spinner">
-        <span class="icon material-icons spinning">refresh</span>
-        <p>Cargando historial...</p>
-      </div>
-    </div>
-
-    <div class="error-modal-footer">
-      <button type="button" class="error-modal-btn error-modal-btn-ok" onclick="cerrarHistorialModal()">
-        <span class="icon material-icons mr-2">close</span>
-        Cerrar
-      </button>
-    </div>
-
-    <!-- Handles para redimensionar -->
-    <div class="resize-handle resize-handle-n"></div>
-    <div class="resize-handle resize-handle-s"></div>
-    <div class="resize-handle resize-handle-e"></div>
-    <div class="resize-handle resize-handle-w"></div>
-    <div class="resize-handle resize-handle-ne"></div>
-    <div class="resize-handle resize-handle-nw"></div>
-    <div class="resize-handle resize-handle-se"></div>
-    <div class="resize-handle resize-handle-sw"></div>
-  </div>
 </div>
 
 <!-- Modal de Error - Sin Usuarios -->
@@ -699,19 +617,6 @@
         max-width: 110px; /* Limitar fechas de registro */
         text-align: center;
     }
-
-    .resizable-th[data-column="historial"], .resizable-td[data-column="historial"] {
-        min-width: 120px;
-        max-width: 140px;
-        text-align: center;
-    }
-
-    .resizable-th[data-column="detalles"], .resizable-td[data-column="detalles"] {
-        min-width: 100px;
-        max-width: 120px;
-        text-align: center;
-    }
-
     
     .resizable-th[data-column="email"], .resizable-td[data-column="email"] { 
         min-width: 180px;
@@ -812,11 +717,6 @@
         color: #14532d;
     }
 
-    .glass-badge-primary {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
-        color: #1e40af;
-    }
-
     .glass-badge-secondary {
         background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
         color: #374151;
@@ -900,7 +800,6 @@
         opacity: 0;
         visibility: hidden;
         transition: all 0.3s ease;
-        overflow: auto;
     }
 
     .error-modal.show {
@@ -939,12 +838,6 @@
         padding: 2rem 2rem 1rem;
         text-align: center;
         border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            cursor: move;
-        user-select: none;
-    }
-
-    .error-modal-header:active {
-        cursor: grabbing;
     }
 
     .error-modal-icon {
@@ -1017,254 +910,6 @@
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(34, 197, 94, 0.2);
     }
-
-    /* Historial Modal Styles */
-    .historial-modal-content {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) scale(0.9);
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
-        backdrop-filter: blur(20px);
-        border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        max-width: 900px;
-        width: 90%;
-        max-height: 80vh;
-        transition: transform 0.3s ease;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .error-modal.show .historial-modal-content {
-        transform: translate(-50%, -50%) scale(1);
-    }
-
-    .historial-modal-icon {
-        width: 60px;
-        height: 60px;
-        margin: 0 auto 1rem;
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-    }
-
-    .historial-modal-body {
-        padding: 1.5rem 2rem;
-        overflow-y: auto;
-        max-height: 60vh;
-        flex: 1;
-    }
-
-    .modal-close-btn {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        background: transparent;
-        border: none;
-        cursor: pointer;
-        color: #6b7280;
-        transition: color 0.3s ease;
-    }
-
-    .modal-close-btn {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        background: transparent;
-        border: none;
-        cursor: pointer;
-        color: #6b7280;
-        transition: color 0.3s ease;
-        z-index: 10;
-    }
-
-    .modal-close-btn:hover {
-        color: #374151;
-    }
-
-    /* Estilos para hacer el modal redimensionable */
-    .historial-modal-content.resizable {
-        resize: both;
-        overflow: hidden;
-        min-width: 400px;
-        min-height: 300px;
-    }
-
-    .resize-handle {
-        position: absolute;
-        background: transparent;
-        z-index: 5;
-    }
-
-    .resize-handle-n {
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 8px;
-        cursor: n-resize;
-    }
-
-    .resize-handle-s {
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 8px;
-        cursor: s-resize;
-    }
-
-    .resize-handle-e {
-        top: 0;
-        right: 0;
-        bottom: 0;
-        width: 8px;
-        cursor: e-resize;
-    }
-
-    .resize-handle-w {
-        top: 0;
-        left: 0;
-        bottom: 0;
-        width: 8px;
-        cursor: w-resize;
-    }
-
-    .resize-handle-ne {
-        top: 0;
-        right: 0;
-        width: 15px;
-        height: 15px;
-        cursor: ne-resize;
-    }
-
-    .resize-handle-nw {
-        top: 0;
-        left: 0;
-        width: 15px;
-        height: 15px;
-        cursor: nw-resize;
-    }
-
-    .resize-handle-se {
-        bottom: 0;
-        right: 0;
-        width: 15px;
-        height: 15px;
-        cursor: se-resize;
-    }
-
-    .resize-handle-se::after {
-        content: '';
-        position: absolute;
-        right: 3px;
-        bottom: 3px;
-        width: 10px;
-        height: 10px;
-        border-right: 2px solid rgba(107, 114, 128, 0.4);
-        border-bottom: 2px solid rgba(107, 114, 128, 0.4);
-    }
-
-    .resize-handle-sw {
-        bottom: 0;
-        left: 0;
-        width: 15px;
-        height: 15px;
-        cursor: sw-resize;
-    }
-
-
-    .loading-spinner {
-        text-align: center;
-        padding: 2rem;
-    }
-
-    .spinning {
-        animation: spin 1s linear infinite;
-        font-size: 2rem;
-        color: #3b82f6;
-    }
-
-    @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-    }
-
-    .historial-section {
-        margin-bottom: 2rem;
-    }
-
-    .historial-section-title {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #1e40af;
-        margin-bottom: 1rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 2px solid rgba(59, 130, 246, 0.3);
-        display: flex;
-        align-items: center;
-    }
-
-    .historial-section-title .icon {
-        margin-right: 0.5rem;
-    }
-
-    .historial-item {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
-        backdrop-filter: blur(10px);
-        border-radius: 12px;
-        padding: 1rem;
-        margin-bottom: 0.75rem;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-    }
-
-    .historial-item-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 0.5rem;
-        font-size: 0.875rem;
-    }
-
-    .historial-item-row:last-child {
-        margin-bottom: 0;
-    }
-
-    .historial-item-label {
-        font-weight: 600;
-        color: #374151;
-    }
-
-    .historial-item-value {
-        color: #6b7280;
-    }
-
-    .no-data-message {
-        text-align: center;
-        padding: 1rem;
-        color: #9ca3af;
-        font-style: italic;
-    }
-
-    .usuario-info {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05));
-        border-radius: 12px;
-        padding: 1rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .usuario-info-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 0.5rem;
-    }
-
-    .usuario-info-row:last-child {
-        margin-bottom: 0;
-    }
-
 </style>
 
 <script>
@@ -1409,437 +1054,5 @@
             hideErrorModal();
         }
     }
-
-    // Función para ver el historial de un usuario
-    function verHistorial(userId) {
-        const modal = document.getElementById('historialModal');
-        const content = document.getElementById('historialContent');
-        
-        // Mostrar modal con loading
-        modal.classList.remove('hidden');
-        modal.classList.add('show');
-
-        // Inicializar redimensionamiento del modal
-        setTimeout(() => inicializarRedimensionamiento(), 100);
-        
-        // Mostrar spinner de carga
-        content.innerHTML = `
-            <div class="loading-spinner">
-                <span class="icon material-icons spinning">refresh</span>
-                <p>Cargando historial...</p>
-            </div>
-        `;
-        
-        // Hacer petición AJAX
-        fetch(`/historial-usuario/${userId}/`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Error al cargar el historial');
-                }
-                return response.json();
-            })
-            .then(data => {
-                mostrarHistorial(data);
-            })
-            .catch(error => {
-                content.innerHTML = `
-                    <div class="glass-alert glass-alert-info">
-                        <span class="icon material-icons mr-2">error</span>
-                        Error al cargar el historial: ${error.message}
-                    </div>
-                `;
-            });
-    }
-
-    // Función para mostrar el historial en el modal
-    // Función para mostrar el historial en el modal
-    function mostrarHistorial(data) {
-        console.log('=== DATOS RECIBIDOS EN mostrarHistorial ===');
-        console.log('Categorías:', data.categorias);
-        console.log('Total categorías:', data.categorias ? data.categorias.length : 0);
-        
-        const content = document.getElementById('historialContent');
-        let html = '';
-        
-        // Información del usuario
-        html += `
-            <div class="usuario-info">
-                <div class="usuario-info-row">
-                    <span class="historial-item-label">Nombre:</span>
-                    <span class="historial-item-value">${data.usuario.nombre}</span>
-                </div>
-                <div class="usuario-info-row">
-                    <span class="historial-item-label">Usuario:</span>
-                    <span class="historial-item-value">${data.usuario.username}</span>
-                </div>
-                <div class="usuario-info-row">
-                    <span class="historial-item-label">Email:</span>
-                    <span class="historial-item-value">${data.usuario.email}</span>
-                </div>
-            </div>
-        `;
-        
-        // 1. Aplicaciones a Cursos
-        html += generarSeccionHistorial(
-            'Aplicaciones a Cursos',
-            'description',
-            data.aplicaciones,
-            [
-                { key: 'curso', label: 'Curso' },
-                { key: 'curso_codigo', label: 'Código' },
-                { key: 'area', label: 'Área' },
-                { key: 'categoria', label: 'Categoría' },
-                { key: 'edicion', label: 'Edición' },
-                { key: 'edicion_fecha_inicio', label: 'Inicio Edición' },
-                { key: 'edicion_fecha_fin', label: 'Fin Edición' },
-                { key: 'fecha_solicitud', label: 'Fecha Solicitud' },
-                { key: 'estado', label: 'Estado' },
-                { key: 'beca', label: 'Beca' },
-                { key: 'pagado', label: 'Pagado' },
-                { key: 'nota_primaria', label: 'Nota Primaria' },
-                { key: 'nota_secundaria', label: 'Nota Secundaria' },
-                { key: 'nota_final', label: 'Nota Final' },
-                { key: 'nota_extra', label: 'Nota Extra' },
-                { key: 'comentarios', label: 'Comentarios' }
-            ]
-        );
-        
-        // 2. Matrículas
-        html += generarSeccionHistorial(
-            'Matrículas',
-            'school',
-            data.matriculas,
-            [
-                { key: 'curso', label: 'Curso' },
-                { key: 'edicion', label: 'Edición' },
-                { key: 'fecha_inscripcion', label: 'Fecha Inscripción' },
-                { key: 'estado', label: 'Estado' },
-                { key: 'ausencias', label: 'Ausencias' },
-                { key: 'intento', label: 'Intento' },
-                { key: 'nota_primaria', label: 'Nota Primaria' },
-                { key: 'nota_secundaria', label: 'Nota Secundaria' },
-                { key: 'nota_final', label: 'Nota Final' },
-                { key: 'nota_extra', label: 'Nota Extra' }
-            ]
-        );
-        
-        // 3. Solicitudes de Inscripción
-        html += generarSeccionHistorial(
-            'Solicitudes de Inscripción',
-            'assignment',
-            data.solicitudes_inscripcion,
-            [
-                { key: 'curso', label: 'Curso' },
-                { key: 'curso_codigo', label: 'Código' },
-                { key: 'fecha_solicitud', label: 'Fecha' },
-                { key: 'estado', label: 'Estado' }
-            ]
-        );
-        
-        // 4. Pagos
-        html += generarSeccionHistorial(
-            'Pagos',
-            'payment',
-            data.pagos,
-            [
-                { key: 'monto', label: 'Monto' },
-                { key: 'fecha', label: 'Fecha' },
-                { key: 'metodo', label: 'Método' },
-                { key: 'referencia', label: 'Referencia' }
-            ]
-        );
-        
-        // 5. Cuentas Bancarias
-        html += generarSeccionHistorial(
-            'Cuentas Bancarias',
-            'account_balance',
-            data.cuentas_bancarias,
-            [
-                { key: 'numero_cuenta', label: 'Número de Cuenta' },
-                { key: 'banco', label: 'Banco' }
-            ]
-        );
-        
-        // 6. Cursos como Profesor
-        html += generarSeccionHistorial(
-            'Cursos como Profesor',
-            'person',
-            data.cursos_como_profesor,
-            [
-                { key: 'curso', label: 'Curso' },
-                { key: 'curso_codigo', label: 'Código' },
-                { key: 'area', label: 'Área' },
-                { key: 'categoria', label: 'Categoría' }
-            ]
-        );
-        
-        // 7. Cursos Administrados
-        html += generarSeccionHistorial(
-            'Cursos Administrados',
-            'admin_panel_settings',
-            data.cursos_administrados,
-            [
-                { key: 'nombre', label: 'Nombre' },
-                { key: 'codigo', label: 'Código' },
-                { key: 'area', label: 'Área' },
-                { key: 'categoria', label: 'Categoría' },
-                { key: 'descripcion', label: 'Descripción' }
-            ]
-        );
-        
-        // 8. Ediciones
-        html += generarSeccionHistorial(
-            'Ediciones de Cursos',
-            'event',
-            data.ediciones,
-            [
-                { key: 'nombre', label: 'Nombre' },
-                { key: 'curso', label: 'Curso' },
-                { key: 'fecha_inicio', label: 'Fecha Inicio' },
-                { key: 'fecha_fin', label: 'Fecha Fin' }
-            ]
-        );
-        
-        // 9. Asignaturas
-        html += generarSeccionHistorial(
-            'Asignaturas',
-            'book',
-            data.asignaturas,
-            [
-                { key: 'nombre', label: 'Nombre' },
-                { key: 'codigo', label: 'Código' },
-                { key: 'curso', label: 'Curso' },
-                { key: 'descripcion', label: 'Descripción' }
-            ]
-        );
-        
-        // 10. Áreas
-        html += generarSeccionHistorial(
-            'Áreas de Conocimiento',
-            'category',
-            data.areas,
-            [
-                { key: 'nombre', label: 'Nombre' },
-                { key: 'codigo', label: 'Código' },
-                { key: 'descripcion', label: 'Descripción' }
-            ]
-        );
-        
-        // 11. Categorías
-        console.log('Generando sección de categorías...');
-        console.log('data.categorias:', data.categorias);
-        console.log('Es array?:', Array.isArray(data.categorias));
-        console.log('Length:', data.categorias ? data.categorias.length : 'undefined');
-        
-        html += generarSeccionHistorial(
-            'Categorías de Cursos',
-            'label',
-            data.categorias,
-            [
-                { key: 'nombre', label: 'Nombre' },
-                { key: 'codigo', label: 'Código' },
-                { key: 'descripcion', label: 'Descripción' },
-                { key: 'precio', label: 'Precio' },
-                { key: 'es_servicio', label: 'Es Servicio' },
-                { key: 'registro_abierto', label: 'Registro Abierto' }
-            ]
-        );
-        
-        content.innerHTML = html;
-    }
-
-    // Función auxiliar para generar secciones de historial
-    function generarSeccionHistorial(titulo, icono, items, campos) {
-        if (!items || items.length === 0) {
-            return `
-                <div class="historial-section">
-                    <div class="historial-section-title">
-                        <span class="icon material-icons">${icono}</span>
-                        ${titulo}
-                    </div>
-                    <div class="no-data-message">No hay registros</div>
-                </div>
-            `;
-        }
-        
-        let html = `
-            <div class="historial-section">
-                <div class="historial-section-title">
-                    <span class="icon material-icons">${icono}</span>
-                    ${titulo} (${items.length})
-                </div>
-        `;
-        
-        items.forEach(item => {
-            html += '<div class="historial-item">';
-            campos.forEach(campo => {
-                html += `
-                    <div class="historial-item-row">
-                        <span class="historial-item-label">${campo.label}:</span>
-                        <span class="historial-item-value">${item[campo.key] || 'N/A'}</span>
-                    </div>
-                `;
-            });
-            html += '</div>';
-        });
-        
-        html += '</div>';
-        return html;
-    }
-
-
-
-    // Funcionalidad de redimensionamiento y arrastre del modal
-    function inicializarRedimensionamiento() {
-        const modal = document.getElementById('historialModal');
-        const modalContent = document.querySelector('.historial-modal-content');
-        const modalHeader = modalContent.querySelector('.error-modal-header');
-        
-        if (!modalContent) return;
-
-        // Resetear estilos al abrir el modal
-        modalContent.style.position = 'absolute';
-        modalContent.style.top = '50%';
-        modalContent.style.left = '50%';
-        modalContent.style.transform = 'translate(-50%, -50%)';
-        modalContent.style.width = '900px';
-        modalContent.style.maxWidth = '90vw';
-        modalContent.style.height = 'auto';
-        modalContent.style.maxHeight = '80vh';
-
-        // Funcionalidad de arrastre (drag) desde el header
-        let isDragging = false;
-        let currentX;
-        let currentY;
-        let initialX;
-        let initialY;
-
-        modalHeader.addEventListener('mousedown', function(e) {
-            // No iniciar drag si se hace clic en el botón de cerrar
-            if (e.target.closest('.modal-close-btn')) return;
-            
-            isDragging = true;
-            
-            const rect = modalContent.getBoundingClientRect();
-            initialX = e.clientX - rect.left;
-            initialY = e.clientY - rect.top;
-            
-            modalContent.style.transform = 'none';
-            modalHeader.style.cursor = 'grabbing';
-        });
-
-        document.addEventListener('mousemove', function(e) {
-            if (!isDragging) return;
-            
-            e.preventDefault();
-            
-            currentX = e.clientX - initialX;
-            currentY = e.clientY - initialY;
-            
-            modalContent.style.left = currentX + 'px';
-            modalContent.style.top = currentY + 'px';
-        });
-
-        document.addEventListener('mouseup', function() {
-            if (isDragging) {
-                isDragging = false;
-                modalHeader.style.cursor = 'move';
-            }
-        });
-
-        // Funcionalidad de redimensionamiento
-        const handles = {
-            'resize-handle-n': { cursor: 'n-resize', edges: { top: true } },
-            'resize-handle-s': { cursor: 's-resize', edges: { bottom: true } },
-            'resize-handle-e': { cursor: 'e-resize', edges: { right: true } },
-            'resize-handle-w': { cursor: 'w-resize', edges: { left: true } },
-            'resize-handle-ne': { cursor: 'ne-resize', edges: { top: true, right: true } },
-            'resize-handle-nw': { cursor: 'nw-resize', edges: { top: true, left: true } },
-            'resize-handle-se': { cursor: 'se-resize', edges: { bottom: true, right: true } },
-            'resize-handle-sw': { cursor: 'sw-resize', edges: { bottom: true, left: true } }
-        };
-
-        Object.keys(handles).forEach(handleClass => {
-            const handle = modalContent.querySelector('.' + handleClass);
-            if (!handle) return;
-
-            handle.addEventListener('mousedown', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-
-                const startX = e.clientX;
-                const startY = e.clientY;
-                const rect = modalContent.getBoundingClientRect();
-                const startWidth = rect.width;
-                const startHeight = rect.height;
-                const startLeft = rect.left;
-                const startTop = rect.top;
-
-                const edges = handles[handleClass].edges;
-
-                // Asegurar que el transform esté en none para posicionamiento absoluto
-                modalContent.style.transform = 'none';
-
-                function onMouseMove(e) {
-                    const deltaX = e.clientX - startX;
-                    const deltaY = e.clientY - startY;
-
-                    if (edges.right) {
-                        const newWidth = startWidth + deltaX;
-                        if (newWidth >= 400) {
-                            modalContent.style.width = newWidth + 'px';
-                            modalContent.style.maxWidth = 'none';
-                        }
-                    }
-
-                    if (edges.left) {
-                        const newWidth = startWidth - deltaX;
-                        if (newWidth >= 400) {
-                            modalContent.style.width = newWidth + 'px';
-                            modalContent.style.maxWidth = 'none';
-                            modalContent.style.left = (startLeft + deltaX) + 'px';
-                        }
-                    }
-
-                    if (edges.bottom) {
-                        const newHeight = startHeight + deltaY;
-                        if (newHeight >= 300) {
-                            modalContent.style.height = newHeight + 'px';
-                            modalContent.style.maxHeight = 'none';
-                        }
-                    }
-
-                    if (edges.top) {
-                        const newHeight = startHeight - deltaY;
-                        if (newHeight >= 300) {
-                            modalContent.style.height = newHeight + 'px';
-                            modalContent.style.maxHeight = 'none';
-                            modalContent.style.top = (startTop + deltaY) + 'px';
-                        }
-                    }
-                }
-
-                function onMouseUp() {
-                    document.removeEventListener('mousemove', onMouseMove);
-                    document.removeEventListener('mouseup', onMouseUp);
-                }
-
-                document.addEventListener('mousemove', onMouseMove);
-                document.addEventListener('mouseup', onMouseUp);
-            });
-        });
-    }
-
-
-    // Función para cerrar el modal de historial
-    function cerrarHistorialModal() {
-        const modal = document.getElementById('historialModal');
-        modal.classList.remove('show');
-        setTimeout(() => {
-            modal.classList.add('hidden');
-        }, 300);
-    }
-
-
 </script>
 {% endblock %}

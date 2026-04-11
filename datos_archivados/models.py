@@ -296,9 +296,9 @@ class DatoArchivadoDinamico(models.Model):
     nombre_registro = models.CharField(max_length=255, blank=True, null=True, verbose_name='Nombre del Registro')
     tipo_registro = models.CharField(max_length=50, blank=True, null=True, verbose_name='Tipo de Registro')
 
-    # Campos de combinación (indica si el registro fue combinado con la BD activa)
+    # Campos de combinacion (indica si el registro fue combinado con la BD activa)
     combinado = models.BooleanField(default=False, verbose_name='Combinado')
-    fecha_combinacion = models.DateTimeField(null=True, blank=True, verbose_name='Fecha de Combinación')
+    fecha_combinacion = models.DateTimeField(null=True, blank=True, verbose_name='Fecha de Combinacion')
     registros_procesados = models.IntegerField(default=0, verbose_name='Registros Procesados')
     
     def __str__(self):

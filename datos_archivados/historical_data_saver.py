@@ -1,0 +1,1613 @@
+"""
+Módulo para guardar datos de tablas de docencia en modelos históricos.
+
+Este módulo contiene la lógica para detectar y guardar datos de las 11 tablas
+de docencia en sus correspondientes modelos históricos en la app historial.
+"""
+
+import logging
+from django.db import transaction
+from django.contrib.auth.models import User
+from django.core.cache import cache
+from django.utils import timezone
+from mapeos_campos_docencia import aplicar_mapeo_campos
+
+
+# Mapeo de tablas de docencia a modelos históricos
+DOCENCIA_TABLES_MAPPING = {
+    'Docencia_area': 'HistoricalArea',
+    'Docencia_coursecategory': 'HistoricalCourseCategory',
+    'Docencia_courseinformation_adminteachers': 'HistoricalCourseInformationAdminTeachers',
+    'Docencia_courseinformation': 'HistoricalCourseInformation',
+    'Docencia_enrollmentapplication': 'HistoricalEnrollmentApplication',
+    'Docencia_enrollmentpay': 'HistoricalEnrollmentPay',
+    'Docencia_accountnumber': 'HistoricalAccountNumber',
+    'Docencia_enrollment': 'HistoricalEnrollment',
+    'Docencia_subjectinformation': 'HistoricalSubjectInformation',
+    'Docencia_edition': 'HistoricalEdition',
+    'Docencia_application': 'HistoricalApplication',
+    'Docencia_class': 'HistoricalClass',
+    'Docencia_class_studentView': 'HistoricalClassStudentView',
+}
+
+# Definición estática de las relaciones FK conocidas entre tablas.
+# Formato: { tabla: { campo_fk: (tabla_destino, campo_destino) } }
+# Esto sirve como base y se enriquece con el análisis dinámico.
+RELACIONES_FK_CONOCIDAS = {
+    'Docencia_application': {
+        'student_id': ('Docencia_studentpersonalinformation', 'id'),
+        'course_id':  ('Docencia_courseinformation', 'id'),
+        'edition_id': ('Docencia_edition', 'id'),
+    },
+    'Docencia_enrollment': {
+        'student_id': ('Docencia_studentpersonalinformation', 'id'),
+        'subject_id': ('Docencia_subjectinformation', 'id'),
+        'edition_id': ('Docencia_edition', 'id'),
+    },
+    'Docencia_studentpersonalinformation': {
+        'user_id': ('auth_user', 'id'),
+    },
+    'Docencia_enrollmentapplication': {
+        'user_id': ('auth_user', 'id'),
+        'course_id': ('Docencia_courseinformation', 'id'),
+    },
+    'Docencia_accountnumber': {
+        'user_id': ('auth_user', 'id'),
+    },
+    'Docencia_enrollmentpay': {
+        'app_id': ('Docencia_application', 'id'),
+        'account_number_id': ('Docencia_accountnumber', 'id'),
+    },
+    'Docencia_subjectinformation': {
+        'course_id': ('Docencia_courseinformation', 'id'),
+    },
+    'Docencia_edition': {
+        'course_id': ('Docencia_courseinformation', 'id'),
+    },
+    'Docencia_courseinformation': {
+        'area_id': ('Docencia_area', 'id'),
+        'category_id': ('Docencia_coursecategory', 'id'),
+    },
+    'Docencia_courseinformation_adminteachers': {
+        'courseinformation_id': ('Docencia_courseinformation', 'id'),
+        'user_id': ('auth_user', 'id'),
+    },
+    'Docencia_class': {
+        'subject_id': ('Docencia_subjectinformation', 'id'),
+    },
+    'Docencia_class_studentView': {
+        'class_id': ('Docencia_class', 'id'),
+        'app_id': ('Docencia_application', 'id'),
+    },
+}
+
+
+def analizar_vinculos_tablas(tablas_seleccionadas, logger=None):
+    """
+    Examina los datos reales archivados para construir automáticamente el mapa
+    de relaciones FK entre tablas. No depende de lógica hardcodeada — detecta
+    los campos _id presentes, los cruza con RELACIONES_FK_CONOCIDAS como base,
+    e infiere los desconocidos por nombre.
+
+    También construye mapeos de IDs (id_original -> objeto) para todas las
+    tablas referenciadas, incluyendo la cadena auth_user -> studentpersonalinformation.
+
+    Se ejecuta ANTES de guardar en historial.
+
+    Returns:
+        dict: {
+            'relaciones': { tabla: { campo_fk: (tabla_destino, campo_destino) } },
+            'mapeos_ids': { tabla: { id_original: objeto_o_user } }
+        }
+    """
+    if logger is None:
+        logger = logging.getLogger(__name__)
+
+    from .models import DatoArchivadoDinamico
+
+    logger.info("=" * 60)
+    logger.info("ANÁLISIS AUTOMÁTICO DE VÍNCULOS ENTRE TABLAS")
+    logger.info("=" * 60)
+
+    tablas_destino_conocidas = set(RELACIONES_FK_CONOCIDAS.keys()) | {
+        'auth_user', 'Docencia_studentpersonalinformation'
+    }
+
+    relaciones = {}
+    advertencias = []
+
+    # PASO 1: detectar campos FK en los datos reales de cada tabla
+    for tabla in tablas_seleccionadas:
+        muestra = list(DatoArchivadoDinamico.objects.filter(
+            tabla_origen=tabla
+        ).values_list('datos_originales', flat=True)[:20])
+
+        if not muestra:
+            logger.warning(f"  [{tabla}] Sin datos para analizar")
+            relaciones[tabla] = RELACIONES_FK_CONOCIDAS.get(tabla, {})
+            continue
+
+        campos_fk_encontrados = set()
+        for registro in muestra:
+            for campo in registro.keys():
+                if campo.endswith('_id') and campo != 'id':
+                    campos_fk_encontrados.add(campo)
+
+        relaciones_conocidas = RELACIONES_FK_CONOCIDAS.get(tabla, {})
+        relaciones_tabla = {}
+
+        logger.info(f"\n  [{tabla}]")
+        logger.info(f"  Campos FK en datos: {sorted(campos_fk_encontrados)}")
+
+        for campo_fk in sorted(campos_fk_encontrados):
+            if campo_fk in relaciones_conocidas:
+                tabla_dest, campo_dest = relaciones_conocidas[campo_fk]
+                relaciones_tabla[campo_fk] = (tabla_dest, campo_dest)
+                logger.info(f"    ✅ {campo_fk} -> {tabla_dest}.{campo_dest}")
+            else:
+                nombre_base = campo_fk[:-3].lower()
+                tabla_inferida = None
+                for t in tablas_destino_conocidas:
+                    if nombre_base in t.lower():
+                        tabla_inferida = t
+                        break
+                if tabla_inferida:
+                    relaciones_tabla[campo_fk] = (tabla_inferida, 'id')
+                    msg = f"    ⚠️  {campo_fk} -> {tabla_inferida}.id (inferido)"
+                else:
+                    relaciones_tabla[campo_fk] = (None, 'id')
+                    msg = f"    ❓ {campo_fk} -> destino desconocido"
+                advertencias.append(f"[{tabla}] {msg.strip()}")
+                logger.warning(msg)
+
+        for campo_doc, (td, cd) in relaciones_conocidas.items():
+            if campo_doc not in campos_fk_encontrados:
+                logger.info(f"    ℹ️  {campo_doc} -> {td}.{cd} (documentado, no en muestra)")
+
+        relaciones[tabla] = relaciones_tabla
+
+    # PASO 2: construir mapeos de IDs para todas las tablas referenciadas
+    tablas_a_mapear = set()
+    for rels in relaciones.values():
+        for _, (tabla_dest, _) in rels.items():
+            if tabla_dest:
+                tablas_a_mapear.add(tabla_dest)
+    tablas_a_mapear.update(tablas_seleccionadas)
+
+    mapeos_ids = {}
+
+    # auth_user: mapear por email y username
+    if 'auth_user' in tablas_a_mapear:
+        usuarios_por_email = {u.email.lower(): u for u in User.objects.all() if u.email}
+        usuarios_por_username = {u.username: u for u in User.objects.all()}
+        mapeo_auth = {}
+        for dato in DatoArchivadoDinamico.objects.filter(tabla_origen='auth_user'):
+            orig_id = dato.datos_originales.get('id')
+            if not orig_id:
+                continue
+            email = dato.datos_originales.get('email', '').lower()
+            username = dato.datos_originales.get('username', '')
+            user_obj = usuarios_por_email.get(email) or usuarios_por_username.get(username)
+            if user_obj:
+                mapeo_auth[int(orig_id)] = user_obj
+        mapeos_ids['auth_user'] = mapeo_auth
+        logger.info(f"\n  auth_user: {len(mapeo_auth)} usuarios mapeados")
+
+    # studentpersonalinformation: mapear id -> User (a través de auth_user)
+    if 'Docencia_studentpersonalinformation' in tablas_a_mapear:
+        mapeo_auth = mapeos_ids.get('auth_user', {})
+        mapeo_student = {}
+        for dato in DatoArchivadoDinamico.objects.filter(
+            tabla_origen='Docencia_studentpersonalinformation'
+        ):
+            orig_id = dato.datos_originales.get('id')
+            user_id = dato.datos_originales.get('user_id')
+            if orig_id and user_id:
+                user_obj = mapeo_auth.get(int(user_id))
+                if user_obj:
+                    mapeo_student[int(orig_id)] = user_obj
+        mapeos_ids['Docencia_studentpersonalinformation'] = mapeo_student
+        logger.info(f"  Docencia_studentpersonalinformation: {len(mapeo_student)} registros mapeados")
+
+    logger.info("\n" + "=" * 60)
+    logger.info(f"  Tablas analizadas: {len(relaciones)}")
+    logger.info(f"  FK detectadas: {sum(len(v) for v in relaciones.values())}")
+    if advertencias:
+        logger.warning(f"  Advertencias: {len(advertencias)}")
+        for adv in advertencias:
+            logger.warning(f"    {adv}")
+    else:
+        logger.info("  Sin advertencias.")
+    logger.info("=" * 60)
+
+    return {'relaciones': relaciones, 'mapeos_ids': mapeos_ids}
+
+
+def resolver_fk(campo_fk, valor_id, tabla_origen, analisis, mapeos_historicos):
+    """
+    Resuelve el valor de una FK usando el mapa construido por analizar_vinculos_tablas.
+    Sigue la cadena automáticamente sin lógica hardcodeada.
+
+    - FK a auth_user -> devuelve User
+    - FK a studentpersonalinformation -> devuelve User (via cadena)
+    - FK a otra tabla Docencia -> devuelve objeto histórico ya guardado
+
+    Args:
+        campo_fk: nombre del campo (ej: 'student_id')
+        valor_id: valor del campo en los datos originales
+        tabla_origen: tabla que contiene el campo FK
+        analisis: resultado de analizar_vinculos_tablas()
+        mapeos_historicos: { tabla: { id_original: objeto_historico } }
+
+    Returns:
+        Objeto resuelto o None
+    """
+    if valor_id is None:
+        return None
+
+    relaciones = analisis.get('relaciones', {})
+    mapeos_ids = analisis.get('mapeos_ids', {})
+
+    destino = relaciones.get(tabla_origen, {}).get(campo_fk)
+    if not destino:
+        return None
+    tabla_dest, _ = destino
+
+    try:
+        valor_id = int(valor_id)
+    except (ValueError, TypeError):
+        return None
+
+    if tabla_dest == 'auth_user':
+        return mapeos_ids.get('auth_user', {}).get(valor_id)
+
+    if tabla_dest == 'Docencia_studentpersonalinformation':
+        return mapeos_ids.get('Docencia_studentpersonalinformation', {}).get(valor_id)
+
+    return mapeos_historicos.get(tabla_dest, {}).get(valor_id)
+
+def es_tabla_docencia(tabla_nombre):
+    """
+    Verifica si una tabla es una tabla de docencia que debe guardarse en historial.
+    
+    Args:
+        tabla_nombre: Nombre de la tabla a verificar
+        
+    Returns:
+        bool: True si es una tabla de docencia, False en caso contrario
+    """
+    return tabla_nombre in DOCENCIA_TABLES_MAPPING
+
+
+def son_todas_tablas_docencia(tablas_seleccionadas):
+    """
+    Verifica si todas las tablas seleccionadas son tablas de docencia.
+    
+    Args:
+        tablas_seleccionadas: Lista de nombres de tablas
+        
+    Returns:
+        bool: True si todas son tablas de docencia, False en caso contrario
+    """
+
+    return all(es_tabla_docencia(tabla) for tabla in tablas_seleccionadas)
+
+
+def copiar_campos_a_modelo_historico(objeto_destino, datos_origen, campos_excluir=None, logger=None):
+    """
+    Copia campos dinámicamente de datos_origen a objeto_destino.
+    
+    Args:
+        objeto_destino: Instancia del modelo histórico
+        datos_origen: Diccionario con los datos originales
+        campos_excluir: Lista de campos a excluir de la copia
+        logger: Logger para registrar operaciones
+    """
+    if campos_excluir is None:
+        campos_excluir = ['id', 'pk']
+    
+    campos_copiados = 0
+    for campo, valor in datos_origen.items():
+        if campo in campos_excluir:
+            continue
+        
+        try:
+            if hasattr(objeto_destino, campo):
+                # Convertir valores especiales
+                if valor == 'NULL' or valor == 'null':
+                    valor = None
+                elif isinstance(valor, str) and valor.lower() in ['true', 'false']:
+                    valor = valor.lower() == 'true'
+                
+                setattr(objeto_destino, campo, valor)
+                campos_copiados += 1
+        except Exception as e:
+            if logger:
+                logger.warning(f"No se pudo copiar campo {campo}: {str(e)}")
+    
+    if logger:
+        logger.debug(f"Campos copiados: {campos_copiados}")
+    
+    return campos_copiados
+def completar_campos_obligatorios(objeto_destino, logger=None):
+    """
+    Completa campos obligatorios con valores por defecto si están vacíos.
+
+    Args:
+        objeto_destino: Instancia del modelo histórico
+        logger: Logger para registrar operaciones
+    """
+    from django.db import models
+    from django.utils import timezone
+
+    campos_completados = 0
+
+    # Iterar sobre todos los campos del modelo
+    for field in objeto_destino._meta.fields:
+        # Saltar campos que permiten null o tienen default
+        if field.null or field.has_default():
+            continue
+
+        # Saltar campos de auditoría que ya deben estar establecidos
+        if field.name in ['id', 'id_original', 'tabla_origen', 'fecha_consolidacion', 'dato_archivado']:
+            continue
+
+        # Obtener el valor actual
+        valor_actual = getattr(objeto_destino, field.name, None)
+
+        # Si el campo está vacío, asignar un valor por defecto según el tipo
+        if valor_actual is None or valor_actual == '':
+            if isinstance(field, models.BooleanField):
+                setattr(objeto_destino, field.name, False)
+                campos_completados += 1
+                if logger:
+                    logger.debug(f"Campo {field.name} (Boolean) completado con False")
+
+            elif isinstance(field, models.DateTimeField):
+                setattr(objeto_destino, field.name, timezone.now())
+                campos_completados += 1
+                if logger:
+                    logger.debug(f"Campo {field.name} (DateTime) completado con fecha actual")
+
+            elif isinstance(field, models.DateField):
+                setattr(objeto_destino, field.name, timezone.now().date())
+                campos_completados += 1
+                if logger:
+                    logger.debug(f"Campo {field.name} (Date) completado con fecha actual")
+
+            elif isinstance(field, models.CharField):
+                setattr(objeto_destino, field.name, '')
+                campos_completados += 1
+                if logger:
+                    logger.debug(f"Campo {field.name} (Char) completado con cadena vacía")
+
+            elif isinstance(field, models.IntegerField):
+                setattr(objeto_destino, field.name, 0)
+                campos_completados += 1
+                if logger:
+                    logger.debug(f"Campo {field.name} (Integer) completado con 0")
+
+            elif isinstance(field, models.DecimalField):
+                setattr(objeto_destino, field.name, 0)
+                campos_completados += 1
+                if logger:
+                    logger.debug(f"Campo {field.name} (Decimal) completado con 0")
+
+    return campos_completados
+
+
+
+def guardar_datos_docencia_en_historial(tablas_seleccionadas, logger=None):
+    """
+    Guarda los datos de las tablas de docencia seleccionadas en los modelos históricos.
+    
+    Args:
+        tablas_seleccionadas: Lista de nombres de tablas de docencia
+        logger: Logger para registrar operaciones
+        
+    Returns:
+        dict: Estadísticas de la operación con contadores por tabla
+    """
+    if logger is None:
+        logger = logging.getLogger(__name__)
+    
+    from .models import DatoArchivadoDinamico
+    from historial.models import (
+        HistoricalArea,
+        HistoricalCourseCategory,
+        HistoricalCourseInformation,
+        HistoricalCourseInformationAdminTeachers,
+        HistoricalEnrollmentApplication,
+        HistoricalEnrollmentPay,
+        HistoricalAccountNumber,
+        HistoricalEnrollment,
+        HistoricalSubjectInformation,
+        HistoricalEdition,
+        HistoricalApplication,
+        HistoricalClass,
+        HistoricalClassStudentView,
+    )
+    
+    # Mapeo de modelos históricos
+    modelos_historicos = {
+        'Docencia_area': HistoricalArea,
+        'Docencia_coursecategory': HistoricalCourseCategory,
+        'Docencia_courseinformation': HistoricalCourseInformation,
+
+        'Docencia_courseinformation_adminteachers': HistoricalCourseInformationAdminTeachers,
+        'Docencia_enrollmentapplication': HistoricalEnrollmentApplication,
+        'Docencia_enrollmentpay': HistoricalEnrollmentPay,
+        'Docencia_accountnumber': HistoricalAccountNumber,
+        'Docencia_enrollment': HistoricalEnrollment,
+        'Docencia_subjectinformation': HistoricalSubjectInformation,
+        'Docencia_edition': HistoricalEdition,
+        'Docencia_application': HistoricalApplication,
+        'Docencia_class': HistoricalClass,
+        'Docencia_class_studentView': HistoricalClassStudentView,
+    }
+    
+    # Estadísticas
+    estadisticas = {
+        'total_registros_guardados': 0,
+        'tablas_procesadas': 0,
+        'errores': 0,
+    }
+    
+    # Mapeos para mantener relaciones FK
+    mapeo_areas = {}
+    mapeo_categorias = {}
+    mapeo_cursos = {}
+    mapeo_asignaturas = {}
+    mapeo_ediciones = {}
+    mapeo_solicitudes = {}
+    mapeo_cuentas = {}
+    mapeo_clases = {}
+    mapeo_aplicaciones = {}
+    
+    # Orden de procesamiento para respetar dependencias FK
+    orden_procesamiento = [
+        'Docencia_area',
+        'Docencia_coursecategory',
+        'Docencia_courseinformation',
+        'Docencia_courseinformation_adminteachers',
+        'Docencia_subjectinformation',
+        'Docencia_edition',
+        'Docencia_enrollmentapplication',
+        'Docencia_accountnumber',
+        'Docencia_enrollmentpay',
+        'Docencia_enrollment',
+        'Docencia_application',
+        'Docencia_class',
+        'Docencia_class_studentView',
+    ]
+    
+    logger.info("=== INICIANDO GUARDADO DE DATOS DE DOCENCIA EN HISTORIAL ===")
+    logger.info(f"Tablas a procesar: {tablas_seleccionadas}")
+
+    # Analizar vínculos entre tablas ANTES de procesar.
+    # Examina los datos reales, construye el mapa de relaciones FK y los mapeos de IDs.
+    analisis = analizar_vinculos_tablas(tablas_seleccionadas, logger=logger)
+    total_fk = sum(len(v) for v in analisis['relaciones'].values())
+    logger.info(f"Análisis completado. FK detectadas: {total_fk}")
+
+    # mapeos_historicos acumula { tabla: { id_original: objeto_historico } }
+    # para que resolver_fk pueda encontrar objetos ya guardados
+    mapeos_historicos = {
+        'Docencia_area': mapeo_areas,
+        'Docencia_coursecategory': mapeo_categorias,
+        'Docencia_courseinformation': mapeo_cursos,
+        'Docencia_subjectinformation': mapeo_asignaturas,
+        'Docencia_edition': mapeo_ediciones,
+        'Docencia_enrollmentapplication': mapeo_solicitudes,
+        'Docencia_accountnumber': mapeo_cuentas,
+        'Docencia_application': mapeo_aplicaciones,
+        'Docencia_class': mapeo_clases,
+    }
+    
+    try:
+        # Procesar tablas en orden
+        for tabla in orden_procesamiento:
+            if tabla not in tablas_seleccionadas:
+                continue
+            
+            logger.info(f"\n--- Procesando tabla: {tabla} ---")
+            
+            # Obtener datos de la tabla
+            datos_tabla = DatoArchivadoDinamico.objects.filter(tabla_origen=tabla)
+            total_registros = datos_tabla.count()
+            logger.info(f"Encontrados {total_registros} registros en {tabla}")
+            
+            if total_registros == 0:
+                logger.warning(f"No hay registros para procesar en {tabla}")
+                continue
+            
+            # Obtener modelo histórico correspondiente
+            ModeloHistorico = modelos_historicos.get(tabla)
+            if not ModeloHistorico:
+                logger.error(f"No se encontró modelo histórico para {tabla}")
+                continue
+            
+            registros_guardados = 0
+            
+            # Procesar según la tabla
+            if tabla == 'Docencia_area':
+                registros_guardados = _procesar_areas(
+                    datos_tabla, ModeloHistorico, mapeo_areas, logger,
+                    estadisticas, tablas_seleccionadas, tabla
+                )
+
+            
+            elif tabla == 'Docencia_coursecategory':
+                registros_guardados = _procesar_categorias(
+                    datos_tabla, ModeloHistorico, mapeo_categorias, logger,
+                    estadisticas, tablas_seleccionadas, tabla
+                )
+            
+            elif tabla == 'Docencia_courseinformation':
+                registros_guardados = _procesar_cursos(
+                    datos_tabla, ModeloHistorico, mapeo_cursos, 
+                    mapeo_areas, mapeo_categorias, logger,
+                    estadisticas, tablas_seleccionadas, tabla
+                )
+            
+            elif tabla == 'Docencia_courseinformation_adminteachers':
+                registros_guardados = _procesar_admin_teachers(
+                    datos_tabla, ModeloHistorico, mapeo_cursos, logger,
+                    estadisticas, tablas_seleccionadas, tabla
+                )
+            
+            elif tabla == 'Docencia_subjectinformation':
+                registros_guardados = _procesar_asignaturas(
+                    datos_tabla, ModeloHistorico, mapeo_asignaturas, mapeo_cursos, logger,
+                    estadisticas, tablas_seleccionadas, tabla
+                )
+            
+            elif tabla == 'Docencia_edition':
+                registros_guardados = _procesar_ediciones(
+                    datos_tabla, ModeloHistorico, mapeo_ediciones, mapeo_cursos, logger,
+                    estadisticas, tablas_seleccionadas, tabla
+                )
+            
+            elif tabla == 'Docencia_enrollmentapplication':
+                registros_guardados = _procesar_solicitudes(
+                    datos_tabla, ModeloHistorico, mapeo_solicitudes, mapeo_cursos, logger,
+                    estadisticas, tablas_seleccionadas, tabla
+                )
+            
+            elif tabla == 'Docencia_accountnumber':
+                registros_guardados = _procesar_cuentas(
+                    datos_tabla, ModeloHistorico, mapeo_cuentas, logger,
+                    estadisticas, tablas_seleccionadas, tabla
+                )
+            
+            elif tabla == 'Docencia_enrollmentpay':
+                registros_guardados = _procesar_pagos(
+                    datos_tabla, ModeloHistorico, mapeo_solicitudes, mapeo_cuentas, logger,
+                    estadisticas, tablas_seleccionadas, tabla
+                )
+            
+            elif tabla == 'Docencia_enrollment':
+                registros_guardados = _procesar_inscripciones(
+                    datos_tabla, ModeloHistorico, mapeo_asignaturas, mapeo_ediciones, logger,
+                    estadisticas, tablas_seleccionadas, tabla
+                )
+            
+            elif tabla == 'Docencia_application':
+                registros_guardados = _procesar_aplicaciones(
+                    datos_tabla, ModeloHistorico, mapeo_cursos, mapeo_ediciones, mapeo_aplicaciones, logger,
+                    estadisticas, tablas_seleccionadas, tabla,
+                    analisis=analisis, mapeos_historicos=mapeos_historicos
+                )
+            elif tabla == 'Docencia_class':
+                registros_guardados = _procesar_clases(
+                    datos_tabla, ModeloHistorico, mapeo_clases, mapeo_asignaturas, logger,
+                    estadisticas, tablas_seleccionadas, tabla
+                )
+
+            elif tabla == 'Docencia_class_studentView':
+                registros_guardados = _procesar_clases_studentview(
+                    datos_tabla, ModeloHistorico, mapeo_clases, mapeo_aplicaciones, logger,
+                    estadisticas, tablas_seleccionadas, tabla
+                )
+
+            
+            # Actualizar estadísticas
+            estadisticas['total_registros_guardados'] += registros_guardados
+            estadisticas['tablas_procesadas'] += 1
+            estadisticas[f'{tabla}_guardados'] = registros_guardados
+            
+            logger.info(f"✅ {tabla}: {registros_guardados} registros guardados en historial")
+            
+            # Actualizar progreso en cache con información de la tabla completada
+            _actualizar_progreso_cache(
+                tabla, 
+                estadisticas, 
+                tablas_seleccionadas,
+                registros_procesados=total_registros,  # Tabla completada
+                total_registros=total_registros
+            )
+        
+        logger.info("\n=== GUARDADO EN HISTORIAL COMPLETADO EXITOSAMENTE ===")
+        logger.info(f"Total de registros guardados: {estadisticas['total_registros_guardados']}")
+        logger.info(f"Tablas procesadas: {estadisticas['tablas_procesadas']}")
+        
+        return estadisticas
+        
+    except Exception as e:
+        logger.error(f"Error guardando datos en historial: {str(e)}", exc_info=True)
+        estadisticas['error'] = str(e)
+        raise
+
+
+
+
+def _procesar_areas(datos_tabla, ModeloHistorico, mapeo_areas, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
+    """Procesa y guarda áreas en HistoricalArea."""
+    registros_guardados = 0
+    
+    
+    # Obtener total de registros para progreso
+    total_registros = len(datos_tabla)
+    
+    with transaction.atomic():
+        for i, dato in enumerate(datos_tabla, 1):
+            try:
+                sid = transaction.savepoint()
+                datos = dato.datos_originales
+                id_original = datos.get('id')
+                
+                # Aplicar mapeo de campos
+                datos_mapeados = aplicar_mapeo_campos(datos, 'Docencia_area')
+                
+                # Crear nueva área histórica
+                area = ModeloHistorico(
+                    id_original=id_original,
+                    tabla_origen='Docencia_area',
+                    dato_archivado=dato
+                )
+                copiar_campos_a_modelo_historico(area, datos_mapeados, campos_excluir=['id', 'pk'], logger=logger)
+                completar_campos_obligatorios(area, logger=logger)
+                area.save()
+                
+                # Guardar mapeo
+                mapeo_areas[id_original] = area
+                registros_guardados += 1
+                
+                transaction.savepoint_commit(sid)
+                
+                # Actualizar progreso cada 100 registros o al final
+                if estadisticas and tablas_seleccionadas and tabla_actual and (i % 100 == 0 or i == total_registros):
+                    _actualizar_progreso_cache(
+                        tabla_actual,
+                        estadisticas,
+                        tablas_seleccionadas,
+                        registros_procesados=i,
+                        total_registros=total_registros
+                    )
+                logger.debug(f"Área guardada: {area.nombre} (ID original: {id_original})")
+                
+            except Exception as e:
+                transaction.savepoint_rollback(sid)
+                logger.error(f"Error procesando área: {str(e)}")
+                continue
+    
+    return registros_guardados
+
+
+def _procesar_categorias(datos_tabla, ModeloHistorico, mapeo_categorias, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
+    """Procesa y guarda categorías en HistoricalCourseCategory."""
+    registros_guardados = 0
+    
+    # Primer paso: crear todas las categorías sin parent
+    categorias_pendientes = []
+    
+    # Obtener total de registros para progreso
+    total_registros = len(datos_tabla)
+
+    with transaction.atomic():
+        for i, dato in enumerate(datos_tabla, 1):
+            try:
+                sid = transaction.savepoint()
+                datos = dato.datos_originales
+                id_original = datos.get('id')
+                parent_id = datos.get('parent_id')
+                
+                # Aplicar mapeo de campos
+                datos_mapeados = aplicar_mapeo_campos(datos, 'Docencia_coursecategory')
+                
+                # Crear categoría
+                categoria = ModeloHistorico(
+                    id_original=id_original,
+                    tabla_origen='Docencia_coursecategory',
+                    dato_archivado=dato
+                )
+                copiar_campos_a_modelo_historico(
+                    categoria, datos_mapeados, 
+                    campos_excluir=['id', 'pk', 'parent_id', 'parent'], 
+                    logger=logger
+                )
+                completar_campos_obligatorios(categoria, logger=logger)
+                categoria.save()
+                
+                # Guardar mapeo
+                mapeo_categorias[id_original] = categoria
+                registros_guardados += 1
+                
+                # Si tiene parent, guardar para procesar después
+                if parent_id:
+                    categorias_pendientes.append((categoria, parent_id))
+                
+                transaction.savepoint_commit(sid)
+                
+                # Actualizar progreso cada 100 registros o al final
+                if estadisticas and tablas_seleccionadas and tabla_actual and (i % 100 == 0 or i == total_registros):
+                    _actualizar_progreso_cache(
+                        tabla_actual,
+                        estadisticas,
+                        tablas_seleccionadas,
+                        registros_procesados=i,
+                        total_registros=total_registros
+                    )
+                logger.debug(f"Categoría guardada: {categoria.nombre} (ID original: {id_original})")
+                
+            except Exception as e:
+                transaction.savepoint_rollback(sid)
+                logger.error(f"Error procesando categoría: {str(e)}")
+                continue
+    
+    # Segundo paso: asignar relaciones parent
+    with transaction.atomic():
+        for categoria, parent_id in categorias_pendientes:
+            try:
+                if parent_id in mapeo_categorias:
+                    categoria.parent = mapeo_categorias[parent_id]
+                    completar_campos_obligatorios(categoria, logger=logger)
+                    categoria.save()
+                    logger.debug(f"Parent asignado a categoría {categoria.nombre}")
+            except Exception as e:
+                logger.error(f"Error asignando parent a categoría: {str(e)}")
+    
+    return registros_guardados
+
+
+
+
+def _procesar_cursos(datos_tabla, ModeloHistorico, mapeo_cursos, mapeo_areas, mapeo_categorias, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
+    """Procesa y guarda cursos en HistoricalCourseInformation."""
+    registros_guardados = 0
+    
+    
+    # Obtener total de registros para progreso
+    total_registros = len(datos_tabla)
+    
+    with transaction.atomic():
+        for i, dato in enumerate(datos_tabla, 1):
+            try:
+                sid = transaction.savepoint()
+                datos = dato.datos_originales
+                id_original = datos.get('id')
+                area_id = datos.get('area_id')
+                categoria_id = datos.get('categoria_id')
+                
+                # Aplicar mapeo de campos
+                datos_mapeados = aplicar_mapeo_campos(datos, 'Docencia_courseinformation')
+                
+                # Crear curso
+                curso = ModeloHistorico(
+                    id_original=id_original,
+                    tabla_origen='Docencia_courseinformation',
+                    dato_archivado=dato
+                )
+                copiar_campos_a_modelo_historico(
+                    curso, datos_mapeados, 
+                    campos_excluir=['id', 'pk', 'area_id', 'categoria_id', 'area', 'categoria'], 
+                    logger=logger
+                )
+                
+                # Asignar relaciones FK
+                if area_id and area_id in mapeo_areas:
+                    curso.area = mapeo_areas[area_id]
+                
+                if categoria_id and categoria_id in mapeo_categorias:
+                    curso.categoria = mapeo_categorias[categoria_id]
+                
+                completar_campos_obligatorios(curso, logger=logger)
+                curso.save()
+                
+                # Guardar mapeo
+                mapeo_cursos[id_original] = curso
+                registros_guardados += 1
+                
+                transaction.savepoint_commit(sid)
+                
+                # Actualizar progreso cada 100 registros o al final
+                if estadisticas and tablas_seleccionadas and tabla_actual and (i % 100 == 0 or i == total_registros):
+                    _actualizar_progreso_cache(
+                        tabla_actual,
+                        estadisticas,
+                        tablas_seleccionadas,
+                        registros_procesados=i,
+                        total_registros=total_registros
+                    )
+                logger.debug(f"Curso guardado: {curso.nombre} (ID original: {id_original})")
+                
+            except Exception as e:
+                transaction.savepoint_rollback(sid)
+                logger.error(f"Error procesando curso: {str(e)}")
+                continue
+    
+    return registros_guardados
+
+
+def _procesar_admin_teachers(datos_tabla, ModeloHistorico, mapeo_cursos, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
+    """Procesa y guarda relaciones curso-profesor en HistoricalCourseInformationAdminTeachers."""
+    registros_guardados = 0
+    
+    
+    # Obtener total de registros para progreso
+    total_registros = len(datos_tabla)
+    
+    with transaction.atomic():
+        for i, dato in enumerate(datos_tabla, 1):
+            try:
+                sid = transaction.savepoint()
+                datos = dato.datos_originales
+                curso_id = datos.get('courseinformation_id')
+                profesor_id = datos.get('user_id')
+                
+                # Validar que existan las relaciones
+                if not curso_id or curso_id not in mapeo_cursos:
+                    logger.warning(f"Curso no encontrado: {curso_id}")
+                    transaction.savepoint_rollback(sid)
+                    continue
+                
+                if not profesor_id:
+                    logger.warning(f"Profesor ID no encontrado")
+                    transaction.savepoint_rollback(sid)
+                    continue
+                
+                try:
+                    profesor = User.objects.get(id=profesor_id)
+                except User.DoesNotExist:
+                    logger.warning(f"Usuario profesor no encontrado: {profesor_id}")
+                    transaction.savepoint_rollback(sid)
+                    continue
+                
+                curso = mapeo_cursos[curso_id]
+                id_original = datos.get('id')
+                
+                # Aplicar mapeo de campos
+                datos_mapeados = aplicar_mapeo_campos(datos, 'Docencia_courseinformation_adminteachers')
+                
+                # Crear relación (evitar duplicados)
+                relacion, created = ModeloHistorico.objects.get_or_create(
+                    id_original=id_original,
+                    tabla_origen='Docencia_courseinformation_adminteachers',
+                    dato_archivado=dato,
+                    defaults={
+                        'curso': curso,
+                        'profesor': profesor
+                    }
+                )
+                
+                if created:
+                    registros_guardados += 1
+                    logger.debug(f"Relación curso-profesor guardada: {curso.nombre} - {profesor.username}")
+                
+                transaction.savepoint_commit(sid)
+                
+                # Actualizar progreso cada 100 registros o al final
+                if estadisticas and tablas_seleccionadas and tabla_actual and (i % 100 == 0 or i == total_registros):
+                    _actualizar_progreso_cache(
+                        tabla_actual,
+                        estadisticas,
+                        tablas_seleccionadas,
+                        registros_procesados=i,
+                        total_registros=total_registros
+                    )
+                
+            except Exception as e:
+                transaction.savepoint_rollback(sid)
+                logger.error(f"Error procesando admin teacher: {str(e)}")
+                continue
+    
+    return registros_guardados
+
+
+
+
+def _procesar_asignaturas(datos_tabla, ModeloHistorico, mapeo_asignaturas, mapeo_cursos, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
+    """Procesa y guarda asignaturas en HistoricalSubjectInformation."""
+    registros_guardados = 0
+    
+    
+    # Obtener total de registros para progreso
+    total_registros = len(datos_tabla)
+    
+    with transaction.atomic():
+        for i, dato in enumerate(datos_tabla, 1):
+            try:
+                sid = transaction.savepoint()
+                datos = dato.datos_originales
+                id_original = datos.get('id')
+                curso_id = datos.get('curso_id', datos.get('course_id'))
+                
+                # Aplicar mapeo de campos
+                datos_mapeados = aplicar_mapeo_campos(datos, 'Docencia_subjectinformation')
+                
+                # Crear asignatura
+                asignatura = ModeloHistorico(
+                    id_original=id_original,
+                    tabla_origen='Docencia_subjectinformation',
+                    dato_archivado=dato
+                )
+                copiar_campos_a_modelo_historico(
+                    asignatura, datos_mapeados, 
+                    campos_excluir=['id', 'pk', 'curso_id', 'course_id', 'curso', 'course'], 
+                    logger=logger
+                )
+                
+                # Asignar relación FK
+                if curso_id and curso_id in mapeo_cursos:
+                    asignatura.curso = mapeo_cursos[curso_id]
+                
+                completar_campos_obligatorios(asignatura, logger=logger)
+                asignatura.save()
+                
+                # Guardar mapeo
+                mapeo_asignaturas[id_original] = asignatura
+                registros_guardados += 1
+                
+                transaction.savepoint_commit(sid)
+                
+                # Actualizar progreso cada 100 registros o al final
+                if estadisticas and tablas_seleccionadas and tabla_actual and (i % 100 == 0 or i == total_registros):
+                    _actualizar_progreso_cache(
+                        tabla_actual,
+                        estadisticas,
+                        tablas_seleccionadas,
+                        registros_procesados=i,
+                        total_registros=total_registros
+                    )
+                logger.debug(f"Asignatura guardada: {asignatura.nombre} (ID original: {id_original})")
+                
+            except Exception as e:
+                transaction.savepoint_rollback(sid)
+                logger.error(f"Error procesando asignatura: {str(e)}")
+                continue
+    
+    return registros_guardados
+
+
+def _procesar_ediciones(datos_tabla, ModeloHistorico, mapeo_ediciones, mapeo_cursos, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
+    """Procesa y guarda ediciones en HistoricalEdition."""
+    registros_guardados = 0
+    
+    
+    # Obtener total de registros para progreso
+    total_registros = len(datos_tabla)
+    
+    with transaction.atomic():
+        for i, dato in enumerate(datos_tabla, 1):
+            try:
+                sid = transaction.savepoint()
+                datos = dato.datos_originales
+                id_original = datos.get('id')
+                curso_id = datos.get('curso_id', datos.get('course_id'))
+                instructor_id = datos.get('instructor_id')
+                
+                # Aplicar mapeo de campos
+                datos_mapeados = aplicar_mapeo_campos(datos, 'Docencia_edition')
+                
+                # Crear edición
+                edicion = ModeloHistorico(
+                    id_original=id_original,
+                    tabla_origen='Docencia_edition',
+                    dato_archivado=dato
+                )
+                copiar_campos_a_modelo_historico(
+                    edicion, datos_mapeados, 
+                    campos_excluir=['id', 'pk', 'curso_id', 'course_id', 'instructor_id', 'curso', 'course', 'instructor'], 
+                    logger=logger
+                )
+                
+                # Asignar relaciones FK
+                if curso_id and curso_id in mapeo_cursos:
+                    edicion.curso = mapeo_cursos[curso_id]
+                
+                if instructor_id:
+                    try:
+                        instructor = User.objects.get(id=instructor_id)
+                        edicion.instructor = instructor
+                    except User.DoesNotExist:
+                        logger.warning(f"Instructor no encontrado: {instructor_id}")
+                
+                completar_campos_obligatorios(edicion, logger=logger)
+                edicion.save()
+                
+                # Guardar mapeo
+                mapeo_ediciones[id_original] = edicion
+                registros_guardados += 1
+                
+                transaction.savepoint_commit(sid)
+                
+                # Actualizar progreso cada 100 registros o al final
+                if estadisticas and tablas_seleccionadas and tabla_actual and (i % 100 == 0 or i == total_registros):
+                    _actualizar_progreso_cache(
+                        tabla_actual,
+                        estadisticas,
+                        tablas_seleccionadas,
+                        registros_procesados=i,
+                        total_registros=total_registros
+                    )
+                logger.debug(f"Edición guardada: {edicion.nombre} (ID original: {id_original})")
+                
+            except Exception as e:
+                transaction.savepoint_rollback(sid)
+                logger.error(f"Error procesando edición: {str(e)}")
+                continue
+    
+    return registros_guardados
+
+
+
+
+def _procesar_solicitudes(datos_tabla, ModeloHistorico, mapeo_solicitudes, mapeo_cursos, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
+    """Procesa y guarda solicitudes de inscripción en HistoricalEnrollmentApplication."""
+    registros_guardados = 0
+    
+    
+    # Obtener total de registros para progreso
+    total_registros = len(datos_tabla)
+    
+    with transaction.atomic():
+        for i, dato in enumerate(datos_tabla, 1):
+            try:
+                sid = transaction.savepoint()
+                datos = dato.datos_originales
+                id_original = datos.get('id')
+                curso_id = datos.get('curso_id', datos.get('course_id'))
+                usuario_id = datos.get('usuario_id', datos.get('user_id', datos.get('student_id')))
+                
+                # Aplicar mapeo de campos
+                datos_mapeados = aplicar_mapeo_campos(datos, 'Docencia_enrollmentapplication')
+                
+                # Crear solicitud
+                solicitud = ModeloHistorico(
+                    id_original=id_original,
+                    tabla_origen='Docencia_enrollmentapplication',
+                    dato_archivado=dato
+                )
+                copiar_campos_a_modelo_historico(
+                    solicitud, datos_mapeados, 
+                    campos_excluir=['id', 'pk', 'curso_id', 'course_id', 'usuario_id', 'user_id', 'curso', 'course', 'usuario', 'user'], 
+                    logger=logger
+                )
+                
+                # Asignar relaciones FK
+                if curso_id and curso_id in mapeo_cursos:
+                    solicitud.curso = mapeo_cursos[curso_id]
+                
+                if usuario_id:
+                    try:
+                        usuario = User.objects.get(id=usuario_id)
+                        solicitud.usuario = usuario
+                    except User.DoesNotExist:
+                        logger.warning(f"Usuario no encontrado: {usuario_id}")
+                
+                completar_campos_obligatorios(solicitud, logger=logger)
+                solicitud.save()
+                
+                # Guardar mapeo
+                mapeo_solicitudes[id_original] = solicitud
+                registros_guardados += 1
+                
+                transaction.savepoint_commit(sid)
+                
+                # Actualizar progreso cada 100 registros o al final
+                if estadisticas and tablas_seleccionadas and tabla_actual and (i % 100 == 0 or i == total_registros):
+                    _actualizar_progreso_cache(
+                        tabla_actual,
+                        estadisticas,
+                        tablas_seleccionadas,
+                        registros_procesados=i,
+                        total_registros=total_registros
+                    )
+                logger.debug(f"Solicitud guardada (ID original: {id_original})")
+                
+            except Exception as e:
+                transaction.savepoint_rollback(sid)
+                logger.error(f"Error procesando solicitud: {str(e)}")
+                continue
+    
+    return registros_guardados
+
+
+def _procesar_cuentas(datos_tabla, ModeloHistorico, mapeo_cuentas, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
+    """Procesa y guarda cuentas bancarias en HistoricalAccountNumber."""
+    registros_guardados = 0
+    
+    
+    # Obtener total de registros para progreso
+    total_registros = len(datos_tabla)
+    
+    with transaction.atomic():
+        for i, dato in enumerate(datos_tabla, 1):
+            try:
+                sid = transaction.savepoint()
+                datos = dato.datos_originales
+                id_original = datos.get('id')
+                usuario_id = datos.get('usuario_id', datos.get('user_id', datos.get('student_id')))
+                
+                # Aplicar mapeo de campos
+                datos_mapeados = aplicar_mapeo_campos(datos, 'Docencia_accountnumber')
+                
+                # Crear cuenta
+                cuenta = ModeloHistorico(
+                    id_original=id_original,
+                    tabla_origen='Docencia_accountnumber',
+                    dato_archivado=dato
+                )
+                copiar_campos_a_modelo_historico(
+                    cuenta, datos_mapeados, 
+                    campos_excluir=['id', 'pk', 'usuario_id', 'user_id', 'usuario', 'user'], 
+                    logger=logger
+                )
+                
+                # Asignar relación FK
+                if usuario_id:
+                    try:
+                        usuario = User.objects.get(id=usuario_id)
+                        cuenta.usuario = usuario
+                    except User.DoesNotExist:
+                        logger.warning(f"Usuario no encontrado: {usuario_id}")
+                
+                completar_campos_obligatorios(cuenta, logger=logger)
+                cuenta.save()
+                
+                # Guardar mapeo
+                mapeo_cuentas[id_original] = cuenta
+                registros_guardados += 1
+                
+                transaction.savepoint_commit(sid)
+                
+                # Actualizar progreso cada 100 registros o al final
+                if estadisticas and tablas_seleccionadas and tabla_actual and (i % 100 == 0 or i == total_registros):
+                    _actualizar_progreso_cache(
+                        tabla_actual,
+                        estadisticas,
+                        tablas_seleccionadas,
+                        registros_procesados=i,
+                        total_registros=total_registros
+                    )
+                logger.debug(f"Cuenta guardada: {cuenta.numero_cuenta} (ID original: {id_original})")
+                
+            except Exception as e:
+                transaction.savepoint_rollback(sid)
+                logger.error(f"Error procesando cuenta: {str(e)}")
+                continue
+    
+    return registros_guardados
+
+
+
+
+def _procesar_pagos(datos_tabla, ModeloHistorico, mapeo_solicitudes, mapeo_cuentas, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
+    """Procesa y guarda pagos en HistoricalEnrollmentPay."""
+    registros_guardados = 0
+    
+    
+    # Obtener total de registros para progreso
+    total_registros = len(datos_tabla)
+    
+    with transaction.atomic():
+        for i, dato in enumerate(datos_tabla, 1):
+            try:
+                sid = transaction.savepoint()
+                datos = dato.datos_originales
+                id_original = datos.get('id')
+                solicitud_id = datos.get('solicitud_id', datos.get('application_id'))
+                cuenta_id = datos.get('cuenta_id', datos.get('account_id'))
+                
+                # Aplicar mapeo de campos
+                datos_mapeados = aplicar_mapeo_campos(datos, 'Docencia_enrollmentpay')
+                
+                # Crear pago
+                pago = ModeloHistorico(
+                    id_original=id_original,
+                    tabla_origen='Docencia_enrollmentpay',
+                    dato_archivado=dato
+                )
+                copiar_campos_a_modelo_historico(
+                    pago, datos_mapeados, 
+                    campos_excluir=['id', 'pk', 'solicitud_id', 'application_id', 'cuenta_id', 'account_id', 'solicitud', 'application', 'cuenta', 'account'], 
+                    logger=logger
+                )
+                
+                # Asignar relaciones FK
+                if solicitud_id and solicitud_id in mapeo_solicitudes:
+                    pago.solicitud = mapeo_solicitudes[solicitud_id]
+                
+                if cuenta_id and cuenta_id in mapeo_cuentas:
+                    pago.cuenta = mapeo_cuentas[cuenta_id]
+                
+                completar_campos_obligatorios(pago, logger=logger)
+                pago.save()
+                registros_guardados += 1
+                
+                transaction.savepoint_commit(sid)
+                
+                # Actualizar progreso cada 100 registros o al final
+                if estadisticas and tablas_seleccionadas and tabla_actual and (i % 100 == 0 or i == total_registros):
+                    _actualizar_progreso_cache(
+                        tabla_actual,
+                        estadisticas,
+                        tablas_seleccionadas,
+                        registros_procesados=i,
+                        total_registros=total_registros
+                    )
+                logger.debug(f"Pago guardado: {pago.monto}")
+                
+            except Exception as e:
+                transaction.savepoint_rollback(sid)
+                logger.error(f"Error procesando pago: {str(e)}")
+                continue
+    
+    return registros_guardados
+
+
+def _procesar_inscripciones(datos_tabla, ModeloHistorico, mapeo_asignaturas, mapeo_ediciones, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
+    """Procesa y guarda inscripciones en HistoricalEnrollment."""
+    registros_guardados = 0
+    
+    
+    # Obtener total de registros para progreso
+    total_registros = len(datos_tabla)
+    
+    with transaction.atomic():
+        for i, dato in enumerate(datos_tabla, 1):
+            try:
+                sid = transaction.savepoint()
+                datos = dato.datos_originales
+                id_original = datos.get('id')
+                curso_id = datos.get('curso_id', datos.get('course_id'))
+                usuario_id = datos.get('usuario_id', datos.get('user_id', datos.get('student_id')))
+                edicion_id = datos.get('edicion_id', datos.get('edition_id'))
+                
+                # Aplicar mapeo de campos
+                datos_mapeados = aplicar_mapeo_campos(datos, 'Docencia_enrollment')
+                
+                # Crear inscripción
+                inscripcion = ModeloHistorico(
+                    id_original=id_original,
+                    tabla_origen='Docencia_enrollment',
+                    dato_archivado=dato
+                )
+                copiar_campos_a_modelo_historico(
+                    inscripcion, datos_mapeados, 
+                    campos_excluir=['id', 'pk', 'curso_id', 'course_id', 'usuario_id', 'user_id', 'edicion_id', 'edition_id', 'curso', 'course', 'usuario', 'user', 'edicion', 'edition'], 
+                    logger=logger
+                )
+                
+                # Asignar relaciones FK
+                if curso_id and curso_id in mapeo_asignaturas:
+                    inscripcion.curso = mapeo_asignaturas[curso_id]
+                
+                if usuario_id:
+                    try:
+                        usuario = User.objects.get(id=usuario_id)
+                        inscripcion.usuario = usuario
+                    except User.DoesNotExist:
+                        logger.warning(f"Usuario no encontrado: {usuario_id}")
+                
+                if edicion_id and edicion_id in mapeo_ediciones:
+                    inscripcion.edicion = mapeo_ediciones[edicion_id]
+                
+                completar_campos_obligatorios(inscripcion, logger=logger)
+                inscripcion.save()
+                registros_guardados += 1
+                
+                transaction.savepoint_commit(sid)
+                
+                # Actualizar progreso cada 100 registros o al final
+                if estadisticas and tablas_seleccionadas and tabla_actual and (i % 100 == 0 or i == total_registros):
+                    _actualizar_progreso_cache(
+                        tabla_actual,
+                        estadisticas,
+                        tablas_seleccionadas,
+                        registros_procesados=i,
+                        total_registros=total_registros
+                    )
+                logger.debug(f"Inscripción guardada")
+                
+            except Exception as e:
+                transaction.savepoint_rollback(sid)
+                logger.error(f"Error procesando inscripción: {str(e)}")
+                continue
+    
+    return registros_guardados
+
+
+
+
+def _procesar_aplicaciones(datos_tabla, ModeloHistorico, mapeo_cursos, mapeo_ediciones, mapeo_aplicaciones, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None, analisis=None, mapeos_historicos=None):
+    """Procesa y guarda aplicaciones en HistoricalApplication usando resolver_fk."""
+    registros_guardados = 0
+    total_registros = len(datos_tabla)
+    tabla = 'Docencia_application'
+
+    with transaction.atomic():
+        for i, dato in enumerate(datos_tabla, 1):
+            try:
+                sid = transaction.savepoint()
+                datos = dato.datos_originales
+                id_original = datos.get('id')
+
+                datos_mapeados = aplicar_mapeo_campos(datos, tabla)
+
+                aplicacion = ModeloHistorico(
+                    id_original=id_original,
+                    tabla_origen=tabla,
+                    dato_archivado=dato
+                )
+                copiar_campos_a_modelo_historico(
+                    aplicacion, datos_mapeados,
+                    campos_excluir=['id', 'pk', 'curso_id', 'course_id', 'usuario_id',
+                                    'user_id', 'student_id', 'edicion_id', 'edition_id',
+                                    'curso', 'course', 'usuario', 'user', 'edicion', 'edition'],
+                    logger=logger
+                )
+
+                # Resolver FK usando el análisis automático si está disponible
+                if analisis and mapeos_historicos:
+                    for campo_fk in ('course_id', 'curso_id', 'edition_id', 'edicion_id',
+                                     'student_id', 'user_id', 'usuario_id'):
+                        valor = datos.get(campo_fk)
+                        if valor is None:
+                            continue
+                        obj = resolver_fk(campo_fk, valor, tabla, analisis, mapeos_historicos)
+                        if obj is None:
+                            continue
+                        # Asignar al campo correcto del modelo
+                        if campo_fk in ('course_id', 'curso_id'):
+                            aplicacion.curso = obj
+                        elif campo_fk in ('edition_id', 'edicion_id'):
+                            aplicacion.edicion = obj
+                        elif campo_fk in ('student_id', 'user_id', 'usuario_id'):
+                            # resolver_fk devuelve User para student_id y user_id
+                            if hasattr(obj, 'username'):
+                                aplicacion.usuario = obj
+                else:
+                    # Fallback a lógica anterior
+                    curso_id = datos.get('curso_id', datos.get('course_id'))
+                    usuario_id = datos.get('usuario_id', datos.get('user_id', datos.get('student_id')))
+                    edicion_id = datos.get('edicion_id', datos.get('edition_id'))
+                    if curso_id and curso_id in mapeo_cursos:
+                        aplicacion.curso = mapeo_cursos[curso_id]
+                    if usuario_id:
+                        try:
+                            aplicacion.usuario = User.objects.get(id=usuario_id)
+                        except User.DoesNotExist:
+                            logger.warning(f"Usuario no encontrado: {usuario_id}")
+                    if edicion_id and edicion_id in mapeo_ediciones:
+                        aplicacion.edicion = mapeo_ediciones[edicion_id]
+
+                completar_campos_obligatorios(aplicacion, logger=logger)
+                aplicacion.save()
+                registros_guardados += 1
+                mapeo_aplicaciones[id_original] = aplicacion
+                if mapeos_historicos:
+                    mapeos_historicos.setdefault(tabla, {})[id_original] = aplicacion
+
+                transaction.savepoint_commit(sid)
+
+                if estadisticas and tablas_seleccionadas and tabla_actual and (i % 100 == 0 or i == total_registros):
+                    _actualizar_progreso_cache(tabla_actual, estadisticas, tablas_seleccionadas,
+                                               registros_procesados=i, total_registros=total_registros)
+                logger.debug("Aplicación guardada")
+
+            except Exception as e:
+                transaction.savepoint_rollback(sid)
+                logger.error(f"Error procesando aplicación: {str(e)}")
+                continue
+
+    return registros_guardados
+
+
+
+def _procesar_clases(datos_tabla, ModeloHistorico, mapeo_clases, mapeo_asignaturas, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
+    """
+    Procesa y guarda registros de Docencia_class en HistoricalClass.
+    
+    Args:
+        datos_tabla: QuerySet con los datos a procesar
+        ModeloHistorico: Modelo HistoricalClass
+        mapeo_clases: Diccionario para mapear IDs originales a nuevos IDs
+        mapeo_asignaturas: Diccionario con mapeo de asignaturas (FK)
+        logger: Logger para registrar operaciones
+        estadisticas: Diccionario de estadísticas (opcional)
+        tablas_seleccionadas: Lista de tablas seleccionadas (opcional)
+        tabla_actual: Nombre de la tabla actual (opcional)
+    
+    Returns:
+        int: Número de registros guardados
+    """
+    registros_guardados = 0
+    total_registros = datos_tabla.count()
+    
+    logger.info(f"Procesando {total_registros} clases...")
+    
+    with transaction.atomic():
+        for idx, dato in enumerate(datos_tabla, 1):
+            try:
+                datos = dato.datos_originales
+                id_original = datos.get('id')
+                
+                # Obtener subject_id (FK a HistoricalSubjectInformation)
+                subject_id_original = datos.get('subject_id')
+                subject = None
+                
+                if subject_id_original and mapeo_asignaturas:
+                    subject = mapeo_asignaturas.get(subject_id_original)
+                    if not subject:
+                        logger.warning(f"No se encontró asignatura con ID original {subject_id_original} para clase {id_original}")
+                
+                # Crear registro histórico
+                clase_historica = ModeloHistorico(
+                    id_original=id_original,
+                    tabla_origen=dato.tabla_origen,
+                    name=datos.get('name', ''),
+                    classbody=datos.get('classbody', ''),
+                    uploaddate=datos.get('uploaddate'),
+                    datepub=datos.get('datepub'),
+                    dateend=datos.get('dateend'),
+                    slug=datos.get('slug', ''),
+                    subject=subject
+                )
+                
+                # Completar campos obligatorios
+                completar_campos_obligatorios(clase_historica, logger)
+                
+                # Guardar
+                clase_historica.save()
+                
+                # Guardar en mapeo para referencias futuras
+                mapeo_clases[id_original] = clase_historica
+                
+                registros_guardados += 1
+                
+                # Actualizar progreso cada 10 registros
+                if idx % 10 == 0 or idx == total_registros:
+                    _actualizar_progreso_cache(
+                        tabla_actual,
+                        estadisticas,
+                        tablas_seleccionadas,
+                        registros_procesados=idx,
+                        total_registros=total_registros
+                    )
+                    logger.info(f"Progreso: {idx}/{total_registros} clases procesadas")
+                
+            except Exception as e:
+                logger.error(f"Error procesando clase {datos.get('id')}: {str(e)}")
+                if estadisticas:
+                    estadisticas['errores'] = estadisticas.get('errores', 0) + 1
+                continue
+    
+    logger.info(f"✅ Clases procesadas: {registros_guardados}/{total_registros}")
+    return registros_guardados
+
+
+def _procesar_clases_studentview(datos_tabla, ModeloHistorico, mapeo_clases, mapeo_aplicaciones, logger, estadisticas=None, tablas_seleccionadas=None, tabla_actual=None):
+    """
+    Procesa y guarda registros de Docencia_class_studentView en HistoricalClassStudentView.
+    
+    Args:
+        datos_tabla: QuerySet con los datos a procesar
+        ModeloHistorico: Modelo HistoricalClassStudentView
+        mapeo_clases: Diccionario con mapeo de clases (FK)
+        mapeo_solicitudes: Diccionario con mapeo de solicitudes/applications (FK)
+        logger: Logger para registrar operaciones
+        estadisticas: Diccionario de estadísticas (opcional)
+        tablas_seleccionadas: Lista de tablas seleccionadas (opcional)
+        tabla_actual: Nombre de la tabla actual (opcional)
+    
+    Returns:
+        int: Número de registros guardados
+    """
+    registros_guardados = 0
+    total_registros = datos_tabla.count()
+    
+    logger.info(f"Procesando {total_registros} vistas de clase-estudiante...")
+    
+    with transaction.atomic():
+        for idx, dato in enumerate(datos_tabla, 1):
+            try:
+                datos = dato.datos_originales
+                id_original = datos.get('id')
+                
+                # Obtener class_id (FK a HistoricalClass)
+                class_id_original = datos.get('class_id')
+                clase = None
+                
+                if class_id_original and mapeo_clases:
+                    clase = mapeo_clases.get(class_id_original)
+                    if not clase:
+                        logger.warning(f"No se encontró clase con ID original {class_id_original} para studentview {id_original}")
+                
+                # Obtener application_id (FK a HistoricalApplication)
+                application_id_original = datos.get('application_id')
+                application = None
+                
+                if application_id_original and mapeo_aplicaciones:
+                    application = mapeo_aplicaciones.get(application_id_original)
+                    if not application:
+                        logger.warning(f"No se encontró application con ID original {application_id_original} para studentview {id_original}")
+                # Validar que ambos FK existan (son obligatorios)
+                if not clase:
+                    logger.warning(f"⚠️ Saltando studentview {id_original}: class_field es None (class_id={class_id_original})")
+                    continue
+                
+                if not application:
+                    logger.warning(f"⚠️ Saltando studentview {id_original}: application es None (application_id={application_id_original})")
+                    continue
+
+
+                
+                # Crear registro histórico
+                studentview_historica = ModeloHistorico(
+                    id_original=id_original,
+                    tabla_origen=dato.tabla_origen,
+                    class_field=clase,
+                    application=application
+                )
+                
+                # Completar campos obligatorios
+                completar_campos_obligatorios(studentview_historica, logger)
+                
+                # Guardar
+                studentview_historica.save()
+                
+                registros_guardados += 1
+                
+                # Actualizar progreso cada 10 registros
+                if idx % 10 == 0 or idx == total_registros:
+                    _actualizar_progreso_cache(
+                        tabla_actual,
+                        estadisticas,
+                        tablas_seleccionadas,
+                        registros_procesados=idx,
+                        total_registros=total_registros
+                    )
+                    logger.info(f"Progreso: {idx}/{total_registros} studentviews procesadas")
+                
+            except Exception as e:
+                logger.error(f"Error procesando studentview {datos.get('id')}: {str(e)}")
+                if estadisticas:
+                    estadisticas['errores'] = estadisticas.get('errores', 0) + 1
+                continue
+    
+    logger.info(f"✅ StudentViews procesadas: {registros_guardados}/{total_registros}")
+    return registros_guardados
+
+
+
+def _actualizar_progreso_cache(tabla_actual, estadisticas, tablas_seleccionadas, registros_procesados=0, total_registros=0):
+    """Actualiza el progreso en cache para mostrar en el frontend."""
+    # Calcular porcentaje de la tabla actual
+    porcentaje_tabla = int((registros_procesados / total_registros) * 100) if total_registros > 0 else 0
+    
+    progreso = {
+        'paso_actual': f'Guardando {tabla_actual} en historial',
+        'pasos_completados': estadisticas['tablas_procesadas'],
+        'pasos_totales': len(tablas_seleccionadas),
+        'fecha_inicio': timezone.now().isoformat(),
+        'tipo_operacion': 'guardar_historial',
+        'tablas_seleccionadas': tablas_seleccionadas,
+        # Campos para progreso en tiempo real
+        'tabla_actual_procesando': tabla_actual,
+        'registros_procesados_tabla': registros_procesados,
+        'total_registros_tabla': total_registros,
+        'porcentaje_tabla': porcentaje_tabla,
+        **estadisticas
+    }
+    cache.set('combinacion_en_progreso', progreso, timeout=300)

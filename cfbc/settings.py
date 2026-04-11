@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'blog.apps.BlogConfig',
     'datos_archivados.apps.DatosArchivadosConfig',
     'course_documents.apps.CourseDocumentsConfig',
+    'historial.apps.HistorialConfig',
     
     
 ]

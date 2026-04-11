@@ -10,52 +10,8 @@
 
 /* Estilos específicos para mantener texto blanco en hover */
 #btnSeleccionarYCombinar:hover,
-#btnConfirmarSeleccionCombinacion:hover,
-#btnAutoSeleccionarDocencia:hover {
+#btnConfirmarSeleccionCombinacion:hover {
     color: white !important;
-}
-
-/* Estilo específico para el botón de Docencia */
-#btnAutoSeleccionarDocencia {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    transition: all 0.3s ease;
-    position: relative;
-}
-
-#btnAutoSeleccionarDocencia:hover {
-    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(245, 158, 11, 0.3);
-}
-
-/* Badge para mostrar contador de tablas Docencia */
-.docencia-badge {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    background: #dc2626;
-    color: white;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: bold;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    z-index: 10;
-}
-
-/* Animación pulse para el botón Docencia */
-@keyframes pulse {
-    0%, 100% {
-        box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
-    }
-    50% {
-        box-shadow: 0 8px 16px rgba(245, 158, 11, 0.6);
-        transform: scale(1.02);
-    }
 }
 
 /* Asegurar que todos los botones primary mantengan texto blanco */
@@ -817,11 +773,6 @@
                         <button type="button" class="glass-button glass-button-success hidden" id="btnSeleccionarTodas">
                             <span class="material-icons mr-2">select_all</span>
                             Seleccionar Todas
-                        </button>
-                        <button type="button" class="glass-button glass-button-warning hidden" id="btnAutoSeleccionarDocencia" 
-                                title="Selecciona automáticamente todas las 13 tablas de Docencia (área, categoría, información de cursos, inscripciones, etc.)">
-                            <span class="material-icons mr-2">school</span>
-                            Auto-seleccionar Docencia
                         </button>
                         <button type="button" class="glass-button glass-button-danger opacity-50 hidden" id="btnEliminar">
                             <span class="material-icons mr-2">delete</span>
@@ -3140,7 +3091,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnModoSeleccion = document.getElementById('btnModoSeleccion');
     const btnEliminar = document.getElementById('btnEliminar');
     const btnSeleccionarTodas = document.getElementById('btnSeleccionarTodas');
-    const btnAutoSeleccionarDocencia = document.getElementById('btnAutoSeleccionarDocencia');
     const btnSeleccionarYCombinar = document.getElementById('btnSeleccionarYCombinar');
     const contadorSeleccionadas = document.getElementById('contadorSeleccionadas');
     const checkboxes = document.querySelectorAll('.tabla-checkbox');
@@ -3201,39 +3151,6 @@ document.addEventListener('DOMContentLoaded', function() {
             btnModoSeleccion.classList.add('glass-button-secondary');
             btnEliminar.classList.remove('hidden');
             btnSeleccionarTodas.classList.remove('hidden'); // Mostrar botón seleccionar todas
-            btnAutoSeleccionarDocencia.classList.remove('hidden'); // Mostrar botón auto-seleccionar Docencia
-            
-            // Agregar badge con contador de tablas Docencia disponibles
-            setTimeout(() => {
-                const tablasDocencia = [
-                    'Docencia_area', 'Docencia_coursecategory', 'Docencia_courseinformation_adminteachers',
-                    'Docencia_courseinformation', 'Docencia_enrollmentapplication', 'Docencia_enrollmentpay',
-                    'Docencia_accountnumber', 'Docencia_enrollment', 'Docencia_subjectinformation',
-                    'Docencia_edition', 'Docencia_application',
-            'Docencia_class',
-            'Docencia_class_studentView'
-                ];
-                
-                const checkboxes = document.querySelectorAll('.tabla-checkbox');
-                let docenciaDisponibles = 0;
-                
-                checkboxes.forEach(checkbox => {
-                    const tableName = checkbox.getAttribute('data-tabla');
-                    if (tablasDocencia.includes(tableName)) {
-                        docenciaDisponibles++;
-                    }
-                });
-                
-                // Agregar badge si hay tablas disponibles
-                if (docenciaDisponibles > 0 && !btnAutoSeleccionarDocencia.querySelector('.docencia-badge')) {
-                    const badge = document.createElement('span');
-                    badge.className = 'docencia-badge';
-                    badge.textContent = docenciaDisponibles;
-                    badge.title = `${docenciaDisponibles} tablas de Docencia disponibles`;
-                    btnAutoSeleccionarDocencia.style.position = 'relative';
-                    btnAutoSeleccionarDocencia.appendChild(badge);
-                }
-            }, 100);
             btnSeleccionarYCombinar.classList.remove('hidden'); // Mostrar botón de seleccionar y combinar
             
             // Mostrar checkboxes
@@ -3265,7 +3182,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Ocultar botones de acción (solo el botón eliminar)
             btnEliminar.classList.add('hidden');
             btnSeleccionarTodas.classList.add('hidden'); // Ocultar botón seleccionar todas
-            btnAutoSeleccionarDocencia.classList.add('hidden'); // Ocultar botón auto-seleccionar Docencia
             
             // El botón "Seleccionar y Combinar" debe volver a su estado inicial: VISIBLE y ACTIVO
             btnSeleccionarYCombinar.classList.remove('hidden'); // Mostrar (estado inicial)
@@ -3377,11 +3293,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     btnSeleccionarTodas.innerHTML = '<span class="material-icons mr-2">select_all</span>Seleccionar Todas';
                 }
                 
-                // Resetear botón "Auto-seleccionar Docencia"
-                if (btnAutoSeleccionarDocencia) {
-                    btnAutoSeleccionarDocencia.innerHTML = '<span class="material-icons mr-2">school</span>Auto-seleccionar Docencia';
-                }
-                
             }, 100);
         }
     });
@@ -3457,202 +3368,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Actualizar contador una sola vez al final
         actualizarContador();
-    });
-    
-    // Event listener para el botón "Auto-seleccionar Docencia"
-    btnAutoSeleccionarDocencia.addEventListener('click', async function() {
-        console.log('🎓 Botón Auto-seleccionar Docencia clickeado');
-        
-        // Lista de tablas de Docencia
-        const tablasDocencia = [
-            'Docencia_area',
-            'Docencia_coursecategory',
-            'Docencia_courseinformation_adminteachers',
-            'Docencia_courseinformation',
-            'Docencia_enrollmentapplication',
-            'Docencia_enrollmentpay',
-            'Docencia_accountnumber',
-            'Docencia_enrollment',
-            'Docencia_subjectinformation',
-            'Docencia_edition',
-            'Docencia_application',
-            'Docencia_class',
-            'Docencia_class_studentView',
-            'Docencia_class',
-            'Docencia_class_studentView'
-        ];
-        
-        // Obtener TODOS los checkboxes disponibles
-        const checkboxes = document.querySelectorAll('.tabla-checkbox');
-        console.log(`📊 Total checkboxes encontrados: ${checkboxes.length}`);
-        
-        let seleccionadas = 0;
-        
-        // Contar cuántas tablas de Docencia están actualmente seleccionadas
-        let docenciaSeleccionadasCount = 0;
-        checkboxes.forEach(cb => {
-            const tableName = cb.getAttribute('data-tabla');
-            if (tablasDocencia.includes(tableName) && cb.checked) {
-                docenciaSeleccionadasCount++;
-            }
-        });
-        
-        console.log(`📋 Tablas Docencia actualmente seleccionadas: ${docenciaSeleccionadasCount}`);
-        
-        // Determinar la acción: si TODAS están seleccionadas, deseleccionar; si no, seleccionar
-        const debeSeleccionar = docenciaSeleccionadasCount < tablasDocencia.length;
-        
-        console.log(`🎯 Acción a realizar: ${debeSeleccionar ? 'SELECCIONAR' : 'DESELECCIONAR'}`);
-        
-        // Confirmación al deseleccionar si hay muchas tablas seleccionadas
-        if (!debeSeleccionar && docenciaSeleccionadasCount > 5) {
-            const confirmar = confirm(`¿Estás seguro de deseleccionar ${docenciaSeleccionadasCount} tablas de Docencia?`);
-            if (!confirmar) {
-                console.log('❌ Operación cancelada por el usuario');
-                return; // Cancelar la operación
-            }
-        }
-        
-        // Agregar un pequeño delay entre selecciones para efecto visual
-        let delay = 0;
-        const checkboxesToUpdate = [];
-        
-        // Primero recolectar todos los checkboxes que necesitan actualizarse
-        checkboxes.forEach(checkbox => {
-            const tableName = checkbox.getAttribute('data-tabla');
-            if (tablasDocencia.includes(tableName)) {
-                if (checkbox.checked !== debeSeleccionar) {
-                    checkboxesToUpdate.push({ checkbox, tableName });
-                }
-                if (debeSeleccionar) {
-                    seleccionadas++;
-                }
-            }
-        });
-        
-        // Seleccionar TODAS las tablas de una vez sin delays para evitar conflictos
-        console.log(`🔄 Procesando ${checkboxesToUpdate.length} checkboxes...`);
-        
-        checkboxesToUpdate.forEach(({ checkbox, tableName }) => {
-            // Cambiar el estado del checkbox directamente
-            checkbox.checked = debeSeleccionar;
-            
-            // Agregar clase visual a la tarjeta
-            const card = checkbox.closest('.tabla-card');
-            if (card) {
-                if (debeSeleccionar) {
-                    card.classList.add('seleccionada');
-                } else {
-                    card.classList.remove('seleccionada');
-                }
-            }
-            
-            console.log(`${debeSeleccionar ? '✅' : '❌'} ${tableName}: checked = ${checkbox.checked}`);
-        });
-
-        // Si estamos seleccionando, también seleccionar auth_user y sus dependencias
-        if (debeSeleccionar) {
-            console.log('🔗 Seleccionando auth_user y sus dependencias...');
-            
-            // Buscar el checkbox de auth_user
-            const authUserCheckbox = document.querySelector('.tabla-checkbox[data-tabla="auth_user"]');
-            if (authUserCheckbox && !authUserCheckbox.checked) {
-                authUserCheckbox.checked = true;
-                const authCard = authUserCheckbox.closest('.tabla-card');
-                if (authCard) {
-                    authCard.classList.add('seleccionada');
-                }
-                console.log('✅ auth_user seleccionado');
-                
-                // Usar RelationshipManager para seleccionar dependencias automáticamente
-                if (window.relationshipManager && window.relationshipManager.isInitialized) {
-                    try {
-                        const result = window.relationshipManager.handleTableSelection('auth_user', true, true);
-                        if (result.autoSelected && result.autoSelected.length > 0) {
-                            console.log(`✅ Dependencias de auth_user auto-seleccionadas: ${result.autoSelected.join(', ')}`);
-                        }
-                    } catch (error) {
-                        console.warn('⚠️ Error al auto-seleccionar dependencias de auth_user:', error);
-                    }
-                } else {
-                    console.warn('⚠️ RelationshipManager no disponible, solo se seleccionó auth_user');
-                }
-            }
-        }
-
-        // Después de cambiar todos los checkboxes, actualizar el contador y sistema
-        setTimeout(() => {
-            // Actualizar el contador manualmente
-            const contadorElement = document.getElementById('contadorSeleccionadas');
-            const totalSeleccionados = document.querySelectorAll('.tabla-checkbox:checked').length;
-            
-            if (contadorElement) {
-                contadorElement.textContent = totalSeleccionados;
-            }
-            
-            // Actualizar el botón eliminar si existe
-            const btnEliminar = document.getElementById('btnEliminar');
-            if (btnEliminar) {
-                if (totalSeleccionados > 0) {
-                    btnEliminar.classList.remove('opacity-50');
-                    btnEliminar.disabled = false;
-                } else {
-                    btnEliminar.classList.add('opacity-50');
-                    btnEliminar.disabled = true;
-                }
-            }
-            
-            // Llamar a actualizarContador para sincronizar todo
-            actualizarContador();
-            
-            console.log(`🔄 Contador actualizado: ${totalSeleccionados} tablas seleccionadas`);
-            
-            // Verificar específicamente las tablas de Docencia
-            const tablasDocencia = [
-                'Docencia_area', 'Docencia_coursecategory', 'Docencia_courseinformation_adminteachers',
-                'Docencia_courseinformation', 'Docencia_enrollmentapplication', 'Docencia_enrollmentpay',
-                'Docencia_accountnumber', 'Docencia_enrollment', 'Docencia_subjectinformation',
-                'Docencia_edition', 'Docencia_application',
-            'Docencia_class',
-            'Docencia_class_studentView'
-            ];
-            
-            let docenciaSeleccionadas = 0;
-            document.querySelectorAll('.tabla-checkbox:checked').forEach(cb => {
-                const tableName = cb.getAttribute('data-tabla');
-                if (tablasDocencia.includes(tableName)) {
-                    docenciaSeleccionadas++;
-                }
-            });
-            
-            console.log(`📚 Tablas Docencia seleccionadas: ${docenciaSeleccionadas}/11`);
-        }, 150);
-        
-        // Esperar a que todas las selecciones se completen antes de actualizar
-        setTimeout(() => {
-            // Actualizar contador primero
-            actualizarContador();
-            
-            // Actualizar el texto del botón
-            if (debeSeleccionar) {
-                btnAutoSeleccionarDocencia.innerHTML = '<span class="material-icons mr-2">school</span>Deseleccionar Docencia';
-                console.log(`✅ ${seleccionadas} tablas de Docencia seleccionadas automáticamente`);
-                
-                // Mostrar notificación de éxito
-                mostrarNotificacion(`✅ ${seleccionadas} tablas de Docencia seleccionadas`, 'success');
-            } else {
-                btnAutoSeleccionarDocencia.innerHTML = '<span class="material-icons mr-2">school</span>Auto-seleccionar Docencia';
-                console.log('❌ Tablas de Docencia deseleccionadas');
-                
-                // Mostrar notificación
-                mostrarNotificacion('Tablas de Docencia deseleccionadas', 'info');
-            }
-            
-            // Actualizar contador una vez más para asegurar
-            setTimeout(() => {
-                actualizarContador();
-            }, 100);
-        }, delay + 100); // Esperar a que termine el último delay + 100ms extra
     });
     
     // Permitir seleccionar haciendo clic en la tarjeta (solo en modo selección)
@@ -3781,52 +3496,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 btnSeleccionarTodas.innerHTML = '<span class="material-icons mr-2">deselect</span>Deseleccionar Todas';
             } else {
                 btnSeleccionarTodas.innerHTML = '<span class="material-icons mr-2">select_all</span>Seleccionar Todas';
-            }
-        }
-        
-        // Actualizar el texto del botón "Auto-seleccionar Docencia"
-        if (btnAutoSeleccionarDocencia) {
-            const tablasDocencia = [
-                'Docencia_area',
-                'Docencia_coursecategory',
-                'Docencia_courseinformation_adminteachers',
-                'Docencia_courseinformation',
-                'Docencia_enrollmentapplication',
-                'Docencia_enrollmentpay',
-                'Docencia_accountnumber',
-                'Docencia_enrollment',
-                'Docencia_subjectinformation',
-                'Docencia_edition',
-                'Docencia_application',
-            'Docencia_class',
-            'Docencia_class_studentView'
-            ];
-            
-            // Contar cuántas tablas de Docencia están seleccionadas
-            let docenciaSeleccionadas = 0;
-            let docenciaTotal = 0;
-            
-            checkboxes.forEach(checkbox => {
-                const tableName = checkbox.getAttribute('data-tabla');
-                if (tablasDocencia.includes(tableName)) {
-                    docenciaTotal++;
-                    if (checkbox.checked) {
-                        docenciaSeleccionadas++;
-                    }
-                }
-            });
-            
-            // Actualizar el texto del botón según el estado
-            if (docenciaSeleccionadas === docenciaTotal && docenciaTotal > 0) {
-                btnAutoSeleccionarDocencia.innerHTML = '<span class="material-icons mr-2">school</span>Deseleccionar Docencia';
-                btnAutoSeleccionarDocencia.style.animation = 'none';
-            } else if (docenciaSeleccionadas > 0) {
-                btnAutoSeleccionarDocencia.innerHTML = `<span class="material-icons mr-2">school</span>Auto-seleccionar Docencia (${docenciaSeleccionadas}/${docenciaTotal})`;
-                // Resaltar el botón cuando hay algunas seleccionadas pero no todas
-                btnAutoSeleccionarDocencia.style.animation = 'pulse 2s infinite';
-            } else {
-                btnAutoSeleccionarDocencia.innerHTML = '<span class="material-icons mr-2">school</span>Auto-seleccionar Docencia';
-                btnAutoSeleccionarDocencia.style.animation = 'none';
             }
         }
         
