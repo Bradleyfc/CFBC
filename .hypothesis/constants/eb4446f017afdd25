@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\blog\migrations\0001_initial.py
+# hypothesis_version: 6.148.7
+
+[100, 160, 200, 300, '-fecha_publicacion', 'Archivado', 'Borrador', 'Categoria', 'Categoría', 'Categorías', 'Comentario', 'Comentarios', 'Descripción para SEO', 'ID', 'Noticia', 'Noticias', 'Publicado', 'activo', 'archivado', 'autor', 'blog.categoria', 'blog.noticia', 'borrador', 'categoria', 'comentarios', 'contenido', 'descripcion', 'destacada', 'estado', 'fecha_actualizacion', 'fecha_creacion', 'fecha_publicacion', 'id', 'imagen_principal', 'meta_descripcion', 'nombre', 'noticia', 'noticias', 'noticias/', 'ordering', 'publicado', 'resumen', 'slug', 'titulo', 'verbose_name', 'verbose_name_plural']

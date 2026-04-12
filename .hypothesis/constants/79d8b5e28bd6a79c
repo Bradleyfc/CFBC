@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\course_documents\forms.py
+# hypothesis_version: 6.148.7
+
+[200, 1024, ', ', '.', '7z', 'Archivo', 'Nombre de la carpeta', 'Nombre del documento', '[<>:"/\\\\|?*]', 'accept', 'class', 'data-bs-toggle', 'doc', 'docx', 'file', 'files', 'form-control', 'gif', 'jpeg', 'jpg', 'maxlength', 'name', 'pdf', 'placeholder', 'png', 'ppt', 'pptx', 'rar', 'required', 'title', 'tooltip', 'txt', 'xls', 'xlsx', 'zip']

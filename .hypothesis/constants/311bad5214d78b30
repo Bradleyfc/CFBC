@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\accounts\migrations\0004_registro_carnet_registro_correo_registro_grado_and_more.py
+# hypothesis_version: 6.148.7
+
+[100, 150, 254, 'Ama de Casa', 'Bachiller', 'Carnet', 'Correo', 'Desocupado', 'F', 'Femenino', 'M', 'Masculino', 'Movil', 'Municipio', 'Nacionalidad', 'Ninguno', 'Noveno Grado', 'Provincia', 'Superior', 'Titulo', 'Trabajador Estatal', 'accounts', 'carnet', 'correo', 'grado', 'grado1', 'grado2', 'grado3', 'grado4', 'location', 'movil', 'nacionalidad', 'ocupacion', 'ocupacion1', 'ocupacion2', 'ocupacion3', 'ocupacion4', 'provincia', 'registro', 'sexo', 'titulo']

@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\cfbc\settings.py
+# hypothesis_version: 6.148.7
+
+['/media/', '/static/', '127.0.0.1', '5432', 'APP_DIRS', 'America/Managua', 'BACKEND', 'DIRS', 'ENGINE', 'HOST', 'NAME', 'OPTIONS', 'PASSWORD', 'PORT', 'SECRET_KEY', 'USER', 'admin', 'blog.apps.BlogConfig', 'bootstrap5', 'cfbc', 'cfbc.urls', 'context_processors', 'crispy_bootstrap5', 'crispy_forms', 'default', 'django.contrib.admin', 'django.contrib.auth', 'es', 'localhost', 'media', 'postgres', 'principal', 'principal:home', 'static', 'templates', 'testserver']

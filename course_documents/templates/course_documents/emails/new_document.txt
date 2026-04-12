@@ -1,0 +1,18 @@
+Hola {{ student_name }},
+
+Se ha subido un nuevo documento al curso "{{ curso.name }}".
+
+Detalles del documento:
+- Nombre: {{ document.name }}
+- Carpeta: {{ folder.name }}
+- Subido por: {{ teacher_name }}
+- Fecha: {{ upload_date|date:"d/m/Y H:i" }}
+
+Puedes acceder al documento desde tu dashboard del curso:
+{{ dashboard_url }}
+
+Saludos,
+{{ site_name }}
+
+---
+Este es un mensaje automático, por favor no responder a este email.

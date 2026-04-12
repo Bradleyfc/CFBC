@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\accounts\models.py
+# hypothesis_version: 6.148.7
+
+[100, 150, '-id', 'Ama de Casa', 'Bachiller', 'Carnet', 'Desocupado', 'Dirección', 'Es Religioso', 'Estudiante', 'F', 'Femenino', 'Foto del Carnet', 'Foto del Título', 'Imagen de perfil', 'M', 'Masculino', 'Municipio', 'Móvil', 'Nacionalidad', 'Ninguno', 'Noveno Grado', 'Provincia', 'Sexo', 'Superior', 'Teléfono', 'Trabajador Estatal', 'Título', 'Usuario', 'documentos/carnets/', 'documentos/titulos/', 'grado1', 'grado2', 'grado3', 'grado4', 'ocupacion1', 'ocupacion2', 'ocupacion3', 'ocupacion4', 'ocupacion5', 'registro', 'registros', 'users/']

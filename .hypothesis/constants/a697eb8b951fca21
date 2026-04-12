@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\datos_archivados\urls.py
+# hypothesis_version: 6.148.7
+
+['buscar-ajax/', 'buscar_datos_ajax', 'buscar_en_tabla_ajax', 'combinar-datos/', 'combinar_datos', 'configurar_migracion', 'dashboard', 'dato_detail', 'datos/<int:pk>/', 'datos_archivados', 'datos_list', 'debug/', 'debug_permisos', 'eliminar_tablas', 'estado_migracion', 'exportar_excel', 'exportar_tabla_excel', 'migracion/estado/', 'tablas/', 'tablas/<str:tabla>/', 'tablas/eliminar/', 'tablas_list']

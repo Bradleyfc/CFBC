@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\course_documents\signals.py
+# hypothesis_version: 6.148.7
+
+['course_name', 'dashboard_url', 'document_deleted', 'document_name', 'document_uploaded', 'folder_name', 'student_name', 'teacher_name']

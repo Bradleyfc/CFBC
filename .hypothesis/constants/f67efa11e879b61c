@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\blog\forms.py
+# hypothesis_version: 6.148.7
+
+['%Y-%m-%dT%H:%M', 'Categoría', 'Comentario', 'Contenido', 'Estado', 'Fecha de publicación', 'Imagen principal', 'Noticia destacada', 'Resumen', 'Título', 'Título de la noticia', 'accept', 'categoria', 'class', 'contenido', 'datetime-local', 'destacada', 'estado', 'fecha_publicacion', 'form-check-input', 'form-control', 'form-select', 'image/*', 'imagen_principal', 'meta_descripcion', 'placeholder', 'resumen', 'rows', 'titulo', 'type']

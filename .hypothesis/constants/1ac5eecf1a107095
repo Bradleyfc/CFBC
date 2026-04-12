@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\course_documents\permissions.py
+# hypothesis_version: 6.148.7
+
+[',', 'El curso no existe.', 'Estudiantes', 'HTTP_X_FORWARDED_FOR', 'Profesores', 'REMOTE_ADDR', 'curso_id', 'document_downloaded', 'unauthorized_access']

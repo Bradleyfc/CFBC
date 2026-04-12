@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\accounts\migrations\0002_rename_rol_registro_alter_registro_options.py
+# hypothesis_version: 6.148.7
+
+['-id', '0001_initial', 'Registro', 'Rol', 'accounts', 'ordering', 'registro', 'registros', 'verbose_name', 'verbose_name_plural']

@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\course_documents\migrations\0003_increase_audit_log_action_length.py
+# hypothesis_version: 6.148.7
+
+['Acceso No Autorizado', 'Acción', 'Carpeta Creada', 'Carpeta Eliminada', 'Documento Descargado', 'Documento Eliminado', 'Documento Subido', 'action', 'auditlog', 'course_documents', 'document_deleted', 'document_downloaded', 'document_uploaded', 'folder_created', 'folder_deleted', 'unauthorized_access']

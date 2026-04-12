@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\course_documents\tests.py
+# hypothesis_version: 6.148.7
+
+[200, '2024-2025', 'Duplicate Name', 'Estudiantes', 'Profesores', 'Test Course', 'Test Folder', 'Test folder created', 'assigned_courses', 'enrolled_courses', 'folder_created', 'principal:profile', 'student', 'student@test.com', 'teacher', 'teacher@test.com', 'teacher_no_courses', 'testpass123']

@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\blog\models.py
+# hypothesis_version: 6.148.7
+
+[100, 160, 200, 300, '-fecha_publicacion', 'Archivado', 'Borrador', 'Categoría', 'Categorías', 'Comentario', 'Comentarios', 'Descripción para SEO', 'Noticia', 'Noticias', 'Publicado', 'archivado', 'blog:detalle_noticia', 'borrador', 'comentarios', 'fecha_creacion', 'nombre', 'noticias', 'noticias/', 'publicado', 'slug']

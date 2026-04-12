@@ -8,19 +8,20 @@ import os
 
 
 def course_document_upload_path(instance, filename):
-    """Genera la ruta de subida para documentos del curso"""
-    # Organizar por curso y carpeta
-    if instance.folder_id:
-        return f'course_documents/{instance.folder.curso.id}/{instance.folder.id}/{filename}'
-    else:
-        # Fallback temporal si no hay folder asignado aún
-        return f'course_documents/temp/{filename}'
+    """
+    Genera la ruta de subida para documentos de curso
+    """
+    from .file_service import FileService
+    return FileService.get_upload_path(
+        instance.folder.curso.id,
+        instance.folder.id,
+        FileService.generate_secure_filename(filename, instance.folder.curso.id, instance.folder.id)
+    )
 
 
 class DocumentFolder(models.Model):
     """Carpeta para organizar documentos por curso"""
-    curso = models.ForeignKey('principal.Curso', on_delete=models.CASCADE, 
-                             related_name='document_folders', verbose_name='Curso')
+    curso = models.ForeignKey('principal.Curso', on_delete=models.CASCADE, related_name='document_folders', verbose_name='Curso')
     name = models.CharField(max_length=255, verbose_name='Nombre de la carpeta')
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Creado por')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de creación')
@@ -38,19 +39,19 @@ class DocumentFolder(models.Model):
     def clean(self):
         from django.core.exceptions import ValidationError
         import re
-
+        
         # Validar que el nombre no esté vacío después de quitar espacios
         if not self.name or not self.name.strip():
             raise ValidationError({'name': 'El nombre de la carpeta no puede estar vacío.'})
-
+        
         # Validar caracteres especiales no permitidos
         if re.search(r'[<>:"/\\|?*]', self.name):
             raise ValidationError({'name': 'El nombre de la carpeta contiene caracteres no permitidos.'})
-
+        
         # Validar longitud máxima
         if len(self.name.strip()) > 200:  # Reducir límite para dar margen
             raise ValidationError({'name': 'El nombre de la carpeta es demasiado largo (máximo 200 caracteres).'})
-
+        
         # Limpiar espacios al inicio y final
         self.name = self.name.strip()
 
@@ -59,33 +60,18 @@ class DocumentFolder(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
-    def get_new_documents_count(self, student):
-        """Calcula el número de documentos nuevos en esta carpeta para un estudiante específico"""
-        try:
-            # Obtener el último acceso del estudiante a esta carpeta específica
-            folder_access = FolderAccess.objects.get(
-                folder=self,
-                student=student
-            )
-            
-            # Contar documentos subidos después del último acceso a la carpeta
-            new_documents = self.documents.filter(
-                uploaded_at__gt=folder_access.last_accessed
-            ).count()
-            
-            return new_documents
-            
-        except FolderAccess.DoesNotExist:
-            # Si nunca ha accedido a esta carpeta, todos los documentos son "nuevos"
-            return self.documents.count()
+
+def course_document_upload_path(instance, filename):
+    """Genera la ruta de subida para documentos del curso"""
+    # Organizar por curso y carpeta
+    return f'course_documents/{instance.folder.curso.id}/{instance.folder.id}/{filename}'
 
 
 class CourseDocument(models.Model):
     """Documento subido por el profesor"""
-
-    folder = models.ForeignKey(DocumentFolder, on_delete=models.CASCADE, 
-                              related_name='documents', verbose_name='Carpeta')
-    name = models.CharField(max_length=255, blank=True, verbose_name='Nombre del documento')
+    
+    folder = models.ForeignKey(DocumentFolder, on_delete=models.CASCADE, related_name='documents', verbose_name='Carpeta')
+    name = models.CharField(max_length=255, verbose_name='Nombre del documento')
     file = models.FileField(
         upload_to=course_document_upload_path,
         verbose_name='Archivo'
@@ -101,66 +87,82 @@ class CourseDocument(models.Model):
         ordering = ['-uploaded_at']
 
     def __str__(self):
-        if self.folder_id:
-            return f"{self.name} - {self.folder.name}"
-        else:
-            return f"{self.name} - Sin carpeta"
+        return f"{self.name} - {self.folder.name}"
 
     def clean(self):
         """Validación personalizada del modelo"""
+        from .file_service import FileService
+        
         # Validar nombre del documento
         if self.name:
             if len(self.name.strip()) > 200:  # Reducir límite para dar margen
                 raise ValidationError({'name': 'El nombre del documento es demasiado largo (máximo 200 caracteres).'})
+            
             # Limpiar espacios
             self.name = self.name.strip()
-
-        # Validar duplicados si el folder está asignado
-        if self.folder_id and self.name and self.file_size:
-            # Excluir el documento actual si estamos editando (tiene pk)
-            existing_query = CourseDocument.objects.filter(
-                folder=self.folder,
-                name=self.name,
-                file_size=self.file_size
-            )
-            
-            if self.pk:
-                existing_query = existing_query.exclude(pk=self.pk)
-            
-            if existing_query.exists():
-                raise ValidationError({
-                    'name': f'Ya existe un documento con el nombre "{self.name}" y el mismo tamaño en esta carpeta.'
-                })
-
+        
+        # Validar archivo usando el servicio
+        if self.file:
+            try:
+                FileService.validate_file(self.file)
+            except ValidationError as e:
+                raise ValidationError({'file': str(e)})
+    
     def save(self, *args, **kwargs):
         """Override save para calcular tamaño del archivo"""
         if self.file and not self.file_size:
             self.file_size = self.file.size
-
-        # Si no se proporciona un nombre, usar el nombre del archivo
-        if not self.name and self.file:
-            self.name = os.path.splitext(self.file.name)[0]
-
-        # Ejecutar validaciones si el folder está asignado
-        if self.folder_id:
-            self.full_clean()
-
         super().save(*args, **kwargs)
+    
+    def delete(self, *args, **kwargs):
+        """Override delete para eliminar archivo físico"""
+        from .file_service import FileService
+        
+        # Eliminar archivo físico
+        if self.file:
+            FileService.delete_file(self.file.name)
+        
+        super().delete(*args, **kwargs)
+    
+    def get_file_info(self):
+        """Obtiene información detallada del archivo"""
+        from .file_service import FileService
+        
+        if self.file:
+            return FileService.get_file_info(self.file.name)
+        return None
+        
+        # Validar que el nombre no esté vacío
+        if not self.name or not self.name.strip():
+            if self.file:
+                self.name = os.path.splitext(self.file.name)[0]
+            else:
+                raise ValidationError({'name': 'El nombre del documento no puede estar vacío.'})
 
+    def save(self, *args, **kwargs):
+        # Calcular el tamaño del archivo
+        if self.file:
+            self.file_size = self.file.size
+            
+            # Si no se proporciona un nombre, usar el nombre del archivo
+            if not self.name:
+                self.name = os.path.splitext(self.file.name)[0]
+        
+        # Ejecutar validaciones antes de guardar
+        self.full_clean()
+        
+        super().save(*args, **kwargs)
+        
         # Después de guardar, activar notificaciones para estudiantes
-        if self.folder_id:
-            self._activate_notifications()
+        self._activate_notifications()
 
     def _activate_notifications(self):
         """Activa las notificaciones de contenido nuevo para estudiantes del curso"""
-        if not self.folder_id:
-            return
-            
         from principal.models import Matriculas
-
+        
         # Obtener todos los estudiantes inscritos en el curso
         matriculas = Matriculas.objects.filter(course=self.folder.curso, activo=True)
-
+        
         for matricula in matriculas:
             notification, created = NewContentNotification.objects.get_or_create(
                 curso=self.folder.curso,
@@ -184,182 +186,10 @@ class CourseDocument(models.Model):
         else:
             return f"{self.file_size / (1024 * 1024):.1f} MB"
 
-    def get_file_icon(self):
-        """Obtiene el icono de Material Icons apropiado según el tipo de archivo"""
-        extension = self.get_file_extension().lower()
-        
-        # Mapeo de extensiones a iconos de Material Icons
-        icon_map = {
-            # Documentos PDF
-            '.pdf': 'picture_as_pdf',
-            
-            # Documentos de Word
-            '.doc': 'description',
-            '.docx': 'description',
-            
-            # Presentaciones
-            '.ppt': 'slideshow',
-            '.pptx': 'slideshow',
-            
-            # Hojas de cálculo
-            '.xls': 'table_chart',
-            '.xlsx': 'table_chart',
-            
-            # Archivos de texto
-            '.txt': 'text_snippet',
-            
-            # Archivos comprimidos
-            '.zip': 'folder_zip',
-            '.rar': 'folder_zip',
-            '.7z': 'folder_zip',
-            
-            # Imágenes
-            '.jpg': 'image',
-            '.jpeg': 'image',
-            '.png': 'image',
-            '.gif': 'image',
-            '.bmp': 'image',
-            
-            # Otros archivos
-            'default': 'insert_drive_file'
-        }
-        
-        return icon_map.get(extension, icon_map['default'])
-
-    def get_file_icon_color(self):
-        """Obtiene el color apropiado para el icono según el tipo de archivo"""
-        extension = self.get_file_extension().lower()
-        
-        # Mapeo de extensiones a colores
-        color_map = {
-            # PDF - Rojo
-            '.pdf': 'text-red-600',
-            
-            # Word - Azul
-            '.doc': 'text-blue-600',
-            '.docx': 'text-blue-600',
-            
-            # PowerPoint - Naranja
-            '.ppt': 'text-orange-600',
-            '.pptx': 'text-orange-600',
-            
-            # Excel - Verde
-            '.xls': 'text-green-600',
-            '.xlsx': 'text-green-600',
-            
-            # Texto - Gris
-            '.txt': 'text-gray-600',
-            
-            # Archivos comprimidos - Púrpura
-            '.zip': 'text-purple-600',
-            '.rar': 'text-purple-600',
-            '.7z': 'text-purple-600',
-            
-            # Imágenes - Rosa
-            '.jpg': 'text-pink-600',
-            '.jpeg': 'text-pink-600',
-            '.png': 'text-pink-600',
-            '.gif': 'text-pink-600',
-            '.bmp': 'text-pink-600',
-            
-            # Por defecto - Gris
-            'default': 'text-gray-600'
-        }
-        
-        return color_map.get(extension, color_map['default'])
-
-    def get_file_icon_class(self):
-        """Obtiene la clase CSS apropiada para el contenedor del icono según el tipo de archivo"""
-        extension = self.get_file_extension().lower()
-        
-        # Mapeo de extensiones a clases CSS
-        class_map = {
-            # PDF
-            '.pdf': 'document-icon-pdf',
-            
-            # Word
-            '.doc': 'document-icon-word',
-            '.docx': 'document-icon-word',
-            
-            # PowerPoint
-            '.ppt': 'document-icon-powerpoint',
-            '.pptx': 'document-icon-powerpoint',
-            
-            # Excel
-            '.xls': 'document-icon-excel',
-            '.xlsx': 'document-icon-excel',
-            
-            # Texto
-            '.txt': 'document-icon-text',
-            
-            # Archivos comprimidos
-            '.zip': 'document-icon-archive',
-            '.rar': 'document-icon-archive',
-            '.7z': 'document-icon-archive',
-            
-            # Imágenes
-            '.jpg': 'document-icon-image',
-            '.jpeg': 'document-icon-image',
-            '.png': 'document-icon-image',
-            '.gif': 'document-icon-image',
-            '.bmp': 'document-icon-image',
-            
-            # Por defecto
-            'default': 'document-icon-default'
-        }
-        
-        return class_map.get(extension, class_map['default'])
-
-    def get_file_type_name(self):
-        """Obtiene el nombre descriptivo del tipo de archivo"""
-        extension = self.get_file_extension().lower()
-        
-        # Mapeo de extensiones a nombres descriptivos
-        type_map = {
-            '.pdf': 'Documento PDF',
-            '.doc': 'Documento Word',
-            '.docx': 'Documento Word',
-            '.ppt': 'Presentación PowerPoint',
-            '.pptx': 'Presentación PowerPoint',
-            '.xls': 'Hoja de cálculo Excel',
-            '.xlsx': 'Hoja de cálculo Excel',
-            '.txt': 'Archivo de texto',
-            '.zip': 'Archivo comprimido ZIP',
-            '.rar': 'Archivo comprimido RAR',
-            '.7z': 'Archivo comprimido 7Z',
-            '.jpg': 'Imagen JPEG',
-            '.jpeg': 'Imagen JPEG',
-            '.png': 'Imagen PNG',
-            '.gif': 'Imagen GIF',
-            '.bmp': 'Imagen BMP',
-            'default': 'Archivo'
-        }
-        
-        return type_map.get(extension, type_map['default'])
-
-
-class FolderAccess(models.Model):
-    """Registro de acceso a carpetas por estudiantes"""
-    folder = models.ForeignKey(DocumentFolder, on_delete=models.CASCADE, 
-                              related_name='access_logs', verbose_name='Carpeta')
-    student = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Estudiante')
-    last_accessed = models.DateTimeField(auto_now=True, verbose_name='Último acceso')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Primer acceso')
-
-    class Meta:
-        verbose_name = '📂 Acceso a Carpeta'
-        verbose_name_plural = '📂 Accesos a Carpetas'
-        unique_together = [['folder', 'student']]
-        ordering = ['-last_accessed']
-
-    def __str__(self):
-        return f"{self.student.get_full_name() or self.student.username} - {self.folder.name} - {self.last_accessed}"
-
 
 class DocumentAccess(models.Model):
     """Registro de acceso a documentos por estudiantes"""
-    document = models.ForeignKey(CourseDocument, on_delete=models.CASCADE, 
-                                related_name='access_logs', verbose_name='Documento')
+    document = models.ForeignKey(CourseDocument, on_delete=models.CASCADE, related_name='access_logs', verbose_name='Documento')
     student = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Estudiante')
     accessed_at = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de acceso')
     ip_address = models.GenericIPAddressField(null=True, blank=True, verbose_name='Dirección IP')
@@ -397,7 +227,7 @@ class NewContentNotification(models.Model):
 
 class AuditLog(models.Model):
     """Log de auditoría para operaciones del sistema de documentos"""
-
+    
     ACTION_CHOICES = [
         ('folder_created', 'Carpeta Creada'),
         ('folder_deleted', 'Carpeta Eliminada'),
@@ -406,15 +236,12 @@ class AuditLog(models.Model):
         ('document_deleted', 'Documento Eliminado'),
         ('unauthorized_access', 'Acceso No Autorizado'),
     ]
-
+    
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='Usuario')
     action = models.CharField(max_length=50, choices=ACTION_CHOICES, verbose_name='Acción')
-    curso = models.ForeignKey('principal.Curso', on_delete=models.CASCADE, 
-                             null=True, blank=True, verbose_name='Curso')
-    folder = models.ForeignKey(DocumentFolder, on_delete=models.SET_NULL, 
-                              null=True, blank=True, verbose_name='Carpeta')
-    document = models.ForeignKey(CourseDocument, on_delete=models.SET_NULL, 
-                                null=True, blank=True, verbose_name='Documento')
+    curso = models.ForeignKey('principal.Curso', on_delete=models.CASCADE, null=True, blank=True, verbose_name='Curso')
+    folder = models.ForeignKey(DocumentFolder, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Carpeta')
+    document = models.ForeignKey(CourseDocument, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Documento')
     timestamp = models.DateTimeField(auto_now_add=True, verbose_name='Fecha y hora')
     ip_address = models.GenericIPAddressField(null=True, blank=True, verbose_name='Dirección IP')
     details = models.TextField(blank=True, null=True, verbose_name='Detalles adicionales')
@@ -428,13 +255,24 @@ class AuditLog(models.Model):
         user_name = self.user.get_full_name() or self.user.username if self.user else "Usuario desconocido"
         return f"{user_name} - {self.get_action_display()} - {self.timestamp}"
 
+    def clean(self):
+        """Validación personalizada del modelo"""
+        # Validar longitud de detalles
+        if self.details and len(self.details) > 1000:  # Límite razonable para detalles
+            raise ValidationError({'details': 'Los detalles son demasiado largos (máximo 1000 caracteres).'})
+        
+        # Validar que la acción esté en las opciones válidas
+        valid_actions = [choice[0] for choice in self.ACTION_CHOICES]
+        if self.action and self.action not in valid_actions:
+            raise ValidationError({'action': f'Acción no válida. Debe ser una de: {", ".join(valid_actions)}'})
+
     @classmethod
     def log_action(cls, user, action, curso=None, folder=None, document=None, ip_address=None, details=None):
         """Método de conveniencia para crear logs de auditoría"""
         # Truncar detalles si son demasiado largos
         if details and len(details) > 1000:
             details = details[:997] + "..."
-
+        
         return cls.objects.create(
             user=user,
             action=action,

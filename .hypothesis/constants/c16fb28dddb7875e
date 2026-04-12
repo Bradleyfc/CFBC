@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\course_documents\urls.py
+# hypothesis_version: 6.148.7
+
+['course_documents', 'create_folder', 'delete_document', 'delete_folder', 'download_document', 'folder_detail', 'student_dashboard', 'student_history', 'teacher_dashboard', 'upload_document']

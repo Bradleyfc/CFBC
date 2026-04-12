@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\chatbot\config.py
+# hypothesis_version: 6.148.7
+
+[5.0, '0.5', '0.6', '0.7', '0.85', '250', '3', '3.0', '30', '300', '50', '8.0', 'CHATBOT_CHUNK_SIZE', 'CHATBOT_DATA_DIR', 'CHATBOT_INDEX_PATH', 'CHATBOT_LLM_MAX_TIME', 'CHATBOT_MAX_TOKENS', 'CHATBOT_MMR_LAMBDA', 'CHATBOT_MODEL_PATH', 'CHATBOT_SEARCH_TOP_K', 'CHATBOT_USE_MMR', 'LLM_MODEL', 'chatbot_data', 'faiss_index.bin', 'google/flan-t5-small', 'id_to_metadata.json', 'models', 'true']

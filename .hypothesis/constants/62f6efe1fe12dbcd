@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\blog\urls.py
+# hypothesis_version: 6.148.7
+
+['agregar_comentario', 'blog', 'categoria_noticias', 'crear_noticia', 'detalle_noticia', 'editar_noticia', 'editores/', 'editores/categorias/', 'editores/crear/', 'eliminar_noticia', 'gestionar_categorias', 'lista_noticias', 'mis_noticias', 'noticia/<slug:slug>/', 'panel_editores']

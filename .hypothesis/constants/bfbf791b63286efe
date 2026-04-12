@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\datos_archivados\migrations\0004_codigoverificacionreclamacion.py
+# hypothesis_version: 6.148.7
+
+[254, '-fecha_creacion', 'Dato Archivado', 'Email', 'Fecha de Creación', 'Fecha de Expiración', 'ID', 'Usado', 'Usuario Archivado', 'codigo', 'dato_archivado', 'datos_archivados', 'email', 'fecha_creacion', 'fecha_expiracion', 'id', 'ordering', 'usado', 'usuario_archivado', 'verbose_name', 'verbose_name_plural']

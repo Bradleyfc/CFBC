@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\chatbot\urls.py
+# hypothesis_version: 6.148.7
+
+['ask', 'ask/', 'chatbot', 'clear-history/', 'clear_history', 'feedback', 'feedback/', 'history', 'history/', 'stats', 'stats/', 'status', 'status/', 'widget', 'widget/']

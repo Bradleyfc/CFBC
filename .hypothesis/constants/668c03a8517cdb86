@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\course_documents\views.py
+# hypothesis_version: 6.148.7
+
+[403, 500, '-accessed_at', '-uploaded_at', 'Content-Disposition', 'Content-Length', 'Sin permisos', 'content_viewed', 'curso', 'curso_id', 'document', 'document__folder', 'document_deleted', 'document_downloaded', 'document_form', 'document_uploaded', 'documents', 'download_error', 'downloads', 'downloads_count', 'error', 'folder', 'folder_created', 'folder_deleted', 'folder_form', 'folder_id', 'folders', 'has_new_content', 'message', 'name', 'path', 'rb', 'stats', 'success', 'total_documents', 'total_downloads', 'total_folders', 'unique_documents', 'user_stats']

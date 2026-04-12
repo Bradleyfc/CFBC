@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\chatbot\views.py
+# hypothesis_version: 6.148.7
+
+[0.0, 365, 400, 404, 500, '-fecha', 'Chat history cleared', 'Chatbot is ready', 'GET', 'Invalid JSON format', 'POST', 'Pregunta is required', 'available', 'chatbot/error.html', 'chatbot/widget.html', 'chatbot_history', 'chatbot_session_id', 'chatbot_start_time', 'components', 'confianza', 'days', 'degraded', 'error', 'fue_util', 'fue_util is required', 'history', 'index_stats', 'interaction_id', 'llm_generator', 'message', 'ok', 'pregunta', 'respuesta', 'semantic_search', 'session_id', 'stats', 'status', 'success', 'suggestions', 'tiempo', 'timestamp', 'total_vectors']

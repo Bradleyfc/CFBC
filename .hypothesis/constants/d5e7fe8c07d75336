@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\principal\migrations\0013_alter_formularioaplicacion_options_and_more.py
+# hypothesis_version: 6.148.7
+
+['-fecha_modificacion', '-fecha_solicitud', 'formularioaplicacion', 'opcionrespuesta', 'orden', 'ordering', 'preguntaformulario', 'principal', 'respuestaestudiante', 'solicitudinscripcion', 'verbose_name', 'verbose_name_plural']

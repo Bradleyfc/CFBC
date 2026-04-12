@@ -11,7 +11,7 @@ class DocumentFolderForm(forms.ModelForm):
     """
     Formulario para crear carpetas de documentos
     """
-
+    
     class Meta:
         model = DocumentFolder
         fields = ['name']
@@ -28,31 +28,31 @@ class DocumentFolderForm(forms.ModelForm):
         labels = {
             'name': 'Nombre de la carpeta'
         }
-
+    
     def clean_name(self):
         """Validar nombre de carpeta"""
         name = self.cleaned_data.get('name')
-
+        
         if not name:
             raise ValidationError("El nombre de la carpeta es requerido.")
-
+        
         # Eliminar espacios al inicio y final
         name = name.strip()
-
+        
         if not name:
             raise ValidationError("El nombre de la carpeta no puede estar vacío o contener solo espacios.")
-
+        
         # Verificar caracteres no permitidos
         forbidden_chars = r'[<>:"/\\|?*]'
         if re.search(forbidden_chars, name):
             raise ValidationError(
                 "El nombre de la carpeta contiene caracteres no permitidos: < > : \" / \\ | ? *"
             )
-
+        
         # Verificar longitud
         if len(name) > 200:
             raise ValidationError("El nombre de la carpeta no puede exceder 200 caracteres.")
-
+        
         return name
 
 
@@ -60,95 +60,72 @@ class CourseDocumentForm(forms.ModelForm):
     """
     Formulario para subir documentos
     """
-
+    
     # Tipos de archivo permitidos
     ALLOWED_EXTENSIONS = [
-        'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx',
-        'txt', 'zip', 'rar', '7z', 'jpg', 'jpeg', 'png', 'gif', 'bmp'
+        'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 
+        'txt', 'zip', 'rar', '7z', 'jpg', 'jpeg', 'png', 'gif'
     ]
-
+    
     # Tamaño máximo de archivo (10MB)
     MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB en bytes
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Hacer que el campo name no sea requerido
-        self.fields['name'].required = False
-        
-        # Agregar clases CSS a los campos
-        self.fields['name'].widget.attrs.update({
-            'class': 'glass-input',
-            'placeholder': 'Dejar vacío para usar el nombre original del archivo',
-            'maxlength': 200,
-            'data-bs-toggle': 'tooltip',
-            'title': 'Opcional. Si se deja vacío, se usará el nombre original del archivo'
-        })
-        
-        self.fields['file'].widget.attrs.update({
-            'class': 'glass-input',
-            'accept': '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,.7z,.jpg,.jpeg,.png,.gif,.bmp',
-            'required': True,
-            'data-bs-toggle': 'tooltip',
-            'title': 'Tamaño máximo: 10MB. Tipos permitidos: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, ZIP, RAR, JPG, JPEG, PNG, GIF, BMP'
-        })
-
+    
     class Meta:
         model = CourseDocument
         fields = ['name', 'file']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Dejar vacío para usar el nombre original del archivo',
+                'placeholder': 'Nombre del documento (máximo 200 caracteres)',
                 'maxlength': 200,
+                'required': True,
                 'data-bs-toggle': 'tooltip',
-                'title': 'Opcional. Si se deja vacío, se usará el nombre original del archivo'
+                'title': 'Máximo 200 caracteres'
             }),
             'file': forms.FileInput(attrs={
                 'class': 'form-control',
-                'accept': '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,.7z,.jpg,.jpeg,.png,.gif,.bmp',
+                'accept': '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,.7z,.jpg,.jpeg,.png,.gif',
                 'required': True,
                 'data-bs-toggle': 'tooltip',
-                'title': 'Tamaño máximo: 10MB. Tipos permitidos: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, ZIP, RAR, JPG, JPEG, PNG, GIF, BMP'
+                'title': 'Tamaño máximo: 50MB. Tipos permitidos: PDF, DOC, PPT, XLS, TXT, ZIP, imágenes'
             })
         }
         labels = {
-            'name': 'Nombre del documento (opcional)',
+            'name': 'Nombre del documento',
             'file': 'Archivo'
         }
-
+    
     def clean_name(self):
         """Validar nombre del documento"""
         name = self.cleaned_data.get('name')
-
-        # Si no se proporciona nombre, está bien (se usará el nombre del archivo)
+        
         if not name:
-            return name
-
+            raise ValidationError("El nombre del documento es requerido.")
+        
         # Eliminar espacios al inicio y final
         name = name.strip()
-
-        # Si después de limpiar queda vacío, está bien
+        
         if not name:
-            return name
-
+            raise ValidationError("El nombre del documento no puede estar vacío o contener solo espacios.")
+        
         # Verificar longitud
         if len(name) > 200:
             raise ValidationError("El nombre del documento no puede exceder 200 caracteres.")
-
+        
         return name
-
+    
     def clean_file(self):
         """Validar archivo subido"""
         file = self.cleaned_data.get('file')
-
+        
         if not file:
             raise ValidationError("Debe seleccionar un archivo.")
-
+        
         # Verificar tamaño del archivo
         if file.size > self.MAX_FILE_SIZE:
             size_mb = self.MAX_FILE_SIZE / (1024 * 1024)
             raise ValidationError(f"El archivo es demasiado grande. Tamaño máximo permitido: {size_mb:.0f}MB")
-
+        
         # Verificar extensión del archivo
         file_extension = self.get_file_extension(file.name)
         if file_extension not in self.ALLOWED_EXTENSIONS:
@@ -156,75 +133,49 @@ class CourseDocumentForm(forms.ModelForm):
             raise ValidationError(
                 f"Tipo de archivo no permitido. Extensiones permitidas: {allowed_extensions_str}"
             )
-
+        
         # Verificar que el archivo no esté vacío
         if file.size == 0:
             raise ValidationError("El archivo está vacío.")
-
+        
         return file
-
+    
     def get_file_extension(self, filename):
         """Obtener extensión del archivo en minúsculas"""
         if not filename:
             return ''
-
+        
         # Obtener la extensión y convertir a minúsculas
         _, extension = os.path.splitext(filename)
         return extension.lower().lstrip('.')
-
+    
     def clean(self):
         """Validación adicional del formulario"""
         cleaned_data = super().clean()
         name = cleaned_data.get('name')
         file = cleaned_data.get('file')
-
-        # Si no se proporciona nombre o está vacío, usar el nombre del archivo
-        if file and (not name or not name.strip()):
+        
+        # Si no se proporciona nombre, usar el nombre del archivo
+        if file and not name:
             # Usar el nombre del archivo sin extensión como nombre por defecto
             filename_without_ext = os.path.splitext(file.name)[0]
-            # Limpiar el nombre del archivo de caracteres especiales si es necesario
-            cleaned_filename = filename_without_ext.strip()
-            if cleaned_filename:
-                cleaned_data['name'] = cleaned_filename
-            else:
-                # Si el nombre del archivo también está vacío, usar un nombre por defecto
-                cleaned_data['name'] = f"Documento_{file.name}"
-        elif name:
-            # Si se proporciona un nombre, limpiarlo
-            cleaned_data['name'] = name.strip()
-
+            cleaned_data['name'] = filename_without_ext
+        
         return cleaned_data
 
-    def check_duplicate_document(self, folder):
-        """
-        Verificar si ya existe un documento con el mismo nombre y tamaño en la carpeta
-        """
-        cleaned_data = self.cleaned_data
-        name = cleaned_data.get('name')
-        file = cleaned_data.get('file')
 
-        if not name or not file or not folder:
-            return
-
-        # Buscar documentos existentes con el mismo nombre y tamaño en la misma carpeta
-        existing_document = CourseDocument.objects.filter(
-            folder=folder,
-            name=name,
-            file_size=file.size
-        ).first()
-
-        if existing_document:
-            raise ValidationError(
-                f'Ya existe un documento con el nombre "{name}" y el mismo tamaño '
-                f'({self.get_file_size_display(file.size)}) en esta carpeta. '
-                f'Por favor, cambia el nombre del documento o verifica que no sea un duplicado.'
-            )
-
-    def get_file_size_display(self, size_bytes):
-        """Muestra el tamaño del archivo en formato legible"""
-        if size_bytes < 1024:
-            return f"{size_bytes} bytes"
-        elif size_bytes < 1024 * 1024:
-            return f"{size_bytes / 1024:.1f} KB"
-        else:
-            return f"{size_bytes / (1024 * 1024):.1f} MB"
+class BulkUploadForm(forms.Form):
+    """
+    Formulario para subida masiva de documentos (futuro)
+    """
+    # Usar un campo personalizado para múltiples archivos
+    files = forms.CharField(
+        widget=forms.HiddenInput(),
+        required=False,
+        help_text='Formulario para subida masiva - implementación futura'
+    )
+    
+    def clean_files(self):
+        """Validar archivos múltiples - implementación futura"""
+        # Por ahora, este formulario es solo un placeholder
+        return self.cleaned_data.get('files', '')

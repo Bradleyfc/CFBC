@@ -77,6 +77,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'course_documents.mixins.documents_context',
             ],
         },
     },
@@ -142,6 +143,19 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Media files (User uploaded files)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR / 'media')
+
+# Course Documents Configuration
+COURSE_DOCUMENTS_UPLOAD_PATH = 'course_documents/'
+COURSE_DOCUMENTS_MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+COURSE_DOCUMENTS_ALLOWED_EXTENSIONS = [
+    'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 
+    'txt', 'zip', 'rar', '7z', 'jpg', 'jpeg', 'png', 'gif'
+]
+
+# File Upload Settings
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+FILE_UPLOAD_PERMISSIONS = 0o644
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

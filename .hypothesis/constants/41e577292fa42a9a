@@ -1,0 +1,4 @@
+# file: D:\Trabajos de Programacion\Lab\proyecto\principal\views_registro_respuestas.py
+# hypothesis_version: 6.148.7
+
+['%d/%m/%Y %H:%M', ', ', '003366', 'Aprobadas', 'Arial', 'Content-Disposition', 'Curso', 'Email', 'Estado', 'Estudiante', 'FFFFFF', 'Fecha Solicitud', 'Pendientes', 'Profesor', 'Profesores', 'Rechazadas', 'Resumen General', 'Secretaria', 'Sin respuesta', 'Total Solicitudes', 'aprobada', 'center', 'curso', 'curso_academico', 'cursos', 'estado', 'estados_choices', 'estudiante', 'formulario', 'name', 'orden', 'pendiente', 'pregunta', 'pregunta__orden', 'preguntas', 'rechazada', 'registro_estudiante', 'respuestas', 'respuestas__pregunta', 'search', 'solicitud', 'solicitudes', 'solid', 'thin', 'total_solicitudes']
