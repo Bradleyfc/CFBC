@@ -1,90 +1,299 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
-
-<div class="container mt-3">
-
-<h2 class="mb-4 text-center">Asistencias para el curso {{course.name}}</h2>
-<hr>
-
-
-
-<!-- Formulario para agregar asistencias -->
-<div class="card">
-    <div class="card-header bg-warning text-dark">
-        <h5 class="mb-0">Agregar Asistencia</h5>
+<!-- Background Section with Gradient -->
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-30"
+        style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;">
     </div>
-    <div class="card-body">
-        <form action="{% url 'principal:add_asistencias' course_id=course.id %}" method="post">
-            {% csrf_token %}
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="mb-3">
-                        <label for="date" class="form-label">Fecha</label>
-                        <input class="form-control" type="date" name="date" id="date" value="{{ today|date:'Y-m-d' }}" required>
-                    </div>
-                    <hr>
-                    <h6>Seleccione los estudiantes ausentes:</h6>
-                    <div class="row">
-                        {% for matricula in matriculas %}
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="asistencia_{{matricula.id}}" id="asistencia_{{matricula.id}}" value="{{matricula.id}}">
-                                    <label class="form-check-label" for="asistencia_{{matricula.id}}">{{matricula.student.get_full_name|default:matricula.student.username}}</label>
-                                </div>
-                            </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        <!-- Breadcrumb and Header -->
+        <div class="mb-6">
+            <nav class="flex mb-4" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                    <li class="inline-flex items-center">
+                        <a href="{% url 'principal:asistencias' course.id %}" 
+                           class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+                            <span class="fa material-icons mr-2">assignment</span></i>
+                            Ver Asistencias
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <span class="fa material-icons text-gray-400">arrow_back</span></i>
+                            <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Agregar Asistencia</span>
                         </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-            <div class="text-end">
-                <button  class="btn btn-warning" type="submit">
-                  <i class="bi bi-plus-circle"></i> Agregar Asistencia
-                </button>
-                
-            </div>
+                    </li>
+                </ol>
+            </nav>
             
-        </form>
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">Agregar Asistencia</h2>
+            <p class="text-center text-gray-600">{{ course.name }}</p>
+        </div>
+
+        <!-- Add Attendance Form Card -->
+        <div class="glass-card">
+            <div class="glass-header">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <span class="fa material-icons mr-2">add_circle</span></i>
+                    Registrar Asistencia
+                </h3>
+            </div>
+            <div class="glass-content">
+                <form action="{% url 'principal:add_asistencias' course_id=course.id %}" method="post">
+                    {% csrf_token %}
+                    
+                    <!-- Date Selection -->
+                    <div class="mb-6">
+                        <label for="date" class="block text-sm font-medium text-gray-700 mb-2">
+                            <span class="fa material-icons mr-1">event</span></i>
+                            Fecha de la clase
+                        </label>
+                        <input class="glass-input" 
+                               type="date" 
+                               name="date" 
+                               id="date" 
+                               value="{{ today|date:'Y-m-d' }}" 
+                               required>
+                    </div>
+
+                    <!-- Divider -->
+                    <div class="border-t border-gray-200 my-6"></div>
+
+                    <!-- Students Selection -->
+                    <div class="mb-6">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                            <span class="fa material-icons mr-2">group</span></i>
+                            Marcar estudiantes ausentes
+                        </h4>
+                        <p class="text-sm text-gray-600 mb-4">
+                            Seleccione únicamente los estudiantes que NO asistieron a la clase. 
+                            Los estudiantes no marcados se registrarán como presentes.
+                        </p>
+                        
+                        {% if matriculas %}
+                            <div class="flex flex-wrap gap-3">
+                                {% for matricula in matriculas %}
+                                <div class="glass-checkbox-card">
+                                    <input class="glass-checkbox" 
+                                           type="checkbox" 
+                                           name="asistencia_{{matricula.id}}" 
+                                           id="asistencia_{{matricula.id}}" 
+                                           value="{{matricula.id}}">
+                                    <label class="glass-checkbox-label" for="asistencia_{{matricula.id}}">
+                                        <div class="flex flex-col items-center text-center">
+                                            <div class="glass-checkbox-indicator mb-2"></div>
+                                            <div class="flex-1">
+                                                <div class="font-medium text-gray-800 text-xs leading-tight">
+                                                    {{matricula.student.get_full_name|default:matricula.student.username}}
+                                                </div>
+                                                <div class="text-xs text-gray-500 mt-1">
+                                                    {{matricula.student.username}}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="glass-alert glass-alert-info">
+                                <span class="fa material-icons mr-2">info</span></i>
+                                No hay estudiantes matriculados en este curso.
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-3 justify-end">
+                        <a href="{% url 'principal:asistencias' course.id %}" 
+                           class="glass-button glass-button-secondary">
+                            <span class="fa material-icons mr-2">arrow_back</span></i>
+                            Cancelar
+                        </a>
+                        <button type="submit" class="glass-button glass-button-success">
+                            <span class="fa material-icons mr-2">add_circle</span></i>
+                            Registrar Asistencia
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
     </div>
 </div>
 
-<!-- Tabla de asistencias existentes -->
-<!-- <div class="card mb-4">
-    <div class="card-header bg-primary text-white">
-        <h5 class="mb-0">Registro de Asistencias</h5>
-    </div>
-    <div class="card-body">
-        {% if asistencias %}
-        <div class="table-responsive">
-            <table class="table table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th>Estudiante</th>
-                        <th>Fecha</th>
-                        <th>Asistió</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for asistencia in asistencias %}
-                    <tr>
-                        <td>{{ asistencia.student.first_name }} {{ asistencia.student.last_name }}</td>
-                        <td>{{ asistencia.date }}</td>
-                        <td>{% if asistencia.presente %}<span class="badge bg-success">Sí</span>{% else %}<span class="badge bg-danger">No</span>{% endif %}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <div class="alert alert-info">
-            No hay registros de asistencia para este curso.
-        </div>
-        {% endif %}
-    </div>
-</div> -->
+<style>
+    /* Glass Card */
+    .glass-card {
+        position: relative;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            0 4px 16px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-</div>
+    .glass-header {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .glass-content {
+        padding: 2rem;
+    }
+
+    /* Glass Input */
+    .glass-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #374151;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+    }
+
+    .glass-input:focus {
+        outline: none;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3));
+        border-color: rgba(59, 130, 246, 0.5);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Glass Button */
+    .glass-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        cursor: pointer;
+        min-width: 140px;
+    }
+
+    .glass-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .glass-button-secondary {
+        background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
+        color: #374151;
+    }
+
+    .glass-button-success {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+        color: #14532d;
+    }
+
+    /* Glass Checkbox Card */
+    .glass-checkbox-card {
+        position: relative;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.4));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 0.75rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        min-height: 80px;
+        width: 140px;
+        flex-shrink: 0;
+    }
+
+    .glass-checkbox-card:hover {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.5));
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .glass-checkbox {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .glass-checkbox-label {
+        display: block;
+        cursor: pointer;
+        width: 100%;
+    }
+
+    .glass-checkbox-indicator {
+        width: 18px;
+        height: 18px;
+        border-radius: 4px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.6));
+        border: 2px solid rgba(156, 163, 175, 0.5);
+        transition: all 0.3s ease;
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .glass-checkbox:checked + .glass-checkbox-label .glass-checkbox-indicator {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.8), rgba(220, 38, 38, 0.6));
+        border-color: rgba(239, 68, 68, 0.8);
+    }
+
+    .glass-checkbox:checked + .glass-checkbox-label .glass-checkbox-indicator::after {
+        content: '✓';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .glass-checkbox:checked + .glass-checkbox-label {
+        color: #dc2626;
+    }
+
+    .glass-checkbox-card:has(.glass-checkbox:checked) {
+        background: linear-gradient(135deg, rgba(254, 226, 226, 0.8), rgba(252, 165, 165, 0.4));
+        border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    /* Glass Alert */
+    .glass-alert {
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        font-size: 0.875rem;
+    }
+
+    .glass-alert-info {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        color: #1e3a8a;
+    }
+</style>
 
 {% endblock %}

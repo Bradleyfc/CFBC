@@ -9,13 +9,8 @@
         line-height: 1.8;
         font-size: 1.1rem;
     }
-    .noticia-meta {
-        border-bottom: 1px solid #dee2e6;
-        padding-bottom: 15px;
-        margin-bottom: 20px;
-    }
     .comentario {
-        border-left: 3px solid #007bff;
+        border-left: 3px solid #3b82f6;
         padding-left: 15px;
         margin-bottom: 20px;
     }
@@ -23,64 +18,82 @@
 {% endblock %}
 
 {% block content %}
-<div class="row">
-    <!-- Contenido principal -->
-    <div class="col-lg-8">
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+    <!-- Main Content -->
+    <div class="lg:col-span-3">
         <!-- Breadcrumb -->
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item">
-                    <a href="{% url 'blog:lista_noticias' %}">Noticias</a>
-                </li>
-                <li class="breadcrumb-item">
-                    <a href="{% url 'blog:categoria_noticias' noticia.categoria.slug %}">
-                        {{ noticia.categoria.nombre }}
+        <nav class="flex mb-6" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                <li class="inline-flex items-center">
+                    <a href="{% url 'blog:lista_noticias' %}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+                        Noticias
                     </a>
                 </li>
-                <li class="breadcrumb-item active">{{ noticia.titulo|truncatechars:50 }}</li>
+                <li>
+                    <div class="flex items-center">
+                        <span class="material-icons text-gray-400 mx-2">chevron_right</span>
+                        <a href="{% url 'blog:categoria_noticias' noticia.categoria.slug %}" class="text-sm font-medium text-gray-700 hover:text-blue-600">
+                            {{ noticia.categoria.nombre }}
+                        </a>
+                    </div>
+                </li>
+                <li aria-current="page">
+                    <div class="flex items-center">
+                        <span class="material-icons text-gray-400 mx-2">chevron_right</span>
+                        <span class="text-sm font-medium text-gray-500">{{ noticia.titulo|truncatechars:50 }}</span>
+                    </div>
+                </li>
             </ol>
         </nav>
 
-        <!-- Artículo principal -->
-        <article class="mb-5">
+        <!-- Main Article -->
+        <article class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
             {% if noticia.destacada %}
-                <div class="alert alert-warning">
-                    <i class="fas fa-star"></i> <strong>Noticia Destacada</strong>
+                <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3">
+                    <div class="flex items-center">
+                        <span class="material-icons mr-2">star</span>
+                        <strong>Noticia Destacada</strong>
+                    </div>
                 </div>
             {% endif %}
 
-            <header class="noticia-meta">
-                <h1 class="display-5 mb-3">{{ noticia.titulo }}</h1>
+            <header class="p-6 border-b border-gray-200">
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{{ noticia.titulo }}</h1>
                 
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <p class="lead text-muted mb-2">{{ noticia.resumen }}</p>
-                        <div class="d-flex flex-wrap gap-3">
-                            <span class="badge bg-primary">{{ noticia.categoria.nombre }}</span>
-                            <small class="text-muted">
-                                <i class="fas fa-user"></i> 
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+                    <div class="md:col-span-2">
+                        <p class="text-lg text-gray-600 mb-4">{{ noticia.resumen }}</p>
+                        <div class="flex flex-wrap gap-4 text-sm text-gray-500">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 font-medium">
+                                {{ noticia.categoria.nombre }}
+                            </span>
+                            <div class="flex items-center">
+                                <span class="material-icons text-sm mr-1">person</span>
                                 {{ noticia.autor.get_full_name|default:noticia.autor.username }}
-                            </small>
-                            <small class="text-muted">
-                                <i class="fas fa-calendar"></i> 
+                            </div>
+                            <div class="flex items-center">
+                                <span class="material-icons text-sm mr-1">event</span>
                                 {{ noticia.fecha_publicacion|date:"d/m/Y H:i" }}
-                            </small>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-4 text-md-end">
-                        <!-- Botones de compartir -->
-                        <div class="btn-group" role="group">
+                    <div class="md:text-right">
+                        <!-- Share Buttons -->
+                        <div class="flex md:justify-end gap-2">
                             <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" 
-                               target="_blank" class="btn btn-outline-primary btn-sm">
-                                <i class="fab fa-facebook-f"></i>
+                               target="_blank" 
+                               class="inline-flex items-center px-3 py-2 border border-blue-600 text-blue-600 text-sm font-medium rounded-md hover:bg-blue-600 hover:text-white transition-colors">
+                                <span class="material-icons text-sm">share</span>
                             </a>
                             <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri }}&text={{ noticia.titulo }}" 
-                               target="_blank" class="btn btn-outline-info btn-sm">
-                                <i class="fab fa-twitter"></i>
+                               target="_blank" 
+                               class="inline-flex items-center px-3 py-2 border border-blue-400 text-blue-400 text-sm font-medium rounded-md hover:bg-blue-400 hover:text-white transition-colors">
+                                <span class="material-icons text-sm">share</span>
                             </a>
                             <a href="https://wa.me/?text={{ noticia.titulo }} {{ request.build_absolute_uri }}" 
-                               target="_blank" class="btn btn-outline-success btn-sm">
-                                <i class="fab fa-whatsapp"></i>
+                               target="_blank" 
+                               class="inline-flex items-center px-3 py-2 border border-green-600 text-green-600 text-sm font-medium rounded-md hover:bg-green-600 hover:text-white transition-colors">
+                                <span class="material-icons text-sm">share</span>
                             </a>
                         </div>
                     </div>
@@ -88,107 +101,116 @@
             </header>
 
             {% if noticia.imagen_principal %}
-                <div class="text-center mb-4">
+                <div class="p-6">
                     <img src="{{ noticia.imagen_principal.url }}" 
-                         class="img-fluid rounded shadow" 
-                         alt="{{ noticia.titulo }}"
-                         style="max-height: 400px; width: 100%; object-fit: cover;">
+                         class="w-full max-h-96 object-cover rounded-lg shadow-md" 
+                         alt="{{ noticia.titulo }}">
                 </div>
             {% endif %}
 
-            <div class="noticia-content">
+            <div class="p-6 noticia-content prose max-w-none">
                 {{ noticia.contenido|linebreaks }}
             </div>
         </article>
 
-        <!-- Sección de comentarios -->
-        <section class="mt-5">
-            <h3><i class="fas fa-comments"></i> Comentarios ({{ comentarios.count }})</h3>
+        <!-- Comments Section -->
+        <section class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="flex items-center text-xl font-semibold text-gray-900 mb-6">
+                <span class="material-icons mr-2">comment</span>
+                Comentarios ({{ comentarios.count }})
+            </h3>
             
             {% if user.is_authenticated %}
-                <!-- Formulario para nuevo comentario -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Agregar comentario</h5>
-                    </div>
-                    <div class="card-body">
-                        <form method="post" action="{% url 'blog:agregar_comentario' noticia.slug %}">
-                            {% csrf_token %}
+                <!-- New Comment Form -->
+                <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                    <h5 class="text-lg font-medium text-gray-900 mb-4">Agregar comentario</h5>
+                    <form method="post" action="{% url 'blog:agregar_comentario' noticia.slug %}">
+                        {% csrf_token %}
+                        <div class="mb-4">
                             {{ comentario_form.as_p }}
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-paper-plane"></i> Publicar comentario
-                            </button>
-                        </form>
-                    </div>
+                        </div>
+                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors">
+                            <span class="material-icons mr-2 text-sm">send</span>
+                            Publicar comentario
+                        </button>
+                    </form>
                 </div>
             {% else %}
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i>
-                    <a href="{% url 'login' %}">Inicia sesión</a> para poder comentar.
+                <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-6">
+                    <div class="flex items-center">
+                        <span class="material-icons mr-2">info</span>
+                        <span><a href="{% url 'login' %}" class="font-medium hover:underline">Inicia sesión</a> para poder comentar.</span>
+                    </div>
                 </div>
             {% endif %}
 
-            <!-- Lista de comentarios -->
+            <!-- Comments List -->
             {% if comentarios %}
-                {% for comentario in comentarios %}
-                    <div class="comentario">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <strong>
-                                <i class="fas fa-user-circle"></i>
-                                {{ comentario.autor.get_full_name|default:comentario.autor.username }}
-                            </strong>
-                            <small class="text-muted">
-                                {{ comentario.fecha_creacion|date:"d/m/Y H:i" }}
-                            </small>
+                <div class="space-y-6">
+                    {% for comentario in comentarios %}
+                        <div class="comentario bg-gray-50 rounded-lg p-4">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex items-center">
+                                    <span class="material-icons text-gray-500 mr-2">person</span>
+                                    <strong class="text-gray-900">{{ comentario.autor.get_full_name|default:comentario.autor.username }}</strong>
+                                </div>
+                                <small class="text-gray-500">
+                                    {{ comentario.fecha_creacion|date:"d/m/Y H:i" }}
+                                </small>
+                            </div>
+                            <div class="text-gray-700">{{ comentario.contenido|linebreaks }}</div>
                         </div>
-                        <p class="mb-0">{{ comentario.contenido|linebreaks }}</p>
-                    </div>
-                {% endfor %}
+                    {% endfor %}
+                </div>
             {% else %}
-                <div class="text-center py-4">
-                    <i class="fas fa-comment-slash fa-3x text-muted mb-3"></i>
-                    <p class="text-muted">Aún no hay comentarios. ¡Sé el primero en comentar!</p>
+                <div class="text-center py-8">
+                    <span class="material-icons text-gray-400 text-4xl mb-3 block">comment</span>
+                    <p class="text-gray-600">Aún no hay comentarios. ¡Sé el primero en comentar!</p>
                 </div>
             {% endif %}
         </section>
     </div>
 
     <!-- Sidebar -->
-    <div class="col-lg-4">
-        <div class="sidebar">
-            <!-- Noticias relacionadas -->
+    <div class="lg:col-span-1">
+        <div class="bg-gray-50 p-6 rounded-lg">
+            <!-- Related News -->
             {% if noticias_relacionadas %}
-                <h5><i class="fas fa-newspaper"></i> Noticias Relacionadas</h5>
-                {% for noticia_rel in noticias_relacionadas %}
-                    <div class="card mb-3">
-                        {% if noticia_rel.imagen_principal %}
-                            <img src="{{ noticia_rel.imagen_principal.url }}" 
-                                 class="card-img-top" 
-                                 style="height: 120px; object-fit: cover;"
-                                 alt="{{ noticia_rel.titulo }}">
-                        {% endif %}
-                        <div class="card-body">
-                            <h6 class="card-title">
-                                <a href="{{ noticia_rel.get_absolute_url }}" class="text-decoration-none">
-                                    {{ noticia_rel.titulo|truncatechars:60 }}
-                                </a>
-                            </h6>
-                            <small class="text-muted">
-                                <i class="fas fa-calendar"></i> 
-                                {{ noticia_rel.fecha_publicacion|date:"d/m/Y" }}
-                            </small>
+                <h5 class="flex items-center text-lg font-semibold text-gray-900 mb-4">
+                    <span class="material-icons mr-2">article</span>
+                    Noticias Relacionadas
+                </h5>
+                <div class="space-y-4 mb-6">
+                    {% for noticia_rel in noticias_relacionadas %}
+                        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                            {% if noticia_rel.imagen_principal %}
+                                <img src="{{ noticia_rel.imagen_principal.url }}" 
+                                     class="w-full h-24 object-cover" 
+                                     alt="{{ noticia_rel.titulo }}">
+                            {% endif %}
+                            <div class="p-4">
+                                <h6 class="font-medium mb-2">
+                                    <a href="{{ noticia_rel.get_absolute_url }}" class="text-gray-900 hover:text-blue-600 transition-colors">
+                                        {{ noticia_rel.titulo|truncatechars:60 }}
+                                    </a>
+                                </h6>
+                                <div class="flex items-center text-sm text-gray-500">
+                                    <span class="material-icons text-sm mr-1">event</span>
+                                    {{ noticia_rel.fecha_publicacion|date:"d/m/Y" }}
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                {% endfor %}
-                <hr>
+                    {% endfor %}
+                </div>
+                <hr class="border-gray-200 mb-6">
             {% endif %}
 
-            <!-- Volver a la lista -->
-            <div class="d-grid">
-                <a href="{% url 'blog:lista_noticias' %}" class="btn btn-outline-primary">
-                    <i class="fas fa-arrow-left"></i> Volver a noticias
-                </a>
-            </div>
+            <!-- Back to List -->
+            <a href="{% url 'blog:lista_noticias' %}" 
+               class="w-full inline-flex items-center justify-center px-4 py-2 border border-blue-600 text-blue-600 text-sm font-medium rounded-md hover:bg-blue-600 hover:text-white transition-colors">
+                <span class="material-icons mr-2 text-sm">arrow_back</span>
+                Volver a noticias
+            </a>
         </div>
     </div>
 </div>

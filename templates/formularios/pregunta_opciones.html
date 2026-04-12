@@ -5,117 +5,715 @@
 {% block title %}Opciones de Respuesta{% endblock %}
 
 {% block messages %}
-{% if messages %}
-<div class="container mt-3">
-    {% for message in messages %}
-    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mensaje-alerta" role="alert"
-        data-mensaje="{{ message }}">
-        {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    {% endfor %}
-</div>
-
-<script>
-    // Eliminar mensajes duplicados
-    document.addEventListener('DOMContentLoaded', function () {
-        const mensajes = document.querySelectorAll('.mensaje-alerta');
-        const mensajesTexto = new Set();
-
-        mensajes.forEach(function (mensaje) {
-            const textoMensaje = mensaje.getAttribute('data-mensaje');
-
-            if (mensajesTexto.has(textoMensaje)) {
-                // Si ya existe un mensaje con este texto, eliminar el duplicado
-                mensaje.remove();
-            } else {
-                mensajesTexto.add(textoMensaje);
-            }
-        });
-    });
-</script>
-{% endif %}
+<!-- Intencionalmente vacío para no mostrar mensajes en esta página -->
 {% endblock %}
 
 {% block content %}
-<div class="container">
-    <h3>OPCIONES DE RESPUESTA</h3>
-</div>
-<hr>
-<br>
+<style>
+  /* Ocultar todos los tipos de mensajes de error que aparecen en la parte superior */
+  .messages,
+  .alert,
+  .alert-danger,
+  .alert-error,
+  .alert-warning,
+  .alert-info,
+  .alert-block,
+  .errorlist,
+  .nonfield,
+  ul.errorlist,
+  div.alert,
+  .has-error .help-block {
+    display: none !important;
+  }
 
-<form method="post">
+  /* Mantener visibles solo los errores específicos de campos */
+  .form-group .invalid-feedback,
+  .form-group .text-danger {
+    display: block !important;
+  }
+
+  /* Título principal con efectos modernos */
+  .main-title {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8, #1e40af) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    font-size: 2.5rem !important;
+    font-weight: 800 !important;
+    text-align: center !important;
+    margin-bottom: 1rem !important;
+    position: relative !important;
+    text-shadow: 0 4px 8px rgba(59, 130, 246, 0.3) !important;
+    letter-spacing: 1px !important;
+  }
+
+  .main-title::after {
+    content: '' !important;
+    position: absolute !important;
+    bottom: -8px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 80px !important;
+    height: 3px !important;
+    background: linear-gradient(90deg, transparent, #3b82f6, transparent) !important;
+    border-radius: 2px !important;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5) !important;
+  }
+
+  /* Animación sutil para el título */
+  @keyframes titleGlow {
+    0%, 100% {
+      text-shadow: 0 4px 8px rgba(59, 130, 246, 0.3) !important;
+    }
+    50% {
+      text-shadow: 0 4px 20px rgba(59, 130, 246, 0.6) !important;
+    }
+  }
+
+  .main-title {
+    animation: titleGlow 3s ease-in-out infinite !important;
+  }
+
+  /* Responsive para el título */
+  @media (max-width: 768px) {
+    .main-title {
+      font-size: 2rem !important;
+    }
+  }
+
+  /* Logo con efectos glassmorphism avanzados */
+  .glass-logo-wrapper {
+    display: inline-block !important;
+    position: relative !important;
+    border-radius: 12px !important;
+    backdrop-filter: blur(15px) !important;
+    -webkit-backdrop-filter: blur(15px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 
+      0 8px 32px rgba(59, 130, 246, 0.15),
+      0 4px 16px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    overflow: hidden !important;
+    padding: 8px !important;
+  }
+
+  .glass-logo-wrapper::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.1), 
+      rgba(255, 255, 255, 0.05),
+      rgba(59, 130, 246, 0.05)
+    ) !important;
+    border-radius: 12px !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+  }
+
+  .glass-logo-wrapper::after {
+    content: '' !important;
+    position: absolute !important;
+    top: -2px !important;
+    left: -2px !important;
+    right: -2px !important;
+    bottom: -2px !important;
+    background: linear-gradient(45deg, 
+      rgba(59, 130, 246, 0.2), 
+      rgba(147, 197, 253, 0.1),
+      rgba(59, 130, 246, 0.2)
+    ) !important;
+    border-radius: 14px !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
+    transition: opacity 0.4s ease !important;
+  }
+
+  .glass-logo-wrapper:hover {
+    transform: translateY(-4px) scale(1.02) !important;
+    box-shadow: 
+      0 16px 48px rgba(59, 130, 246, 0.25),
+      0 8px 24px rgba(0, 0, 0, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6),
+      0 0 30px rgba(59, 130, 246, 0.3) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+  }
+
+  .glass-logo-wrapper:hover::after {
+    opacity: 1 !important;
+  }
+
+  .glass-logo-wrapper img {
+    position: relative !important;
+    z-index: 2 !important;
+    border-radius: 8px !important;
+    transition: all 0.4s ease !important;
+    display: block !important;
+  }
+
+  .glass-logo-wrapper:hover img {
+    filter: brightness(1.05) contrast(1.02) !important;
+  }
+
+  /* Tabla glassmorphism */
+  .glass-table {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      0 4px 16px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    overflow: hidden;
+  }
+
+  .glass-table table {
+    background: transparent;
+    border: none;
+  }
+
+  .glass-table thead th {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+    color: #1e40af;
+    font-weight: 600;
+    border: none;
+    padding: 16px 12px;
+    font-size: 14px;
+  }
+
+  .glass-table tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+  }
+
+  .glass-table tbody tr:hover {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(37, 99, 235, 0.02));
+  }
+
+  .glass-table tbody td {
+    padding: 12px;
+    border: none;
+    vertical-align: middle;
+  }
+
+  /* Campos de formulario mejorados */
+  .glass-table input[type="text"],
+  .glass-table input[type="number"],
+  .glass-table textarea,
+  .glass-table select {
+    border: 1px solid rgba(209, 213, 219, 0.5) !important;
+    border-radius: 6px !important;
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+    transition: all 0.3s ease !important;
+    background-color: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+  }
+
+  .glass-table input[type="text"]:focus,
+  .glass-table input[type="number"]:focus,
+  .glass-table textarea:focus,
+  .glass-table select:focus {
+    outline: none !important;
+    border-color: #3b82f6 !important;
+    background-color: rgba(239, 246, 255, 0.9) !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+  }
+
+  /* Checkbox personalizado */
+  .glass-table input[type="checkbox"] {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    width: 18px !important;
+    height: 18px !important;
+    border: 2px solid #d1d5db !important;
+    border-radius: 4px !important;
+    background-color: rgba(255, 255, 255, 0.8) !important;
+    cursor: pointer !important;
+    position: relative !important;
+    transition: all 0.3s ease !important;
+  }
+
+  .glass-table input[type="checkbox"]:checked {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+    border-color: #1d4ed8 !important;
+  }
+
+  .glass-table input[type="checkbox"]:checked::after {
+    content: '✓' !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    color: white !important;
+    font-size: 12px !important;
+    font-weight: bold !important;
+  }
+
+  /* Botones con glassmorphism */
+  .glass-btn {
+    padding: 8px 16px !important;
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border: 1px solid !important;
+    cursor: pointer !important;
+    font-size: 12px !important;
+    position: relative !important;
+    overflow: hidden !important;
+    backdrop-filter: blur(15px) !important;
+    -webkit-backdrop-filter: blur(15px) !important;
+  }
+
+  .glass-btn::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: -100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent) !important;
+    transition: left 0.6s ease !important;
+    pointer-events: none !important;
+  }
+
+  .glass-btn:hover::before {
+    left: 100% !important;
+  }
+
+  /* Botón Primario */
+  .glass-btn-primary {
+    background: rgba(59, 130, 246, 0.8) !important;
+    background-image: linear-gradient(135deg, 
+      rgba(59, 130, 246, 0.9), 
+      rgba(29, 78, 216, 0.7)
+    ) !important;
+    color: white !important;
+    border-color: rgba(147, 197, 253, 0.6) !important;
+    box-shadow: 
+      0 4px 16px rgba(59, 130, 246, 0.3),
+      inset 0 1px 0 rgba(147, 197, 253, 0.7) !important;
+  }
+
+  .glass-btn-primary:hover {
+    background: rgba(147, 197, 253, 0.9) !important;
+    background-image: linear-gradient(135deg, 
+      rgba(147, 197, 253, 0.8), 
+      rgba(96, 165, 250, 0.6)
+    ) !important;
+    color: #1e40af !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 
+      0 8px 24px rgba(59, 130, 246, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      0 0 20px rgba(59, 130, 246, 0.6) !important;
+    text-decoration: none !important;
+  }
+
+  /* Botón Success */
+  .glass-btn-success {
+    background: rgba(16, 185, 129, 0.8) !important;
+    background-image: linear-gradient(135deg, 
+      rgba(16, 185, 129, 0.9), 
+      rgba(5, 150, 105, 0.7)
+    ) !important;
+    color: white !important;
+    border-color: rgba(52, 211, 153, 0.6) !important;
+    box-shadow: 
+      0 4px 16px rgba(16, 185, 129, 0.3),
+      inset 0 1px 0 rgba(167, 243, 208, 0.7) !important;
+  }
+
+  .glass-btn-success:hover {
+    background: rgba(167, 243, 208, 0.9) !important;
+    background-image: linear-gradient(135deg, 
+      rgba(167, 243, 208, 0.8), 
+      rgba(110, 231, 183, 0.6)
+    ) !important;
+    color: #047857 !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 
+      0 8px 24px rgba(16, 185, 129, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      0 0 20px rgba(16, 185, 129, 0.6) !important;
+    text-decoration: none !important;
+  }
+
+  /* Botón Danger */
+  .glass-btn-danger {
+    background: rgba(239, 68, 68, 0.8) !important;
+    background-image: linear-gradient(135deg, 
+      rgba(239, 68, 68, 0.9), 
+      rgba(220, 38, 38, 0.7)
+    ) !important;
+    color: white !important;
+    border-color: rgba(248, 113, 113, 0.6) !important;
+    box-shadow: 
+      0 4px 16px rgba(239, 68, 68, 0.3),
+      inset 0 1px 0 rgba(248, 113, 113, 0.7) !important;
+  }
+
+  .glass-btn-danger:hover {
+    background: rgba(248, 113, 113, 0.9) !important;
+    background-image: linear-gradient(135deg, 
+      rgba(248, 113, 113, 0.8), 
+      rgba(239, 68, 68, 0.6)
+    ) !important;
+    color: #7f1d1d !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 
+      0 8px 24px rgba(239, 68, 68, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      0 0 20px rgba(239, 68, 68, 0.6) !important;
+    text-decoration: none !important;
+  }
+
+  /* Botón Secondary */
+  .glass-btn-secondary {
+    background: rgba(107, 114, 128, 0.8) !important;
+    background-image: linear-gradient(135deg, 
+      rgba(107, 114, 128, 0.9), 
+      rgba(75, 85, 99, 0.7)
+    ) !important;
+    color: white !important;
+    border-color: rgba(156, 163, 175, 0.6) !important;
+    box-shadow: 
+      0 4px 16px rgba(107, 114, 128, 0.3),
+      inset 0 1px 0 rgba(156, 163, 175, 0.7) !important;
+  }
+
+  .glass-btn-secondary:hover {
+    background: rgba(156, 163, 175, 0.9) !important;
+    background-image: linear-gradient(135deg, 
+      rgba(156, 163, 175, 0.8), 
+      rgba(107, 114, 128, 0.6)
+    ) !important;
+    color: #374151 !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 
+      0 8px 24px rgba(107, 114, 128, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      0 0 20px rgba(107, 114, 128, 0.6) !important;
+    text-decoration: none !important;
+  }
+
+  /* Contenedor de acciones */
+  .form-actions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-top: 24px !important;
+    padding: 20px !important;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .form-actions .left-actions {
+    display: flex !important;
+    gap: 12px !important;
+    flex-wrap: wrap !important;
+  }
+
+  .form-actions .right-actions {
+    display: flex !important;
+    gap: 12px !important;
+    flex-wrap: wrap !important;
+  }
+
+  /* Responsive para botones */
+  @media (max-width: 768px) {
+    .form-actions {
+      flex-direction: column !important;
+      align-items: stretch !important;
+    }
+    
+    .form-actions .left-actions,
+    .form-actions .right-actions {
+      justify-content: center !important;
+    }
+    
+    .glass-btn {
+      width: 100% !important;
+      justify-content: center !important;
+    }
+  }
+
+  /* Modal glassmorphism */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .modal-overlay.show {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .modal-content {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 
+      0 20px 60px rgba(0, 0, 0, 0.2),
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    padding: 32px;
+    max-width: 400px;
+    width: 90%;
+    transform: scale(0.8) translateY(20px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .modal-overlay.show .modal-content {
+    transform: scale(1) translateY(0);
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .modal-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+
+  .modal-icon svg {
+    width: 24px;
+    height: 24px;
+    color: #dc2626;
+  }
+
+  .modal-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 0;
+  }
+
+  .modal-message {
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 24px;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+  }
+
+  .modal-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 80px;
+  }
+
+  .modal-btn-cancel {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+    border: 1px solid rgba(107, 114, 128, 0.3);
+  }
+
+  .modal-btn-cancel:hover {
+    background: rgba(107, 114, 128, 0.2);
+    color: #374151;
+    transform: translateY(-1px);
+  }
+
+  .modal-btn-delete {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  }
+
+  .modal-btn-delete:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+  }
+
+  /* Responsive para modal */
+  @media (max-width: 768px) {
+    .modal-content {
+      padding: 24px;
+      margin: 20px;
+    }
+    
+    .modal-actions {
+      flex-direction: column;
+    }
+    
+    .modal-btn {
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="container mx-auto px-4">
+  <h1 class="main-title">OPCIONES DE RESPUESTA</h1>
+</div>
+<hr class="border-gray-300 mb-6">
+
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="text-center mb-6">
+    <div class="glass-logo-wrapper" style="display: inline-block; margin-bottom: 1.5rem;">
+      <img src="{% static 'icono.jpg' %}" alt="logo del centro" style="width: 120px; height: auto;">
+    </div>
+    <h5 class="text-xl font-semibold mb-2">{{ pregunta.texto }}</h5>
+    <p class="text-lg text-blue-600 font-medium mb-1">Formulario de aplicación al curso</p>
+    <p class="text-md text-gray-600 mb-1">{{ formulario.curso.name }}</p>
+    <p class="text-sm text-gray-500">Tipo: {{ pregunta.get_tipo_display }}</p>
+  </div>
+
+  <form method="post" class="space-y-6">
     {% csrf_token %}
     <input type="hidden" name="pregunta_id" value="{{ pregunta.id }}">
     
-    <div class="card mx-auto" style="width: 50rem;">
-        
-        <img src="{% static 'icono.jpg' %}" class="card-img-top" alt="logo del centro" style="max-width: 20%; height: auto; margin: 0 auto; display: block; padding-top: 5%;">
-        
-        <div class="card-body">
-            <h5 class="card-title text-center">{{ pregunta.texto }}</h5>
-            <p class="text-center text-muted">
-                Formulario: {{ formulario.titulo }} -
-                Curso: {{ formulario.curso.name }} -
-                Tipo: {{ pregunta.get_tipo_display }}
-            </p>
-            
-            <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 60%;">Texto de la opción</th>
-                                        <th style="width: 20%;">Orden</th>
-                                        <th style="width: 20%;">Eliminar</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="opciones-tbody">
-                                    {% for opcion in pregunta.opciones.all %}
-                                    <tr class="opcion-row" data-id="{{ opcion.id }}">
-                                        <td>
-                                            <input type="hidden" name="opcion_id_{{ forloop.counter0 }}" value="{{ opcion.id }}">
-                                            <div class="form-group">
-                                                <label for="texto_{{ forloop.counter0 }}">Texto de la opción</label>
-                                                <textarea name="texto_{{ forloop.counter0 }}" id="texto_{{ forloop.counter0 }}" rows="2" class="form-control" style="width: 100%; max-width: 400px;">{{ opcion.texto }}</textarea>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="form-group">
-                                                <label for="orden_{{ forloop.counter0 }}">Orden</label>
-                                                <input type="number" name="orden_{{ forloop.counter0 }}" id="orden_{{ forloop.counter0 }}" value="{{ opcion.orden }}" class="form-control" style="width: 80px;">
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <input type="checkbox" name="eliminar_{{ forloop.counter0 }}" id="eliminar_{{ forloop.counter0 }}" style="display: none;">
-                                                <button type="button" class="btn btn-sm btn-danger eliminar-opcion ms-2" onclick="marcarParaEliminar(this)">
-                                                    <i class="bi bi-trash"></i> Eliminar
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                            <input type="hidden" name="total_opciones" id="total_opciones" value="{{ pregunta.opciones.count }}">
-            </div>
-
-            <div class="d-flex justify-content-between mt-4">
-                <a href="{% url 'principal:formulario_preguntas' formulario.id %}" class="btn btn-secondary">
-                  <i class="bi bi-arrow-left"></i> Volver
-                </a>
-                <button type="button" class="btn btn-success" id="agregar-opcion">
-                    <i class="bi bi-plus-circle"></i> Agregar Opciones
-                </button>
-                <button type="submit" class="btn btn-primary">
-                  <i class="bi bi-save"></i> Guardar Opciones
-                </button>
-            </div>
-        </div>
+    <div class="glass-table">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr>
+              <th class="text-left" style="width: 50%;">Texto de la opción</th>
+              <th class="text-left" style="width: 25%;">Orden</th>
+              <th class="text-center" style="width: 25%;">Eliminar</th>
+            </tr>
+          </thead>
+          <tbody id="opciones-tbody">
+            {% for opcion in pregunta.opciones.all %}
+            <tr class="opcion-row" data-id="{{ opcion.id }}">
+              <td>
+                <input type="hidden" name="opcion_id_{{ forloop.counter0 }}" value="{{ opcion.id }}">
+                <div class="form-group">
+                  <textarea name="texto_{{ forloop.counter0 }}" id="texto_{{ forloop.counter0 }}" rows="2" class="form-control" style="width: 100%; max-width: 300px;" placeholder="Texto de la opción">{{ opcion.texto }}</textarea>
+                </div>
+              </td>
+              <td>
+                <div class="form-group">
+                  <input type="number" name="orden_{{ forloop.counter0 }}" id="orden_{{ forloop.counter0 }}" value="{{ opcion.orden }}" class="form-control" style="width: 80px;">
+                </div>
+              </td>
+              <td class="text-center">
+                <div class="d-flex align-items-center justify-content-center">
+                  <input type="checkbox" name="eliminar_{{ forloop.counter0 }}" id="eliminar_{{ forloop.counter0 }}" style="display: none;">
+                  <button type="button" class="glass-btn glass-btn-danger eliminar-opcion" onclick="showDeleteModal(this)">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"></path>
+                    </svg>
+                    Eliminar
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <input type="hidden" name="total_opciones" id="total_opciones" value="{{ pregunta.opciones.count }}">
+      </div>
     </div>
-</form>
 
-<br>
+    <div class="form-actions">
+      <div class="left-actions">
+        <a href="{% url 'principal:formulario_preguntas' formulario.id %}" class="glass-btn glass-btn-secondary">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"></path>
+          </svg>
+          Volver
+        </a>
+      </div>
+      
+      <div class="right-actions">
+        <button type="button" class="glass-btn glass-btn-success" id="agregar-opcion">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"></path>
+          </svg>
+          Agregar Opciones
+        </button>
+        <button type="submit" class="glass-btn glass-btn-primary">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z"></path>
+          </svg>
+          Guardar Opciones
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Modal de confirmación para eliminar opción -->
+<div id="deleteModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+        </svg>
+      </div>
+      <h3 class="modal-title">Confirmar eliminación</h3>
+    </div>
+    <div class="modal-message">
+      ¿Estás seguro de que deseas eliminar esta opción de respuesta? Esta acción no se puede deshacer.
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="modal-btn modal-btn-cancel" onclick="closeDeleteModal()">
+        Cancelar
+      </button>
+      <button type="button" class="modal-btn modal-btn-delete" onclick="confirmDelete()">
+        Eliminar
+      </button>
+    </div>
+  </div>
+</div>
 
 {% block extra_js %}
 <script>
@@ -177,29 +775,46 @@
                 });
             });
 
-            // Función para marcar una opción para eliminar
-            window.marcarParaEliminar = function (button) {
-                const row = button.closest('.opcion-row');
-                const deleteCheckbox = row.querySelector('input[type="checkbox"][id^="eliminar_"]');
+            // Función para marcar una opción para eliminar usando modal
+            window.showDeleteModal = function (button) {
+                window.currentRowToDelete = button.closest('.opcion-row');
+                const modal = document.getElementById('deleteModal');
+                modal.classList.add('show');
+                
+                // Prevenir scroll del body
+                document.body.style.overflow = 'hidden';
+                
+                // Cerrar modal con Escape
+                document.addEventListener('keydown', handleEscapeKey);
+                
+                // Cerrar modal al hacer clic fuera
+                modal.addEventListener('click', handleOutsideClick);
+            };
 
-                if (confirm('¿Estás seguro de que deseas eliminar esta opción de respuesta?')) {
+            window.closeDeleteModal = function () {
+                const modal = document.getElementById('deleteModal');
+                modal.classList.remove('show');
+                
+                // Restaurar scroll del body
+                document.body.style.overflow = '';
+                
+                // Remover event listeners
+                document.removeEventListener('keydown', handleEscapeKey);
+                modal.removeEventListener('click', handleOutsideClick);
+                
+                // Limpiar la referencia a la fila
+                window.currentRowToDelete = null;
+            };
+
+            window.confirmDelete = function () {
+                if (window.currentRowToDelete) {
+                    const row = window.currentRowToDelete;
+                    const deleteCheckbox = row.querySelector('input[type="checkbox"][id^="eliminar_"]');
+
                     if (deleteCheckbox) {
                         // Para opciones existentes, marcar el checkbox DELETE
                         deleteCheckbox.checked = true;
-                        row.style.opacity = '0.5';
-                        button.textContent = 'Cancelar';
-                        button.classList.remove('btn-danger');
-                        button.classList.add('btn-warning');
-
-                        // Cambiar la función del botón para cancelar la eliminación
-                        button.onclick = function () {
-                            deleteCheckbox.checked = false;
-                            row.style.opacity = '1';
-                            button.innerHTML = '<i class="bi bi-trash"></i> Eliminar';
-                            button.classList.remove('btn-warning');
-                            button.classList.add('btn-danger');
-                            button.onclick = function () { marcarParaEliminar(button); };
-                        };
+                        row.style.display = 'none'; // Ocultar la fila
                     } else {
                         // Para opciones nuevas, eliminar la fila directamente
                         row.remove();
@@ -211,7 +826,21 @@
                         }
                     }
                 }
+                
+                closeDeleteModal();
             };
+
+            function handleEscapeKey(event) {
+                if (event.key === 'Escape') {
+                    closeDeleteModal();
+                }
+            }
+
+            function handleOutsideClick(event) {
+                if (event.target === event.currentTarget) {
+                    closeDeleteModal();
+                }
+            }
 
             // Función para agregar una nueva opción de respuesta
             const addButton = document.getElementById('agregar-opcion');
@@ -257,8 +886,7 @@
                         const textoCell = document.createElement('td');
                         textoCell.innerHTML = `
                         <div class="form-group">
-                            <label for="texto_${currentCount}">Texto de la opción</label>
-                            <textarea name="texto_${currentCount}" id="texto_${currentCount}" rows="2" class="form-control" style="width: 100%; max-width: 400px;" placeholder="Escriba aquí el texto de la opción"></textarea>
+                            <textarea name="texto_${currentCount}" id="texto_${currentCount}" rows="2" class="form-control" style="width: 100%; max-width: 300px;" placeholder="Escriba aquí el texto de la opción"></textarea>
                         </div>
                     `;
 
@@ -266,18 +894,21 @@
                         const ordenCell = document.createElement('td');
                         ordenCell.innerHTML = `
                         <div class="form-group">
-                            <label for="orden_${currentCount}">Orden</label>
                             <input type="number" name="orden_${currentCount}" id="orden_${currentCount}" value="${currentCount}" class="form-control" style="width: 80px;">
                         </div>
                     `;
 
                         // Crear la celda para el botón de eliminar
                         const deleteCell = document.createElement('td');
+                        deleteCell.className = 'text-center';
                         deleteCell.innerHTML = `
-                        <div class="d-flex align-items-center">
+                        <div class="d-flex align-items-center justify-content-center">
                             <input type="checkbox" name="eliminar_${currentCount}" id="eliminar_${currentCount}" style="display: none;">
-                            <button type="button" class="btn btn-sm btn-danger eliminar-opcion ms-2" onclick="marcarParaEliminar(this)">
-                                <i class="bi bi-trash"></i> Eliminar
+                            <button type="button" class="glass-btn glass-btn-danger eliminar-opcion" onclick="showDeleteModal(this)">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"></path>
+                                </svg>
+                                Eliminar
                             </button>
                         </div>
                     `;

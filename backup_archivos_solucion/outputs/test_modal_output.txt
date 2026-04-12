@@ -1,0 +1,53 @@
+INFO:datos_archivados.views:=== INICIANDO COMBINACIÓN SELECTIVA DE DATOS ===
+ERROR:datos_archivados.views:Error en combinación selectiva: cannot access local variable 'tablas_seleccionadas' where it is not associated with a value
+ERROR:datos_archivados.views:Traceback: 
+Traceback (most recent call last):
+  File "/home/bradley/CFBC/datos_archivados/views.py", line 3743, in ejecutar_combinacion_seleccionada
+    logger.info(f"Tablas seleccionadas: {tablas_seleccionadas}")
+                                         ^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'tablas_seleccionadas' where it is not associated with a value
+Exception in thread Thread-1 (wrapper):
+Traceback (most recent call last):
+  File "/home/bradley/CFBC/datos_archivados/views.py", line 3743, in ejecutar_combinacion_seleccionada
+    logger.info(f"Tablas seleccionadas: {tablas_seleccionadas}")
+                                         ^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'tablas_seleccionadas' where it is not associated with a value
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.12/threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/bradley/CFBC/datos_archivados/views.py", line 4996, in wrapper
+    ejecutar_combinacion_seleccionada()
+  File "/home/bradley/CFBC/datos_archivados/views.py", line 4977, in ejecutar_combinacion_seleccionada
+    cache.delete('combinacion_en_progreso')
+    ^^^^^
+UnboundLocalError: cannot access local variable 'cache' where it is not associated with a value
+
+================================================================================
+SIMULACIÓN DEL MODAL DE COMBINACIÓN SELECTIVA
+================================================================================
+
+Enviando petición POST con 11 tablas de docencia...
+Tablas: ['Docencia_area', 'Docencia_coursecategory', 'Docencia_courseinformation', 'Docencia_courseinformation_adminteachers', 'Docencia_subjectinformation', 'Docencia_edition', 'Docencia_enrollmentapplication', 'Docencia_accountnumber', 'Docencia_enrollmentpay', 'Docencia_enrollment', 'Docencia_application']
+
+Status Code: 200
+Response: {'success': True, 'message': 'Combinación selectiva iniciada para 11 tablas. Puede seguir el progreso en tiempo real.', 'tablas_seleccionadas': ['Docencia_area', 'Docencia_coursecategory', 'Docencia_courseinformation', 'Docencia_courseinformation_adminteachers', 'Docencia_subjectinformation', 'Docencia_edition', 'Docencia_enrollmentapplication', 'Docencia_accountnumber', 'Docencia_enrollmentpay', 'Docencia_enrollment', 'Docencia_application']}
+
+✅ La petición fue exitosa
+⏳ Esperando 30 segundos para que el proceso en segundo plano termine...
+
+================================================================================
+VERIFICACIÓN DE RESULTADOS
+================================================================================
+HistoricalArea: 0 registros
+HistoricalCourseCategory: 0 registros
+HistoricalCourseInformation: 0 registros
+HistoricalEnrollmentApplication: 0 registros
+
+⚠️ No hay resultado en cache
+
+================================================================================

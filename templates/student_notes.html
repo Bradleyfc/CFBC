@@ -1,41 +1,338 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
-<div class="container mt-5">
-    <h2 class="mb-4 text-center">Notas del Estudiante {{ student.first_name }} {{ student.last_name }} en {{ course.name }}</h2>
+<!-- Background Section with Gradient -->
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-30"
+        style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;">
+    </div>
 
-    {% if all_notes %}
-    <div class="card">
-        <div class="card-body">
-            <h5 class="card-title">Promedio General: <span class="badge bg-primary px-3 py-1.5 text-center">{{ average_score|floatformat:2 }}</span></h5>
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-
-                        <th>Nota</th>
-                        <th>Fecha</th>
-                        <!-- Add more headers for additional notes if applicable -->
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for nota in all_notes %}
-                    <tr>
-                        <td>{{ nota.valor|floatformat:2|default:"N/A" }}</td>
-                        <td>{{ nota.fecha_creacion|date:"d/m/Y" }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        <!-- Header -->
+        <div class="mb-6">
+            <!-- Back Button -->
+            <div class="mb-4">
+                <a href="{% url 'principal:profile' %}" class="glass-button glass-button-secondary">
+                    <span class="fa material-icons mr-2">arrow_back</span></i>
+                    Volver al Perfil
+                </a>
+            </div>
+            
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">Mis Calificaciones</h2>
+            <p class="text-center text-gray-600">Curso: <strong>{{ course.name }}</strong></p>
         </div>
-    </div>
-    {% else %}
-    <div class="alert alert-info" role="alert">
-        No hay notas disponibles para este curso.
-    </div>
-    {% endif %}
 
-    <a href="{% url 'principal:profile' %}" class="btn btn-secondary mt-3">
-      <i class="bi bi-arrow-left"></i> Volver al Perfil
-    </a>
+        <!-- Notes Summary Cards -->
+        <div class="flex flex-col lg:flex-row gap-6 mb-6 lg:items-stretch">
+            <!-- Total Notes -->
+            <div class="glass-card flex-1 flex flex-col min-h-32">
+                <div class="glass-content flex-1 flex flex-col justify-center items-center text-center py-4">
+                    <div class="text-4xl font-bold text-blue-600 mb-2">{{ all_notes|length }}</div>
+                    <div class="text-sm text-gray-600">Total de Notas</div>
+                </div>
+            </div>
+
+            <!-- Average Score -->
+            <div class="glass-card flex-1 flex flex-col min-h-32">
+                <div class="glass-content flex-1 flex flex-col justify-center items-center text-center py-4">
+                    {% if average_score is not None %}
+                        {% if average_score >= 6 %}
+                            <div class="text-4xl font-bold text-green-600 mb-2">{{ average_score|floatformat:1 }}</div>
+                        {% else %}
+                            <div class="text-4xl font-bold text-red-600 mb-2">{{ average_score|floatformat:1 }}</div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-4xl font-bold text-gray-400 mb-2">N/A</div>
+                    {% endif %}
+                    <div class="text-sm text-gray-600">Promedio General</div>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div class="glass-card flex-1 flex flex-col min-h-32">
+                <div class="glass-content flex-1 flex flex-col justify-center items-center text-center py-4">
+                    {% if average_score is not None %}
+                        {% if average_score >= 6 %}
+                            <div class="text-4xl font-bold text-green-600 mb-2">✓</div>
+                            <div class="text-sm text-gray-600">Aprobado</div>
+                        {% else %}
+                            <div class="text-4xl font-bold text-red-600 mb-2">✗</div>
+                            <div class="text-sm text-gray-600">Reprobado</div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-4xl font-bold text-gray-400 mb-2">?</div>
+                        <div class="text-sm text-gray-600">Sin Calificar</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes Records Card -->
+        <div class="glass-card mb-6">
+            <div class="glass-header">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <span class="fa material-icons mr-2">assignment</span></i>
+                    Registro de Calificaciones
+                </h3>
+            </div>
+            <div class="glass-content">
+                {% if all_notes %}
+                <div class="overflow-x-auto">
+                    <table class="glass-table">
+                        <thead>
+                            <tr>
+                                <th class="nota-col">Nota</th>
+                                <th class="fecha-col">Fecha</th>
+                                <th class="estado-col">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for nota in all_notes %}
+                            <tr>
+                                <td class="nota-col">
+                                    {% if nota.valor is not None %}
+                                        {% if nota.valor >= 6 %}
+                                            <span class="glass-badge glass-badge-success">{{ nota.valor|floatformat:1 }}</span>
+                                        {% else %}
+                                            <span class="glass-badge glass-badge-danger">{{ nota.valor|floatformat:1 }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="glass-badge glass-badge-secondary">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td class="fecha-col">{{ nota.fecha_creacion|date:"d/m/Y" }}</td>
+                                <td class="estado-col">
+                                    {% if nota.valor is not None %}
+                                        {% if nota.valor >= 6 %}
+                                            <span class="glass-badge glass-badge-success">Aprobado</span>
+                                        {% else %}
+                                            <span class="glass-badge glass-badge-danger">Reprobado</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="glass-badge glass-badge-secondary">Sin Calificar</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="glass-alert glass-alert-info">
+                    <span class="fa material-icons mr-2">info</span></i>
+                    No hay notas disponibles para este curso: {{ course.name }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
 </div>
+
+<style>
+    /* Glass Card */
+    .glass-card {
+        position: relative;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            0 4px 16px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-header {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .glass-content {
+        padding: 2rem;
+    }
+
+    /* Glass Button */
+    .glass-button {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.625rem 1.25rem;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .glass-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .glass-button-secondary {
+        background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
+        color: #374151;
+    }
+
+    /* Glass Table */
+    .glass-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: fixed; /* Forzar anchos fijos para mejor alineación */
+    }
+
+    .glass-table thead tr {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        backdrop-filter: blur(10px);
+    }
+
+    .glass-table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: #1e40af;
+        border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+        vertical-align: middle; /* Alineación vertical */
+    }
+
+    /* Anchos específicos para cada columna */
+    .glass-table th:nth-child(1), .glass-table td:nth-child(1) { /* Nota */
+        width: 30%;
+        text-align: center;
+    }
+    
+    .glass-table th:nth-child(2), .glass-table td:nth-child(2) { /* Fecha */
+        width: 35%;
+        text-align: center;
+    }
+    
+    .glass-table th:nth-child(3), .glass-table td:nth-child(3) { /* Estado */
+        width: 35%;
+        text-align: center;
+    }
+
+    /* Estilos específicos por clase para mayor control */
+    .nota-col {
+        width: 30% !important;
+        text-align: center !important;
+        font-weight: 500;
+    }
+    
+    .fecha-col {
+        width: 35% !important;
+        text-align: center !important;
+    }
+    
+    .estado-col {
+        width: 35% !important;
+        text-align: center !important;
+    }
+
+    /* Responsividad para la tabla de estudiante */
+    @media (max-width: 768px) {
+        .glass-table th,
+        .glass-table td {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8rem;
+        }
+        
+        .nota-col {
+            width: 25% !important;
+        }
+        
+        .fecha-col {
+            width: 35% !important;
+        }
+        
+        .estado-col {
+            width: 40% !important;
+        }
+    }
+
+    /* Contenedor de tabla responsivo */
+    .overflow-x-auto {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch; /* Scroll suave en móviles */
+    }
+
+    /* Asegurar que la tabla mantenga su estructura */
+    .glass-table {
+        min-width: 500px; /* Ancho mínimo para evitar que se comprima demasiado */
+    }
+
+    .glass-table tbody tr {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .glass-table tbody tr:hover {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .glass-table td {
+        padding: 0.875rem 1rem;
+        color: #374151;
+        font-size: 0.875rem;
+        vertical-align: middle; /* Alineación vertical */
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Glass Badge */
+    .glass-badge {
+        display: inline-block;
+        padding: 0.375rem 0.75rem;
+        border-radius: 16px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .glass-badge-success {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+        color: #14532d;
+    }
+
+    .glass-badge-danger {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.2));
+        color: #7f1d1d;
+    }
+
+    /* Glass Alert */
+    .glass-alert {
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        font-size: 0.875rem;
+    }
+
+    .glass-alert-info {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        color: #1e3a8a;
+    }
+</style>
 {% endblock %}

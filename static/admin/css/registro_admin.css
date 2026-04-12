@@ -1,0 +1,60 @@
+/* CSS para barra de desplazamiento nativa fija en viewport */
+
+/* Contenedor de la tabla */
+.results {
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+/* Tabla con ancho mínimo */
+#result_list {
+    min-width: 1400px;
+    width: 100%;
+}
+
+/* Contenedor para la barra nativa fija - mismo ancho que la tabla visible */
+.viewport-scrollbar-container {
+    position: fixed !important;
+    bottom: 0 !important;
+    height: 20px !important;
+    z-index: 2147483647 !important;
+    display: none !important;
+    background: rgba(50, 50, 50, 0.95) !important;
+    border-top: 1px solid #333 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+}
+
+.viewport-scrollbar-container.show {
+    display: block !important;
+}
+
+/* Div interno que simula el contenido ancho para generar scroll nativo */
+.viewport-scrollbar-content {
+    height: 1px !important;
+    background: transparent !important;
+}
+
+/* Personalizar la barra nativa */
+.viewport-scrollbar-container::-webkit-scrollbar {
+    height: 16px !important;
+}
+
+.viewport-scrollbar-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2) !important;
+}
+
+.viewport-scrollbar-container::-webkit-scrollbar-thumb {
+    background: rgba(120, 120, 120, 0.8) !important;
+    border-radius: 8px !important;
+}
+
+.viewport-scrollbar-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(150, 150, 150, 0.9) !important;
+}
+
+/* Para Firefox */
+.viewport-scrollbar-container {
+    scrollbar-width: auto !important;
+    scrollbar-color: rgba(120, 120, 120, 0.8) rgba(0, 0, 0, 0.2) !important;
+}

@@ -10,154 +10,169 @@
 {% endblock %}
 
 {% block content %}
-<div class="row">
-    <!-- Contenido principal -->
-    <div class="col-lg-8">
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+    <!-- Main Content -->
+    <div class="lg:col-span-3">
         {% if busqueda %}
-            <div class="alert alert-info">
-                <i class="fas fa-search"></i> 
-                Resultados de búsqueda para: <strong>"{{ busqueda }}"</strong>
-                ({{ page_obj.paginator.count }} resultado{{ page_obj.paginator.count|pluralize }})
+            <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-6">
+                <div class="flex items-center">
+                    <span class="material-icons mr-2">search</span>
+                    <span>Resultados de búsqueda para: <strong>"{{ busqueda }}"</strong>
+                    ({{ page_obj.paginator.count }} resultado{{ page_obj.paginator.count|pluralize }})</span>
+                </div>
             </div>
         {% endif %}
 
         {% if page_obj %}
-            <div class="row">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {% for noticia in page_obj %}
-                    <div class="col-md-6 mb-4">
-                        <div class="card h-100 {% if noticia.destacada %}noticia-destacada{% endif %}">
-                            {% if noticia.imagen_principal %}
-                                <img src="{{ noticia.imagen_principal.url }}" class="card-img-top" alt="{{ noticia.titulo }}">
-                            {% else %}
-                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center">
-                                    <i class="fas fa-newspaper fa-3x text-muted"></i>
-                                </div>
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 {% if noticia.destacada %}noticia-destacada{% endif %}">
+                        {% if noticia.imagen_principal %}
+                            <img src="{{ noticia.imagen_principal.url }}" 
+                                 class="w-full h-48 object-cover" 
+                                 alt="{{ noticia.titulo }}">
+                        {% else %}
+                            <div class="w-full h-48 bg-gray-200 flex items-center justify-content-center">
+                                <span class="material-icons text-gray-400 text-4xl">image</span>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="p-6 flex flex-col h-full">
+                            {% if noticia.destacada %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mb-3 w-fit">
+                                    <span class="material-icons text-sm mr-1">star</span>
+                                    Destacada
+                                </span>
                             {% endif %}
                             
-                            <div class="card-body d-flex flex-column">
-                                {% if noticia.destacada %}
-                                    <span class="badge bg-warning text-dark mb-2">
-                                        <i class="fas fa-star"></i> Destacada
-                                    </span>
-                                {% endif %}
-                                
-                                <span class="badge bg-primary mb-2">{{ noticia.categoria.nombre }}</span>
-                                
-                                <h5 class="card-title">
-                                    <a href="{{ noticia.get_absolute_url }}" class="text-decoration-none">
-                                        {{ noticia.titulo }}
-                                    </a>
-                                </h5>
-                                
-                                <p class="card-text">{{ noticia.resumen }}</p>
-                                
-                                <div class="mt-auto">
-                                    <small class="text-muted">
-                                        <i class="fas fa-user"></i> {{ noticia.autor.get_full_name|default:noticia.autor.username }}
-                                        <br>
-                                        <i class="fas fa-calendar"></i> {{ noticia.fecha_publicacion|date:"d/m/Y" }}
-                                    </small>
-                                    
-                                    <div class="mt-2">
-                                        <a href="{{ noticia.get_absolute_url }}" class="btn btn-primary btn-sm">
-                                            Leer más <i class="fas fa-arrow-right"></i>
-                                        </a>
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mb-3 w-fit">
+                                {{ noticia.categoria.nombre }}
+                            </span>
+                            
+                            <h5 class="text-xl font-semibold mb-3 flex-grow">
+                                <a href="{{ noticia.get_absolute_url }}" class="text-gray-900 hover:text-blue-600 transition-colors">
+                                    {{ noticia.titulo }}
+                                </a>
+                            </h5>
+                            
+                            <p class="text-gray-600 mb-4 flex-grow">{{ noticia.resumen }}</p>
+                            
+                            <div class="mt-auto">
+                                <div class="text-sm text-gray-500 mb-3">
+                                    <div class="flex items-center mb-1">
+                                        <span class="material-icons text-sm mr-1">person</span>
+                                        {{ noticia.autor.get_full_name|default:noticia.autor.username }}
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="material-icons text-sm mr-1">event</span>
+                                        {{ noticia.fecha_publicacion|date:"d/m/Y" }}
                                     </div>
                                 </div>
+                                
+                                <a href="{{ noticia.get_absolute_url }}" 
+                                   class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors">
+                                    Leer más
+                                    <span class="material-icons ml-1 text-sm">arrow_forward</span>
+                                </a>
                             </div>
                         </div>
                     </div>
                 {% endfor %}
             </div>
-
-            <!-- Paginación -->
+            <!-- Pagination -->
             {% if page_obj.has_other_pages %}
-                <nav aria-label="Paginación de noticias">
-                    <ul class="pagination justify-content-center">
-                        {% if page_obj.has_previous %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page=1{% if busqueda %}&q={{ busqueda }}{% endif %}">
-                                    <i class="fas fa-angle-double-left"></i>
+                <nav aria-label="Paginación de noticias" class="mt-8">
+                    <div class="flex justify-center">
+                        <div class="flex space-x-1">
+                            {% if page_obj.has_previous %}
+                                <a href="?page=1{% if busqueda %}&q={{ busqueda }}{% endif %}" 
+                                   class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 hover:text-gray-700">
+                                    <span class="material-icons text-sm">first_page</span>
                                 </a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}">
-                                    <i class="fas fa-angle-left"></i>
+                                <a href="?page={{ page_obj.previous_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}" 
+                                   class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700">
+                                    <span class="material-icons text-sm">chevron_left</span>
                                 </a>
-                            </li>
-                        {% endif %}
-
-                        {% for num in page_obj.paginator.page_range %}
-                            {% if page_obj.number == num %}
-                                <li class="page-item active">
-                                    <span class="page-link">{{ num }}</span>
-                                </li>
-                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ num }}{% if busqueda %}&q={{ busqueda }}{% endif %}">{{ num }}</a>
-                                </li>
                             {% endif %}
-                        {% endfor %}
 
-                        {% if page_obj.has_next %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}">
-                                    <i class="fas fa-angle-right"></i>
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <span class="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-300">
+                                        {{ num }}
+                                    </span>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <a href="?page={{ num }}{% if busqueda %}&q={{ busqueda }}{% endif %}" 
+                                       class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700">
+                                        {{ num }}
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                                <a href="?page={{ page_obj.next_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}" 
+                                   class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700">
+                                    <span class="material-icons text-sm">chevron_right</span>
                                 </a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if busqueda %}&q={{ busqueda }}{% endif %}">
-                                    <i class="fas fa-angle-double-right"></i>
+                                <a href="?page={{ page_obj.paginator.num_pages }}{% if busqueda %}&q={{ busqueda }}{% endif %}" 
+                                   class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 hover:text-gray-700">
+                                    <span class="material-icons text-sm">last_page</span>
                                 </a>
-                            </li>
-                        {% endif %}
-                    </ul>
+                            {% endif %}
+                        </div>
+                    </div>
                 </nav>
             {% endif %}
         {% else %}
-            <div class="text-center py-5">
-                <i class="fas fa-newspaper fa-4x text-muted mb-3"></i>
-                <h3>No hay noticias disponibles</h3>
-                <p class="text-muted">Vuelve pronto para ver las últimas noticias.</p>
+            <div class="text-center py-16">
+                <span class="material-icons text-gray-400 text-6xl mb-4 block">article</span>
+                <h3 class="text-2xl font-semibold text-gray-900 mb-2">No hay noticias disponibles</h3>
+                <p class="text-gray-600">Vuelve pronto para ver las últimas noticias.</p>
             </div>
         {% endif %}
     </div>
 
     <!-- Sidebar -->
-    <div class="col-lg-4">
-        <div class="sidebar">
-            <!-- Noticias destacadas -->
+    <div class="lg:col-span-1">
+        <div class="bg-gray-50 p-6 rounded-lg">
+            <!-- Featured News -->
             {% if noticias_destacadas %}
-                <h5><i class="fas fa-star text-warning"></i> Noticias Destacadas</h5>
-                {% for noticia in noticias_destacadas %}
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h6 class="card-title">
-                                <a href="{{ noticia.get_absolute_url }}" class="text-decoration-none">
+                <h5 class="flex items-center text-lg font-semibold text-gray-900 mb-4">
+                    <span class="material-icons text-yellow-500 mr-2">star</span>
+                    Noticias Destacadas
+                </h5>
+                <div class="space-y-4 mb-6">
+                    {% for noticia in noticias_destacadas %}
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <h6 class="font-medium mb-2">
+                                <a href="{{ noticia.get_absolute_url }}" class="text-gray-900 hover:text-blue-600 transition-colors">
                                     {{ noticia.titulo|truncatechars:60 }}
                                 </a>
                             </h6>
-                            <small class="text-muted">
-                                <i class="fas fa-calendar"></i> {{ noticia.fecha_publicacion|date:"d/m/Y" }}
-                            </small>
+                            <div class="flex items-center text-sm text-gray-500">
+                                <span class="material-icons text-sm mr-1">event</span>
+                                {{ noticia.fecha_publicacion|date:"d/m/Y" }}
+                            </div>
                         </div>
-                    </div>
-                {% endfor %}
-                <hr>
+                    {% endfor %}
+                </div>
+                <hr class="border-gray-200 mb-6">
             {% endif %}
 
-            <!-- Categorías -->
-            <h5><i class="fas fa-tags"></i> Categorías</h5>
-            <div class="list-group">
+            <!-- Categories -->
+            <h5 class="flex items-center text-lg font-semibold text-gray-900 mb-4">
+                <span class="material-icons mr-2">category</span>
+                Categorías
+            </h5>
+            <div class="space-y-2">
                 <a href="{% url 'blog:lista_noticias' %}" 
-                   class="list-group-item list-group-item-action {% if not categoria_actual %}active{% endif %}">
-                    Todas las categorías
+                   class="flex items-center justify-between p-3 rounded-lg transition-colors {% if not categoria_actual %}bg-blue-100 text-blue-700{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+                    <span>Todas las categorías</span>
                 </a>
                 {% for categoria in categorias %}
                     <a href="{% url 'blog:categoria_noticias' categoria.slug %}" 
-                       class="list-group-item list-group-item-action {% if categoria_actual == categoria.slug %}active{% endif %}">
-                        {{ categoria.nombre }}
-                        <span class="badge bg-secondary rounded-pill">{{ categoria.noticias.count }}</span>
+                       class="flex items-center justify-between p-3 rounded-lg transition-colors {% if categoria_actual == categoria.slug %}bg-blue-100 text-blue-700{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+                        <span>{{ categoria.nombre }}</span>
+                        <span class="bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded-full">{{ categoria.noticias.count }}</span>
                     </a>
                 {% endfor %}
             </div>

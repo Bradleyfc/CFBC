@@ -9,6 +9,13 @@ import logging
 import json
 from datetime import datetime, date
 from decimal import Decimal
+from .config_migracion import (
+    LOTE_ACTUALIZACION_PROGRESO, 
+    LOTE_CONTEO_REGISTROS,
+    TIMEOUT_MIGRACION_MINUTOS,
+    LOG_CADA_N_REGISTROS,
+    USAR_TRANSACCIONES_ATOMICAS
+)
 
 logger = logging.getLogger(__name__)
 
@@ -128,9 +135,23 @@ class InspectorBaseDatos:
         """Crea un modelo Django dinámico basado en la estructura de la tabla"""
         nombre_tabla = estructura_tabla['nombre']
         nombre_modelo = self.convertir_nombre_modelo(nombre_tabla)
-        
+    
+        # Verificar si el modelo ya existe en el registro de apps
+        try:
+            modelo_existente = apps.get_model('datos_archivados', nombre_modelo)
+            if modelo_existente:
+                logger.debug(f"Modelo {nombre_modelo} ya existe, reutilizando...")
+                self.modelos_dinamicos[nombre_tabla] = modelo_existente
+                return modelo_existente
+        except LookupError:
+            # El modelo no existe, continuar con la creación
+            pass
+    
         # Diccionario para almacenar los campos del modelo
         campos = {}
+
+    
+    
         
         # Procesar cada columna
         for columna in estructura_tabla['columnas']:
@@ -212,12 +233,10 @@ class InspectorBaseDatos:
         tablas = self.obtener_tablas()
         modelos_creados = {}
         
-        # Filtrar tablas que nos interesan (evitar tablas del sistema)
-        tablas_interes = [t for t in tablas if not t.startswith('django_') 
-                         and not t.startswith('auth_group') 
-                         and not t.startswith('auth_permission')
-                         and t != 'auth_user_groups'
-                         and t != 'auth_user_user_permissions']
+        # Filtrar tablas que nos interesan (excluir solo las problemáticas)
+        # INCLUIR todas las tablas excepto las que pueden causar conflictos
+        tablas_excluir = ['django_session']  # Solo excluir sesiones que cambian constantemente
+        tablas_interes = [t for t in tablas if t not in tablas_excluir]
         
         logger.info(f"Inspeccionando {len(tablas_interes)} tablas: {tablas_interes}")
         
@@ -742,15 +761,26 @@ class MigracionService:
             
             # Conectar a MariaDB
             if not self.conectar_mariadb():
-                raise Exception("No se pudo conectar a la base de datos MariaDB")
+                error_msg = "No se pudo conectar a la base de datos MariaDB. Verifique la configuración de conexión."
+                self.finalizar_migracion('error', error_msg)
+                raise Exception(error_msg)
             
             # Crear inspector de base de datos
             self.inspector = InspectorBaseDatos(self.connection)
             
             # Inspeccionar toda la base de datos
             logger.info("Inspeccionando estructura de la base de datos...")
-            modelos_dinamicos = self.inspector.inspeccionar_base_datos_completa()
-            self.modelos_dinamicos = modelos_dinamicos
+            try:
+                modelos_dinamicos = self.inspector.inspeccionar_base_datos_completa()
+                self.modelos_dinamicos = modelos_dinamicos
+            except Exception as e:
+                error_msg = f"Error inspeccionando la base de datos: {str(e)}"
+                self.finalizar_migracion('error', error_msg)
+                raise Exception(error_msg)
+            
+            # Actualizar log con tablas inspeccionadas
+            self.migration_log.tablas_inspeccionadas = len(modelos_dinamicos)
+            self.migration_log.save()
             
             # Migrar datos usando los modelos dinámicos
             total_registros_migrados = 0
@@ -759,31 +789,181 @@ class MigracionService:
             tablas_vacias = 0
             registros_nuevos_migrados = 0
             
-            for nombre_tabla, modelo_dinamico in modelos_dinamicos.items():
+            # Usar cache para reportar progreso en tiempo real
+            from django.core.cache import cache
+            
+            def actualizar_progreso_migracion(tabla_actual, tabla_num, total_tablas, registros_migrados=0, estado_detalle=""):
+                progreso_porcentaje = int((tabla_num / total_tablas) * 100) if total_tablas > 0 else 0
+                
+                # Determinar el estado detallado
+                if not estado_detalle:
+                    if tabla_num == 0:
+                        estado_detalle = "Iniciando inspección de base de datos"
+                    elif tabla_num <= total_tablas:
+                        estado_detalle = f"Procesando tabla {tabla_num} de {total_tablas}"
+                    else:
+                        estado_detalle = "Finalizando migración"
+                
+                progreso_info = {
+                    'en_progreso': True,
+                    'tabla_actual': tabla_actual,
+                    'tabla_numero': tabla_num,
+                    'total_tablas': total_tablas,
+                    'progreso_porcentaje': progreso_porcentaje,
+                    'tablas_con_datos': tablas_con_datos,
+                    'tablas_vacias': tablas_vacias,
+                    'registros_migrados': registros_migrados,
+                    'estado_detalle': estado_detalle,
+                    'fecha_inicio': self.migration_log.fecha_inicio.isoformat() if self.migration_log.fecha_inicio else timezone.now().isoformat(),
+                    'fecha_actualizacion': timezone.now().isoformat(),
+                    'host_origen': self.host,
+                    'base_datos_origen': self.database,
+                    # Campos adicionales para progreso en tiempo real
+                    'registros_procesados_tabla': 0,  # Se actualizará con el callback
+                    'total_registros_tabla': 0,      # Se actualizará con el callback
+                    'porcentaje_tabla': 0,           # Se actualizará con el callback
+                }
+                cache.set('migracion_progreso', progreso_info, timeout=1800)  # 30 minutos
+                logger.info(f"Progreso migración: {progreso_porcentaje}% - Tabla {tabla_num}/{total_tablas}: {tabla_actual} - {estado_detalle}")
+            
+            total_tablas = len(modelos_dinamicos)
+            
+            if total_tablas == 0:
+                error_msg = "No se encontraron tablas para migrar en la base de datos"
+                self.finalizar_migracion('error', error_msg)
+                raise Exception(error_msg)
+            
+            # Actualizar progreso inicial
+            actualizar_progreso_migracion("Iniciando migración", 0, total_tablas, 0, "Preparando para procesar tablas")
+            
+            for i, (nombre_tabla, modelo_dinamico) in enumerate(modelos_dinamicos.items(), 1):
                 try:
-                    logger.info(f"Migrando datos de la tabla: {nombre_tabla}")
-                    registros_en_origen = self.migrar_tabla_dinamica(nombre_tabla, modelo_dinamico)
+                    # Verificar si la conexión sigue activa
+                    if not self.connection or not self.connection.is_connected():
+                        error_msg = f"Conexión perdida con MariaDB durante el procesamiento de la tabla {nombre_tabla}"
+                        self.finalizar_migracion('error', error_msg)
+                        raise Exception(error_msg)
+                    
+                    # Actualizar progreso antes de procesar cada tabla
+                    actualizar_progreso_migracion(nombre_tabla, i, total_tablas, registros_nuevos_migrados, f"Iniciando migración de {nombre_tabla}")
+                    
+                    logger.info(f"Migrando datos de la tabla: {nombre_tabla} ({i}/{total_tablas})")
+                    
+                    # Callback para actualizaciones en tiempo real durante la migración de la tabla
+                    def callback_progreso_tabla(**kwargs):
+                        nonlocal registros_nuevos_migrados
+                        
+                        # Actualizar contador global de registros migrados
+                        if kwargs.get('registros_migrados_tabla'):
+                            # Contar registros realmente migrados hasta ahora
+                            from .models import DatoArchivadoDinamico
+                            try:
+                                registros_actuales = DatoArchivadoDinamico.objects.filter(
+                                    fecha_migracion__gte=self.migration_log.fecha_inicio
+                                ).count()
+                                registros_nuevos_migrados = registros_actuales
+                            except Exception as e:
+                                logger.error(f"Error contando registros migrados: {e}")
+                        
+                        # Actualizar progreso con información detallada de la tabla actual
+                        estado_detalle = f"Procesando {kwargs.get('tabla_actual', nombre_tabla)}: {kwargs.get('registros_procesados', 0)}/{kwargs.get('total_registros_tabla', 0)} registros ({kwargs.get('porcentaje_tabla', 0)}%)"
+                        
+                        # Crear progreso actualizado con información de la tabla
+                        progreso_tabla = {
+                            'en_progreso': True,
+                            'tabla_actual': kwargs.get('tabla_actual', nombre_tabla),
+                            'tabla_numero': i,
+                            'total_tablas': total_tablas,
+                            'progreso_porcentaje': int((i / total_tablas) * 100) if total_tablas > 0 else 0,
+                            'tablas_con_datos': tablas_con_datos,
+                            'tablas_vacias': tablas_vacias,
+                            'registros_migrados': registros_nuevos_migrados,
+                            'estado_detalle': estado_detalle,
+                            'fecha_inicio': self.migration_log.fecha_inicio.isoformat() if self.migration_log.fecha_inicio else timezone.now().isoformat(),
+                            'fecha_actualizacion': timezone.now().isoformat(),
+                            'host_origen': self.host,
+                            'base_datos_origen': self.database,
+                            # Información específica de la tabla actual
+                            'registros_procesados_tabla': kwargs.get('registros_procesados', 0),
+                            'total_registros_tabla': kwargs.get('total_registros_tabla', 0),
+                            'porcentaje_tabla': kwargs.get('porcentaje_tabla', 0),
+                            'registros_migrados_tabla': kwargs.get('registros_migrados_tabla', 0),
+                        }
+                        
+                        cache.set('migracion_progreso', progreso_tabla, timeout=1800)  # 30 minutos
+                        logger.info(f"📊 Progreso tabla {nombre_tabla}: {kwargs.get('registros_procesados', 0)}/{kwargs.get('total_registros_tabla', 0)} ({kwargs.get('porcentaje_tabla', 0)}%) - Total migrados: {registros_nuevos_migrados}")
+                    
+                    try:
+                        registros_en_origen = self.migrar_tabla_dinamica(nombre_tabla, modelo_dinamico, callback_progreso_tabla)
+                    except Exception as e:
+                        logger.error(f"Error migrando tabla {nombre_tabla}: {e}")
+                        # Si es un error crítico de conexión, fallar completamente
+                        if 'connection' in str(e).lower() or 'mysql' in str(e).lower():
+                            error_msg = f"Error de conexión durante migración de tabla {nombre_tabla}: {str(e)}"
+                            self.finalizar_migracion('error', error_msg)
+                            raise Exception(error_msg)
+                        # Si es otro tipo de error, continuar con las demás tablas
+                        registros_en_origen = 0
                     
                     # Contar si la tabla tiene datos en el origen
                     if registros_en_origen > 0:
                         tablas_con_datos += 1
                         logger.info(f"✓ Tabla {nombre_tabla} tiene {registros_en_origen} registros")
+                        estado_tabla = f"Completada: {nombre_tabla} ({registros_en_origen} registros)"
                     else:
                         tablas_vacias += 1
                         logger.info(f"○ Tabla {nombre_tabla} está vacía")
+                        estado_tabla = f"Completada: {nombre_tabla} (vacía)"
+                    
+                    # Actualizar progreso después de cada tabla
+                    self.migration_log.tablas_con_datos = tablas_con_datos
+                    self.migration_log.tablas_vacias = tablas_vacias
+                    
+                    # Contar registros migrados hasta ahora - usar configuración optimizada
+                    if i % LOTE_CONTEO_REGISTROS == 0 or i == total_tablas:
+                        from .models import DatoArchivadoDinamico
+                        try:
+                            registros_actuales = DatoArchivadoDinamico.objects.filter(
+                                fecha_migracion__gte=self.migration_log.fecha_inicio
+                            ).count()
+                            self.migration_log.usuarios_migrados = registros_actuales
+                            registros_nuevos_migrados = registros_actuales
+                            self.migration_log.save()
+                        except Exception as e:
+                            logger.error(f"Error contando registros migrados: {e}")
+                            # Continuar sin actualizar el conteo
+                    
+                    # Actualizar progreso después de procesar la tabla
+                    actualizar_progreso_migracion(nombre_tabla, i, total_tablas, registros_nuevos_migrados, estado_tabla)
                         
                 except Exception as e:
-                    logger.error(f"Error migrando tabla {nombre_tabla}: {e}")
+                    logger.error(f"Error crítico migrando tabla {nombre_tabla}: {e}")
+                    # Si es un error de conexión, fallar completamente
+                    if 'connection' in str(e).lower() or 'mysql' in str(e).lower() or 'mariadb' in str(e).lower():
+                        error_msg = f"Error de conexión crítico en tabla {nombre_tabla}: {str(e)}"
+                        self.finalizar_migracion('error', error_msg)
+                        raise Exception(error_msg)
+                    
+                    # Para otros errores, continuar pero registrar
                     tablas_vacias += 1  # Contar como vacía si hay error
+                    
+                    # Actualizar progreso incluso si hay error
+                    self.migration_log.tablas_vacias = tablas_vacias
+                    self.migration_log.save()
+                    actualizar_progreso_migracion(nombre_tabla, i, total_tablas, registros_nuevos_migrados, f"Error en {nombre_tabla}: {str(e)}")
                     continue
             
-            # Contar registros realmente migrados (nuevos)
+            # Contar registros realmente migrados (nuevos) - conteo final
             from .models import DatoArchivadoDinamico
-            registros_nuevos_migrados = DatoArchivadoDinamico.objects.filter(
-                fecha_migracion__gte=self.migration_log.fecha_inicio
-            ).count()
+            try:
+                registros_nuevos_migrados = DatoArchivadoDinamico.objects.filter(
+                    fecha_migracion__gte=self.migration_log.fecha_inicio
+                ).count()
+            except Exception as e:
+                logger.error(f"Error en conteo final de registros: {e}")
+                # Usar el último conteo disponible
             
-            # Actualizar log con totales
+            # Actualizar log con totales finales
             self.migration_log.usuarios_migrados = registros_nuevos_migrados
             self.migration_log.tablas_inspeccionadas = len(modelos_dinamicos)
             self.migration_log.tablas_con_datos = tablas_con_datos
@@ -792,47 +972,85 @@ class MigracionService:
             
             logger.info(f"Resumen: {len(modelos_dinamicos)} tablas inspeccionadas, {tablas_con_datos} con datos, {tablas_vacias} vacías")
             
+            # Actualizar progreso final - 100%
+            actualizar_progreso_migracion("Migración completada", total_tablas, total_tablas, registros_nuevos_migrados, "Finalizando proceso y guardando estadísticas")
+            
             # Finalizar migración exitosa
             self.finalizar_migracion('completada')
-            logger.info(f"Migración automática completada. Total de registros migrados: {total_registros_migrados}")
+            logger.info(f"Migración automática completada. Total de registros migrados: {registros_nuevos_migrados}")
+            
+            # Limpiar cache de progreso
+            cache.delete('migracion_progreso')
             
             return self.migration_log
             
         except Exception as e:
             error_msg = f"Error durante la migración automática: {str(e)}"
             logger.error(error_msg)
-            self.finalizar_migracion('error', error_msg)
+            
+            # Limpiar cache de progreso en caso de error
+            cache.delete('migracion_progreso')
+            
+            # Asegurar que el log se marca como error
+            if self.migration_log:
+                self.finalizar_migracion('error', error_msg)
+            
             raise
         finally:
             self.desconectar_mariadb()
     
-    def migrar_tabla_dinamica(self, nombre_tabla, modelo_dinamico):
+    def migrar_tabla_dinamica(self, nombre_tabla, modelo_dinamico, callback_progreso=None):
         """
         Migra los datos de una tabla específica usando un modelo dinámico
+        con actualizaciones de progreso en tiempo real
         """
         cursor = self.connection.cursor(dictionary=True)
         try:
             # Obtener todos los registros de la tabla
-            query = f"SELECT * FROM {nombre_tabla} ORDER BY id DESC LIMIT 1000"  # Limitar para evitar sobrecarga
+            query = f"SELECT * FROM {nombre_tabla} ORDER BY id DESC"
             cursor.execute(query)
             registros = cursor.fetchall()
             
-            # Contar registros en la tabla origen (no solo los nuevos migrados)
+            # Contar registros en la tabla origen
             total_registros_origen = len(registros)
             migrados = 0
             
-            for registro in registros:
+            logger.info(f"📊 Iniciando migración de {nombre_tabla}: {total_registros_origen} registros")
+            
+            # Procesar registros en lotes para actualizaciones en tiempo real
+            lote_size = LOTE_ACTUALIZACION_PROGRESO  # Usar configuración optimizada
+            
+            for i, registro in enumerate(registros, 1):
                 try:
                     # Crear modelo archivado dinámico
                     modelo_archivado = self.crear_modelo_archivado_dinamico(nombre_tabla, registro)
                     if modelo_archivado:
                         migrados += 1
+                    
+                    # Actualizar progreso en tiempo real cada lote_size registros o al final
+                    if i % lote_size == 0 or i == total_registros_origen:
+                        if callback_progreso:
+                            callback_progreso(
+                                tabla_actual=nombre_tabla,
+                                registros_procesados=i,
+                                total_registros_tabla=total_registros_origen,
+                                registros_migrados_tabla=migrados,
+                                porcentaje_tabla=int((i / total_registros_origen) * 100)
+                            )
+                        
+                        logger.info(f"📈 {nombre_tabla}: {i}/{total_registros_origen} procesados ({migrados} nuevos)")
+                        
+                        # Log menos frecuente para bases de datos grandes
+                        if i % LOG_CADA_N_REGISTROS == 0 or i == total_registros_origen:
+                            logger.info(f"📊 Progreso {nombre_tabla}: {i}/{total_registros_origen} registros procesados")
+                        
                 except Exception as e:
                     logger.error(f"Error migrando registro {registro.get('id', 'N/A')} de {nombre_tabla}: {e}")
                     continue
             
+            logger.info(f"✅ {nombre_tabla} completada: {migrados} registros nuevos migrados de {total_registros_origen} totales")
+            
             # Retornar el total de registros en origen (para contar tablas con datos)
-            # aunque no se hayan migrado nuevos registros en esta ejecución
             return total_registros_origen
             
         except Exception as e:

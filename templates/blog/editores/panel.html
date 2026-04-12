@@ -3,141 +3,166 @@
 {% block titulo_pagina %}Dashboard{% endblock %}
 
 {% block contenido_editores %}
-<!-- Estadísticas -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card card-stat">
-            <div class="card-body text-center">
-                <h3 class="text-primary">{{ total_noticias }}</h3>
-                <p class="mb-0">Total Noticias</p>
+<!-- Statistics -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <div class="glass-card p-6">
+        <div class="text-center">
+            <div class="flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-r from-blue-400 to-blue-600">
+                <span class="material-icons text-white">article</span>
             </div>
+            <h3 class="text-3xl font-bold text-gray-800 mb-1">{{ total_noticias }}</h3>
+            <p class="text-gray-600">Total Noticias</p>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card card-stat">
-            <div class="card-body text-center">
-                <h3 class="text-success">{{ noticias_publicadas }}</h3>
-                <p class="mb-0">Publicadas</p>
+    <div class="glass-card p-6">
+        <div class="text-center">
+            <div class="flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-r from-green-400 to-green-600">
+                <span class="material-icons text-white">check_circle</span>
             </div>
+            <h3 class="text-3xl font-bold text-gray-800 mb-1">{{ noticias_publicadas }}</h3>
+            <p class="text-gray-600">Publicadas</p>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card card-stat">
-            <div class="card-body text-center">
-                <h3 class="text-warning">{{ noticias_borrador }}</h3>
-                <p class="mb-0">Borradores</p>
+    <div class="glass-card p-6">
+        <div class="text-center">
+            <div class="flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600">
+                <span class="material-icons text-white">edit</span>
             </div>
+            <h3 class="text-3xl font-bold text-gray-800 mb-1">{{ noticias_borrador }}</h3>
+            <p class="text-gray-600">Borradores</p>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card card-stat">
-            <div class="card-body text-center">
-                <h3 class="text-info">{{ mis_noticias }}</h3>
-                <p class="mb-0">Mis Noticias</p>
+    <div class="glass-card p-6">
+        <div class="text-center">
+            <div class="flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-r from-purple-400 to-purple-600">
+                <span class="material-icons text-white">person</span>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- Acciones rápidas -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5><i class="fas fa-bolt"></i> Acciones Rápidas</h5>
-            </div>
-            <div class="card-body">
-                <a href="{% url 'blog:crear_noticia' %}" class="btn btn-primary btn-editor">
-                    <i class="fas fa-plus"></i> Nueva Noticia
-                </a>
-                <a href="{% url 'blog:mis_noticias' %}" class="btn btn-outline-primary btn-editor">
-                    <i class="fas fa-list"></i> Ver Mis Noticias
-                </a>
-                <a href="{% url 'blog:gestionar_categorias' %}" class="btn btn-outline-secondary btn-editor">
-                    <i class="fas fa-tags"></i> Gestionar Categorías
-                </a>
-                <a href="{% url 'blog:lista_noticias' %}" class="btn btn-outline-success btn-editor">
-                    <i class="fas fa-eye"></i> Ver Sitio Público
-                </a>
-            </div>
+            <h3 class="text-3xl font-bold text-gray-800 mb-1">{{ mis_noticias }}</h3>
+            <p class="text-gray-600">Mis Noticias</p>
         </div>
     </div>
 </div>
 
-<!-- Últimas noticias -->
+<!-- Quick Actions -->
+<div class="glass-card p-6 mb-8">
+    <h5 class="flex items-center text-lg font-semibold text-gray-800 mb-6">
+        <span class="material-icons mr-2">flash_on</span>
+        Acciones Rápidas
+    </h5>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <a href="{% url 'blog:crear_noticia' %}" 
+           class="glass-button glass-button-primary inline-flex items-center justify-center px-6 py-3 text-sm font-medium rounded-lg transition-all">
+            <span class="material-icons mr-2 text-sm">add</span>
+            Nueva Noticia
+        </a>
+        <a href="{% url 'blog:mis_noticias' %}" 
+           class="glass-button inline-flex items-center justify-center px-6 py-3 text-gray-700 text-sm font-medium rounded-lg transition-all">
+            <span class="material-icons mr-2 text-sm">article</span>
+            Ver Mis Noticias
+        </a>
+        <a href="{% url 'blog:gestionar_categorias' %}" 
+           class="glass-button inline-flex items-center justify-center px-6 py-3 text-gray-700 text-sm font-medium rounded-lg transition-all">
+            <span class="material-icons mr-2 text-sm">category</span>
+            Gestionar Categorías
+        </a>
+        <a href="{% url 'blog:lista_noticias' %}" 
+           class="glass-button glass-button-success inline-flex items-center justify-center px-6 py-3 text-sm font-medium rounded-lg transition-all">
+            <span class="material-icons mr-2 text-sm">visibility</span>
+            Ver Sitio Público
+        </a>
+    </div>
+</div>
+
+<!-- Latest News -->
 {% if ultimas_noticias %}
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5><i class="fas fa-clock"></i> Mis Últimas Noticias</h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Título</th>
-                                <th>Estado</th>
-                                <th>Categoría</th>
-                                <th>Fecha</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for noticia in ultimas_noticias %}
-                            <tr>
-                                <td>
-                                    <strong>{{ noticia.titulo|truncatechars:50 }}</strong>
-                                    {% if noticia.destacada %}
-                                        <span class="badge bg-warning text-dark ms-1">Destacada</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if noticia.estado == 'publicado' %}
-                                        <span class="badge bg-success">Publicado</span>
-                                    {% elif noticia.estado == 'borrador' %}
-                                        <span class="badge bg-warning">Borrador</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">Archivado</span>
-                                    {% endif %}
-                                </td>
-                                <td>{{ noticia.categoria.nombre }}</td>
-                                <td>{{ noticia.fecha_creacion|date:"d/m/Y" }}</td>
-                                <td>
+<div class="glass-card">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h5 class="flex items-center text-lg font-semibold text-gray-800">
+            <span class="material-icons mr-2">schedule</span>
+            Mis Últimas Noticias
+        </h5>
+    </div>
+    <div class="p-6">
+        <div class="glass-table">
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Título</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for noticia in ultimas_noticias %}
+                        <tr class="glass-table-row transition-colors hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div>
+                                        <div class="text-sm font-medium text-gray-900">{{ noticia.titulo|truncatechars:50 }}</div>
+                                        {% if noticia.destacada %}
+                                            <span class="glass-badge glass-badge-warning inline-flex items-center px-2 py-1 text-xs font-medium mt-1">
+                                                <span class="material-icons text-xs mr-1">star</span>
+                                                Destacada
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if noticia.estado == 'publicado' %}
+                                    <span class="glass-badge glass-badge-success inline-flex items-center px-3 py-1 text-xs font-medium">
+                                        Publicado
+                                    </span>
+                                {% elif noticia.estado == 'borrador' %}
+                                    <span class="glass-badge glass-badge-warning inline-flex items-center px-3 py-1 text-xs font-medium">
+                                        Borrador
+                                    </span>
+                                {% else %}
+                                    <span class="glass-badge glass-badge-secondary inline-flex items-center px-3 py-1 text-xs font-medium">
+                                        Archivado
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ noticia.categoria.nombre }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ noticia.fecha_creacion|date:"d/m/Y" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div class="flex space-x-2">
                                     <a href="{% url 'blog:editar_noticia' noticia.pk %}" 
-                                       class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-edit"></i>
+                                       class="glass-button px-3 py-1 text-gray-700 text-xs rounded-lg">
+                                        <span class="material-icons text-xs">edit</span>
                                     </a>
                                     {% if noticia.estado == 'publicado' %}
                                         <a href="{{ noticia.get_absolute_url }}" 
-                                           class="btn btn-sm btn-outline-success" target="_blank">
-                                            <i class="fas fa-eye"></i>
+                                           class="glass-button-success px-3 py-1 text-xs rounded-lg" target="_blank">
+                                            <span class="material-icons text-xs">visibility</span>
                                         </a>
                                     {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
 {% else %}
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body text-center py-5">
-                <i class="fas fa-newspaper fa-4x text-muted mb-3"></i>
-                <h4>¡Bienvenido al Panel de Editores!</h4>
-                <p class="text-muted">Aún no has creado ninguna noticia. ¡Comienza creando tu primera noticia!</p>
-                <a href="{% url 'blog:crear_noticia' %}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Crear Primera Noticia
-                </a>
-            </div>
+<div class="glass-card">
+    <div class="p-12 text-center">
+        <div class="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-blue-400 to-purple-600">
+            <span class="material-icons text-white text-2xl">article</span>
         </div>
+        <h4 class="text-xl font-semibold text-gray-800 mb-2">¡Bienvenido al Panel de Editor!</h4>
+        <p class="text-gray-600 mb-6">Aún no has creado ninguna noticia. ¡Comienza creando tu primera noticia!</p>
+        <a href="{% url 'blog:crear_noticia' %}" 
+           class="glass-button glass-button-primary inline-flex items-center px-6 py-3 text-sm font-medium rounded-lg transition-all">
+            <span class="material-icons mr-2">add</span>
+            Crear Primera Noticia
+        </a>
     </div>
 </div>
 {% endif %}

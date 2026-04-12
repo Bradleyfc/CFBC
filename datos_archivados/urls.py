@@ -19,6 +19,14 @@ urlpatterns = [
     # Migración automática
     path('migracion/configurar/', views.configurar_migracion_view, name='configurar_migracion'),
     path('migracion/estado/', views.estado_migracion_ajax, name='estado_migracion'),
+    path('migracion/cancelar/', views.cancelar_migracion_ajax, name='cancelar_migracion'),
+    path('migracion/continuar/', views.continuar_migracion_ajax, name='continuar_migracion'),
+    path('migracion/limpiar-cache/', views.limpiar_cache_migracion, name='limpiar_cache_migracion'),
+    
+    # Combinación de datos
+    path('combinacion/estado/', views.estado_combinacion_ajax, name='estado_combinacion'),
+    path('combinacion/interrumpir/', views.interrumpir_combinacion_ajax, name='interrumpir_combinacion'),
+    path('combinar-datos-seleccionadas/', views.combinar_datos_seleccionadas, name='combinar_datos_seleccionadas'),
     
     # Usuarios archivados - DESHABILITADO (ya no es necesario con la nueva implementación de combinación)
     # path('reclamar-usuario/', views.reclamar_usuario_archivado, name='reclamar_usuario'),
@@ -33,7 +41,4 @@ urlpatterns = [
     # Búsqueda AJAX
     path('buscar-ajax/', views.buscar_datos_ajax, name='buscar_datos_ajax'),
     path('tablas/<str:tabla>/buscar-ajax/', views.buscar_en_tabla_ajax, name='buscar_en_tabla_ajax'),
-    
-    # Debug
-    path('debug/', views.debug_permisos, name='debug_permisos'),
 ]

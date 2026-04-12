@@ -1,0 +1,1354 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ folder.name }} - {{ curso.name }}{% endblock %}
+
+{% block content %}
+<!-- Background Section with Gradient -->
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-30"
+        style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;">
+    </div>
+
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        <!-- Breadcrumb and Header -->
+        <div class="mb-6">
+            <nav class="flex mb-4" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                    <li class="inline-flex items-center">
+                        <a href="{% url 'course_documents:teacher_dashboard' curso_id=curso.id %}" 
+                           class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+                            <span class="material-icons mr-2">folder</span>
+                            Documentos
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <span class="material-icons text-gray-400 rotate-180">arrow_back</span>
+                            <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">{{ folder.name }}</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+            
+            <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">📁 {{ folder.name }}</h1>
+            <p class="text-xl text-center text-gray-700">{{ curso.name }}</p>
+        </div>
+
+        <!-- Botón Subir Documento (solo si hay documentos) -->
+        {% if documents %}
+        <div class="mb-6 text-center flex justify-center gap-3">
+            <a href="{% url 'course_documents:teacher_dashboard' curso_id=curso.id %}" 
+               class="glass-btn glass-btn-secondary">
+                <span class="glass-btn-content">
+                    <span class="material-icons mr-2">arrow_back</span>
+                    Volver
+                </span>
+                <div class="glass-btn-glow"></div>
+            </a>
+            
+            <button type="button" 
+                    class="glass-btn glass-btn-success"
+                    onclick="showUploadModal()">
+                <span class="glass-btn-content">
+                    <span class="material-icons mr-2">cloud_upload</span>
+                    Subir Documento
+                </span>
+                <div class="glass-btn-glow"></div>
+            </button>
+        </div>
+        {% endif %}
+
+        <!-- Lista de Documentos -->
+        {% if documents %}
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {% for document in documents %}
+                <div class="glass-card glass-card-folder glass-card-compact">
+                    <div class="glass-card-content">
+                        <div class="text-center mb-2">
+                            <div class="document-icon-container {{ document.get_file_icon_class }} mx-auto mb-1 document-icon-tooltip" 
+                                 data-tooltip="{{ document.get_file_type_name }}">
+                                <span class="material-icons {{ document.get_file_icon_color }}">{{ document.get_file_icon }}</span>
+                            </div>
+                            <h3 class="glass-card-title-compact">{{ document.name }}</h3>
+                            <p class="glass-card-meta-compact">
+                                {{ document.get_file_size_display }} • {{ document.get_file_extension|upper }}
+                            </p>
+                            <p class="glass-card-meta-compact">
+                                Subido {{ document.uploaded_at|date:"d/m/Y" }}
+                            </p>
+                        </div>
+                        
+                        <div class="flex justify-center gap-1">
+                            <a href="{{ document.file.url }}" 
+                               target="_blank" 
+                               title="Ver/Abrir"
+                               class="glass-btn glass-btn-info glass-btn-xs">
+                                <span class="glass-btn-content">
+                                    <span class="material-icons">open_in_new</span>
+                                </span>
+                                <div class="glass-btn-glow"></div>
+                            </a>
+                            
+                            <a href="{{ document.file.url }}" 
+                               download 
+                               title="Descargar"
+                               class="glass-btn glass-btn-success glass-btn-xs">
+                                <span class="glass-btn-content">
+                                    <span class="material-icons">cloud_download</span>
+                                </span>
+                                <div class="glass-btn-glow"></div>
+                            </a>
+                            
+                            <button type="button" 
+                                    class="glass-btn glass-btn-danger glass-btn-xs glass-btn-icon"
+                                    title="Eliminar documento"
+                                    onclick="showDeleteDocumentModal('{{ document.id }}', '{{ document.name|escapejs }}')">
+                                <span class="glass-btn-content">
+                                    <span class="material-icons">delete</span>
+                                </span>
+                                <div class="glass-btn-glow"></div>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="glass-card-glow glass-glow-neutral"></div>
+                </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- Estado vacío centrado -->
+        <div class="flex items-center justify-center min-h-96">
+            <div class="glass-card glass-card-empty max-w-md w-full">
+                <div class="glass-card-content text-center">
+                    <div class="glass-empty-icon">
+                        <span class="material-icons text-6xl text-gray-300 mb-4">description</span>
+                    </div>
+                    <h3 class="glass-card-title mb-2">No hay documentos en esta carpeta</h3>
+                    <p class="glass-card-subtitle mb-8">Sube tu primer documento para comenzar</p>
+                    
+                    <div class="flex justify-center gap-3">
+                        <a href="{% url 'course_documents:teacher_dashboard' curso_id=curso.id %}" 
+                           class="glass-btn glass-btn-secondary">
+                            <span class="glass-btn-content">
+                                <span class="material-icons mr-2">arrow_back</span>
+                                Volver
+                            </span>
+                            <div class="glass-btn-glow"></div>
+                        </a>
+                        
+                        <button type="button" 
+                                class="glass-btn glass-btn-success"
+                                onclick="showUploadModal()">
+                            <span class="glass-btn-content">
+                                <span class="material-icons mr-2">cloud_upload</span> Subir Primer Documento
+                            </span>
+                            <div class="glass-btn-glow"></div>
+                        </button>
+                    </div>
+                </div>
+                <div class="glass-card-glow glass-glow-neutral"></div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal para subir documento -->
+<div id="uploadDocumentModal" class="glass-modal hidden">
+    <div class="glass-modal-overlay"></div>
+    <div class="glass-modal-container">
+        <div class="glass-modal-content glass-modal-compact">
+            <form method="post" enctype="multipart/form-data" action="{% url 'course_documents:upload_document' curso_id=curso.id folder_id=folder.id %}">
+                {% csrf_token %}
+                <div class="glass-modal-header glass-modal-header-compact">
+                    <div class="glass-modal-icon glass-icon-green glass-modal-icon-small">
+                        <span class="material-icons text-xl">cloud_upload</span>
+                    </div>
+                    <h3 class="glass-modal-title">Subir Documento</h3>
+                </div>
+                <div class="glass-modal-body glass-modal-body-compact">
+                    <div class="glass-form-group glass-form-group-compact">
+                        <label class="glass-form-label-compact">Carpeta: <span class="font-semibold text-blue-600">{{ folder.name }}</span></label>
+                    </div>
+                    <div class="glass-form-group glass-form-group-compact">
+                        <label for="id_document_name" class="glass-form-label-compact">Nombre del documento (opcional)</label>
+                        <input type="text" 
+                               name="name" 
+                               id="id_document_name"
+                               maxlength="200"
+                               class="glass-form-input glass-form-input-compact"
+                               placeholder="Dejar vacío para usar el nombre original del archivo">
+                    </div>
+                    <div class="glass-form-group glass-form-group-compact">
+                        <label for="id_document_file" class="glass-form-label-compact">Archivo</label>
+                        <div class="glass-file-input-wrapper">
+                            <input type="file" 
+                                   name="file" 
+                                   id="id_document_file"
+                                   required
+                                   accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,.7z,.jpg,.jpeg,.png,.gif,.bmp"
+                                   class="glass-file-input-hidden"
+                                   onchange="updateFileName(this)">
+                            <div class="glass-file-input-display">
+                                <button type="button" class="glass-file-btn" onclick="document.getElementById('id_document_file').click()">
+                                    <span class="material-icons mr-1">folder_open</span>
+                                    Elegir Archivo
+                                </button>
+                                <span class="glass-file-name" id="fileName">Ningún archivo seleccionado</span>
+                            </div>
+                        </div>
+                        <p class="glass-form-help-compact">Máx: 10MB • PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, ZIP, RAR, JPG, PNG, BMP</p>
+                    </div>
+                </div>
+                <div class="glass-modal-footer glass-modal-footer-compact">
+                    <button type="button" 
+                            class="glass-btn glass-btn-secondary glass-btn-sm flex-1"
+                            onclick="hideUploadModal()">
+                        <span class="glass-btn-content">
+                            <span class="material-icons mr-1">close</span> Cancelar
+                        </span>
+                        <div class="glass-btn-glow"></div>
+                    </button>
+                    <button type="submit" 
+                            class="glass-btn glass-btn-success glass-btn-sm flex-1">
+                        <span class="glass-btn-content">
+                            <span class="material-icons mr-1">cloud_upload</span> Subir
+                        </span>
+                        <div class="glass-btn-glow"></div>
+                    </button>
+                </div>
+            </form>
+            <div class="glass-modal-glow glass-glow-green"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para confirmar eliminación de documento -->
+<div id="deleteDocumentModal" class="glass-modal hidden">
+    <div class="glass-modal-overlay"></div>
+    <div class="glass-modal-container">
+        <div class="glass-modal-content">
+            <div class="glass-modal-header">
+                <div class="glass-modal-icon glass-icon-red">
+                    <span class="material-icons text-2xl">warning</span>
+                </div>
+                <h3 class="glass-modal-title">Confirmar Eliminación</h3>
+            </div>
+            <div class="glass-modal-body">
+                <p class="text-gray-700 text-center mb-4">
+                    ¿Estás seguro de que quieres eliminar el documento 
+                    <strong id="deleteDocumentName"></strong>?
+                </p>
+                <div class="glass-warning-box">
+                    <div class="flex items-center">
+                        <span class="material-icons text-red-500 mr-2">error</span>
+                        <span class="text-sm text-red-700">
+                            Esta acción no se puede deshacer.
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-modal-footer">
+                <button type="button" 
+                        class="glass-btn glass-btn-secondary flex-1"
+                        onclick="hideDeleteDocumentModal()">
+                    <span class="glass-btn-content">
+                        <span class="material-icons mr-2">close</span>
+                        Cancelar
+                    </span>
+                    <div class="glass-btn-glow"></div>
+                </button>
+                <button type="button" 
+                        class="glass-btn glass-btn-danger flex-1"
+                        onclick="confirmDeleteDocument()">
+                    <span class="glass-btn-content">
+                        <span class="material-icons mr-2">delete</span>
+                        Eliminar Documento
+                    </span>
+                    <div class="glass-btn-glow"></div>
+                </button>
+            </div>
+            <div class="glass-modal-glow glass-glow-red"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Glass Card */
+    .glass-card {
+        position: relative;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            0 4px 16px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .glass-content {
+        position: relative;
+    }
+
+    /* Glass Button */
+    .glass-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        cursor: pointer;
+        min-width: 120px;
+    }
+
+    .glass-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        text-decoration: none;
+    }
+
+    .glass-button-secondary {
+        background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
+        color: #374151;
+    }
+
+    .glass-button-success {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+        color: #14532d;
+    }
+
+    .glass-button-info {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        color: #1e3a8a;
+    }
+
+    .glass-button-danger {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.2));
+        color: #7f1d1d;
+        padding: 0.5rem 1rem;
+        min-width: auto;
+    }
+
+    /* ===== GLASSMORPHISM MODALES ===== */
+    .glass-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-modal.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .glass-modal-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        cursor: pointer;
+    }
+
+    .glass-modal-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 1rem;
+        position: relative;
+        z-index: 10;
+    }
+
+    .glass-modal-content {
+        position: relative;
+        max-width: 28rem;
+        width: 100%;
+        border-radius: 24px;
+        overflow: hidden;
+        transform: scale(0.9) translateY(20px);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        
+        background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.95) 0%, 
+            rgba(255, 255, 255, 0.85) 50%, 
+            rgba(255, 255, 255, 0.9) 100%);
+        backdrop-filter: blur(30px);
+        -webkit-backdrop-filter: blur(30px);
+        
+        box-shadow: 
+            0 25px 80px rgba(0, 0, 0, 0.15),
+            0 12px 40px rgba(0, 0, 0, 0.1),
+            0 6px 20px rgba(0, 0, 0, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+        
+        border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+
+    .glass-modal.show .glass-modal-content {
+        transform: scale(1) translateY(0);
+    }
+
+    .glass-modal-header {
+        padding: 2rem 2rem 1rem;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        position: relative;
+        z-index: 2;
+    }
+
+    .glass-modal-header-compact {
+        padding: 1rem 1.5rem 0.5rem !important;
+    }
+
+    .glass-modal-icon {
+        width: 4rem;
+        height: 4rem;
+        margin: 0 auto 1rem;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        box-shadow: 
+            0 8px 25px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .glass-modal-icon-small {
+        width: 2.5rem !important;
+        height: 2.5rem !important;
+        margin: 0 auto 0.5rem !important;
+        border-radius: 12px !important;
+    }
+
+    .glass-icon-green {
+        background: linear-gradient(135deg, 
+            rgba(34, 197, 94, 0.2) 0%, 
+            rgba(22, 163, 74, 0.1) 100%);
+        color: #14532d;
+    }
+
+    .glass-icon-red {
+        background: linear-gradient(135deg, 
+            rgba(239, 68, 68, 0.2) 0%, 
+            rgba(220, 38, 38, 0.1) 100%);
+        color: #7f1d1d;
+    }
+
+    /* Efectos de resplandor */
+    .glass-glow-green {
+        background: radial-gradient(circle, rgba(34, 197, 94, 0.15) 0%, transparent 70%);
+    }
+
+    .glass-glow-red {
+        background: radial-gradient(circle, rgba(239, 68, 68, 0.15) 0%, transparent 70%);
+    }
+
+    /* Caja de advertencia */
+    .glass-warning-box {
+        background: linear-gradient(135deg, 
+            rgba(254, 226, 226, 0.8) 0%, 
+            rgba(252, 165, 165, 0.6) 100%);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 12px;
+        padding: 0.875rem;
+        margin-top: 1rem;
+    }
+
+    .glass-modal-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #374151;
+        margin: 0;
+        text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+    }
+
+    .glass-modal-body {
+        padding: 1.5rem 2rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .glass-modal-body-compact {
+        padding: 0.75rem 1.5rem !important;
+    }
+
+    .glass-modal-footer {
+        padding: 1rem 2rem 2rem;
+        display: flex;
+        gap: 1rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .glass-modal-footer-compact {
+        padding: 0.75rem 1.5rem 1rem !important;
+        gap: 0.75rem !important;
+    }
+
+    .glass-modal-glow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        z-index: 1;
+        opacity: 0.3;
+    }
+
+    .glass-glow-green {
+        background: radial-gradient(circle, rgba(34, 197, 94, 0.15) 0%, transparent 70%);
+    }
+
+    /* ===== FORMULARIOS GLASSMORPHISM ===== */
+    .glass-form-group {
+        margin-bottom: 1rem;
+    }
+
+    .glass-form-group-compact {
+        margin-bottom: 0.5rem !important;
+    }
+
+    .glass-form-label-compact {
+        display: block;
+        font-size: 0.8rem !important;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.25rem !important;
+        text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+    }
+
+    .glass-form-input {
+        width: 100%;
+        padding: 0.75rem 0.875rem;
+        border-radius: 12px;
+        font-size: 0.875rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        
+        background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.6) 0%, 
+            rgba(255, 255, 255, 0.4) 100%);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        color: #374151;
+        
+        box-shadow: 
+            0 4px 12px rgba(0, 0, 0, 0.05),
+            inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    }
+
+    .glass-form-input-compact {
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.8rem !important;
+    }
+
+    .glass-form-input:focus {
+        outline: none;
+        background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.8) 0%, 
+            rgba(255, 255, 255, 0.6) 100%);
+        border-color: rgba(59, 130, 246, 0.5);
+        box-shadow: 
+            0 6px 20px rgba(0, 0, 0, 0.08),
+            0 0 0 3px rgba(59, 130, 246, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        transform: translateY(-1px);
+    }
+
+    .glass-form-help-compact {
+        font-size: 0.65rem !important;
+        color: rgba(107, 114, 128, 0.7);
+        margin-top: 0.25rem !important;
+        line-height: 1.2 !important;
+    }
+
+    /* Input de archivo personalizado */
+    .glass-file-input-wrapper {
+        position: relative;
+    }
+
+    .glass-file-input-hidden {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+    }
+
+    .glass-file-input-display {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 12px;
+        background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.6) 0%, 
+            rgba(255, 255, 255, 0.4) 100%);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        box-shadow: 
+            0 4px 12px rgba(0, 0, 0, 0.05),
+            inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-file-input-display:hover {
+        background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.7) 0%, 
+            rgba(255, 255, 255, 0.5) 100%);
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    .glass-file-btn {
+        display: flex;
+        align-items: center;
+        padding: 0.375rem 0.75rem;
+        background: linear-gradient(135deg, 
+            rgba(59, 130, 246, 0.25) 0%, 
+            rgba(37, 99, 235, 0.15) 100%);
+        color: #1e40af;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        white-space: nowrap;
+    }
+
+    .glass-file-btn:hover {
+        background: linear-gradient(135deg, 
+            rgba(59, 130, 246, 0.35) 0%, 
+            rgba(37, 99, 235, 0.25) 100%);
+        border-color: rgba(59, 130, 246, 0.5);
+        transform: translateY(-1px);
+    }
+
+    .glass-file-name {
+        flex: 1;
+        font-size: 0.8rem;
+        color: #6b7280;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .glass-file-name.has-file {
+        color: #374151;
+        font-weight: 500;
+    }
+
+    /* ===== GLASSMORPHISM BUTTONS ===== */
+    .glass-btn {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.875rem 1.75rem;
+        border-radius: 16px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-decoration: none;
+        cursor: pointer;
+        border: none;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.12),
+            0 4px 16px rgba(0, 0, 0, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+        
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .glass-btn-content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.3s ease;
+    }
+
+    .glass-btn-glow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .glass-btn:hover .glass-btn-glow {
+        width: 100%;
+        height: 100%;
+    }
+
+    .glass-btn-sm {
+        padding: 0.625rem 1.25rem;
+        font-size: 0.8rem;
+        border-radius: 12px;
+    }
+
+    .glass-btn-secondary {
+        background: linear-gradient(135deg, 
+            rgba(107, 114, 128, 0.25) 0%, 
+            rgba(75, 85, 99, 0.15) 50%, 
+            rgba(55, 65, 81, 0.1) 100%);
+        color: #374151;
+        border-color: rgba(107, 114, 128, 0.3);
+    }
+
+    .glass-btn-secondary .glass-btn-glow {
+        background: radial-gradient(circle, rgba(107, 114, 128, 0.2) 0%, transparent 70%);
+    }
+
+    .glass-btn-success {
+        background: linear-gradient(135deg, 
+            rgba(34, 197, 94, 0.25) 0%, 
+            rgba(22, 163, 74, 0.15) 50%, 
+            rgba(21, 128, 61, 0.1) 100%);
+        color: #14532d;
+        border-color: rgba(34, 197, 94, 0.3);
+    }
+
+    .glass-btn-success .glass-btn-glow {
+        background: radial-gradient(circle, rgba(34, 197, 94, 0.2) 0%, transparent 70%);
+    }
+
+    /* Tarjetas compactas para documentos */
+    .glass-card-compact .glass-card-content {
+        padding: 1rem !important;
+    }
+
+    .glass-card-title-compact {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.375rem;
+        text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+        line-height: 1.2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 100%;
+    }
+
+    .glass-card-meta-compact {
+        font-size: 0.75rem;
+        color: rgba(107, 114, 128, 0.7);
+        font-weight: 500;
+        margin-bottom: 0.375rem;
+    }
+
+    /* Iconos extra pequeños */
+    .glass-icon-xs {
+        width: 2.25rem !important;
+        height: 2.25rem !important;
+        border-radius: 12px !important;
+    }
+
+    .glass-icon-xs i {
+        font-size: 1.125rem !important;
+    }
+
+    /* Tarjeta vacía */
+    .glass-card-empty {
+        background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.3) 0%, 
+            rgba(255, 255, 255, 0.2) 50%, 
+            rgba(255, 255, 255, 0.1) 100%);
+        border-style: dashed;
+        border-width: 2px;
+        border-color: rgba(156, 163, 175, 0.3);
+        min-height: 240px;
+    }
+
+    .glass-card-empty .glass-card-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 220px;
+        padding: 1.5rem !important;
+    }
+
+    .glass-card-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #374151;
+        margin-bottom: 0.75rem;
+        text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+    }
+
+    .glass-card-subtitle {
+        font-size: 0.875rem;
+        color: rgba(75, 85, 99, 0.7);
+        margin-bottom: 0.75rem;
+        line-height: 1.4;
+    }
+
+    .glass-empty-icon {
+        margin-bottom: 1rem;
+    }
+
+    /* Efectos de resplandor */
+    .glass-glow-neutral {
+        background: radial-gradient(circle, rgba(156, 163, 175, 0.1) 0%, transparent 70%);
+    }
+
+    /* Botones glassmorphism adicionales */
+    .glass-btn-xs {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.7rem;
+        border-radius: 10px;
+    }
+
+    .glass-btn-xs.glass-btn-icon {
+        padding: 0.5rem;
+    }
+
+    .glass-btn-info {
+        background: linear-gradient(135deg, 
+            rgba(14, 165, 233, 0.25) 0%, 
+            rgba(2, 132, 199, 0.15) 50%, 
+            rgba(3, 105, 161, 0.1) 100%);
+        color: #0c4a6e;
+        border-color: rgba(14, 165, 233, 0.3);
+    }
+
+    .glass-btn-info .glass-btn-glow {
+        background: radial-gradient(circle, rgba(14, 165, 233, 0.2) 0%, transparent 70%);
+    }
+
+    .glass-btn-danger {
+        background: linear-gradient(135deg, 
+            rgba(239, 68, 68, 0.25) 0%, 
+            rgba(220, 38, 38, 0.15) 50%, 
+            rgba(185, 28, 28, 0.1) 100%);
+        color: #7f1d1d;
+        border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .glass-btn-danger .glass-btn-glow {
+        background: radial-gradient(circle, rgba(239, 68, 68, 0.2) 0%, transparent 70%);
+    }
+
+    .glass-btn-primary {
+        background: linear-gradient(135deg, 
+            rgba(59, 130, 246, 0.25) 0%, 
+            rgba(37, 99, 235, 0.15) 50%, 
+            rgba(29, 78, 216, 0.1) 100%);
+        color: #1e40af;
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    .glass-btn-primary .glass-btn-glow {
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
+    }
+
+    /* ===== EFECTOS GLASSMORPHISM AVANZADOS PARA BOTONES ===== */
+    .glass-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.1) 0%, 
+            rgba(255, 255, 255, 0.05) 50%, 
+            rgba(0, 0, 0, 0.02) 100%);
+        border-radius: inherit;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+        opacity: 0;
+    }
+
+    .glass-btn::after {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        border-radius: inherit;
+        z-index: -1;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    /* Estados hover y active */
+    .glass-btn:hover {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 
+            0 16px 48px rgba(0, 0, 0, 0.18),
+            0 8px 24px rgba(0, 0, 0, 0.12),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+    }
+
+    .glass-btn:hover::before {
+        opacity: 1;
+    }
+
+    .glass-btn:hover::after {
+        opacity: 1;
+    }
+
+    .glass-btn:active {
+        transform: translateY(-1px) scale(0.98);
+        transition: all 0.1s ease;
+    }
+
+    .glass-btn:active .glass-btn-content {
+        transform: scale(0.95);
+    }
+
+    /* Efecto de ondas al hacer clic */
+    .glass-btn:active::before {
+        animation: ripple 0.6s ease-out;
+    }
+
+    @keyframes ripple {
+        0% {
+            transform: scale(0);
+            opacity: 1;
+        }
+        100% {
+            transform: scale(4);
+            opacity: 0;
+        }
+    }
+
+    /* Animación de entrada */
+    .glass-btn {
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Efecto de focus para accesibilidad */
+    .glass-btn:focus {
+        outline: none;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.12),
+            0 4px 16px rgba(0, 0, 0, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4),
+            0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    /* Estados hover específicos por color */
+    .glass-btn-success:hover {
+        background: linear-gradient(135deg, 
+            rgba(34, 197, 94, 0.35) 0%, 
+            rgba(22, 163, 74, 0.25) 50%, 
+            rgba(21, 128, 61, 0.15) 100%);
+        border-color: rgba(34, 197, 94, 0.5);
+        color: #15803d;
+    }
+
+    .glass-btn-primary:hover {
+        background: linear-gradient(135deg, 
+            rgba(59, 130, 246, 0.35) 0%, 
+            rgba(37, 99, 235, 0.25) 50%, 
+            rgba(29, 78, 216, 0.15) 100%);
+        border-color: rgba(59, 130, 246, 0.5);
+        color: #1d4ed8;
+    }
+
+    .glass-btn-info:hover {
+        background: linear-gradient(135deg, 
+            rgba(14, 165, 233, 0.35) 0%, 
+            rgba(2, 132, 199, 0.25) 50%, 
+            rgba(3, 105, 161, 0.15) 100%);
+        border-color: rgba(14, 165, 233, 0.5);
+        color: #0369a1;
+    }
+
+    .glass-btn-danger:hover {
+        background: linear-gradient(135deg, 
+            rgba(239, 68, 68, 0.35) 0%, 
+            rgba(220, 38, 38, 0.25) 50%, 
+            rgba(185, 28, 28, 0.15) 100%);
+        border-color: rgba(239, 68, 68, 0.5);
+        color: #991b1b;
+    }
+
+    .glass-btn-secondary:hover {
+        background: linear-gradient(135deg, 
+            rgba(107, 114, 128, 0.35) 0%, 
+            rgba(75, 85, 99, 0.25) 50%, 
+            rgba(55, 65, 81, 0.15) 100%);
+        border-color: rgba(107, 114, 128, 0.5);
+        color: #1f2937;
+    }
+</style>
+
+<script>
+function showUploadModal() {
+    document.getElementById('uploadDocumentModal').classList.remove('hidden');
+    document.getElementById('uploadDocumentModal').classList.add('show');
+    document.getElementById('id_document_name').focus();
+}
+
+function hideUploadModal() {
+    document.getElementById('uploadDocumentModal').classList.remove('show');
+    setTimeout(() => {
+        document.getElementById('uploadDocumentModal').classList.add('hidden');
+    }, 400);
+    document.getElementById('id_document_name').value = '';
+    document.getElementById('id_document_file').value = '';
+    // Resetear el nombre del archivo
+    document.getElementById('fileName').textContent = 'Ningún archivo seleccionado';
+    document.getElementById('fileName').classList.remove('has-file');
+}
+
+function updateFileName(input) {
+    const fileNameSpan = document.getElementById('fileName');
+    if (input.files && input.files[0]) {
+        fileNameSpan.textContent = input.files[0].name;
+        fileNameSpan.classList.add('has-file');
+    } else {
+        fileNameSpan.textContent = 'Ningún archivo seleccionado';
+        fileNameSpan.classList.remove('has-file');
+    }
+}
+
+// Variables globales para el modal de eliminación de documentos
+let deleteDocumentModalId = null;
+let deleteDocumentModalName = null;
+
+function showDeleteDocumentModal(documentId, documentName) {
+    deleteDocumentModalId = documentId;
+    deleteDocumentModalName = documentName;
+    document.getElementById('deleteDocumentName').textContent = documentName;
+    document.getElementById('deleteDocumentModal').classList.remove('hidden');
+    document.getElementById('deleteDocumentModal').classList.add('show');
+}
+
+function hideDeleteDocumentModal() {
+    document.getElementById('deleteDocumentModal').classList.remove('show');
+    setTimeout(() => {
+        document.getElementById('deleteDocumentModal').classList.add('hidden');
+    }, 400);
+    deleteDocumentModalId = null;
+    deleteDocumentModalName = null;
+}
+
+function confirmDeleteDocument() {
+    if (!deleteDocumentModalId || !deleteDocumentModalName) {
+        return;
+    }
+    
+    fetch(`/course-documents/teacher/{{ curso.id }}/document/${deleteDocumentModalId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideDeleteDocumentModal();
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        hideDeleteDocumentModal();
+        alert('Error al eliminar el documento');
+    });
+}
+
+function deleteDocument(documentId, documentName) {
+    if (confirm(`¿Estás seguro de que quieres eliminar el documento "${documentName}"?`)) {
+        fetch(`/course-documents/teacher/{{ curso.id }}/document/${documentId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error al eliminar el documento');
+        });
+    }
+}
+
+// Cerrar modales al hacer clic fuera de ellos
+document.getElementById('uploadDocumentModal').addEventListener('click', function(e) {
+    if (e.target.classList.contains('glass-modal-overlay')) {
+        hideUploadModal();
+    }
+});
+
+document.getElementById('deleteDocumentModal').addEventListener('click', function(e) {
+    if (e.target.classList.contains('glass-modal-overlay')) {
+        hideDeleteDocumentModal();
+    }
+});
+
+// Cerrar modales con la tecla Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        hideUploadModal();
+        hideDeleteDocumentModal();
+        closeDuplicateModal();
+    }
+});
+
+// Función para cerrar el modal de duplicado (sin abrir modal de subida)
+function closeDuplicateModal() {
+    const modal = document.getElementById('duplicateModal');
+    if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            // Ya no abrimos automáticamente el modal de subir documentos
+            // El usuario puede hacer clic en "Subir Documento" nuevamente si lo desea
+        }, 300);
+    }
+}
+
+// Mostrar modal de duplicado si hay mensaje de error
+document.addEventListener('DOMContentLoaded', function() {
+    // El modal se muestra automáticamente si existe en el HTML
+    const modal = document.getElementById('duplicateModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('show');
+    }
+});
+</script>
+
+<!-- Modal de error de documento duplicado -->
+{% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'error' and 'MODAL_DUPLICATE:' in message.message %}
+            <div id="duplicateModal" class="delete-modal show">
+                <div class="delete-modal-overlay" onclick="closeDuplicateModal()"></div>
+                <div class="delete-modal-content">
+                    <div class="delete-modal-header">
+                        <div class="delete-modal-icon">
+                            <span class="fa material-icons text-yellow-600">warning</span>
+                        </div>
+                        <h3 class="delete-modal-title">Documento Duplicado</h3>
+                    </div>
+                    
+                    <div class="delete-modal-body">
+                        <p class="delete-modal-message">
+                            {{ message.message|slice:"16:" }}
+                        </p>
+                    </div>
+                    
+                    <div class="delete-modal-footer">
+                        <button type="button" class="delete-modal-btn delete-modal-btn-cancel" onclick="closeDuplicateModal()">
+                            <span class="fa material-icons mr-2">check</span>
+                            Entendido
+                        </button>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<style>
+    /* Estilos del modal de error de duplicado */
+    .delete-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .delete-modal.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .delete-modal-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: transparent;
+    }
+
+    .delete-modal-content {
+        position: relative;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        max-width: 450px;
+        width: 90%;
+        transform: scale(0.9);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .delete-modal.show .delete-modal-content {
+        transform: scale(1);
+    }
+
+    .delete-modal-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 24px 24px 16px;
+        text-align: center;
+    }
+
+    .delete-modal-icon {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.1));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 16px;
+        border: 2px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .delete-modal-title {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
+        color: #1f2937;
+    }
+
+    .delete-modal-body {
+        padding: 24px;
+        text-align: center;
+    }
+
+    .delete-modal-message {
+        margin: 0;
+        font-size: 16px;
+        color: #374151;
+        line-height: 1.6;
+    }
+
+    .delete-modal-footer {
+        padding: 16px 24px 24px;
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .delete-modal-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 14px;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+
+    .delete-modal-btn-cancel {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        color: #1e40af;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .delete-modal-btn-cancel:hover {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+</style>
+
+{% endblock %}

@@ -37,12 +37,12 @@ media/
 *.log
 logs/
 
-# Tailwind CSS - toda la carpeta
+# Tailwind CSS - excluir todos los binarios y archivos temporales
 .django_tailwind_cli/
+!.django_tailwind_cli/source.css
 
-# Archivos CSS compilados
-static/css/tailwind.css
-static/css/
+# Incluir CSS compilado para que funcione inmediatamente
+# static/css/tailwind.css está incluido intencionalmente
 
 # Testing
 .coverage

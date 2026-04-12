@@ -10,7 +10,7 @@ urlpatterns = [
     path('noticia/<slug:slug>/comentar/', views.agregar_comentario, name='agregar_comentario'),
     path('categoria/<slug:slug>/', views.noticias_por_categoria, name='categoria_noticias'),
     
-    # URLs para editores
+    # URLs para editor
     path('editores/', views.panel_editores, name='panel_editores'),
     path('editores/mis-noticias/', views.mis_noticias, name='mis_noticias'),
     path('editores/crear/', views.crear_noticia, name='crear_noticia'),

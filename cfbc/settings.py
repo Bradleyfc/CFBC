@@ -37,17 +37,20 @@ ALLOWED_HOSTS = ['testserver', 'localhost', '127.0.0.1']
 
 INSTALLED_APPS = [
     'crispy_forms',
-    'crispy_bootstrap5',
+    'crispy_tailwind',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_tailwind_cli',
     'principal',
     'accounts.apps.AccountsConfig',
     'blog.apps.BlogConfig',
     'datos_archivados.apps.DatosArchivadosConfig',
+    'course_documents.apps.CourseDocumentsConfig',
+    'historial.apps.HistorialConfig',
     
     
 ]
@@ -88,13 +91,14 @@ WSGI_APPLICATION = 'cfbc.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'cfbc',
-        'USER': 'postgres',
+        'NAME': 'postgre_db',
+        'USER': 'postgre',
         'PASSWORD': 'admin',
         'HOST': 'localhost',
         'PORT': '5432',
     }
 }
+
 
 
 # Password validation
@@ -133,6 +137,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR  / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Media files (User uploaded files)
 MEDIA_URL = '/media/'
@@ -149,9 +154,24 @@ LOGIN_REDIRECT_URL = 'principal:login_redirect'
 LOGOUT_REDIRECT_URL = 'principal:home'
 
 
-CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
 
-CRISPY_TEMPLATE_PACK = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "tailwind"
+
+# Configuración de django-tailwind-cli multiplataforma
+import platform
+
+# Configuración específica por sistema operativo
+if platform.system() == "Linux":
+    TAILWIND_CLI_PATH = None  # Usar ubicación por defecto
+elif platform.system() == "Darwin":  # macOS
+    TAILWIND_CLI_PATH = None  # Usar ubicación por defecto
+else:  # Windows
+    TAILWIND_CLI_PATH = None  # Usar ubicación por defecto
+
+# Configuración de archivos CSS
+TAILWIND_CLI_SRC_CSS = '.django_tailwind_cli/source.css'
+TAILWIND_CLI_DIST_CSS = 'static/css/styles.css'
 
 # Backends de autenticación
 AUTHENTICATION_BACKENDS = [
@@ -175,3 +195,9 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Configuración del remitente por defecto
 DEFAULT_FROM_EMAIL = 'Centro Fray Bartolome de las Casas <noreply@cfbc.edu.ni>'
+
+# Configuración para manejar grandes cantidades de datos en formularios
+# Aumentar límites para evitar errores al procesar muchos registros
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000  # Por defecto es 1000
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB (por defecto es 2.5MB)
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB (por defecto es 2.5MB)

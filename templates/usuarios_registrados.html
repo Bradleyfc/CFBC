@@ -1,119 +1,1845 @@
 {% extends 'base.html' %}
 {% load static %}
-
-{% block title %}Listado de Estudiantes Registrados{% endblock %}
+{% load custom_filters %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2 class="mb-4 text-center">Listado de Estudiantes Registrados</h2>
-
-    <div class="d-flex justify-content-end mb-3">
-        <a href="{% url 'principal:export_usuarios_excel' %}{% if request.GET.search %}?search={{ request.GET.search }}{% endif %}" class="btn btn-success ml-2" target="_blank">
-            <i class="bi bi-file-earmark-excel"></i> Exportar a Excel
-        </a>
+<!-- Cargar CSS y JS para barra de desplazamiento horizontal -->
+<link rel="stylesheet" href="{% static 'admin/css/registro_admin.css' %}">
+<script src="{% static 'admin/js/registro_admin.js' %}"></script>
+<!-- Background Section with Gradient -->
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-30"
+        style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;">
     </div>
 
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">Filtrar Usuarios</h5>
-        </div>
-        <div class="card-body">
-            <form method="get" class="row g-3 align-items-end">
-                <div class="col-md-8">
-                    <label for="search" class="form-label">Buscar:</label>
-                    <input type="text" name="search" id="search" class="form-control" placeholder="Nombre o apellido..." value="{{ request.GET.search }}">
-                </div>
-                <div class="col-md-4">
-                    <button type="submit" class="btn btn-primary w-100">
-                      <i class="bi bi-funnel"></i> Filtrar
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        <!-- Page Title -->
+        <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Listado de Usuarios Registrados</h2>
 
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>Foto de Perfil</th>
-                    <th>Nombre</th>
-                    <th>Apellidos</th>
-                    <th>Email</th>
-                    <th>Nacionalidad</th>
-                    <th>Carnet ID</th>
-                    <th>Descargar Carnet</th>
-                    <th>Sexo</th>
-                    <th>Dirección</th>
-                    <th>Municipio</th>
-                    <th>Provincia</th>
-                    <th>Móvil</th>
-                    <th>Grado Académico</th>
-                    <th>Ocupación</th>
-                    <th>Religioso</th>
-                    <th>Título</th>
-                    <th>Descargar Título</th>
-                    <th>Grupo</th>
-                    <th>Fecha de Registro</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for registro in registros %}
-                <tr>
-                    <td>
-                        {% if registro.image and registro.image.name %}
-                            <img src="{{ registro.image.url }}" alt="Imagen de perfil" width="50" height="50" class="rounded-circle" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                            <div class="rounded-circle bg-secondary align-items-center justify-content-center" style="width: 50px; height: 50px; display: none;">
-                                <i class="bi bi-person-fill text-white" style="font-size: 24px;"></i>
-                            </div>
-                        {% else %}
-                            <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                <i class="bi bi-person-fill text-white" style="font-size: 24px;"></i>
-                            </div>
-                        {% endif %}
-                    </td>
-                    <td>{{ registro.user.first_name }}</td>
-                    <td>{{ registro.user.last_name }}</td>
-                    <td>{{ registro.user.email }}</td>
-                    <td>{{ registro.nacionalidad }}</td>
-                    <td>{{ registro.carnet }}</td>
-                    <td>
-                        {% if registro.foto_carnet %}
-                            <a href="{{ registro.foto_carnet.url }}" class="btn btn-sm btn-outline-primary" download>
-                                <i class="bi bi-download"></i> Descargar
+        <!-- Estadísticas rápidas -->
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
+            <div class="glass-card">
+                <div class="glass-content text-center py-3">
+                    <div class="text-2xl font-bold text-blue-600">{{ total_usuarios }}</div>
+                    <div class="text-sm text-gray-600">Total Usuarios</div>
+                </div>
+            </div>
+            {% for grupo in grupos_disponibles %}
+            <div class="glass-card">
+                <div class="glass-content text-center py-3">
+                    <div class="text-2xl font-bold text-green-600">{{ estadisticas_grupos|get_item:grupo.name }}</div>
+                    <div class="text-sm text-gray-600">{{ grupo.name }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Filters Card -->
+        <div class="glass-card mb-6">
+            <div class="glass-header">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <span class="icon material-icons mr-2">help</span>
+                    Filtros
+                </h3>
+            </div>
+            <div class="glass-content">
+                <form method="GET" action="{% url 'principal:usuarios_registrados' %}">
+                    <div class="flex flex-wrap gap-3 mb-4 items-end">
+                        <div class="flex-1 min-w-48">
+                            <label for="grupo" class="block text-xs font-medium text-gray-600 mb-1">Filtrar por Grupo:</label>
+                            <select name="grupo" id="grupo" class="glass-input-compact">
+                                <option value="todos" {% if grupo_seleccionado == 'todos' %}selected{% endif %}>Todos los usuarios</option>
+                                {% for grupo in grupos_disponibles %}
+                                <option value="{{ grupo.name }}" {% if grupo_seleccionado == grupo.name %}selected{% endif %}>
+                                    {{ grupo.name }} ({{ estadisticas_grupos|get_item:grupo.name }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="flex-1 min-w-64">
+                            <label for="search" class="block text-xs font-medium text-gray-600 mb-1">Buscar:</label>
+                            <input type="text" name="search" id="search" class="glass-input-compact" placeholder="Nombre, apellido, usuario, email o carnet..." value="{{ request.GET.search }}">
+                        </div>
+                    </div>
+
+                    <!-- Filtros de fecha -->
+                    <div class="flex flex-wrap gap-3 mb-4 items-end">
+                        <div class="flex-1 min-w-36">
+                            <label for="anio" class="block text-xs font-medium text-gray-600 mb-1">Año de Registro:</label>
+                            <select name="anio" id="anio" class="glass-input-compact">
+                                <option value="">Todos los años</option>
+                                {% for anio in anios_disponibles %}
+                                <option value="{{ anio }}" {% if anio_seleccionado == anio|stringformat:"s" %}selected{% endif %}>{{ anio }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="flex-1 min-w-40">
+                            <label for="fecha_desde" class="block text-xs font-medium text-gray-600 mb-1">Desde:</label>
+                            <input type="date" name="fecha_desde" id="fecha_desde" class="glass-input-compact" value="{{ fecha_desde }}">
+                        </div>
+                        <div class="flex-1 min-w-40">
+                            <label for="fecha_hasta" class="block text-xs font-medium text-gray-600 mb-1">Hasta:</label>
+                            <input type="date" name="fecha_hasta" id="fecha_hasta" class="glass-input-compact" value="{{ fecha_hasta }}">
+                        </div>
+                        <div class="flex-1 min-w-40">
+                            <label for="orden" class="block text-xs font-medium text-gray-600 mb-1">Ordenar por Registro:</label>
+                            <select name="orden" id="orden" class="glass-input-compact">
+                                <option value="desc" {% if orden == 'desc' %}selected{% endif %}>Más reciente primero</option>
+                                <option value="asc" {% if orden == 'asc' %}selected{% endif %}>Más antiguo primero</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-wrap gap-2 justify-end">
+                        <button type="submit" class="glass-button glass-button-primary">
+                            <span class="icon material-icons mr-2">help</span>
+                            Aplicar Filtros
+                        </button>
+                        <a href="{% url 'principal:usuarios_registrados' %}" class="glass-button glass-button-secondary">
+                            <span class="icon material-icons mr-2">arrow_forward</span>
+                            Limpiar Filtros
+                        </a>
+                        <a href="{% url 'principal:profile' %}" class="glass-button glass-button-secondary">
+                            <span class="icon material-icons mr-2">arrow_back</span>
+                            Volver
+                        </a>
+                        <a href="#" onclick="checkUsuariosBeforeExport('excel')" class="glass-button glass-button-success">
+                            <span class="icon material-icons mr-2">description</span>
+                            Exportar Excel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if registros %}
+        <!-- Table Card -->
+        <div class="glass-card mb-6">
+            <div class="overflow-x-auto results">
+                <table class="glass-table resizable-table" id="usuariosTable">
+                    <thead>
+                        <tr>
+                            <th class="resizable-th" data-column="foto">
+                                Foto
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="nombre">
+                                Nombre
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="apellidos">
+                                Apellidos
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="email">
+                                Email
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="nacionalidad">
+                                Nacionalidad
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="carnet">
+                                Carnet ID
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="carnet-doc">
+                                Carnet
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="sexo">
+                                Sexo
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="direccion">
+                                Dirección
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="municipio">
+                                Municipio
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="provincia">
+                                Provincia
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="movil">
+                                Móvil
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="grado">
+                                Grado
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="ocupacion">
+                                Ocupación
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="religioso">
+                                Religioso
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="titulo">
+                                Título
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="titulo-doc">
+                                Título Doc
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="grupo">
+                                Grupo
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="registro">
+                                Registro
+                                {% if orden == 'asc' %}
+                                <span class="icon material-icons text-blue-500" style="font-size:14px;vertical-align:middle;">arrow_upward</span>
+                                {% else %}
+                                <span class="icon material-icons text-blue-500" style="font-size:14px;vertical-align:middle;">arrow_downward</span>
+                                {% endif %}
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="historial">
+                                Historial
+                                <div class="resize-handle"></div>
+                            </th>
+                            <th class="resizable-th" data-column="detalles">
+                                Detalles
+                                <div class="resize-handle"></div>
+                            </th>
+                        </tr>
+                    <tbody>
+                        {% for registro in registros %}
+                        <tr>
+                            <td class="resizable-td" data-column="foto">
+                                {% if registro.image and registro.image.name %}
+                                    <img src="{{ registro.image.url }}" alt="Imagen de perfil" class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div class="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center border-2 border-white shadow-md" style="display: none;">
+                                        <span class="icon material-icons text-gray-600 text-lg">person</span>
+                                    </div>
+                                {% else %}
+                                    <div class="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center border-2 border-white shadow-md">
+                                        <span class="icon material-icons text-gray-600 text-lg">person</span>
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td class="resizable-td" data-column="nombre">{{ registro.user.first_name }}</td>
+                            <td class="resizable-td" data-column="apellidos">{{ registro.user.last_name }}</td>
+                            <td class="resizable-td" data-column="email" title="{{ registro.user.email }}">{{ registro.user.email }}</td>
+                            <td class="resizable-td" data-column="nacionalidad">{{ registro.nacionalidad }}</td>
+                            <td class="resizable-td" data-column="carnet">{{ registro.carnet }}</td>
+                            <td class="resizable-td" data-column="carnet-doc">
+                                {% if registro.foto_carnet %}
+                                    <a href="{{ registro.foto_carnet.url }}" class="glass-badge glass-badge-success text-xs" download>
+                                        <span class="icon material-icons mr-1">cloud_download</span>Descargar
+                                    </a>
+                                {% else %}
+                                    <span class="glass-badge glass-badge-secondary text-xs">No disponible</span>
+                                {% endif %}
+                            </td>
+                            <td class="resizable-td" data-column="sexo">{{ registro.get_sexo_display }}</td>
+                            <td class="resizable-td" data-column="direccion" title="{{ registro.address }}">{{ registro.address }}</td>
+                            <td class="resizable-td" data-column="municipio">{{ registro.location }}</td>
+                            <td class="resizable-td" data-column="provincia">{{ registro.provincia }}</td>
+                            <td class="resizable-td" data-column="movil">{{ registro.movil }}</td>
+                            <td class="resizable-td" data-column="grado">{{ registro.get_grado_display }}</td>
+                            <td class="resizable-td" data-column="ocupacion">{{ registro.get_ocupacion_display }}</td>
+                            <td class="resizable-td" data-column="religioso">
+                                {% if registro.es_religioso %}
+                                <span class="glass-badge glass-badge-success">Sí</span>
+                                {% else %}
+                                <span class="glass-badge glass-badge-secondary">No</span>
+                                {% endif %}
+                            </td>
+                            <td class="resizable-td" data-column="titulo" title="{{ registro.titulo }}">{{ registro.titulo }}</td>
+                            <td class="resizable-td" data-column="titulo-doc">
+                                {% if registro.foto_titulo %}
+                                    <a href="{{ registro.foto_titulo.url }}" class="glass-badge glass-badge-success text-xs" download>
+                                        <span class="icon material-icons mr-1">cloud_download</span>Descargar
+                                    </a>
+                                {% else %}
+                                    <span class="glass-badge glass-badge-secondary text-xs">No disponible</span>
+                                {% endif %}
+                            </td>
+                            <td class="resizable-td" data-column="grupo">{{ registro.user.groups.first.name|default:"Sin grupo" }}</td>
+                            <td class="resizable-td" data-column="registro">{{ registro.user.date_joined|date:"d/m/Y" }}</td>
+                            <td class="resizable-td" data-column="historial">
+                                <button onclick="verHistorial({{ registro.user.id }})" class="glass-badge glass-badge-success text-xs cursor-pointer">
+                                    <span class="icon material-icons mr-1">history</span>Ver Historial
+                                </button>
+                            </td>
+                            <td class="resizable-td" data-column="detalles">
+                                <a href="{% url 'principal:detalles_historial_usuario' registro.user.id %}" class="glass-badge glass-badge-primary text-xs">
+                                    <span class="icon material-icons mr-1">visibility</span>Ver
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="glass-card">
+            <div class="glass-content">
+                <!-- Información de paginación -->
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
+                    <div class="text-sm text-gray-600">
+                        Mostrando 
+                        <span class="font-semibold">{{ page_obj.start_index }}</span>
+                        -
+                        <span class="font-semibold">{{ page_obj.end_index }}</span>
+                        de
+                        <span class="font-semibold">{{ page_obj.paginator.count }}</span>
+                        usuarios registrados
+                    </div>
+                    
+                    <!-- Selector de página -->
+                    <div class="flex items-center gap-2">
+                        <label for="page-select" class="text-sm text-gray-600">Ir a página:</label>
+                        <select id="page-select" class="glass-input-compact w-20" onchange="goToPage(this.value)">
+                            {% for i in page_obj.paginator.page_range %}
+                            <option value="{{ i }}" {% if page_obj.number == i %}selected{% endif %}>{{ i }}</option>
+                            {% endfor %}
+                        </select>
+                        <span class="text-sm text-gray-600">de {{ page_obj.paginator.num_pages }}</span>
+                    </div>
+                </div>
+                
+                <!-- Navegación de páginas -->
+                <nav aria-label="Page navigation" class="flex justify-center">
+                    {% with qs=request.GET.urlencode %}
+                    <ul class="glass-pagination">
+                        {% if page_obj.has_previous %}
+                        <li>
+                            <a href="?page=1&{{ qs }}" class="glass-page-link" title="Primera página">
+                                <span class="icon material-icons">first_page</span>
                             </a>
-                        {% else %}
-                            <span class="text-muted">No disponible</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ registro.get_sexo_display }}</td>
-                    <td>{{ registro.address }}</td>
-                    <td>{{ registro.location }}</td>
-                    <td>{{ registro.provincia }}</td>
-                    <td>{{ registro.movil }}</td>
-                    <td>{{ registro.get_grado_display }}</td>
-                    <td>{{ registro.get_ocupacion_display }}</td>
-                    <td>{{ registro.es_religioso|yesno:"Sí,No" }}</td>
-                    <td>{{ registro.titulo }}</td>
-                    <td>
-                        {% if registro.foto_titulo %}
-                            <a href="{{ registro.foto_titulo.url }}" class="btn btn-sm btn-outline-success" download>
-                                <i class="bi bi-download"></i> Descargar
+                        </li>
+                        <li>
+                            <a href="?page={{ page_obj.previous_page_number }}&{{ qs }}" class="glass-page-link" title="Página anterior">
+                                <span class="icon material-icons">chevron_left</span>
+                                Anterior
                             </a>
-                        {% else %}
-                            <span class="text-muted">No disponible</span>
+                        </li>
                         {% endif %}
-                    </td>
-                    <td>{{ registro.user.groups.first.name|default:"Sin grupo" }}</td>
-                    <td>{{ registro.user.date_joined|date:"d/m/Y" }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="19" class="text-center">No hay usuarios registrados que coincidan con los filtros.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+
+                        <!-- Páginas numeradas con elipsis -->
+                        {% for i in page_obj.paginator.page_range %}
+                            {% if page_obj.number == i %}
+                            <li>
+                                <span class="glass-page-link glass-page-link-active">{{ i }}</span>
+                            </li>
+                            {% elif i <= 3 or i >= page_obj.paginator.num_pages|add:"-2" or i >= page_obj.number|add:"-2" and i <= page_obj.number|add:"2" %}
+                            <li>
+                                <a href="?page={{ i }}&{{ qs }}" class="glass-page-link">{{ i }}</a>
+                            </li>
+                            {% elif i == 4 and page_obj.number > 6 %}
+                            <li><span class="glass-page-link glass-page-ellipsis">...</span></li>
+                            {% elif i == page_obj.paginator.num_pages|add:"-3" and page_obj.number < page_obj.paginator.num_pages|add:"-5" %}
+                            <li><span class="glass-page-link glass-page-ellipsis">...</span></li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                        <li>
+                            <a href="?page={{ page_obj.next_page_number }}&{{ qs }}" class="glass-page-link" title="Página siguiente">
+                                Siguiente
+                                <span class="icon material-icons">chevron_right</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="?page={{ page_obj.paginator.num_pages }}&{{ qs }}" class="glass-page-link" title="Última página">
+                                <span class="icon material-icons">last_page</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                    {% endwith %}
+                </nav>
+            </div>
+        </div>
+        {% else %}
+        <!-- Información cuando no hay paginación -->
+        {% if registros %}
+        <div class="glass-card">
+            <div class="glass-content text-center">
+                <div class="text-sm text-gray-600">
+                    Mostrando todos los <span class="font-semibold">{{ registros|length }}</span> usuarios registrados
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+        {% else %}
+        <!-- Empty State -->
+        <div class="glass-alert glass-alert-info">
+            <span class="icon material-icons mr-2">info</span>
+            No hay usuarios registrados que coincidan con los filtros.
+        </div>
+        {% endif %}
+
     </div>
 </div>
+
+
+<!-- Modal de Historial de Usuario -->
+<div id="historialModal" class="error-modal hidden">
+  <div class="error-modal-overlay" onclick="cerrarHistorialModal()"></div>
+  <div class="historial-modal-content">
+    <div class="error-modal-header">
+      <div class="historial-modal-icon">
+        <span class="icon material-icons text-blue-600">history</span>
+      </div>
+      <h3 class="error-modal-title">Historial del Usuario</h3>
+      <button onclick="cerrarHistorialModal()" class="modal-close-btn">
+        <span class="icon material-icons">close</span>
+      </button>
+    </div>
+
+    <div class="historial-modal-body" id="historialContent">
+      <div class="loading-spinner">
+        <span class="icon material-icons spinning">refresh</span>
+        <p>Cargando historial...</p>
+      </div>
+    </div>
+
+    <div class="error-modal-footer">
+      <button type="button" class="error-modal-btn error-modal-btn-ok" onclick="cerrarHistorialModal()">
+        <span class="icon material-icons mr-2">close</span>
+        Cerrar
+      </button>
+    </div>
+
+    <!-- Handles para redimensionar -->
+    <div class="resize-handle resize-handle-n"></div>
+    <div class="resize-handle resize-handle-s"></div>
+    <div class="resize-handle resize-handle-e"></div>
+    <div class="resize-handle resize-handle-w"></div>
+    <div class="resize-handle resize-handle-ne"></div>
+    <div class="resize-handle resize-handle-nw"></div>
+    <div class="resize-handle resize-handle-se"></div>
+    <div class="resize-handle resize-handle-sw"></div>
+  </div>
+</div>
+
+<!-- Modal de Error - Sin Usuarios -->
+<div id="errorModal" class="error-modal hidden">
+  <div class="error-modal-overlay" onclick="hideErrorModal()"></div>
+  <div class="error-modal-content">
+    <div class="error-modal-header">
+      <div class="error-modal-icon">
+        <span class="fa material-icons text-orange-600">error</span></i>
+      </div>
+      <h3 class="error-modal-title">Sin Datos para Exportar</h3>
+    </div>
+    
+    <div class="error-modal-body">
+      <p class="error-modal-message">
+        No se encontraron usuarios registrados con los filtros seleccionados.
+      </p>
+      <p class="error-modal-warning">
+        Por favor, ajuste los filtros o verifique que existan usuarios registrados.
+      </p>
+    </div>
+    
+    <div class="error-modal-footer">
+      <button type="button" class="error-modal-btn error-modal-btn-ok" onclick="hideErrorModal()">
+        <span class="fa material-icons mr-2">check_circle</span></i>
+        Entendido
+      </button>
+    </div>
+  </div>
+</div>
+<style>
+    /* Glass Card */
+    .glass-card {
+        position: relative;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            0 4px 16px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-header {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .glass-content {
+        padding: 2rem;
+    }
+
+    /* Glass Button */
+    .glass-button {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.625rem 1.25rem;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .glass-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .glass-button-primary {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        color: #1e40af;
+    }
+
+    .glass-button-secondary {
+        background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
+        color: #374151;
+    }
+
+    .glass-button-success {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+        color: #14532d;
+    }
+
+    /* Glass Input */
+    .glass-input-compact {
+        width: 100%;
+        padding: 0.375rem 0.75rem;
+        border-radius: 8px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #374151;
+        font-size: 0.8rem;
+        transition: all 0.3s ease;
+    }
+
+    .glass-input-compact:focus {
+        outline: none;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3));
+        border-color: rgba(59, 130, 246, 0.5);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Glass Table */
+    .glass-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: auto; /* Cambiar a auto para anchos dinámicos */
+        min-width: 1800px; /* Aumentar para acomodar todas las columnas con límites */
+    }
+
+    .glass-table thead tr {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        backdrop-filter: blur(10px);
+    }
+
+    .glass-table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: #1e40af;
+        border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+        font-size: 0.9rem;
+        position: relative;
+        min-width: 60px; /* Ancho mínimo general */
+        white-space: nowrap; /* Evitar que los headers se corten */
+    }
+
+    /* Resizable Table Styles */
+    .resizable-table {
+        position: relative;
+    }
+
+    .resizable-th {
+        position: relative;
+        user-select: none;
+    }
+
+    .resize-handle {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 5px;
+        height: 100%;
+        background: transparent;
+        cursor: col-resize;
+        user-select: none;
+        z-index: 10;
+    }
+
+    .resize-handle:hover {
+        background: rgba(59, 130, 246, 0.3);
+    }
+
+    .resize-handle.resizing {
+        background: rgba(59, 130, 246, 0.5);
+    }
+
+    .resizable-td {
+        position: relative;
+        vertical-align: middle;
+    }
+
+    /* Aplicar ellipsis solo a columnas específicas que pueden ser muy largas */
+    .resizable-td[data-column="email"],
+    .resizable-td[data-column="direccion"],
+    .resizable-td[data-column="titulo"] {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Columnas dinámicas - se ajustan al contenido */
+    .resizable-th, .resizable-td {
+        white-space: nowrap; /* Evitar que el texto se corte */
+        padding: 0.875rem 1rem;
+        overflow: visible; /* Permitir que el contenido determine el ancho */
+        box-sizing: border-box; /* Incluir padding en el ancho */
+    }
+
+    /* Anchos mínimos para columnas específicas */
+    .resizable-th[data-column="foto"], .resizable-td[data-column="foto"] { 
+        min-width: 80px; 
+        width: 80px; /* Foto siempre fija */
+    }
+    
+    .resizable-th[data-column="nombre"], .resizable-td[data-column="nombre"] { 
+        min-width: 100px;
+        max-width: 150px; /* Limitar nombres muy largos */
+    }
+    
+    .resizable-th[data-column="apellidos"], .resizable-td[data-column="apellidos"] { 
+        min-width: 120px;
+        max-width: 180px; /* Limitar apellidos muy largos */
+    }
+    
+    .resizable-th[data-column="nacionalidad"], .resizable-td[data-column="nacionalidad"] { 
+        min-width: 100px;
+        max-width: 120px; /* Limitar nacionalidad para evitar espacios grandes */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .resizable-th[data-column="carnet"], .resizable-td[data-column="carnet"] { 
+        min-width: 120px;
+        max-width: 140px; /* Limitar carnet ID */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .resizable-th[data-column="municipio"], .resizable-td[data-column="municipio"] { 
+        min-width: 100px;
+        max-width: 130px; /* Limitar municipios largos */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .resizable-th[data-column="provincia"], .resizable-td[data-column="provincia"] { 
+        min-width: 100px;
+        max-width: 120px; /* Limitar provincias largas */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .resizable-th[data-column="movil"], .resizable-td[data-column="movil"] { 
+        min-width: 100px;
+        max-width: 120px; /* Limitar números de móvil */
+    }
+    
+    .resizable-th[data-column="grado"], .resizable-td[data-column="grado"] { 
+        min-width: 100px;
+        max-width: 140px; /* Limitar grados académicos */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .resizable-th[data-column="ocupacion"], .resizable-td[data-column="ocupacion"] { 
+        min-width: 120px;
+        max-width: 160px; /* Limitar ocupaciones largas */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .resizable-th[data-column="grupo"], .resizable-td[data-column="grupo"] { 
+        min-width: 100px;
+        max-width: 120px; /* Limitar nombres de grupo */
+        text-align: center;
+    }
+    
+    .resizable-th[data-column="registro"], .resizable-td[data-column="registro"] { 
+        min-width: 100px;
+        max-width: 110px; /* Limitar fechas de registro */
+        text-align: center;
+    }
+
+    .resizable-th[data-column="historial"], .resizable-td[data-column="historial"] {
+        min-width: 120px;
+        max-width: 140px;
+        text-align: center;
+    }
+
+    .resizable-th[data-column="detalles"], .resizable-td[data-column="detalles"] {
+        min-width: 100px;
+        max-width: 120px;
+        text-align: center;
+    }
+
+    
+    .resizable-th[data-column="email"], .resizable-td[data-column="email"] { 
+        min-width: 180px;
+        max-width: 250px; /* Limitar emails muy largos */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .resizable-th[data-column="direccion"], .resizable-td[data-column="direccion"] { 
+        min-width: 120px;
+        max-width: 200px; /* Limitar direcciones muy largas */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .resizable-th[data-column="titulo"], .resizable-td[data-column="titulo"] { 
+        min-width: 100px;
+        max-width: 180px; /* Limitar títulos muy largos */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    /* Columnas de documentos - ancho ajustado para "No disponible" */
+    .resizable-th[data-column="carnet-doc"], .resizable-td[data-column="carnet-doc"],
+    .resizable-th[data-column="titulo-doc"], .resizable-td[data-column="titulo-doc"] { 
+        width: 120px;
+        min-width: 120px;
+        max-width: 120px;
+        text-align: center;
+        white-space: nowrap;
+    }
+    
+    /* Asegurar que las celdas con badges tengan espacio suficiente */
+    .resizable-td[data-column="carnet-doc"] .glass-badge,
+    .resizable-td[data-column="titulo-doc"] .glass-badge {
+        display: block;
+        margin: 0 auto;
+        max-width: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    /* Columnas de estado - ancho pequeño */
+    .resizable-th[data-column="sexo"], .resizable-td[data-column="sexo"],
+    .resizable-th[data-column="religioso"], .resizable-td[data-column="religioso"] { 
+        min-width: 70px;
+        text-align: center;
+    }
+
+    .glass-table tbody tr {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .glass-table tbody tr:hover {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .glass-table td {
+        padding: 0.875rem 1rem;
+        color: #374151;
+        font-size: 0.9rem;
+        vertical-align: middle; /* Alineación vertical mejorada */
+    }
+
+    /* Glass Badge */
+    .glass-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        white-space: nowrap; /* Evitar que el texto del badge se corte */
+        min-width: fit-content; /* Asegurar que el badge tenga el ancho necesario */
+    }
+
+    .glass-badge:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .glass-badge-success {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+        color: #14532d;
+    }
+
+    .glass-badge-primary {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        color: #1e40af;
+    }
+
+    .glass-badge-secondary {
+        background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
+        color: #374151;
+    }
+
+    /* Glass Pagination */
+    .glass-pagination {
+        display: flex;
+        gap: 0.5rem;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .glass-page-link {
+        display: inline-block;
+        padding: 0.5rem 0.875rem;
+        border-radius: 8px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #374151;
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .glass-page-link:hover {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3));
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .glass-page-link-active {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.4), rgba(37, 99, 235, 0.3));
+        color: #1e40af;
+        border-color: rgba(59, 130, 246, 0.5);
+    }
+
+    .glass-page-ellipsis {
+        background: transparent !important;
+        color: #9ca3af !important;
+        cursor: default !important;
+        border: none !important;
+    }
+
+    .glass-page-ellipsis:hover {
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Glass Alert */
+    .glass-alert {
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        font-size: 0.875rem;
+    }
+
+    .glass-alert-info {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        color: #1e3a8a;
+    }
+
+    /* Error Modal Styles */
+    .error-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        overflow: auto;
+    }
+
+    .error-modal.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .error-modal-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+
+    .error-modal-content {
+        position: relative;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        max-width: 500px;
+        width: 90%;
+        margin: 10% auto;
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+    }
+
+    .error-modal.show .error-modal-content {
+        transform: scale(1);
+    }
+
+    .error-modal-header {
+        padding: 2rem 2rem 1rem;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: move;
+        user-select: none;
+    }
+
+    .error-modal-header:active {
+        cursor: grabbing;
+    }
+
+    .error-modal-icon {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 1rem;
+        background: linear-gradient(135deg, rgba(251, 146, 60, 0.2), rgba(245, 101, 101, 0.1));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .error-modal-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #374151;
+        margin: 0;
+    }
+
+    .error-modal-body {
+        padding: 1.5rem 2rem;
+        text-align: center;
+    }
+
+    .error-modal-message {
+        font-size: 1rem;
+        color: #374151;
+        margin-bottom: 0.75rem;
+        font-weight: 500;
+    }
+
+    .error-modal-warning {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .error-modal-footer {
+        padding: 1rem 2rem 2rem;
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .error-modal-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .error-modal-btn-ok {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+        color: #14532d;
+    }
+
+    .error-modal-btn-ok:hover {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.4), rgba(22, 163, 74, 0.3));
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(34, 197, 94, 0.2);
+    }
+
+    /* Historial Modal Styles */
+    .historial-modal-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.9);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        max-width: 900px;
+        width: 90%;
+        max-height: 80vh;
+        transition: transform 0.3s ease;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .error-modal.show .historial-modal-content {
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    .historial-modal-icon {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 1rem;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .historial-modal-body {
+        padding: 1.5rem 2rem;
+        overflow-y: auto;
+        max-height: 60vh;
+        flex: 1;
+    }
+
+    .modal-close-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: #6b7280;
+        transition: color 0.3s ease;
+    }
+
+    .modal-close-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: #6b7280;
+        transition: color 0.3s ease;
+        z-index: 10;
+    }
+
+    .modal-close-btn:hover {
+        color: #374151;
+    }
+
+    /* Estilos para hacer el modal redimensionable */
+    .historial-modal-content.resizable {
+        resize: both;
+        overflow: hidden;
+        min-width: 400px;
+        min-height: 300px;
+    }
+
+    .resize-handle {
+        position: absolute;
+        background: transparent;
+        z-index: 5;
+    }
+
+    .resize-handle-n {
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 8px;
+        cursor: n-resize;
+    }
+
+    .resize-handle-s {
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 8px;
+        cursor: s-resize;
+    }
+
+    .resize-handle-e {
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 8px;
+        cursor: e-resize;
+    }
+
+    .resize-handle-w {
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 8px;
+        cursor: w-resize;
+    }
+
+    .resize-handle-ne {
+        top: 0;
+        right: 0;
+        width: 15px;
+        height: 15px;
+        cursor: ne-resize;
+    }
+
+    .resize-handle-nw {
+        top: 0;
+        left: 0;
+        width: 15px;
+        height: 15px;
+        cursor: nw-resize;
+    }
+
+    .resize-handle-se {
+        bottom: 0;
+        right: 0;
+        width: 15px;
+        height: 15px;
+        cursor: se-resize;
+    }
+
+    .resize-handle-se::after {
+        content: '';
+        position: absolute;
+        right: 3px;
+        bottom: 3px;
+        width: 10px;
+        height: 10px;
+        border-right: 2px solid rgba(107, 114, 128, 0.4);
+        border-bottom: 2px solid rgba(107, 114, 128, 0.4);
+    }
+
+    .resize-handle-sw {
+        bottom: 0;
+        left: 0;
+        width: 15px;
+        height: 15px;
+        cursor: sw-resize;
+    }
+
+
+    .loading-spinner {
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .spinning {
+        animation: spin 1s linear infinite;
+        font-size: 2rem;
+        color: #3b82f6;
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    .historial-section {
+        margin-bottom: 2rem;
+    }
+
+    .historial-section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1e40af;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+        display: flex;
+        align-items: center;
+    }
+
+    .historial-section-title .icon {
+        margin-right: 0.5rem;
+    }
+
+    .historial-item {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .historial-item-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .historial-item-row:last-child {
+        margin-bottom: 0;
+    }
+
+    .historial-item-label {
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .historial-item-value {
+        color: #6b7280;
+    }
+
+    .no-data-message {
+        text-align: center;
+        padding: 1rem;
+        color: #9ca3af;
+        font-style: italic;
+    }
+
+    .usuario-info {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05));
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .usuario-info-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+
+    .usuario-info-row:last-child {
+        margin-bottom: 0;
+    }
+
+</style>
+
+<script>
+    // Variables para el redimensionamiento de columnas
+    let isResizing = false;
+    let currentColumn = null;
+    let startX = 0;
+    let startWidth = 0;
+
+    // Inicializar redimensionamiento de columnas
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeColumnResizing();
+    });
+
+    function initializeColumnResizing() {
+        const table = document.getElementById('usuariosTable');
+        if (!table) return;
+
+        const resizeHandles = table.querySelectorAll('.resize-handle');
+        
+        resizeHandles.forEach(handle => {
+            handle.addEventListener('mousedown', startResize);
+        });
+
+        document.addEventListener('mousemove', doResize);
+        document.addEventListener('mouseup', stopResize);
+    }
+
+    function startResize(e) {
+        isResizing = true;
+        currentColumn = e.target.parentElement;
+        startX = e.clientX;
+        startWidth = parseInt(window.getComputedStyle(currentColumn).width, 10);
+        
+        e.target.classList.add('resizing');
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    }
+
+    function doResize(e) {
+        if (!isResizing) return;
+
+        const width = startWidth + e.clientX - startX;
+        const minWidth = 60; // Ancho mínimo
+        const maxWidth = 400; // Ancho máximo
+        
+        if (width >= minWidth && width <= maxWidth) {
+            const columnName = currentColumn.getAttribute('data-column');
+            
+            // Actualizar ancho del header
+            currentColumn.style.width = width + 'px';
+            
+            // Actualizar ancho de todas las celdas de la misma columna
+            const cells = document.querySelectorAll(`[data-column="${columnName}"]`);
+            cells.forEach(cell => {
+                cell.style.width = width + 'px';
+            });
+        }
+    }
+
+    function stopResize(e) {
+        if (!isResizing) return;
+        
+        isResizing = false;
+        document.body.style.cursor = '';
+        
+        const resizeHandle = document.querySelector('.resize-handle.resizing');
+        if (resizeHandle) {
+            resizeHandle.classList.remove('resizing');
+        }
+        
+        currentColumn = null;
+    }
+
+    // Función para ir a una página específica
+    function goToPage(pageNumber) {
+        const currentUrl = new URL(window.location);
+        currentUrl.searchParams.set('page', pageNumber);
+        window.location.href = currentUrl.toString();
+    }
+
+    // Verificar si hay usuarios antes de exportar
+    function checkUsuariosBeforeExport(type) {
+        // Verificar si hay usuarios contando las filas de la tabla
+        const tableRows = document.querySelectorAll('.glass-table tbody tr');
+        const hasUsuarios = tableRows.length > 0;
+        
+        if (hasUsuarios) {
+            // Si hay usuarios, proceder con la exportación
+            let baseUrl = '';
+            if (type === 'excel') {
+                baseUrl = '/export-usuarios-excel/';
+            }
+            
+            // Obtener los parámetros actuales de la URL
+            const currentParams = window.location.search;
+            const finalUrl = baseUrl + currentParams;
+            
+            window.location.href = finalUrl;
+        } else {
+            // Si no hay usuarios, mostrar modal de error
+            showErrorModal();
+        }
+    }
+
+    // Mostrar modal de error
+    function showErrorModal() {
+        const modal = document.getElementById('errorModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('show');
+        
+        // Agregar event listeners para cerrar con ESC o click fuera
+        document.addEventListener('keydown', handleEscapeKey);
+        modal.addEventListener('click', handleOutsideClick);
+    }
+
+    // Ocultar modal de error
+    function hideErrorModal() {
+        const modal = document.getElementById('errorModal');
+        modal.classList.remove('show');
+        
+        // Pequeño delay antes de ocultar completamente
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+        
+        // Remover event listeners
+        document.removeEventListener('keydown', handleEscapeKey);
+        modal.removeEventListener('click', handleOutsideClick);
+    }
+
+    // Manejar tecla ESC
+    function handleEscapeKey(event) {
+        if (event.key === 'Escape') {
+            hideErrorModal();
+        }
+    }
+
+    // Manejar click fuera del modal
+    function handleOutsideClick(event) {
+        if (event.target === event.currentTarget) {
+            hideErrorModal();
+        }
+    }
+
+    // Función para ver el historial de un usuario
+    function verHistorial(userId) {
+        const modal = document.getElementById('historialModal');
+        const content = document.getElementById('historialContent');
+        
+        // Mostrar modal con loading
+        modal.classList.remove('hidden');
+        modal.classList.add('show');
+
+        // Inicializar redimensionamiento del modal
+        setTimeout(() => inicializarRedimensionamiento(), 100);
+        
+        // Mostrar spinner de carga
+        content.innerHTML = `
+            <div class="loading-spinner">
+                <span class="icon material-icons spinning">refresh</span>
+                <p>Cargando historial...</p>
+            </div>
+        `;
+        
+        // Hacer petición AJAX
+        fetch(`/historial-usuario/${userId}/`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error al cargar el historial');
+                }
+                return response.json();
+            })
+            .then(data => {
+                mostrarHistorial(data);
+            })
+            .catch(error => {
+                content.innerHTML = `
+                    <div class="glass-alert glass-alert-info">
+                        <span class="icon material-icons mr-2">error</span>
+                        Error al cargar el historial: ${error.message}
+                    </div>
+                `;
+            });
+    }
+
+    // Función para mostrar el historial en el modal
+    // Función para mostrar el historial en el modal
+    function mostrarHistorial(data) {
+        console.log('=== DATOS RECIBIDOS EN mostrarHistorial ===');
+        console.log('Categorías:', data.categorias);
+        console.log('Total categorías:', data.categorias ? data.categorias.length : 0);
+        
+        const content = document.getElementById('historialContent');
+        let html = '';
+        
+        // Información del usuario
+        html += `
+            <div class="usuario-info">
+                <div class="usuario-info-row">
+                    <span class="historial-item-label">Nombre:</span>
+                    <span class="historial-item-value">${data.usuario.nombre}</span>
+                </div>
+                <div class="usuario-info-row">
+                    <span class="historial-item-label">Usuario:</span>
+                    <span class="historial-item-value">${data.usuario.username}</span>
+                </div>
+                <div class="usuario-info-row">
+                    <span class="historial-item-label">Email:</span>
+                    <span class="historial-item-value">${data.usuario.email}</span>
+                </div>
+            </div>
+        `;
+        
+        // 1. Aplicaciones a Cursos
+        html += generarSeccionHistorial(
+            'Aplicaciones a Cursos',
+            'description',
+            data.aplicaciones,
+            [
+                { key: 'curso', label: 'Curso' },
+                { key: 'curso_codigo', label: 'Código' },
+                { key: 'area', label: 'Área' },
+                { key: 'categoria', label: 'Categoría' },
+                { key: 'edicion', label: 'Edición' },
+                { key: 'edicion_fecha_inicio', label: 'Inicio Edición' },
+                { key: 'edicion_fecha_fin', label: 'Fin Edición' },
+                { key: 'fecha_solicitud', label: 'Fecha Solicitud' },
+                { key: 'estado', label: 'Estado' },
+                { key: 'beca', label: 'Beca' },
+                { key: 'pagado', label: 'Pagado' },
+                { key: 'nota_primaria', label: 'Nota Primaria' },
+                { key: 'nota_secundaria', label: 'Nota Secundaria' },
+                { key: 'nota_final', label: 'Nota Final' },
+                { key: 'nota_extra', label: 'Nota Extra' },
+                { key: 'comentarios', label: 'Comentarios' }
+            ]
+        );
+        
+        // 2. Matrículas
+        html += generarSeccionHistorial(
+            'Matrículas',
+            'school',
+            data.matriculas,
+            [
+                { key: 'curso', label: 'Curso' },
+                { key: 'edicion', label: 'Edición' },
+                { key: 'fecha_inscripcion', label: 'Fecha Inscripción' },
+                { key: 'estado', label: 'Estado' },
+                { key: 'ausencias', label: 'Ausencias' },
+                { key: 'intento', label: 'Intento' },
+                { key: 'nota_primaria', label: 'Nota Primaria' },
+                { key: 'nota_secundaria', label: 'Nota Secundaria' },
+                { key: 'nota_final', label: 'Nota Final' },
+                { key: 'nota_extra', label: 'Nota Extra' }
+            ]
+        );
+        
+        // 3. Solicitudes de Inscripción
+        html += generarSeccionHistorial(
+            'Solicitudes de Inscripción',
+            'assignment',
+            data.solicitudes_inscripcion,
+            [
+                { key: 'curso', label: 'Curso' },
+                { key: 'curso_codigo', label: 'Código' },
+                { key: 'fecha_solicitud', label: 'Fecha' },
+                { key: 'estado', label: 'Estado' }
+            ]
+        );
+        
+        // 4. Pagos
+        html += generarSeccionHistorial(
+            'Pagos',
+            'payment',
+            data.pagos,
+            [
+                { key: 'monto', label: 'Monto' },
+                { key: 'fecha', label: 'Fecha' },
+                { key: 'metodo', label: 'Método' },
+                { key: 'referencia', label: 'Referencia' }
+            ]
+        );
+        
+        // 5. Cuentas Bancarias
+        html += generarSeccionHistorial(
+            'Cuentas Bancarias',
+            'account_balance',
+            data.cuentas_bancarias,
+            [
+                { key: 'numero_cuenta', label: 'Número de Cuenta' },
+                { key: 'banco', label: 'Banco' }
+            ]
+        );
+        
+        // 6. Cursos como Profesor
+        html += generarSeccionHistorial(
+            'Cursos como Profesor',
+            'person',
+            data.cursos_como_profesor,
+            [
+                { key: 'curso', label: 'Curso' },
+                { key: 'curso_codigo', label: 'Código' },
+                { key: 'area', label: 'Área' },
+                { key: 'categoria', label: 'Categoría' }
+            ]
+        );
+        
+        // 7. Cursos Administrados
+        html += generarSeccionHistorial(
+            'Cursos Administrados',
+            'admin_panel_settings',
+            data.cursos_administrados,
+            [
+                { key: 'nombre', label: 'Nombre' },
+                { key: 'codigo', label: 'Código' },
+                { key: 'area', label: 'Área' },
+                { key: 'categoria', label: 'Categoría' },
+                { key: 'descripcion', label: 'Descripción' }
+            ]
+        );
+        
+        // 8. Ediciones
+        html += generarSeccionHistorial(
+            'Ediciones de Cursos',
+            'event',
+            data.ediciones,
+            [
+                { key: 'nombre', label: 'Nombre' },
+                { key: 'curso', label: 'Curso' },
+                { key: 'fecha_inicio', label: 'Fecha Inicio' },
+                { key: 'fecha_fin', label: 'Fecha Fin' }
+            ]
+        );
+        
+        // 9. Asignaturas
+        html += generarSeccionHistorial(
+            'Asignaturas',
+            'book',
+            data.asignaturas,
+            [
+                { key: 'nombre', label: 'Nombre' },
+                { key: 'codigo', label: 'Código' },
+                { key: 'curso', label: 'Curso' },
+                { key: 'descripcion', label: 'Descripción' }
+            ]
+        );
+        
+        // 10. Áreas
+        html += generarSeccionHistorial(
+            'Áreas de Conocimiento',
+            'category',
+            data.areas,
+            [
+                { key: 'nombre', label: 'Nombre' },
+                { key: 'codigo', label: 'Código' },
+                { key: 'descripcion', label: 'Descripción' }
+            ]
+        );
+        
+        // 11. Categorías
+        console.log('Generando sección de categorías...');
+        console.log('data.categorias:', data.categorias);
+        console.log('Es array?:', Array.isArray(data.categorias));
+        console.log('Length:', data.categorias ? data.categorias.length : 'undefined');
+        
+        html += generarSeccionHistorial(
+            'Categorías de Cursos',
+            'label',
+            data.categorias,
+            [
+                { key: 'nombre', label: 'Nombre' },
+                { key: 'codigo', label: 'Código' },
+                { key: 'descripcion', label: 'Descripción' },
+                { key: 'precio', label: 'Precio' },
+                { key: 'es_servicio', label: 'Es Servicio' },
+                { key: 'registro_abierto', label: 'Registro Abierto' }
+            ]
+        );
+        
+        content.innerHTML = html;
+    }
+
+    // Función auxiliar para generar secciones de historial
+    function generarSeccionHistorial(titulo, icono, items, campos) {
+        if (!items || items.length === 0) {
+            return `
+                <div class="historial-section">
+                    <div class="historial-section-title">
+                        <span class="icon material-icons">${icono}</span>
+                        ${titulo}
+                    </div>
+                    <div class="no-data-message">No hay registros</div>
+                </div>
+            `;
+        }
+        
+        let html = `
+            <div class="historial-section">
+                <div class="historial-section-title">
+                    <span class="icon material-icons">${icono}</span>
+                    ${titulo} (${items.length})
+                </div>
+        `;
+        
+        items.forEach(item => {
+            html += '<div class="historial-item">';
+            campos.forEach(campo => {
+                html += `
+                    <div class="historial-item-row">
+                        <span class="historial-item-label">${campo.label}:</span>
+                        <span class="historial-item-value">${item[campo.key] || 'N/A'}</span>
+                    </div>
+                `;
+            });
+            html += '</div>';
+        });
+        
+        html += '</div>';
+        return html;
+    }
+
+
+
+    // Funcionalidad de redimensionamiento y arrastre del modal
+    function inicializarRedimensionamiento() {
+        const modal = document.getElementById('historialModal');
+        const modalContent = document.querySelector('.historial-modal-content');
+        const modalHeader = modalContent.querySelector('.error-modal-header');
+        
+        if (!modalContent) return;
+
+        // Resetear estilos al abrir el modal
+        modalContent.style.position = 'absolute';
+        modalContent.style.top = '50%';
+        modalContent.style.left = '50%';
+        modalContent.style.transform = 'translate(-50%, -50%)';
+        modalContent.style.width = '900px';
+        modalContent.style.maxWidth = '90vw';
+        modalContent.style.height = 'auto';
+        modalContent.style.maxHeight = '80vh';
+
+        // Funcionalidad de arrastre (drag) desde el header
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+
+        modalHeader.addEventListener('mousedown', function(e) {
+            // No iniciar drag si se hace clic en el botón de cerrar
+            if (e.target.closest('.modal-close-btn')) return;
+            
+            isDragging = true;
+            
+            const rect = modalContent.getBoundingClientRect();
+            initialX = e.clientX - rect.left;
+            initialY = e.clientY - rect.top;
+            
+            modalContent.style.transform = 'none';
+            modalHeader.style.cursor = 'grabbing';
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            
+            e.preventDefault();
+            
+            currentX = e.clientX - initialX;
+            currentY = e.clientY - initialY;
+            
+            modalContent.style.left = currentX + 'px';
+            modalContent.style.top = currentY + 'px';
+        });
+
+        document.addEventListener('mouseup', function() {
+            if (isDragging) {
+                isDragging = false;
+                modalHeader.style.cursor = 'move';
+            }
+        });
+
+        // Funcionalidad de redimensionamiento
+        const handles = {
+            'resize-handle-n': { cursor: 'n-resize', edges: { top: true } },
+            'resize-handle-s': { cursor: 's-resize', edges: { bottom: true } },
+            'resize-handle-e': { cursor: 'e-resize', edges: { right: true } },
+            'resize-handle-w': { cursor: 'w-resize', edges: { left: true } },
+            'resize-handle-ne': { cursor: 'ne-resize', edges: { top: true, right: true } },
+            'resize-handle-nw': { cursor: 'nw-resize', edges: { top: true, left: true } },
+            'resize-handle-se': { cursor: 'se-resize', edges: { bottom: true, right: true } },
+            'resize-handle-sw': { cursor: 'sw-resize', edges: { bottom: true, left: true } }
+        };
+
+        Object.keys(handles).forEach(handleClass => {
+            const handle = modalContent.querySelector('.' + handleClass);
+            if (!handle) return;
+
+            handle.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const rect = modalContent.getBoundingClientRect();
+                const startWidth = rect.width;
+                const startHeight = rect.height;
+                const startLeft = rect.left;
+                const startTop = rect.top;
+
+                const edges = handles[handleClass].edges;
+
+                // Asegurar que el transform esté en none para posicionamiento absoluto
+                modalContent.style.transform = 'none';
+
+                function onMouseMove(e) {
+                    const deltaX = e.clientX - startX;
+                    const deltaY = e.clientY - startY;
+
+                    if (edges.right) {
+                        const newWidth = startWidth + deltaX;
+                        if (newWidth >= 400) {
+                            modalContent.style.width = newWidth + 'px';
+                            modalContent.style.maxWidth = 'none';
+                        }
+                    }
+
+                    if (edges.left) {
+                        const newWidth = startWidth - deltaX;
+                        if (newWidth >= 400) {
+                            modalContent.style.width = newWidth + 'px';
+                            modalContent.style.maxWidth = 'none';
+                            modalContent.style.left = (startLeft + deltaX) + 'px';
+                        }
+                    }
+
+                    if (edges.bottom) {
+                        const newHeight = startHeight + deltaY;
+                        if (newHeight >= 300) {
+                            modalContent.style.height = newHeight + 'px';
+                            modalContent.style.maxHeight = 'none';
+                        }
+                    }
+
+                    if (edges.top) {
+                        const newHeight = startHeight - deltaY;
+                        if (newHeight >= 300) {
+                            modalContent.style.height = newHeight + 'px';
+                            modalContent.style.maxHeight = 'none';
+                            modalContent.style.top = (startTop + deltaY) + 'px';
+                        }
+                    }
+                }
+
+                function onMouseUp() {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                }
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+        });
+    }
+
+
+    // Función para cerrar el modal de historial
+    function cerrarHistorialModal() {
+        const modal = document.getElementById('historialModal');
+        modal.classList.remove('show');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+
+
+</script>
 {% endblock %}

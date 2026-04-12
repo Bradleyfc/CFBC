@@ -30,10 +30,10 @@
                     </select>
                 </div>
                 <div class="col-12 text-end">
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filtrar</button>
-                    <a href="{{ request.path }}" class="btn btn-secondary"><i class="fas fa-sync-alt"></i> Limpiar Filtros</a>
-                    <a href="{{ request.path }}?{% if request.GET.curso %}curso={{ request.GET.curso }}&{% endif %}{% if request.GET.estudiante %}estudiante={{ request.GET.estudiante }}&{% endif %}pdf=1" class="btn btn-danger"><i class="fas fa-file-pdf"></i> Exportar a PDF</a>
-                    <a href="{{ request.path }}?{% if request.GET.curso %}curso={{ request.GET.curso }}&{% endif %}{% if request.GET.estudiante %}estudiante={{ request.GET.estudiante }}&{% endif %}excel=1" class="btn btn-success"><i class="fas fa-file-excel"></i> Exportar a Excel</a>
+                    <button type="submit" class="btn btn-primary"><span class="fas material-icons">filter_list</span></i> Filtrar</button>
+                    <a href="{{ request.path }}" class="btn btn-secondary"><span class="fas material-icons">help</span></i> Limpiar Filtros</a>
+                    <a href="{{ request.path }}?{% if request.GET.curso %}curso={{ request.GET.curso }}&{% endif %}{% if request.GET.estudiante %}estudiante={{ request.GET.estudiante }}&{% endif %}pdf=1" class="btn btn-danger"><span class="fas material-icons">description</span></i> Exportar a PDF</a>
+                    <a href="{{ request.path }}?{% if request.GET.curso %}curso={{ request.GET.curso }}&{% endif %}{% if request.GET.estudiante %}estudiante={{ request.GET.estudiante }}&{% endif %}excel=1" class="btn btn-success"><span class="fas material-icons">table_chart</span></i> Exportar a Excel</a>
                 </div>
             </form>
         </div>

@@ -48,7 +48,7 @@ urlpatterns = [
     path('verify_email/', views.verify_email, name='verify_email'),
     
     # Rutas para el sistema de formularios de aplicación a cursos
-    # Rutas para secretaria
+    # Rutas para secretaría
     path('formularios/', views.FormularioAplicacionListView.as_view(), name='formulario_list'),
     path('formularios/crear/', views.FormularioAplicacionCreateView.as_view(), name='formulario_create'),
     path('formularios/<int:pk>/editar/', views.FormularioAplicacionUpdateView.as_view(), name='formulario_update'),
@@ -76,10 +76,23 @@ urlpatterns = [
     # Rutas para registro
     path('registro/resend-code/', views.registro_resend_code, name='registro_resend_code'),
     
+    # Rutas para validación AJAX
+    path('validate-username/', views.validate_username, name='validate_username'),
+    path('validate-email/', views.validate_email, name='validate_email'),
+    path('validate-carnet/', views.validate_carnet, name='validate_carnet'),
+    
     # Rutas para registro de respuestas de formularios
     path('registro-respuestas/', RegistroRespuestasGeneralView.as_view(), name='registro_respuestas_general'),
     path('registro-respuestas/curso/<int:pk>/', RegistroRespuestasCursoView.as_view(), name='registro_respuestas_curso'),
     path('registro-respuestas/estudiante/<int:pk>/', RegistroRespuestasEstudianteView.as_view(), name='registro_respuestas_estudiante'),
     path('registro-respuestas/exportar-excel/', exportar_respuestas_excel, name='exportar_respuestas_excel'),
     path('registro-respuestas/exportar-excel/<int:curso_id>/', exportar_respuestas_excel, name='exportar_respuestas_excel_curso'),
+    
+    # Ruta para exportar solicitud individual
+    path('exportar-respuestas-excel-solicitud/<int:solicitud_id>/', views.exportar_solicitud_excel, name='exportar_solicitud_excel'),
+    
+    # Ruta para obtener historial de usuario
+    path('historial-usuario/<int:user_id>/', views.obtener_historial_usuario, name='historial_usuario'),
+    path('detalles-historial-usuario/<int:user_id>/', views.ver_detalles_historial_usuario, name='detalles_historial_usuario'),
+    path('exportar-detalles-historial-pdf/<int:user_id>/', views.exportar_detalles_historial_pdf, name='exportar_detalles_historial_pdf'),
 ]

@@ -55,3 +55,8 @@ def map_max_notas(calificaciones):
         if num_notas > max_notas:
             max_notas = num_notas
     return max_notas
+
+@register.filter
+def get_item(dictionary, key):
+    """Obtiene un valor de un diccionario usando una clave"""
+    return dictionary.get(key, 0)

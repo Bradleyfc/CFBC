@@ -11,8 +11,8 @@ from .models import (
 )
 
 def es_profesor_o_secretaria(user):
-    """Verifica si el usuario es profesor o secretaria"""
-    return user.groups.filter(name__in=['Profesores', 'Secretaria']).exists()
+    """Verifica si el usuario es profesor o secretaría"""
+    return user.groups.filter(name__in=['Profesores', 'Secretaría']).exists()
 
 class RegistroRespuestasGeneralView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     """

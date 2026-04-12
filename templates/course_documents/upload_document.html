@@ -1,0 +1,385 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Subir Documento - {{ folder.name }}{% endblock %}
+
+{% block content %}
+<!-- Background Section with Gradient -->
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-30"
+        style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;">
+    </div>
+
+    <div class="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        <div class="glass-card">
+            <div class="glass-header">
+                <h1 class="text-2xl font-bold text-gray-800 text-center">Subir Documento</h1>
+                <p class="text-gray-600 text-center mt-2">Carpeta: {{ folder.name }}</p>
+            </div>
+            <div class="glass-content">
+                <!-- Mostrar mensajes de Django -->
+                {% if messages %}
+                    {% for message in messages %}
+                        {% if message.tags == 'error' and 'MODAL_DUPLICATE:' in message.message %}
+                            <!-- Modal de advertencia para duplicados -->
+                            <div id="duplicateModal" class="delete-modal show">
+                                <div class="delete-modal-overlay" onclick="closeDuplicateModal()"></div>
+                                <div class="delete-modal-content">
+                                    <div class="delete-modal-header">
+                                        <div class="delete-modal-icon">
+                                            <span class="fa material-icons text-yellow-600">warning</span>
+                                        </div>
+                                        <h3 class="delete-modal-title">Documento Duplicado</h3>
+                                    </div>
+                                    
+                                    <div class="delete-modal-body">
+                                        <p class="delete-modal-message">
+                                            {{ message.message|slice:"16:" }}
+                                        </p>
+                                    </div>
+                                    
+                                    <div class="delete-modal-footer">
+                                        <button type="button" class="delete-modal-btn delete-modal-btn-cancel" onclick="closeDuplicateModal()">
+                                            <span class="fa material-icons mr-2">check</span>
+                                            Entendido
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <!-- Otros mensajes normales -->
+                            <div class="glass-alert glass-alert-{{ message.tags }} mb-4">
+                                <span class="material-icons mr-2">
+                                    {% if message.tags == 'success' %}check_circle
+                                    {% elif message.tags == 'error' %}error
+                                    {% elif message.tags == 'warning' %}warning
+                                    {% else %}info{% endif %}
+                                </span>
+                                {{ message.message }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="space-y-4">
+                        <div>
+                            <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                {{ form.name.label }}
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.help_text %}
+                                <p class="text-xs text-gray-500 mt-1">{{ form.name.help_text }}</p>
+                            {% endif %}
+                            {% if form.name.errors %}
+                                <div class="text-red-600 text-xs mt-1">
+                                    {% for error in form.name.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label for="{{ form.file.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                {{ form.file.label }}
+                            </label>
+                            {{ form.file }}
+                            {% if form.file.help_text %}
+                                <p class="text-xs text-gray-500 mt-1">{{ form.file.help_text }}</p>
+                            {% else %}
+                                <p class="text-xs text-gray-500 mt-1">
+                                    Tamaño máximo: 10MB. Tipos permitidos: PDF, DOC, PPT, XLS, TXT, ZIP, imágenes.<br>
+                                    <strong>Nota:</strong> No se pueden subir documentos duplicados (mismo nombre y tamaño) en la misma carpeta.
+                                </p>
+                            {% endif %}
+                            {% if form.file.errors %}
+                                <div class="text-red-600 text-xs mt-1">
+                                    {% for error in form.file.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        {% if form.non_field_errors %}
+                            <div class="text-red-600 text-sm">
+                                {% for error in form.non_field_errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="flex gap-3 mt-6">
+                        <button type="submit" class="glass-button glass-button-success flex-1">
+                            <span class="fa material-icons mr-2">cloud_upload</span></i> Subir Documento
+                        </button>
+                        <a href="{% url 'course_documents:teacher_dashboard' curso_id=curso.id %}" 
+                           class="glass-button glass-button-secondary flex-1">
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function closeDuplicateModal() {
+    const modal = document.getElementById('duplicateModal');
+    if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+}
+
+// Cerrar modal al hacer clic fuera de él o con Escape
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('duplicateModal');
+    if (modal) {
+        // Cerrar con tecla Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && modal.classList.contains('show')) {
+                closeDuplicateModal();
+            }
+        });
+    }
+});
+</script>
+
+<style>
+    /* Estilos del modal de error de duplicado (separados del formulario) */
+    .delete-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .delete-modal.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .delete-modal-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: transparent;
+    }
+
+    .delete-modal-content {
+        position: relative;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        max-width: 450px;
+        width: 90%;
+        transform: scale(0.9);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .delete-modal.show .delete-modal-content {
+        transform: scale(1);
+    }
+
+    .delete-modal-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 24px 24px 16px;
+        text-align: center;
+    }
+
+    .delete-modal-icon {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.1));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 16px;
+        border: 2px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .delete-modal-title {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
+        color: #1f2937;
+    }
+
+    .delete-modal-body {
+        padding: 24px;
+        text-align: center;
+    }
+
+    .delete-modal-message {
+        margin: 0;
+        font-size: 16px;
+        color: #374151;
+        line-height: 1.6;
+    }
+
+    .delete-modal-footer {
+        padding: 16px 24px 24px;
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .delete-modal-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 14px;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+
+    .delete-modal-btn-cancel {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        color: #1e40af;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .delete-modal-btn-cancel:hover {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Estilos del formulario de subir documentos (separados del modal) */
+    .glass-card {
+        position: relative;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            0 4px 16px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-header {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.1));
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .glass-content {
+        padding: 2rem;
+    }
+
+    .glass-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #374151;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+    }
+
+    .glass-input:focus {
+        outline: none;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3));
+        border-color: rgba(59, 130, 246, 0.5);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .glass-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .glass-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        text-decoration: none;
+    }
+
+    .glass-button-success {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+        color: #14532d;
+    }
+
+    .glass-button-secondary {
+        background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
+        color: #374151;
+    }
+
+    .glass-alert {
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        font-size: 0.875rem;
+    }
+
+    .glass-alert-success {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.1));
+        color: #14532d;
+    }
+
+    .glass-alert-error {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
+        color: #7f1d1d;
+    }
+
+    .glass-alert-warning {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.1));
+        color: #78350f;
+    }
+</style>
+{% endblock %}

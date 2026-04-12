@@ -10,13 +10,13 @@
             <div class="card">
                 <div class="card-header bg-success text-white">
                     <h4 class="mb-0">
-                        <i class="fas fa-user-check"></i>
+                        <span class="fas material-icons">person</span></i>
                         Reclamar Cuenta Archivada
                     </h4>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
+                        <span class="fas material-icons">info</span></i>
                         <strong>Datos encontrados en archivo:</strong><br>
                         Se encontraron los siguientes datos de su cuenta anterior. Revise la información y establezca una nueva contraseña para reactivar su cuenta.
                     </div>
@@ -75,7 +75,7 @@
                         </div>
 
                         <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle"></i>
+                            <span class="fas material-icons">warning</span></i>
                             <strong>Importante:</strong>
                             <ul class="mb-0 mt-2">
                                 <li>Al reclamar esta cuenta, se creará un nuevo usuario con los datos archivados.</li>
@@ -87,11 +87,11 @@
 
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                             <a href="{% url 'datos_archivados:buscar_usuario' %}" class="btn btn-secondary me-md-2">
-                                <i class="fas fa-arrow-left"></i>
+                                <span class="fas material-icons">arrow_back</span></i>
                                 Volver a Buscar
                             </a>
                             <button type="submit" class="btn btn-success">
-                                <i class="fas fa-user-check"></i>
+                                <span class="fas material-icons">person</span></i>
                                 Reactivar Cuenta
                             </button>
                         </div>

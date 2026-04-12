@@ -1,0 +1,1615 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Documentos - {{ curso.name }}{% endblock %}
+
+{% block content %}
+<!-- Background Section with Gradient -->
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-30"
+        style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;">
+    </div>
+
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        <!-- Header -->
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">📁 Documentos del Curso</h1>
+            <p class="text-xl text-center text-gray-700">{{ curso.name }}</p>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="glass-card glass-card-stat">
+                <div class="glass-card-content glass-card-centered">
+                    <div class="glass-icon glass-icon-blue">
+                        <span class="material-icons">folder</span>
+                    </div>
+                    <div class="glass-text-container-centered">
+                        <p class="glass-card-label">Carpetas</p>
+                        <p class="glass-card-value glass-card-value-small text-blue-600">{{ stats.total_folders }}</p>
+                    </div>
+                </div>
+                <div class="glass-card-glow glass-glow-blue"></div>
+            </div>
+            <div class="glass-card glass-card-stat">
+                <div class="glass-card-content glass-card-centered">
+                    <div class="glass-icon glass-icon-green">
+                        <span class="material-icons">description</span>
+                    </div>
+                    <div class="glass-text-container-centered">
+                        <p class="glass-card-label">Documentos</p>
+                        <p class="glass-card-value glass-card-value-small text-green-600">{{ stats.total_documents }}</p>
+                    </div>
+                </div>
+                <div class="glass-card-glow glass-glow-green"></div>
+            </div>
+            <div class="glass-card glass-card-stat">
+                <div class="glass-card-content glass-card-centered">
+                    <div class="glass-icon glass-icon-purple">
+                        <span class="material-icons">group</span>
+                    </div>
+                    <div class="glass-text-container-centered">
+                        <p class="glass-card-label">Estudiantes</p>
+                        <p class="glass-card-value glass-card-value-small text-purple-600">{{ stats.total_students }}</p>
+                    </div>
+                </div>
+                <div class="glass-card-glow glass-glow-purple"></div>
+            </div>
+            <div class="glass-card glass-card-stat">
+                <div class="glass-card-content glass-card-centered">
+                    <div class="glass-icon glass-icon-orange">
+                        <span class="material-icons">trending_up</span>
+                    </div>
+                    <div class="glass-text-container-centered">
+                        <p class="glass-card-label">Docs/Carpeta</p>
+                        <p class="glass-card-value glass-card-value-small text-orange-600">{{ stats.average_docs_per_folder|floatformat:1 }}</p>
+                    </div>
+                </div>
+                <div class="glass-card-glow glass-glow-orange"></div>
+            </div>
+        </div>
+
+        <!-- Botones Nueva Carpeta y Volver (solo si hay carpetas) -->
+        {% if folders %}
+        <div class="mb-6 text-center flex justify-center gap-3">
+            <a href="{% url 'principal:profile' %}" 
+               class="glass-btn glass-btn-secondary">
+                <span class="glass-btn-content">
+                    <span class="material-icons mr-2">arrow_back</span>
+                    Volver al Perfil
+                </span>
+                <div class="glass-btn-glow"></div>
+            </a>
+            <button type="button" 
+                    class="glass-btn glass-btn-primary"
+                    onclick="showCreateFolderModal()">
+                <span class="glass-btn-content">
+                    <span class="material-icons mr-2">create_new_folder</span>
+                    Nueva Carpeta
+                </span>
+                <div class="glass-btn-glow"></div>
+            </button>
+        </div>
+        {% endif %}
+
+        <!-- Lista de Carpetas -->
+        {% if folders %}
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {% for folder in folders %}
+                <div class="glass-card glass-card-folder glass-card-compact">
+                    <div class="glass-card-content">
+                        <div class="text-center mb-2">
+                            <div class="glass-icon glass-icon-blue mx-auto mb-1 glass-icon-xs">
+                                <span class="material-icons">folder</span>
+                            </div>
+                            <h3 class="glass-card-title-compact">{{ folder.name }}</h3>
+                            <p class="glass-card-meta-compact">
+                                {{ folder.documents.count }} doc{{ folder.documents.count|pluralize }} • Creada {{ folder.created_at|date:"d/m/Y" }}
+                            </p>
+                        </div>
+                        
+                        <div class="flex justify-center gap-1">
+                            <button type="button" 
+                                    class="glass-btn glass-btn-success glass-btn-xs"
+                                    title="Subir documento"
+                                    onclick="showUploadModal('{{ folder.id }}', '{{ folder.name|escapejs }}')">
+                                <span class="glass-btn-content">
+                                    <span class="material-icons">cloud_upload</span>
+                                </span>
+                                <div class="glass-btn-glow"></div>
+                            </button>
+                            
+                            <a href="{% url 'course_documents:folder_detail' curso_id=curso.id folder_id=folder.id %}" 
+                               title="Abrir"
+                               class="glass-btn glass-btn-info glass-btn-xs">
+                                <span class="glass-btn-content">
+                                    <span class="material-icons">folder_open</span>
+                                </span>
+                                <div class="glass-btn-glow"></div>
+                            </a>
+                            
+                            <button type="button" 
+                                    class="glass-btn glass-btn-danger glass-btn-xs glass-btn-icon"
+                                    title="Eliminar carpeta"
+                                    onclick="showDeleteModal('{{ folder.id }}', '{{ folder.name|escapejs }}')">
+                                <span class="glass-btn-content">
+                                    <span class="material-icons">delete</span>
+                                </span>
+                                <div class="glass-btn-glow"></div>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="glass-card-glow glass-glow-neutral"></div>
+                </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- Estado vacío centrado -->
+        <div class="flex items-center justify-center min-h-96">
+            <div class="glass-card glass-card-empty max-w-md w-full">
+                <div class="glass-card-content text-center">
+                    <div class="glass-empty-icon">
+                        <span class="material-icons text-6xl text-gray-300 mb-4">folder_open</span>
+                    </div>
+                    <h3 class="glass-card-title mb-2">No hay carpetas creadas</h3>
+                    <p class="glass-card-subtitle mb-8">Crea tu primera carpeta para organizar los documentos del curso</p>
+                    <div class="flex justify-center gap-3">
+                        <a href="{% url 'principal:profile' %}" 
+                           class="glass-btn glass-btn-secondary">
+                            <span class="glass-btn-content">
+                                <span class="material-icons mr-2">arrow_back</span>
+                                Volver al Perfil
+                            </span>
+                            <div class="glass-btn-glow"></div>
+                        </a>
+                        <button type="button" 
+                                class="glass-btn glass-btn-primary"
+                                onclick="showCreateFolderModal()">
+                            <span class="glass-btn-content">
+                                <span class="material-icons mr-2">create_new_folder</span> Crear Primera Carpeta
+                            </span>
+                            <div class="glass-btn-glow"></div>
+                        </button>
+                    </div>
+                </div>
+                <div class="glass-card-glow glass-glow-neutral"></div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal para crear carpeta -->
+<div id="createFolderModal" class="glass-modal hidden">
+    <div class="glass-modal-overlay"></div>
+    <div class="glass-modal-container">
+        <div class="glass-modal-content">
+            <form method="post" action="{% url 'course_documents:create_folder' curso_id=curso.id %}">
+                {% csrf_token %}
+                <div class="glass-modal-header">
+                    <div class="glass-modal-icon glass-icon-blue">
+                        <span class="material-icons">create_new_folder</span>
+                    </div>
+                    <h3 class="glass-modal-title">Nueva Carpeta</h3>
+                </div>
+                <div class="glass-modal-body">
+                    <div class="glass-form-group">
+                        <label for="id_name" class="glass-form-label">
+                            Nombre de la carpeta
+                        </label>
+                        <input type="text" 
+                               name="name" 
+                               id="id_name"
+                               maxlength="200"
+                               required
+                               class="glass-form-input"
+                               placeholder="Nombre de la carpeta (máximo 200 caracteres)">
+                    </div>
+                </div>
+                <div class="glass-modal-footer">
+                    <button type="button" 
+                            class="glass-btn glass-btn-secondary flex-1"
+                            onclick="hideCreateFolderModal()">
+                        <span class="glass-btn-content">
+                            <span class="material-icons mr-2">close</span>
+                            Cancelar
+                        </span>
+                        <div class="glass-btn-glow"></div>
+                    </button>
+                    <button type="submit" 
+                            class="glass-btn glass-btn-primary flex-1">
+                        <span class="glass-btn-content">
+                            <span class="material-icons mr-2">create_new_folder</span>
+                            Crear Carpeta
+                        </span>
+                        <div class="glass-btn-glow"></div>
+                    </button>
+                </div>
+            </form>
+            <div class="glass-modal-glow glass-glow-blue"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para subir documento -->
+<div id="uploadDocumentModal" class="glass-modal hidden">
+    <div class="glass-modal-overlay"></div>
+    <div class="glass-modal-container">
+        <div class="glass-modal-content glass-modal-compact">
+            <form method="post" enctype="multipart/form-data" id="uploadForm">
+                {% csrf_token %}
+                <div class="glass-modal-header glass-modal-header-compact">
+                    <div class="glass-modal-icon glass-icon-green glass-modal-icon-small">
+                        <span class="material-icons">cloud_upload</span>
+                    </div>
+                    <h3 class="glass-modal-title">Subir Documento</h3>
+                </div>
+                <div class="glass-modal-body glass-modal-body-compact">
+                    <div class="glass-form-group glass-form-group-compact">
+                        <label class="glass-form-label-compact">Carpeta: <span id="folderName" class="font-semibold text-blue-600"></span></label>
+                    </div>
+                    <div class="glass-form-group glass-form-group-compact">
+                        <label for="id_document_name" class="glass-form-label-compact">Nombre del documento (opcional)</label>
+                        <input type="text" 
+                               name="name" 
+                               id="id_document_name"
+                               maxlength="200"
+                               class="glass-form-input glass-form-input-compact"
+                               placeholder="Dejar vacío para usar el nombre original del archivo">
+                    </div>
+                    <div class="glass-form-group glass-form-group-compact">
+                        <label for="id_document_file" class="glass-form-label-compact">Archivo</label>
+                        <div class="glass-file-input-wrapper">
+                            <input type="file" 
+                                   name="file" 
+                                   id="id_document_file"
+                                   required
+                                   accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,.7z,.jpg,.jpeg,.png,.gif,.bmp"
+                                   class="glass-file-input-hidden"
+                                   onchange="updateFileName(this)">
+                            <div class="glass-file-input-display">
+                                <button type="button" class="glass-file-btn" onclick="document.getElementById('id_document_file').click()">
+                                    <span class="material-icons mr-1">folder_open</span>
+                                    Elegir Archivo
+                                </button>
+                                <span class="glass-file-name" id="fileName">Ningún archivo seleccionado</span>
+                            </div>
+                        </div>
+                        <p class="glass-form-help-compact">Máx: 10MB • PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, ZIP, RAR, JPG, PNG, BMP</p>
+                    </div>
+                </div>
+                <div class="glass-modal-footer glass-modal-footer-compact">
+                    <button type="button" 
+                            class="glass-btn glass-btn-secondary glass-btn-sm flex-1"
+                            onclick="hideUploadModal()">
+                        <span class="glass-btn-content">
+                            <span class="material-icons mr-1">close</span> Cancelar
+                        </span>
+                        <div class="glass-btn-glow"></div>
+                    </button>
+                    <button type="submit" 
+                            class="glass-btn glass-btn-success glass-btn-sm flex-1">
+                        <span class="glass-btn-content">
+                            <span class="material-icons mr-1">cloud_upload</span> Subir
+                        </span>
+                        <div class="glass-btn-glow"></div>
+                    </button>
+                </div>
+            </form>
+            <div class="glass-modal-glow glass-glow-green"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para confirmar eliminación -->
+<div id="deleteConfirmModal" class="glass-modal hidden">
+    <div class="glass-modal-overlay"></div>
+    <div class="glass-modal-container">
+        <div class="glass-modal-content">
+            <div class="glass-modal-header">
+                <div class="glass-modal-icon glass-icon-red">
+                    <span class="material-icons">warning</span>
+                </div>
+                <h3 class="glass-modal-title">Confirmar Eliminación</h3>
+            </div>
+            <div class="glass-modal-body">
+                <p class="text-gray-700 text-center mb-4">
+                    ¿Estás seguro de que quieres eliminar la carpeta 
+                    <strong id="deleteFolderName"></strong>?
+                </p>
+                <div class="glass-warning-box">
+                    <div class="flex items-center">
+                        <span class="material-icons text-red-500 mr-2">error</span>
+                        <span class="text-sm text-red-700">
+                            Esta acción eliminará todos los documentos dentro de la carpeta y no se puede deshacer.
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-modal-footer">
+                <button type="button" 
+                        class="glass-btn glass-btn-secondary flex-1"
+                        onclick="hideDeleteModal()">
+                    <span class="glass-btn-content">
+                        <span class="material-icons mr-2">close</span>
+                        Cancelar
+                    </span>
+                    <div class="glass-btn-glow"></div>
+                </button>
+                <button type="button" 
+                        class="glass-btn glass-btn-danger flex-1"
+                        onclick="confirmDeleteFolder()">
+                    <span class="glass-btn-content">
+                        <span class="material-icons mr-2">delete</span>
+                        Eliminar Carpeta
+                    </span>
+                    <div class="glass-btn-glow"></div>
+                </button>
+            </div>
+            <div class="glass-modal-glow glass-glow-red"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* ===== GLASSMORPHISM BUTTONS AVANZADOS ===== */
+.glass-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.875rem 1.75rem;
+    border-radius: 16px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Glassmorphism base */
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    
+    /* Sombras múltiples para profundidad */
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.12),
+        0 4px 16px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    
+    /* Bordes con gradiente sutil */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.1) 0%, 
+        rgba(255, 255, 255, 0.05) 50%, 
+        rgba(0, 0, 0, 0.02) 100%);
+    border-radius: inherit;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.glass-btn::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.glass-btn-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+}
+
+.glass-btn-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Estados hover y active */
+.glass-btn:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 
+        0 16px 48px rgba(0, 0, 0, 0.18),
+        0 8px 24px rgba(0, 0, 0, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+}
+
+.glass-btn:hover::before {
+    opacity: 1;
+}
+
+.glass-btn:hover::after {
+    opacity: 1;
+}
+
+.glass-btn:hover .glass-btn-glow {
+    width: 100%;
+    height: 100%;
+}
+
+.glass-btn:active {
+    transform: translateY(-1px) scale(0.98);
+    transition: all 0.1s ease;
+}
+
+.glass-btn:active .glass-btn-content {
+    transform: scale(0.95);
+}
+
+/* ===== VARIANTES DE COLOR ===== */
+
+/* Primary - Azul */
+.glass-btn-primary {
+    background: linear-gradient(135deg, 
+        rgba(59, 130, 246, 0.25) 0%, 
+        rgba(37, 99, 235, 0.15) 50%, 
+        rgba(29, 78, 216, 0.1) 100%);
+    color: #1e40af;
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.glass-btn-primary .glass-btn-glow {
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
+}
+
+.glass-btn-primary:hover {
+    background: linear-gradient(135deg, 
+        rgba(59, 130, 246, 0.35) 0%, 
+        rgba(37, 99, 235, 0.25) 50%, 
+        rgba(29, 78, 216, 0.15) 100%);
+    border-color: rgba(59, 130, 246, 0.5);
+    color: #1d4ed8;
+}
+
+/* Success - Verde */
+.glass-btn-success {
+    background: linear-gradient(135deg, 
+        rgba(34, 197, 94, 0.25) 0%, 
+        rgba(22, 163, 74, 0.15) 50%, 
+        rgba(21, 128, 61, 0.1) 100%);
+    color: #14532d;
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.glass-btn-success .glass-btn-glow {
+    background: radial-gradient(circle, rgba(34, 197, 94, 0.2) 0%, transparent 70%);
+}
+
+.glass-btn-success:hover {
+    background: linear-gradient(135deg, 
+        rgba(34, 197, 94, 0.35) 0%, 
+        rgba(22, 163, 74, 0.25) 50%, 
+        rgba(21, 128, 61, 0.15) 100%);
+    border-color: rgba(34, 197, 94, 0.5);
+    color: #15803d;
+}
+
+/* Info - Azul claro */
+.glass-btn-info {
+    background: linear-gradient(135deg, 
+        rgba(14, 165, 233, 0.25) 0%, 
+        rgba(2, 132, 199, 0.15) 50%, 
+        rgba(3, 105, 161, 0.1) 100%);
+    color: #0c4a6e;
+    border-color: rgba(14, 165, 233, 0.3);
+}
+
+.glass-btn-info .glass-btn-glow {
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.2) 0%, transparent 70%);
+}
+
+.glass-btn-info:hover {
+    background: linear-gradient(135deg, 
+        rgba(14, 165, 233, 0.35) 0%, 
+        rgba(2, 132, 199, 0.25) 50%, 
+        rgba(3, 105, 161, 0.15) 100%);
+    border-color: rgba(14, 165, 233, 0.5);
+    color: #0369a1;
+}
+
+/* Danger - Rojo */
+.glass-btn-danger {
+    background: linear-gradient(135deg, 
+        rgba(239, 68, 68, 0.25) 0%, 
+        rgba(220, 38, 38, 0.15) 50%, 
+        rgba(185, 28, 28, 0.1) 100%);
+    color: #7f1d1d;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.glass-btn-danger .glass-btn-glow {
+    background: radial-gradient(circle, rgba(239, 68, 68, 0.2) 0%, transparent 70%);
+}
+
+.glass-btn-danger:hover {
+    background: linear-gradient(135deg, 
+        rgba(239, 68, 68, 0.35) 0%, 
+        rgba(220, 38, 38, 0.25) 50%, 
+        rgba(185, 28, 28, 0.15) 100%);
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #991b1b;
+}
+
+/* Secondary - Gris */
+.glass-btn-secondary {
+    background: linear-gradient(135deg, 
+        rgba(107, 114, 128, 0.25) 0%, 
+        rgba(75, 85, 99, 0.15) 50%, 
+        rgba(55, 65, 81, 0.1) 100%);
+    color: #374151;
+    border-color: rgba(107, 114, 128, 0.3);
+}
+
+.glass-btn-secondary .glass-btn-glow {
+    background: radial-gradient(circle, rgba(107, 114, 128, 0.2) 0%, transparent 70%);
+}
+
+.glass-btn-secondary:hover {
+    background: linear-gradient(135deg, 
+        rgba(107, 114, 128, 0.35) 0%, 
+        rgba(75, 85, 99, 0.25) 50%, 
+        rgba(55, 65, 81, 0.15) 100%);
+    border-color: rgba(107, 114, 128, 0.5);
+    color: #1f2937;
+}
+
+/* ===== TAMAÑOS ===== */
+.glass-btn-sm {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.8rem;
+    border-radius: 12px;
+}
+
+.glass-btn-xs {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.7rem;
+    border-radius: 10px;
+}
+
+.glass-btn-icon {
+    padding: 0.625rem;
+    min-width: auto;
+    aspect-ratio: 1;
+}
+
+.glass-btn-xs.glass-btn-icon {
+    padding: 0.5rem;
+}
+
+/* ===== EFECTOS ESPECIALES ===== */
+
+/* Efecto de ondas al hacer clic */
+.glass-btn:active::before {
+    animation: ripple 0.6s ease-out;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+/* Efecto de brillo sutil */
+.glass-btn:hover::before {
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.15) 0%, 
+        rgba(255, 255, 255, 0.08) 50%, 
+        rgba(255, 255, 255, 0.02) 100%);
+}
+
+/* Animación de entrada */
+.glass-btn {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Efecto de focus para accesibilidad */
+.glass-btn:focus {
+    outline: none;
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.12),
+        0 4px 16px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+        0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .glass-btn {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .glass-btn-sm {
+        padding: 0.5rem 1rem;
+        font-size: 0.75rem;
+    }
+}
+
+/* ===== GLASSMORPHISM CARDS AVANZADAS ===== */
+.glass-card {
+    position: relative;
+    border-radius: 24px;
+    overflow: hidden;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Glassmorphism base */
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.25) 0%, 
+        rgba(255, 255, 255, 0.15) 50%, 
+        rgba(255, 255, 255, 0.05) 100%);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    
+    /* Sombras múltiples para profundidad extrema */
+    box-shadow: 
+        0 12px 40px rgba(0, 0, 0, 0.08),
+        0 6px 20px rgba(0, 0, 0, 0.06),
+        0 2px 8px rgba(0, 0, 0, 0.04),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+    
+    /* Bordes con gradiente cristalino */
+    border: 1px solid;
+    border-image: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.4) 0%, 
+        rgba(255, 255, 255, 0.1) 50%, 
+        rgba(255, 255, 255, 0.2) 100%) 1;
+}
+
+.glass-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.1) 0%, 
+        rgba(255, 255, 255, 0.05) 30%, 
+        rgba(0, 0, 0, 0.02) 70%, 
+        rgba(0, 0, 0, 0.05) 100%);
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.glass-card::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, 
+        transparent 0%, 
+        rgba(255, 255, 255, 0.1) 25%, 
+        transparent 50%, 
+        rgba(255, 255, 255, 0.1) 75%, 
+        transparent 100%);
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.glass-card-content {
+    position: relative;
+    z-index: 2;
+    padding: 1.5rem;
+}
+
+.glass-card-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0;
+}
+
+/* Estados hover */
+.glass-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.12),
+        0 10px 30px rgba(0, 0, 0, 0.08),
+        0 4px 12px rgba(0, 0, 0, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+}
+
+.glass-card:hover::before {
+    opacity: 1;
+}
+
+.glass-card:hover::after {
+    opacity: 1;
+}
+
+.glass-card:hover .glass-card-glow {
+    width: 120%;
+    height: 120%;
+    opacity: 0.6;
+}
+
+/* ===== VARIANTES DE TARJETAS ===== */
+
+/* Tarjetas de estadísticas */
+.glass-card-stat {
+    animation: slideInUp 0.6s ease-out;
+}
+
+.glass-card-stat:nth-child(1) { animation-delay: 0.1s; }
+.glass-card-stat:nth-child(2) { animation-delay: 0.2s; }
+.glass-card-stat:nth-child(3) { animation-delay: 0.3s; }
+.glass-card-stat:nth-child(4) { animation-delay: 0.4s; }
+
+.glass-card-stat .glass-card-content {
+    padding: 1.25rem;
+}
+
+/* Tarjetas de carpetas */
+.glass-card-folder {
+    animation: slideInLeft 0.6s ease-out;
+}
+
+.glass-card-folder .glass-card-content {
+    padding: 1.75rem;
+}
+
+/* Tarjetas compactas para carpetas */
+.glass-card-compact .glass-card-content {
+    padding: 1rem !important;
+}
+
+.glass-card-title-compact {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.375rem;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+.glass-card-meta-compact {
+    font-size: 0.75rem;
+    color: rgba(107, 114, 128, 0.7);
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+}
+
+/* Iconos extra pequeños */
+.glass-icon-xs {
+    width: 2.25rem !important;
+    height: 2.25rem !important;
+    border-radius: 12px !important;
+}
+
+.glass-icon-xs i {
+    font-size: 1.125rem !important;
+}
+
+/* Tarjeta vacía */
+.glass-card-empty {
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.3) 0%, 
+        rgba(255, 255, 255, 0.2) 50%, 
+        rgba(255, 255, 255, 0.1) 100%);
+    border-style: dashed;
+    border-width: 2px;
+    border-color: rgba(156, 163, 175, 0.3);
+}
+
+/* ===== ELEMENTOS DE TARJETAS ===== */
+
+/* Iconos glassmorphism */
+.glass-icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    
+    box-shadow: 
+        0 6px 20px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.3s ease;
+}
+
+.glass-icon::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.2) 0%, 
+        rgba(255, 255, 255, 0.05) 100%);
+    border-radius: inherit;
+}
+
+.glass-icon i {
+    position: relative;
+    z-index: 2;
+    font-size: 1.5rem;
+}
+
+/* Variantes de color para iconos */
+.glass-icon-blue {
+    background: linear-gradient(135deg, 
+        rgba(59, 130, 246, 0.2) 0%, 
+        rgba(37, 99, 235, 0.1) 100%);
+    color: #1e40af;
+}
+
+.glass-icon-green {
+    background: linear-gradient(135deg, 
+        rgba(34, 197, 94, 0.2) 0%, 
+        rgba(22, 163, 74, 0.1) 100%);
+    color: #14532d;
+}
+
+.glass-icon-purple {
+    background: linear-gradient(135deg, 
+        rgba(147, 51, 234, 0.2) 0%, 
+        rgba(126, 34, 206, 0.1) 100%);
+    color: #581c87;
+}
+
+.glass-icon-orange {
+    background: linear-gradient(135deg, 
+        rgba(249, 115, 22, 0.2) 0%, 
+        rgba(234, 88, 12, 0.1) 100%);
+    color: #9a3412;
+}
+
+.glass-icon-red {
+    background: linear-gradient(135deg, 
+        rgba(239, 68, 68, 0.2) 0%, 
+        rgba(220, 38, 38, 0.1) 100%);
+    color: #7f1d1d;
+}
+
+/* Textos de tarjetas */
+.glass-card-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: rgba(75, 85, 99, 0.8);
+    margin-bottom: 0.25rem;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.glass-card-value {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.glass-card-value-small {
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+}
+
+.glass-text-container {
+    margin-left: 2rem;
+    flex: 1;
+}
+
+/* Centering classes for statistics cards */
+.glass-card-centered {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 100px;
+    padding: 1rem !important;
+}
+
+.glass-text-container-centered {
+    margin-top: 0.75rem;
+    margin-left: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.glass-card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 0.75rem;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.glass-card-subtitle {
+    font-size: 0.875rem;
+    color: rgba(75, 85, 99, 0.7);
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+
+.glass-card-meta {
+    font-size: 0.8rem;
+    color: rgba(107, 114, 128, 0.6);
+    font-weight: 500;
+}
+
+/* ===== EFECTOS DE RESPLANDOR ===== */
+.glass-glow-blue {
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+}
+
+.glass-glow-green {
+    background: radial-gradient(circle, rgba(34, 197, 94, 0.15) 0%, transparent 70%);
+}
+
+.glass-glow-purple {
+    background: radial-gradient(circle, rgba(147, 51, 234, 0.15) 0%, transparent 70%);
+}
+
+.glass-glow-orange {
+    background: radial-gradient(circle, rgba(249, 115, 22, 0.15) 0%, transparent 70%);
+}
+
+.glass-glow-neutral {
+    background: radial-gradient(circle, rgba(156, 163, 175, 0.1) 0%, transparent 70%);
+}
+
+.glass-glow-red {
+    background: radial-gradient(circle, rgba(239, 68, 68, 0.15) 0%, transparent 70%);
+}
+
+/* Caja de advertencia */
+.glass-warning-box {
+    background: linear-gradient(135deg, 
+        rgba(254, 226, 226, 0.8) 0%, 
+        rgba(252, 165, 165, 0.6) 100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 12px;
+    padding: 0.875rem;
+    margin-top: 1rem;
+}
+
+/* Tarjeta vacía */
+.glass-card-empty {
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.3) 0%, 
+        rgba(255, 255, 255, 0.2) 50%, 
+        rgba(255, 255, 255, 0.1) 100%);
+    border-style: dashed;
+    border-width: 2px;
+    border-color: rgba(156, 163, 175, 0.3);
+    min-height: 240px;
+}
+
+.glass-card-empty .glass-card-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 220px;
+    padding: 1.5rem !important;
+}
+
+.glass-card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 0.75rem;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.glass-card-subtitle {
+    font-size: 0.875rem;
+    color: rgba(75, 85, 99, 0.7);
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+
+.glass-empty-icon {
+    margin-bottom: 1rem;
+}
+
+/* ===== MODALES GLASSMORPHISM ===== */
+.glass-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.glass-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    cursor: pointer;
+}
+
+.glass-modal-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1rem;
+    position: relative;
+    z-index: 10;
+}
+
+.glass-modal-content {
+    position: relative;
+    max-width: 28rem;
+    width: 100%;
+    border-radius: 24px;
+    overflow: hidden;
+    transform: scale(0.9) translateY(20px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Glassmorphism extremo */
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.95) 0%, 
+        rgba(255, 255, 255, 0.85) 50%, 
+        rgba(255, 255, 255, 0.9) 100%);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    
+    /* Sombras dramáticas */
+    box-shadow: 
+        0 25px 80px rgba(0, 0, 0, 0.15),
+        0 12px 40px rgba(0, 0, 0, 0.1),
+        0 6px 20px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+    
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.glass-modal.show .glass-modal-content {
+    transform: scale(1) translateY(0);
+}
+
+.glass-modal-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.3;
+}
+
+.glass-modal-header {
+    padding: 2rem 2rem 1rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    position: relative;
+    z-index: 2;
+}
+
+.glass-modal-header-compact {
+    padding: 1rem 1.5rem 0.5rem !important;
+}
+
+.glass-modal-icon {
+    width: 4rem;
+    height: 4rem;
+    margin: 0 auto 1rem;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    box-shadow: 
+        0 8px 25px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glass-modal-icon-small {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    margin: 0 auto 0.5rem !important;
+    border-radius: 12px !important;
+}
+
+.glass-modal-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #374151;
+    margin: 0;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.glass-modal-body {
+    padding: 1.5rem 2rem;
+    position: relative;
+    z-index: 2;
+}
+
+.glass-modal-body-compact {
+    padding: 0.75rem 1.5rem !important;
+}
+
+.glass-modal-footer {
+    padding: 1rem 2rem 2rem;
+    display: flex;
+    gap: 1rem;
+    position: relative;
+    z-index: 2;
+}
+
+.glass-modal-footer-compact {
+    padding: 0.75rem 1.5rem 1rem !important;
+    gap: 0.75rem !important;
+}
+
+/* ===== FORMULARIOS GLASSMORPHISM ===== */
+.glass-form-group {
+    margin-bottom: 1rem;
+}
+
+.glass-form-group-compact {
+    margin-bottom: 0.5rem !important;
+}
+
+.glass-form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.375rem;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.glass-form-label-compact {
+    font-size: 0.8rem !important;
+    margin-bottom: 0.25rem !important;
+}
+
+.glass-form-input {
+    width: 100%;
+    padding: 0.75rem 0.875rem;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.6) 0%, 
+        rgba(255, 255, 255, 0.4) 100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: #374151;
+    
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.glass-form-input-compact {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.8rem !important;
+}
+
+.glass-form-input:focus {
+    outline: none;
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.8) 0%, 
+        rgba(255, 255, 255, 0.6) 100%);
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 
+        0 6px 20px rgba(0, 0, 0, 0.08),
+        0 0 0 3px rgba(59, 130, 246, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    transform: translateY(-1px);
+}
+
+.glass-form-readonly {
+    padding: 0.75rem 0.875rem;
+    border-radius: 12px;
+    background: linear-gradient(135deg, 
+        rgba(229, 231, 235, 0.6) 0%, 
+        rgba(209, 213, 219, 0.4) 100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(156, 163, 175, 0.3);
+    color: #374151;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.glass-form-file {
+    padding: 0.625rem;
+    cursor: pointer;
+}
+
+.glass-form-help {
+    font-size: 0.7rem;
+    color: rgba(107, 114, 128, 0.7);
+    margin-top: 0.375rem;
+    line-height: 1.3;
+}
+
+.glass-form-help-compact {
+    font-size: 0.65rem !important;
+    margin-top: 0.25rem !important;
+    line-height: 1.2 !important;
+}
+
+/* Input de archivo personalizado */
+.glass-file-input-wrapper {
+    position: relative;
+}
+
+.glass-file-input-hidden {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+}
+
+.glass-file-input-display {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 12px;
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.6) 0%, 
+        rgba(255, 255, 255, 0.4) 100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-file-input-display:hover {
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.7) 0%, 
+        rgba(255, 255, 255, 0.5) 100%);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.glass-file-btn {
+    display: flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    background: linear-gradient(135deg, 
+        rgba(59, 130, 246, 0.25) 0%, 
+        rgba(37, 99, 235, 0.15) 100%);
+    color: #1e40af;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    white-space: nowrap;
+}
+
+.glass-file-btn:hover {
+    background: linear-gradient(135deg, 
+        rgba(59, 130, 246, 0.35) 0%, 
+        rgba(37, 99, 235, 0.25) 100%);
+    border-color: rgba(59, 130, 246, 0.5);
+    transform: translateY(-1px);
+}
+
+.glass-file-name {
+    flex: 1;
+    font-size: 0.8rem;
+    color: #6b7280;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.glass-file-name.has-file {
+    color: #374151;
+    font-weight: 500;
+}
+
+/* ===== ANIMACIONES ===== */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Efecto de partículas flotantes */
+.glass-card::before {
+    background-image: 
+        radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+        radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+        radial-gradient(circle at 40% 60%, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 50px 50px, 30px 30px, 70px 70px;
+    animation: float 20s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    33% { transform: translateY(-10px) rotate(1deg); }
+    66% { transform: translateY(5px) rotate(-1deg); }
+}
+
+/* Responsive para tarjetas */
+@media (max-width: 640px) {
+    .glass-card-content {
+        padding: 1rem;
+    }
+    
+    .glass-modal-content {
+        margin: 1rem;
+        max-width: calc(100% - 2rem);
+    }
+    
+    .glass-modal-header,
+    .glass-modal-body,
+    .glass-modal-footer {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+}
+</style>
+
+<script>
+function showCreateFolderModal() {
+    document.getElementById('createFolderModal').classList.remove('hidden');
+    document.getElementById('createFolderModal').classList.add('show');
+    document.getElementById('id_name').focus();
+}
+
+function hideCreateFolderModal() {
+    document.getElementById('createFolderModal').classList.remove('show');
+    setTimeout(() => {
+        document.getElementById('createFolderModal').classList.add('hidden');
+    }, 400);
+    document.getElementById('id_name').value = '';
+}
+
+function showUploadModal(folderId, folderName) {
+    document.getElementById('folderName').textContent = folderName;
+    document.getElementById('uploadForm').action = `/course-documents/teacher/{{ curso.id }}/folder/${folderId}/upload/`;
+    document.getElementById('uploadDocumentModal').classList.remove('hidden');
+    document.getElementById('uploadDocumentModal').classList.add('show');
+    document.getElementById('id_document_name').focus();
+}
+
+function hideUploadModal() {
+    document.getElementById('uploadDocumentModal').classList.remove('show');
+    setTimeout(() => {
+        document.getElementById('uploadDocumentModal').classList.add('hidden');
+    }, 400);
+    document.getElementById('id_document_name').value = '';
+    document.getElementById('id_document_file').value = '';
+    // Resetear el nombre del archivo
+    document.getElementById('fileName').textContent = 'Ningún archivo seleccionado';
+    document.getElementById('fileName').classList.remove('has-file');
+}
+
+function updateFileName(input) {
+    const fileNameSpan = document.getElementById('fileName');
+    if (input.files && input.files[0]) {
+        fileNameSpan.textContent = input.files[0].name;
+        fileNameSpan.classList.add('has-file');
+    } else {
+        fileNameSpan.textContent = 'Ningún archivo seleccionado';
+        fileNameSpan.classList.remove('has-file');
+    }
+}
+
+// Variables globales para el modal de eliminación
+let deleteModalFolderId = null;
+let deleteModalFolderName = null;
+
+function showDeleteModal(folderId, folderName) {
+    deleteModalFolderId = folderId;
+    deleteModalFolderName = folderName;
+    document.getElementById('deleteFolderName').textContent = folderName;
+    document.getElementById('deleteConfirmModal').classList.remove('hidden');
+    document.getElementById('deleteConfirmModal').classList.add('show');
+}
+
+function hideDeleteModal() {
+    document.getElementById('deleteConfirmModal').classList.remove('show');
+    setTimeout(() => {
+        document.getElementById('deleteConfirmModal').classList.add('hidden');
+    }, 400);
+    deleteModalFolderId = null;
+    deleteModalFolderName = null;
+}
+
+function confirmDeleteFolder() {
+    if (!deleteModalFolderId || !deleteModalFolderName) {
+        return;
+    }
+    
+    fetch(`/course-documents/teacher/{{ curso.id }}/folder/${deleteModalFolderId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideDeleteModal();
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        hideDeleteModal();
+        alert('Error al eliminar la carpeta');
+    });
+}
+
+function deleteFolder(folderId, folderName) {
+    if (confirm(`¿Estás seguro de que quieres eliminar la carpeta "${folderName}"? Esta acción eliminará todos los documentos dentro de la carpeta.`)) {
+        fetch(`/course-documents/teacher/{{ curso.id }}/folder/${folderId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error al eliminar la carpeta');
+        });
+    }
+}
+
+// Cerrar modales al hacer clic fuera de ellos
+document.getElementById('createFolderModal').addEventListener('click', function(e) {
+    if (e.target.classList.contains('glass-modal-overlay')) {
+        hideCreateFolderModal();
+    }
+});
+
+document.getElementById('uploadDocumentModal').addEventListener('click', function(e) {
+    if (e.target.classList.contains('glass-modal-overlay')) {
+        hideUploadModal();
+    }
+});
+
+document.getElementById('deleteConfirmModal').addEventListener('click', function(e) {
+    if (e.target.classList.contains('glass-modal-overlay')) {
+        hideDeleteModal();
+    }
+});
+
+// Cerrar modales con la tecla Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        hideCreateFolderModal();
+        hideUploadModal();
+        hideDeleteModal();
+    }
+});
+</script>
+{% endblock %}

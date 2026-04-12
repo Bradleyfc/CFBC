@@ -1,0 +1,14 @@
+Nuevo documento disponible en {{ curso.name }}
+
+Hola {{ student.get_full_name|default:student.username }},
+
+Se ha subido un nuevo documento al curso {{ curso.name }}:
+
+- Documento: {{ document.name }}
+- Carpeta: {{ folder.name }}
+- Fecha: {{ document.uploaded_at|date:"d/m/Y H:i" }}
+
+Puedes acceder a los documentos del curso desde tu perfil de estudiante.
+
+Saludos,
+Centro Fray Bartolomé de las Casas

@@ -160,7 +160,7 @@ Esto significa que:
 ## 🚀 Cómo Usar
 
 ### Paso 1: Acceder a Datos Archivados
-1. Inicia sesión como **Secretaria** o **Administrador**
+1. Inicia sesión como **Secretaría** o **Administrador**
 2. Ve a **Datos Archivados** → **Ver Tablas Archivadas**
 
 ### Paso 2: Verificar Datos
@@ -257,7 +257,7 @@ Después de combinar:
 ### Antes de Combinar:
 1. ✅ Haz un backup de tu base de datos actual
 2. ✅ Verifica que tengas espacio suficiente
-3. ✅ Asegúrate de tener permisos de Secretaria o Admin
+3. ✅ Asegúrate de tener permisos de Secretaría o Admin
 4. ✅ Cierra otras operaciones que puedan estar en curso
 
 ### Durante el Proceso:

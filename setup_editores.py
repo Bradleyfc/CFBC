@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Script para crear el grupo de Editores y usuarios de prueba
+Script para crear el grupo de Editor y usuarios de prueba
 """
 import os
 import django
@@ -14,14 +14,14 @@ from django.contrib.contenttypes.models import ContentType
 from blog.models import Noticia, Categoria, Comentario
 
 def crear_grupo_editores():
-    print("Configurando grupo de Editores...")
+    print("Configurando grupo de Editor...")
     
-    # Crear grupo Editores
-    grupo_editores, created = Group.objects.get_or_create(name='Editores')
+    # Crear grupo Editor
+    grupo_editores, created = Group.objects.get_or_create(name='Editor')
     if created:
-        print("✓ Grupo 'Editores' creado")
+        print("✓ Grupo 'Editor' creado")
     else:
-        print("✓ Grupo 'Editores' ya existe")
+        print("✓ Grupo 'Editor' ya existe")
     
     # Obtener permisos para el blog
     content_types = [
@@ -37,7 +37,7 @@ def crear_grupo_editores():
     
     # Asignar permisos al grupo
     grupo_editores.permissions.set(permisos_editores)
-    print(f"✓ Asignados {len(permisos_editores)} permisos al grupo Editores")
+    print(f"✓ Asignados {len(permisos_editores)} permisos al grupo Editor")
     
     # Crear usuario editor de prueba
     editor_user, created = User.objects.get_or_create(
@@ -60,7 +60,7 @@ def crear_grupo_editores():
     
     # Agregar usuario al grupo
     editor_user.groups.add(grupo_editores)
-    print("✓ Usuario 'editor' agregado al grupo Editores")
+    print("✓ Usuario 'editor' agregado al grupo Editor")
     
     # Crear otro usuario editor
     editor2_user, created = User.objects.get_or_create(
@@ -83,14 +83,14 @@ def crear_grupo_editores():
     
     # Agregar usuario al grupo
     editor2_user.groups.add(grupo_editores)
-    print("✓ Usuario 'redactor' agregado al grupo Editores")
+    print("✓ Usuario 'redactor' agregado al grupo Editor")
     
     print("\n¡Configuración completada!")
-    print("\nUsuarios editores creados:")
+    print("\nUsuarios editor creados:")
     print("1. Usuario: editor | Contraseña: editor123")
     print("2. Usuario: redactor | Contraseña: redactor123")
-    print("\nPueden acceder al panel de editores en: http://localhost:8000/noticias/editores/")
-    print("También pueden ver el enlace 'Panel de Editores' en el menú de usuario cuando inicien sesión.")
+    print("\nPueden acceder al panel de editor en: http://localhost:8000/noticias/editores/")
+    print("También pueden ver el enlace 'Panel de Editor' en el menú de usuario cuando inicien sesión.")
 
 if __name__ == '__main__':
     crear_grupo_editores()

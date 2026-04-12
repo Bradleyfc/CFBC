@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Historial de Usuario - {{ usuario_historial.username }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            color: #333;
+        }
+        
+        h1 {
+            color: #1e40af;
+            font-size: 18pt;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 5px;
+        }
+        
+        h2 {
+            color: #3b82f6;
+            font-size: 14pt;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #93c5fd;
+            padding-bottom: 3px;
+        }
+        
+        .info-box {
+            background-color: #eff6ff;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .info-row {
+            margin: 5px 0;
+        }
+        
+        .label {
+            font-weight: bold;
+            color: #1e40af;
+        }
+        
+        .item {
+            background-color: #f9fafb;
+            padding: 8px;
+            margin-bottom: 8px;
+            border: 1px solid #e5e7eb;
+            page-break-inside: avoid;
+        }
+        
+        .item-grid {
+            display: table;
+            width: 100%;
+        }
+        
+        .item-row {
+            display: table-row;
+        }
+        
+        .item-cell {
+            display: table-cell;
+            padding: 3px 5px;
+            width: 50%;
+        }
+        
+        .no-data {
+            color: #9ca3af;
+            font-style: italic;
+            padding: 10px;
+        }
+        
+        .section-count {
+            color: #6b7280;
+            font-size: 9pt;
+        }
+    </style>
+</head>
+<body>
+    <h1>Historial Completo de Usuario</h1>
+    
+    <!-- Información del Usuario -->
+    <div class="info-box">
+        <div class="info-row">
+            <span class="label">Nombre:</span> {{ historial.usuario.nombre }}
+        </div>
+        <div class="info-row">
+            <span class="label">Usuario:</span> {{ historial.usuario.username }}
+        </div>
+        <div class="info-row">
+            <span class="label">Email:</span> {{ historial.usuario.email }}
+        </div>
+    </div>
+
+    <!-- 1. Aplicaciones a Cursos -->
+    <h2>1. Aplicaciones a Cursos <span class="section-count">({{ historial.aplicaciones|length }})</span></h2>
+    {% if historial.aplicaciones %}
+        {% for app in historial.aplicaciones %}
+        <div class="item">
+            <div class="item-grid">
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Curso:</span> {{ app.curso }}</div>
+                    <div class="item-cell"><span class="label">Código:</span> {{ app.curso_codigo }}</div>
+                </div>
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Área:</span> {{ app.area }}</div>
+                    <div class="item-cell"><span class="label">Categoría:</span> {{ app.categoria }}</div>
+                </div>
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Edición:</span> {{ app.edicion }}</div>
+                    <div class="item-cell"><span class="label">Estado:</span> {{ app.estado }}</div>
+                </div>
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Fecha Solicitud:</span> {{ app.fecha_solicitud }}</div>
+                    <div class="item-cell"><span class="label">Beca:</span> {{ app.beca }} | <span class="label">Pagado:</span> {{ app.pagado }}</div>
+                </div>
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Nota Final:</span> {{ app.nota_final }}</div>
+                    <div class="item-cell"><span class="label">Comentarios:</span> {{ app.comentarios }}</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-data">No hay registros</div>
+    {% endif %}
+
+    <!-- 2. Matrículas -->
+    <h2>2. Matrículas <span class="section-count">({{ historial.matriculas|length }})</span></h2>
+    {% if historial.matriculas %}
+        {% for mat in historial.matriculas %}
+        <div class="item">
+            <div class="item-grid">
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Curso:</span> {{ mat.curso }}</div>
+                    <div class="item-cell"><span class="label">Edición:</span> {{ mat.edicion }}</div>
+                </div>
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Fecha Inscripción:</span> {{ mat.fecha_inscripcion }}</div>
+                    <div class="item-cell"><span class="label">Estado:</span> {{ mat.estado }}</div>
+                </div>
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Ausencias:</span> {{ mat.ausencias }}</div>
+                    <div class="item-cell"><span class="label">Intento:</span> {{ mat.intento }}</div>
+                </div>
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Nota Final:</span> {{ mat.nota_final }}</div>
+                    <div class="item-cell"><span class="label">Nota Extra:</span> {{ mat.nota_extra }}</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-data">No hay registros</div>
+    {% endif %}
+
+    <!-- 3. Solicitudes de Inscripción -->
+    <h2>3. Solicitudes de Inscripción <span class="section-count">({{ historial.solicitudes_inscripcion|length }})</span></h2>
+    {% if historial.solicitudes_inscripcion %}
+        {% for sol in historial.solicitudes_inscripcion %}
+        <div class="item">
+            <div class="item-grid">
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Curso:</span> {{ sol.curso }}</div>
+                    <div class="item-cell"><span class="label">Código:</span> {{ sol.curso_codigo }}</div>
+                </div>
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Fecha:</span> {{ sol.fecha_solicitud }}</div>
+                    <div class="item-cell"><span class="label">Estado:</span> {{ sol.estado }}</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-data">No hay registros</div>
+    {% endif %}
+
+    <!-- 4. Pagos -->
+    <h2>4. Pagos <span class="section-count">({{ historial.pagos|length }})</span></h2>
+    {% if historial.pagos %}
+        {% for pago in historial.pagos %}
+        <div class="item">
+            <div class="item-grid">
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Monto:</span> {{ pago.monto }}</div>
+                    <div class="item-cell"><span class="label">Fecha:</span> {{ pago.fecha }}</div>
+                </div>
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Método:</span> {{ pago.metodo }}</div>
+                    <div class="item-cell"><span class="label">Referencia:</span> {{ pago.referencia }}</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-data">No hay registros</div>
+    {% endif %}
+
+    <!-- 5. Cuentas Bancarias -->
+    <h2>5. Cuentas Bancarias <span class="section-count">({{ historial.cuentas_bancarias|length }})</span></h2>
+    {% if historial.cuentas_bancarias %}
+        {% for cuenta in historial.cuentas_bancarias %}
+        <div class="item">
+            <div class="item-grid">
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Número de Cuenta:</span> {{ cuenta.numero_cuenta }}</div>
+                    <div class="item-cell"><span class="label">Banco:</span> {{ cuenta.banco }}</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-data">No hay registros</div>
+    {% endif %}
+
+    <!-- 6. Cursos como Profesor -->
+    <h2>6. Cursos como Profesor <span class="section-count">({{ historial.cursos_como_profesor|length }})</span></h2>
+    {% if historial.cursos_como_profesor %}
+        {% for cp in historial.cursos_como_profesor %}
+        <div class="item">
+            <div class="item-grid">
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Curso:</span> {{ cp.curso }}</div>
+                    <div class="item-cell"><span class="label">Código:</span> {{ cp.curso_codigo }}</div>
+                </div>
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Área:</span> {{ cp.area }}</div>
+                    <div class="item-cell"><span class="label">Categoría:</span> {{ cp.categoria }}</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-data">No hay registros</div>
+    {% endif %}
+
+    <!-- 7. Cursos Administrados -->
+    <h2>7. Cursos Administrados <span class="section-count">({{ historial.cursos_administrados|length }})</span></h2>
+    {% if historial.cursos_administrados %}
+        {% for curso in historial.cursos_administrados %}
+        <div class="item">
+            <div class="item-grid">
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Nombre:</span> {{ curso.nombre }}</div>
+                    <div class="item-cell"><span class="label">Código:</span> {{ curso.codigo }}</div>
+                </div>
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Área:</span> {{ curso.area }}</div>
+                    <div class="item-cell"><span class="label">Categoría:</span> {{ curso.categoria }}</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-data">No hay registros</div>
+    {% endif %}
+
+    <!-- 8. Ediciones de Cursos -->
+    <h2>8. Ediciones de Cursos <span class="section-count">({{ historial.ediciones|length }})</span></h2>
+    {% if historial.ediciones %}
+        {% for ed in historial.ediciones %}
+        <div class="item">
+            <div class="item-grid">
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Nombre:</span> {{ ed.nombre }}</div>
+                    <div class="item-cell"><span class="label">Curso:</span> {{ ed.curso }}</div>
+                </div>
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Fecha Inicio:</span> {{ ed.fecha_inicio }}</div>
+                    <div class="item-cell"><span class="label">Fecha Fin:</span> {{ ed.fecha_fin }}</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-data">No hay registros</div>
+    {% endif %}
+
+    <!-- 9. Asignaturas -->
+    <h2>9. Asignaturas <span class="section-count">({{ historial.asignaturas|length }})</span></h2>
+    {% if historial.asignaturas %}
+        {% for asig in historial.asignaturas %}
+        <div class="item">
+            <div class="item-grid">
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Nombre:</span> {{ asig.nombre }}</div>
+                    <div class="item-cell"><span class="label">Código:</span> {{ asig.codigo }}</div>
+                </div>
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Curso:</span> {{ asig.curso }}</div>
+                    <div class="item-cell"><span class="label">Descripción:</span> {{ asig.descripcion }}</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-data">No hay registros</div>
+    {% endif %}
+
+    <!-- 10. Áreas de Conocimiento -->
+    <h2>10. Áreas de Conocimiento <span class="section-count">({{ historial.areas|length }})</span></h2>
+    {% if historial.areas %}
+        {% for area in historial.areas %}
+        <div class="item">
+            <div class="item-grid">
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Nombre:</span> {{ area.nombre }}</div>
+                    <div class="item-cell"><span class="label">Código:</span> {{ area.codigo }}</div>
+                </div>
+                <div class="item-row">
+                    <div class="item-cell" colspan="2"><span class="label">Descripción:</span> {{ area.descripcion }}</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-data">No hay registros</div>
+    {% endif %}
+
+    <!-- 11. Categorías de Cursos -->
+    <h2>11. Categorías de Cursos <span class="section-count">({{ historial.categorias|length }})</span></h2>
+    {% if historial.categorias %}
+        {% for cat in historial.categorias %}
+        <div class="item">
+            <div class="item-grid">
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Nombre:</span> {{ cat.nombre }}</div>
+                    <div class="item-cell"><span class="label">Código:</span> {{ cat.codigo }}</div>
+                </div>
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Precio:</span> {{ cat.precio }}</div>
+                    <div class="item-cell"><span class="label">Es Servicio:</span> {{ cat.es_servicio }}</div>
+                </div>
+                <div class="item-row">
+                    <div class="item-cell"><span class="label">Registro Abierto:</span> {{ cat.registro_abierto }}</div>
+                    <div class="item-cell"><span class="label">Descripción:</span> {{ cat.descripcion }}</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-data">No hay registros</div>
+    {% endif %}
+
+</body>
+</html>

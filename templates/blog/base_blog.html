@@ -6,149 +6,786 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Noticias - CFBC{% endblock %}</title>
     
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     
     <style>
-        .navbar-brand {
-            font-weight: bold;
+        /* Glassmorphism Header Container */
+        .glass-header-container {
+            /* Fondo azul oscuro sólido */
+            background: rgba(30, 64, 175, 0.9);
+            /* Gradiente azul por encima para el efecto glass */
+            background-image: linear-gradient(135deg, 
+                rgba(59, 130, 246, 0.3), 
+                rgba(30, 64, 175, 0.1)
+            );
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            border-radius: 20px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(147, 197, 253, 0.4);
+            position: relative;
+            /* Sin overflow para permitir dropdown */
         }
-        .card-img-top {
-            height: 200px;
-            object-fit: cover;
+
+        .glass-header-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(147, 197, 253, 0.6), transparent);
+            pointer-events: none;
         }
-        .noticia-destacada {
-            border-left: 4px solid #007bff;
+
+        .glass-header-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(147, 197, 253, 0.3), transparent);
+            animation: shimmer 3s infinite;
+            pointer-events: none;
         }
-        .sidebar {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
         }
-        .footer {
-            background-color: #343a40;
+
+        /* Navigation Links con Glassmorphism */
+        .glass-nav-link {
+            /* Fondo muy transparente */
+            background: rgba(59, 130, 246, 0.15);
+            /* Gradiente muy sutil */
+            background-image: linear-gradient(135deg, 
+                rgba(59, 130, 246, 0.2), 
+                rgba(37, 99, 235, 0.05)
+            );
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(147, 197, 253, 0.1);
+            border-radius: 10px;
+            transition: all 0.15s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 2px 8px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(147, 197, 253, 0.2);
+            padding: 0.4rem 0.8rem !important;
+            font-size: 0.875rem !important;
+            color: white !important;
+            text-decoration: none !important;
+        }
+
+        .glass-nav-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(147, 197, 253, 0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.15s ease;
+            pointer-events: none;
+        }
+
+        .glass-nav-link:hover {
+            /* Hover más sutil */
+            background: rgba(59, 130, 246, 0.3);
+            background-image: linear-gradient(135deg, 
+                rgba(96, 165, 250, 0.35), 
+                rgba(59, 130, 246, 0.15)
+            );
+            border-color: rgba(147, 197, 253, 0.2);
+            transform: translateY(-1px) scale(1.01);
+            box-shadow: 
+                0 4px 15px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(147, 197, 253, 0.4),
+                0 0 10px rgba(59, 130, 246, 0.2);
+            color: white !important;
+        }
+
+        .glass-nav-link:hover::before {
+            opacity: 1;
+        }
+
+        /* Efectos de profundidad para el logo */
+        .glass-logo {
+            /* Fondo muy transparente */
+            background: rgba(59, 130, 246, 0.2);
+            background-image: linear-gradient(135deg, 
+                rgba(59, 130, 246, 0.25), 
+                rgba(37, 99, 235, 0.1)
+            );
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(147, 197, 253, 0.3);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 2px 8px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(147, 197, 253, 0.3);
+            padding: 0.4rem 0.8rem !important;
+            color: white !important;
+            text-decoration: none !important;
+        }
+
+        .glass-logo:hover {
+            transform: translateY(-1px) scale(1.02);
+            box-shadow: 
+                0 4px 15px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(147, 197, 253, 0.4),
+                0 0 10px rgba(59, 130, 246, 0.3);
+            color: white !important;
+        }
+
+        /* Botones de Autenticación con Glassmorphism */
+        .glass-button-oval {
+            /* Fondo azul oscuro sólido */
+            background: rgba(30, 64, 175, 0.8);
+            background-image: linear-gradient(135deg, 
+                rgba(59, 130, 246, 0.5), 
+                rgba(30, 64, 175, 0.3)
+            );
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(147, 197, 253, 0.6);
+            border-radius: 20px;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 6px 20px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(147, 197, 253, 0.7);
+            padding: 0.4rem 1rem !important;
+            font-size: 0.875rem !important;
+            color: white !important;
+            text-decoration: none !important;
+        }
+
+        .glass-button-oval::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+            pointer-events: none;
+        }
+
+        .glass-button-oval:hover {
+            background: rgba(147, 197, 253, 0.9);
+            background-image: linear-gradient(135deg, 
+                rgba(147, 197, 253, 0.8), 
+                rgba(96, 165, 250, 0.6)
+            );
+            color: #1e40af !important;
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8),
+                0 0 25px rgba(59, 130, 246, 0.6);
+        }
+
+        .glass-button-oval:hover::before {
+            left: 100%;
+        }
+
+        /* Search Input Glassmorphism */
+        .glass-search-input {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
             color: white;
-            padding: 40px 0;
-            margin-top: 50px;
+            transition: all 0.3s ease;
+        }
+
+        .glass-search-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .glass-search-input:focus {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(147, 197, 253, 0.5);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Dropdown Menu Glassmorphism */
+        .glass-dropdown {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            z-index: 9999 !important;
+            min-width: 200px;
+            position: fixed;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .glass-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .glass-dropdown a {
+            transition: all 0.2s ease;
+            color: #374151 !important;
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            text-decoration: none;
+        }
+
+        .glass-dropdown a:hover {
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 8px;
+            color: #1e40af !important;
+        }
+
+        /* Asegurar que el dropdown sea visible */
+        .dropdown-container {
+            position: relative;
+            z-index: 9999;
+        }
+
+        /* Prevenir scroll horizontal global */
+        html, body {
+            overflow-x: hidden;
+            max-width: 100vw;
+        }
+
+        /* Asegurar que el shimmer no interfiera */
+        .glass-header-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(147, 197, 253, 0.3), transparent);
+            animation: shimmer 3s infinite;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Mobile Menu Glassmorphism */
+        .glass-mobile-menu {
+            background: rgba(30, 64, 175, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 15px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(147, 197, 253, 0.3);
+        }
+
+        /* Asegurar visibilidad del texto */
+        .glass-header-container .text-white {
+            color: white !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .noticia-destacada {
+            border-left: 4px solid #3b82f6;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .glass-header-container {
+                border-radius: 15px;
+                margin: 0.5rem;
+            }
+            
+            .glass-nav-link {
+                border-radius: 8px;
+                padding: 0.3rem 0.6rem !important;
+                font-size: 0.8rem !important;
+            }
+            
+            .glass-button-oval {
+                border-radius: 15px;
+                padding: 0.3rem 0.8rem !important;
+            }
+
+            .glass-logo {
+                border-radius: 10px;
+                padding: 0.3rem 0.6rem !important;
+            }
         }
     </style>
     
     {% block extra_css %}{% endblock %}
 </head>
-<body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand" href="{% url 'blog:lista_noticias' %}">
-                <i class="fas fa-newspaper"></i> Noticias CFBC
-            </a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'principal:home' %}">Inicio</a>
-                    </li>
+<body class="bg-gray-50">
+    <!-- Glassmorphism Header Container -->
+    <div class="container mx-auto px-4" style="position: relative; z-index: 1000;">
+        <header class="glass-header-container flex flex-wrap items-center justify-between py-4 mb-4 mx-4 mt-3">
+            <!-- Left Side: Logo and Inicio -->
+            <div class="flex items-center space-x-4 ml-8">
+                <a href="{% url 'blog:lista_noticias' %}" class="glass-logo flex items-center font-bold text-xl">
+                    <span class="material-icons mr-2">article</span>
+                    Noticias CFBC
+                </a>
+                <a href="{% url 'principal:home' %}" class="glass-nav-link">
+                    Inicio
+                </a>
+            </div>
+
+            <!-- Center Navigation -->
+            <div class="hidden md:flex items-center space-x-4">
+                <!-- Category Navigation Links -->
+                <div class="flex space-x-4">
                     {% for categoria in categorias %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'blog:categoria_noticias' categoria.slug %}">
-                            {{ categoria.nombre }}
-                        </a>
-                    </li>
+                    <a href="{% url 'blog:categoria_noticias' categoria.slug %}" class="glass-nav-link">
+                        {{ categoria.nombre }}
+                    </a>
                     {% endfor %}
-                </ul>
-                
-                <!-- Buscador -->
-                <form class="d-flex me-3" method="GET" action="{% url 'blog:lista_noticias' %}">
-                    <input class="form-control me-2" type="search" name="q" placeholder="Buscar noticias..." 
-                           value="{{ request.GET.q }}">
-                    <button class="btn btn-outline-light" type="submit">
-                        <i class="fas fa-search"></i>
-                    </button>
+                </div>
+            </div>
+
+            <!-- Right Side: Search and User Menu (moved left) -->
+            <div class="hidden md:flex items-center space-x-4 mr-8">
+                <!-- Search Form -->
+                <form class="flex items-center" method="GET" action="{% url 'blog:lista_noticias' %}">
+                    <div class="relative">
+                        <input type="search" name="q" placeholder="Buscar noticias..." 
+                               value="{{ request.GET.q }}"
+                               class="glass-search-input px-4 py-2 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all">
+                        <button type="submit" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-white hover:text-blue-200">
+                            <span class="material-icons">search</span>
+                        </button>
+                    </div>
                 </form>
-                
-                <!-- Usuario -->
-                <ul class="navbar-nav">
-                    {% if user.is_authenticated %}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-user"></i> {{ user.username }}
-                            </a>
-                            <ul class="dropdown-menu">
+
+                <!-- User Menu -->
+                {% if user.is_authenticated %}
+                    <div class="dropdown-container">
+                        <button class="glass-nav-link flex items-center" id="user-menu-button">
+                            <span class="material-icons mr-1">person</span>
+                            {{ user.username }}
+                            <span class="material-icons ml-1">arrow_drop_down</span>
+                        </button>
+                        <div class="glass-dropdown" id="user-dropdown">
+                            <div class="py-1">
                                 {% if user.groups.all|length > 0 %}
                                     {% for group in user.groups.all %}
-                                        {% if group.name == 'Editores' %}
-                                            <li><a class="dropdown-item" href="{% url 'blog:panel_editores' %}">
-                                                <i class="fas fa-edit"></i> Panel de Editores
-                                            </a></li>
+                                        {% if group.name == 'Editor' %}
+                                            <a href="{% url 'blog:panel_editores' %}">
+                                                <span class="material-icons mr-2 text-sm">edit</span>
+                                                Panel de Editor
+                                            </a>
                                         {% endif %}
                                     {% endfor %}
                                 {% endif %}
                                 {% if user.is_staff %}
-                                <li><a class="dropdown-item" href="{% url 'admin:index' %}">
-                                    <i class="fas fa-cog"></i> Admin
-                                </a></li>
+                                <a href="{% url 'admin:index' %}">
+                                    <span class="material-icons mr-2 text-sm">settings</span>
+                                    Admin
+                                </a>
                                 {% endif %}
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item" href="#" onclick="document.getElementById('logout-form').submit(); return false;">
-                                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-                                    </a>
-                                    <form id="logout-form" method="post" action="{% url 'logout' %}" style="display: none;">
-                                        {% csrf_token %}
-                                    </form>
-                                </li>
-                            </ul>
-                        </li>
-                    {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'login' %}">Iniciar Sesión</a>
-                        </li>
-                    {% endif %}
-                </ul>
+                                <hr class="my-1 border-gray-200">
+                                <a href="#" onclick="document.getElementById('logout-form').submit(); return false;">
+                                    <span class="material-icons mr-2 text-sm">logout</span>
+                                    Cerrar Sesión
+                                </a>
+                                <form id="logout-form" method="post" action="{% url 'logout' %}" class="hidden">
+                                    {% csrf_token %}
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <a href="{% url 'login' %}" class="glass-button-oval">
+                        <span class="material-icons mr-2 text-sm">login</span>
+                        Iniciar Sesión
+                    </a>
+                {% endif %}
             </div>
-        </div>
-    </nav>
 
-    <!-- Mensajes -->
+            <!-- Mobile menu button -->
+            <div class="md:hidden">
+                <button type="button" class="glass-nav-link" onclick="toggleMobileMenu()">
+                    <span class="material-icons">menu</span>
+                </button>
+            </div>
+
+            <!-- Mobile Navigation Menu -->
+            <div id="mobile-menu" class="md:hidden hidden w-full mt-4">
+                <div class="glass-mobile-menu px-4 py-3 space-y-2">
+                    <a href="{% url 'principal:home' %}" class="block glass-nav-link text-center">
+                        Inicio
+                    </a>
+                    {% for categoria in categorias %}
+                    <a href="{% url 'blog:categoria_noticias' categoria.slug %}" class="block glass-nav-link text-center">
+                        {{ categoria.nombre }}
+                    </a>
+                    {% endfor %}
+                    
+                    <!-- Mobile Search -->
+                    <form class="mt-4" method="GET" action="{% url 'blog:lista_noticias' %}">
+                        <div class="relative">
+                            <input type="search" name="q" placeholder="Buscar noticias..." 
+                                   value="{{ request.GET.q }}"
+                                   class="glass-search-input w-full px-4 py-2 pr-10 rounded-lg">
+                            <button type="submit" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-white">
+                                <span class="material-icons">search</span>
+                            </button>
+                        </div>
+                    </form>
+                    
+                    {% if user.is_authenticated %}
+                        <div class="border-t border-blue-600 pt-2 mt-4">
+                            <span class="block text-blue-200 px-3 py-1 text-sm">{{ user.username }}</span>
+                            {% if user.groups.all|length > 0 %}
+                                {% for group in user.groups.all %}
+                                    {% if group.name == 'Editor' %}
+                                        <a href="{% url 'blog:panel_editores' %}" class="block glass-nav-link text-center mt-2">
+                                            Panel de Editor
+                                        </a>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                            {% if user.is_staff %}
+                            <a href="{% url 'admin:index' %}" class="block glass-nav-link text-center mt-2">
+                                Admin
+                            </a>
+                            {% endif %}
+                            <a href="#" onclick="document.getElementById('logout-form').submit(); return false;" 
+                               class="block glass-nav-link text-center mt-2">
+                                Cerrar Sesión
+                            </a>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="block glass-button-oval text-center mt-4">
+                            Iniciar Sesión
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </header>
+    </div>
+    <!-- Messages -->
     {% if messages %}
-        <div class="container mt-3">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <div class="bg-{% if message.tags == 'error' %}red{% elif message.tags == 'warning' %}yellow{% elif message.tags == 'success' %}green{% else %}blue{% endif %}-100 border border-{% if message.tags == 'error' %}red{% elif message.tags == 'warning' %}yellow{% elif message.tags == 'success' %}green{% else %}blue{% endif %}-400 text-{% if message.tags == 'error' %}red{% elif message.tags == 'warning' %}yellow{% elif message.tags == 'success' %}green{% else %}blue{% endif %}-700 px-4 py-3 rounded mb-4 relative" role="alert">
+                    <span class="block sm:inline">{{ message }}</span>
+                    <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3" onclick="this.parentElement.style.display='none'">
+                        <span class="material-icons">close</span>
+                    </button>
                 </div>
             {% endfor %}
         </div>
     {% endif %}
 
-    <!-- Contenido principal -->
-    <main class="container my-4">
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {% block content %}{% endblock %}
     </main>
 
     <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <h5>Centro Fray Bartolomé de las Casas</h5>
-                    <p>Mantente informado con las últimas noticias y eventos de nuestra institución.</p>
+    <style>
+    /* Efectos glassmorphism para footer */
+    .glass-footer {
+        background: linear-gradient(135deg, rgba(17, 24, 39, 0.8) 0%, rgba(31, 41, 55, 0.9) 50%, rgba(17, 24, 39, 0.8) 100%);
+        backdrop-filter: blur(20px);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .glass-footer::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+        z-index: 1;
+    }
+
+    .glass-footer-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .glass-section {
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 0.75rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-section:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .glass-link {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .glass-link::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        transition: left 0.5s;
+    }
+
+    .glass-link:hover::before {
+        left: 100%;
+    }
+
+    .glass-link:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.3);
+        transform: translateY(-1px) scale(1.02);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .glass-social {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .glass-social::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+        border-radius: 50%;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        transform: translate(-50%, -50%);
+    }
+
+    .glass-social:hover::before {
+        width: 100%;
+        height: 100%;
+    }
+
+    .glass-social:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.4);
+        transform: translateY(-3px) scale(1.1);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .glass-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        border: none;
+        margin: 1.25rem 0;
+    }
+
+    .contact-item {
+        backdrop-filter: blur(8px);
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 0.6rem;
+        margin-bottom: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .contact-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.15);
+        transform: translateX(4px);
+    }
+
+    .icon-glow {
+        filter: drop-shadow(0 0 8px currentColor);
+    }
+
+    .glass-section-compact {
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 0.5rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-section-compact:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+    }
+    </style>
+
+    <footer class="glass-footer py-4 mt-8">
+        <div class="glass-footer-content container mx-auto px-4">
+            <div class="flex flex-col md:flex-row gap-3">
+                <div class="glass-section w-full md:w-[40%]">
+                    <h5 class="text-white text-lg font-bold mb-3 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Centro Fray Bartolomé de las Casas</h5>
+                    <p class="text-gray-200 leading-relaxed text-sm">Formación integral y educación de calidad para el desarrollo personal y
+                        profesional.</p>
                 </div>
-                <div class="col-md-6 text-md-end">
-                    <p>&copy; 2025 CFBC. Todos los derechos reservados.</p>
+                <div class="glass-section w-full md:w-[20%]">
+                    <h6 class="text-white text-base font-bold mb-3 bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">Enlaces Rápidos</h6>
+                    <ul class="space-y-2">
+                        <li><a href="{% url 'principal:home' %}" class="glass-link text-gray-200 hover:text-white no-underline text-sm">Inicio</a></li>
+                        <li><a href="{% url 'principal:cursos' %}" class="glass-link text-gray-200 hover:text-white no-underline text-sm">Cursos</a></li>
+                        <li><a href="{% url 'blog:lista_noticias' %}" class="glass-link text-gray-200 hover:text-white no-underline text-sm">Noticias</a></li>
+                        <li><a href="#" class="glass-link text-gray-200 hover:text-white no-underline text-sm">Contacto</a></li>
+                    </ul>
+                </div>
+                <div class="glass-section w-full md:w-[40%]">
+                    <h6 class="text-white text-base font-bold mb-3 bg-gradient-to-r from-red-400 to-pink-400 bg-clip-text text-transparent">Contacto</h6>
+                    <div class="space-y-2">
+                        <div class="contact-item">
+                            <p class="text-gray-200 flex items-start text-sm">
+                                <span class="material-icons mr-2 mt-0.5 text-blue-400">location_on</span>
+                                <span class="leading-snug text-xs">
+                                    Calle 19 No 258 e/ J e I<br>
+                                    Vedado, Plaza de la Revolución<br>
+                                    La Habana
+                                </span>
+                            </p>
+                        </div>
+                        <div class="contact-item">
+                            <p class="text-gray-200 flex items-center text-sm">
+                                <span class="material-icons mr-2 text-green-400">phone</span>
+                                <span class="text-xs">+53 59518075</span>
+                            </p>
+                        </div>
+                        <div class="contact-item">
+                            <p class="text-gray-200 flex items-center text-sm">
+                                <span class="material-icons mr-2 text-red-400 flex-shrink-0">email</span>
+                                <span class="text-xs break-all">centrofraybartolomedelascasas@gmail.com</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr class="glass-divider">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-2">
+                <div>
+                    <p class="text-gray-200 text-xs">&copy; 2025 Centro Fray Bartolomé de las Casas. Todos los derechos
+                        reservados.</p>
+                </div>
+                <div class="flex space-x-3">
+                    <a href="#" class="glass-social text-gray-200 hover:text-blue-400 no-underline">
+                        <span class="material-icons">facebook</span>
+                    </a>
+                    <a href="#" class="glass-social text-gray-200 hover:text-blue-400 no-underline">
+                        <span class="material-icons">twitter</span>
+                    </a>
+                    <a href="#" class="glass-social text-gray-200 hover:text-pink-400 no-underline">
+                        <span class="material-icons">instagram</span>
+                    </a>
+                    <a href="#" class="glass-social text-gray-200 hover:text-blue-600 no-underline">
+                        <span class="material-icons">linkedin</span>
+                    </a>
                 </div>
             </div>
         </div>
     </footer>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        // Dropdown functionality with JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            const userMenuButton = document.getElementById('user-menu-button');
+            const userDropdown = document.getElementById('user-dropdown');
+            
+            if (userMenuButton && userDropdown) {
+                let timeoutId;
+                
+                // Position dropdown
+                function positionDropdown() {
+                    const buttonRect = userMenuButton.getBoundingClientRect();
+                    userDropdown.style.top = (buttonRect.bottom + 8) + 'px';
+                    userDropdown.style.right = (window.innerWidth - buttonRect.right) + 'px';
+                }
+                
+                userMenuButton.addEventListener('mouseenter', function() {
+                    clearTimeout(timeoutId);
+                    positionDropdown();
+                    userDropdown.classList.add('show');
+                });
+                
+                userMenuButton.addEventListener('mouseleave', function() {
+                    timeoutId = setTimeout(function() {
+                        userDropdown.classList.remove('show');
+                    }, 150);
+                });
+                
+                userDropdown.addEventListener('mouseenter', function() {
+                    clearTimeout(timeoutId);
+                });
+                
+                userDropdown.addEventListener('mouseleave', function() {
+                    userDropdown.classList.remove('show');
+                });
+                
+                // Reposition on window resize
+                window.addEventListener('resize', positionDropdown);
+            }
+        });
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
