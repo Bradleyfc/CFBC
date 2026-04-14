@@ -10,7 +10,7 @@
     <h1 class="text-3xl font-bold text-center mb-2 drop-shadow-sm text-gray-800">
       Bienvenido {{ user.first_name|default:user.username }}
     </h1>
-    {% if group_name == 'Secretaria' %}
+    {% if group_name == 'Secretaría' %}
     <p class="text-xl text-center text-gray-700 drop-shadow-sm">Administrar los Cursos Disponibles en el Centro</p>
     {% else %}
     <p class="text-xl text-center text-gray-700 drop-shadow-sm">Listado de Cursos Disponibles</p>
@@ -58,7 +58,7 @@
       </div>
 
       <!-- Botón Agregar Curso -->
-      {% if group_name == 'Secretaria' %}
+      {% if group_name == 'Secretaría' %}
       <div class="flex justify-center lg:justify-start">
         <a href="{% url 'principal:crear_cursos'%}" class="glass-button glass-button-primary flex items-center justify-center">
           <span class="fa material-icons mr-2">add_circle</span></i>
@@ -109,7 +109,7 @@
               <h3 class="text-base font-bold text-gray-900 line-clamp-2 group-hover:text-shadow-glow transition-all duration-300 min-h-[2rem] flex-1">
                 {{course.name}}
               </h3>
-              {% if group_name == 'Secretaria' %}
+              {% if group_name == 'Secretaría' %}
               <button class="glass-tag-options flex-shrink-0 mt-0.5 pulse-options-button" onclick="toggleOptionsPanel('{{course.id}}')" title="Opciones del curso">
                 ...
               </button>
@@ -258,7 +258,7 @@
             </div>
             
             <div class="space-y-1.5">
-              {% if group_name == 'Secretaria' %}
+              {% if group_name == 'Secretaría' %}
               <a href="{% url 'principal:editar_curso' course.id %}" class="glass-option-link glass-option-orange glass-option-compact flex items-center gap-1.5 p-2 rounded-md transition-all duration-300">
                 <div class="glass-icon-compact-opt glass-icon-orange">
                   <span class="fa material-icons">edit</span></i>

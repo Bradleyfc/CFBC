@@ -725,7 +725,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
       </div>
 
-      {% if object and group_name == 'Secretaria' %}
+      {% if object and group_name == 'Secretaría' %}
       <div class="text-center">
         {% if not object.formulario_aplicacion %}
         <a href="{% url 'principal:formulario_create' %}?curso_id={{ object.id }}" class="glass-btn glass-btn-form">
