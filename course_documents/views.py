@@ -422,18 +422,16 @@ class DownloadDocumentView(LoginRequiredMixin, StudentPermissionMixin, View):
             raise PermissionDenied("No tienes acceso a este documento")
         
         try:
-            # Ignorar prefetch requests del navegador (Chrome, Edge, etc.)
-            # Estos no son descargas reales del usuario
+            # Ignorar prefetch requests
             is_prefetch = (
                 request.META.get('HTTP_PURPOSE', '').lower() == 'prefetch' or
                 request.META.get('HTTP_SEC_PURPOSE', '').lower() == 'prefetch' or
                 request.META.get('HTTP_X_PURPOSE', '').lower() == 'prefetch'
             )
             if is_prefetch:
-                from django.http import HttpResponse as HR
-                return HR(status=204)
+                return HttpResponse(status=204)
 
-            # Verificar que el archivo existe antes de registrar
+            # Verificar que el archivo existe
             if not document.file or not default_storage.exists(document.file.name):
                 messages.error(request, 'El archivo no está disponible.')
                 return redirect('course_documents:student_dashboard', curso_id=curso.id)
@@ -447,22 +445,29 @@ class DownloadDocumentView(LoginRequiredMixin, StudentPermissionMixin, View):
             with default_storage.open(document.file.name, 'rb') as file:
                 file_content = file.read()
 
-            # Solo registrar DESPUÉS de leer el archivo exitosamente
-            DocumentAccess.objects.create(
-                document=document,
-                student=request.user
-            )
+            # Usar token de sesión para evitar registros duplicados por antivirus/extensiones.
+            # Solo la primera request en un intervalo de 5 segundos registra la descarga.
+            import time
+            session_key = f'dl_token_{request.user.id}_{document_id}'
+            last_registered = request.session.get(session_key, 0)
+            now = time.time()
+            should_register = (now - last_registered) > 5
 
-            AuditLog.log_action(
-                user=request.user,
-                action='document_downloaded',
-                curso=curso,
-                folder=document.folder,
-                document=document,
-                details=f'Documento "{document.name}" descargado por estudiante'
-            )
+            if should_register:
+                request.session[session_key] = now
+                DocumentAccess.objects.create(
+                    document=document,
+                    student=request.user
+                )
+                AuditLog.log_action(
+                    user=request.user,
+                    action='document_downloaded',
+                    curso=curso,
+                    folder=document.folder,
+                    document=document,
+                    details=f'Documento "{document.name}" descargado por estudiante'
+                )
 
-            # Crear respuesta HTTP con el archivo
             response = HttpResponse(file_content, content_type=content_type)
             filename = os.path.basename(document.file.name)
             response['Content-Disposition'] = f'attachment; filename="{filename}"'
