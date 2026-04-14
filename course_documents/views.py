@@ -203,17 +203,16 @@ class UploadDocumentView(LoginRequiredMixin, TeacherPermissionMixin, CreateView)
                 self.request, 
                 f'Error al subir el documento: {str(e)}'
             )
-            return self.form_invalid(form)
-    
+            return redirect('course_documents:teacher_dashboard', curso_id=curso.id)
+
     def form_invalid(self, form):
-        """Manejar formulario inválido"""
+        """Manejar formulario inválido - mostrar errores específicos"""
         curso = self.get_curso()
-        messages.error(
-            self.request, 
-            'Error al subir el documento. Verifica el archivo y el nombre.'
-        )
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(self.request, error)
         return redirect('course_documents:teacher_dashboard', curso_id=curso.id)
-    
+
     def get_success_url(self):
         """URL de redirección después de subir documento"""
         return reverse('course_documents:teacher_dashboard', kwargs={'curso_id': self.kwargs['curso_id']})

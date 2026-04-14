@@ -8,15 +8,8 @@ import os
 
 
 def course_document_upload_path(instance, filename):
-    """
-    Genera la ruta de subida para documentos de curso
-    """
-    from .file_service import FileService
-    return FileService.get_upload_path(
-        instance.folder.curso.id,
-        instance.folder.id,
-        FileService.generate_secure_filename(filename, instance.folder.curso.id, instance.folder.id)
-    )
+    """Genera la ruta de subida para documentos del curso"""
+    return f'course_documents/{instance.folder.curso.id}/{instance.folder.id}/{filename}'
 
 
 class DocumentFolder(models.Model):
@@ -56,15 +49,8 @@ class DocumentFolder(models.Model):
         self.name = self.name.strip()
 
     def save(self, *args, **kwargs):
-        # Ejecutar validaciones antes de guardar
         self.full_clean()
         super().save(*args, **kwargs)
-
-
-def course_document_upload_path(instance, filename):
-    """Genera la ruta de subida para documentos del curso"""
-    # Organizar por curso y carpeta
-    return f'course_documents/{instance.folder.curso.id}/{instance.folder.id}/{filename}'
 
 
 class CourseDocument(models.Model):
@@ -91,70 +77,17 @@ class CourseDocument(models.Model):
 
     def clean(self):
         """Validación personalizada del modelo"""
-        from .file_service import FileService
-        
         # Validar nombre del documento
         if self.name:
-            if len(self.name.strip()) > 200:  # Reducir límite para dar margen
+            if len(self.name.strip()) > 200:
                 raise ValidationError({'name': 'El nombre del documento es demasiado largo (máximo 200 caracteres).'})
-            
-            # Limpiar espacios
             self.name = self.name.strip()
-        
-        # Validar archivo usando el servicio
-        if self.file:
-            try:
-                FileService.validate_file(self.file)
-            except ValidationError as e:
-                raise ValidationError({'file': str(e)})
-    
+
     def save(self, *args, **kwargs):
         """Override save para calcular tamaño del archivo"""
         if self.file and not self.file_size:
             self.file_size = self.file.size
         super().save(*args, **kwargs)
-    
-    def delete(self, *args, **kwargs):
-        """Override delete para eliminar archivo físico"""
-        from .file_service import FileService
-        
-        # Eliminar archivo físico
-        if self.file:
-            FileService.delete_file(self.file.name)
-        
-        super().delete(*args, **kwargs)
-    
-    def get_file_info(self):
-        """Obtiene información detallada del archivo"""
-        from .file_service import FileService
-        
-        if self.file:
-            return FileService.get_file_info(self.file.name)
-        return None
-        
-        # Validar que el nombre no esté vacío
-        if not self.name or not self.name.strip():
-            if self.file:
-                self.name = os.path.splitext(self.file.name)[0]
-            else:
-                raise ValidationError({'name': 'El nombre del documento no puede estar vacío.'})
-
-    def save(self, *args, **kwargs):
-        # Calcular el tamaño del archivo
-        if self.file:
-            self.file_size = self.file.size
-            
-            # Si no se proporciona un nombre, usar el nombre del archivo
-            if not self.name:
-                self.name = os.path.splitext(self.file.name)[0]
-        
-        # Ejecutar validaciones antes de guardar
-        self.full_clean()
-        
-        super().save(*args, **kwargs)
-        
-        # Después de guardar, activar notificaciones para estudiantes
-        self._activate_notifications()
 
     def _activate_notifications(self):
         """Activa las notificaciones de contenido nuevo para estudiantes del curso"""

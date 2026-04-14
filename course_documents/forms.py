@@ -63,52 +63,46 @@ class CourseDocumentForm(forms.ModelForm):
     
     # Tipos de archivo permitidos
     ALLOWED_EXTENSIONS = [
-        'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 
-        'txt', 'zip', 'rar', '7z', 'jpg', 'jpeg', 'png', 'gif'
+        'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx',
+        'txt', 'zip', 'rar', '7z', 'jpg', 'jpeg', 'png', 'gif', 'bmp'
     ]
     
     # Tamaño máximo de archivo (10MB)
     MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB en bytes
+
+    name = forms.CharField(
+        required=False,
+        max_length=200,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Nombre del documento (opcional)',
+            'maxlength': 200,
+            'data-bs-toggle': 'tooltip',
+            'title': 'Máximo 200 caracteres. Si se deja vacío se usará el nombre del archivo.'
+        }),
+        label='Nombre del documento'
+    )
     
     class Meta:
         model = CourseDocument
         fields = ['name', 'file']
         widgets = {
-            'name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Nombre del documento (máximo 200 caracteres)',
-                'maxlength': 200,
-                'required': True,
-                'data-bs-toggle': 'tooltip',
-                'title': 'Máximo 200 caracteres'
-            }),
             'file': forms.FileInput(attrs={
                 'class': 'form-control',
-                'accept': '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,.7z,.jpg,.jpeg,.png,.gif',
+                'accept': '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,.7z,.jpg,.jpeg,.png,.gif,.bmp',
                 'required': True,
                 'data-bs-toggle': 'tooltip',
-                'title': 'Tamaño máximo: 50MB. Tipos permitidos: PDF, DOC, PPT, XLS, TXT, ZIP, imágenes'
+                'title': 'Máx: 10MB. Tipos permitidos: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, ZIP, RAR, 7Z, JPG, JPEG, PNG, GIF, BMP'
             })
         }
         labels = {
-            'name': 'Nombre del documento',
             'file': 'Archivo'
         }
     
     def clean_name(self):
-        """Validar nombre del documento"""
-        name = self.cleaned_data.get('name')
+        """Validar nombre del documento (opcional)"""
+        name = self.cleaned_data.get('name', '').strip()
         
-        if not name:
-            raise ValidationError("El nombre del documento es requerido.")
-        
-        # Eliminar espacios al inicio y final
-        name = name.strip()
-        
-        if not name:
-            raise ValidationError("El nombre del documento no puede estar vacío o contener solo espacios.")
-        
-        # Verificar longitud
         if len(name) > 200:
             raise ValidationError("El nombre del documento no puede exceder 200 caracteres.")
         
