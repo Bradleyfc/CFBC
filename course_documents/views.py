@@ -422,13 +422,37 @@ class DownloadDocumentView(LoginRequiredMixin, StudentPermissionMixin, View):
             raise PermissionDenied("No tienes acceso a este documento")
         
         try:
-            # Registrar acceso al documento
+            # Ignorar prefetch requests del navegador (Chrome, Edge, etc.)
+            # Estos no son descargas reales del usuario
+            is_prefetch = (
+                request.META.get('HTTP_PURPOSE', '').lower() == 'prefetch' or
+                request.META.get('HTTP_SEC_PURPOSE', '').lower() == 'prefetch' or
+                request.META.get('HTTP_X_PURPOSE', '').lower() == 'prefetch'
+            )
+            if is_prefetch:
+                from django.http import HttpResponse as HR
+                return HR(status=204)
+
+            # Verificar que el archivo existe antes de registrar
+            if not document.file or not default_storage.exists(document.file.name):
+                messages.error(request, 'El archivo no está disponible.')
+                return redirect('course_documents:student_dashboard', curso_id=curso.id)
+
+            # Determinar el tipo MIME
+            content_type, _ = mimetypes.guess_type(document.file.name)
+            if not content_type:
+                content_type = 'application/octet-stream'
+
+            # Leer el archivo
+            with default_storage.open(document.file.name, 'rb') as file:
+                file_content = file.read()
+
+            # Solo registrar DESPUÉS de leer el archivo exitosamente
             DocumentAccess.objects.create(
                 document=document,
                 student=request.user
             )
-            
-            # Registrar en audit log
+
             AuditLog.log_action(
                 user=request.user,
                 action='document_downloaded',
@@ -437,30 +461,16 @@ class DownloadDocumentView(LoginRequiredMixin, StudentPermissionMixin, View):
                 document=document,
                 details=f'Documento "{document.name}" descargado por estudiante'
             )
-            
-            # Verificar que el archivo existe
-            if not document.file or not default_storage.exists(document.file.name):
-                messages.error(request, 'El archivo no está disponible.')
-                return redirect('course_documents:student_dashboard', curso_id=curso.id)
-            
-            # Obtener el archivo
-            file_path = document.file.path if hasattr(document.file, 'path') else document.file.name
-            
-            # Determinar el tipo MIME
-            content_type, _ = mimetypes.guess_type(document.file.name)
-            if not content_type:
-                content_type = 'application/octet-stream'
-            
+
             # Crear respuesta HTTP con el archivo
-            with default_storage.open(document.file.name, 'rb') as file:
-                response = HttpResponse(file.read(), content_type=content_type)
-                
-                # Configurar headers para descarga
-                filename = os.path.basename(document.file.name)
-                response['Content-Disposition'] = f'attachment; filename="{filename}"'
-                response['Content-Length'] = document.file_size or document.file.size
-                
-                return response
+            response = HttpResponse(file_content, content_type=content_type)
+            filename = os.path.basename(document.file.name)
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            response['Content-Length'] = document.file_size or len(file_content)
+            response['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+            response['X-Robots-Tag'] = 'noindex'
+
+            return response
                 
         except Exception as e:
             # Registrar error en audit log
@@ -525,10 +535,15 @@ class StudentDocumentHistoryView(LoginRequiredMixin, StudentPermissionMixin, Det
         curso = self.get_object()
         
         # Obtener historial de descargas del estudiante en este curso
+        # IMPORTANTE: {% regroup %} requiere que los datos estén ordenados por el campo de agrupación.
+        # Agrupamos por accessed_at.date, así que ordenamos por fecha descendente y luego por hora.
+        from django.db.models.functions import TruncDate
         downloads = DocumentAccess.objects.filter(
             document__folder__curso=curso,
             student=self.request.user
-        ).select_related('document', 'document__folder').order_by('-accessed_at')
+        ).select_related('document', 'document__folder').annotate(
+            download_date=TruncDate('accessed_at')
+        ).order_by('-download_date', '-accessed_at')
         
         context['downloads'] = downloads
         

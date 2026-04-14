@@ -20,12 +20,15 @@ def send_new_document_notification(sender, instance, created, **kwargs):
             
             # Preparar el contexto para el email
             context = {
+                'student': student,
                 'student_name': student.get_full_name() or student.username,
-                'course_name': instance.folder.curso.name,
-                'folder_name': instance.folder.name,
-                'document_name': instance.name,
+                'curso': instance.folder.curso,
+                'folder': instance.folder,
+                'document': instance,
                 'teacher_name': instance.uploaded_by.get_full_name() or instance.uploaded_by.username,
-                'dashboard_url': f"{settings.SITE_URL if hasattr(settings, 'SITE_URL') else 'http://localhost:8000'}/course-documents/student/{instance.folder.curso.id}/",
+                'upload_date': instance.uploaded_at,
+                'site_name': getattr(settings, 'SITE_NAME', 'Plataforma Educativa'),
+                'dashboard_url': f"{getattr(settings, 'SITE_URL', 'http://localhost:8000')}/course-documents/student/{instance.folder.curso.id}/",
             }
             
             # Renderizar el contenido del email

@@ -101,7 +101,7 @@
             </h3>
             
             {% if downloads %}
-                {% regroup downloads by accessed_at.date as downloads_by_date %}
+                {% regroup downloads by download_date as downloads_by_date %}
                 
                 {% for date_group in downloads_by_date %}
                     <div class="timeline-date">
