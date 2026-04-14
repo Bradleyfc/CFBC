@@ -11310,7 +11310,26 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Mostrar modal después de un breve delay
         setTimeout(() => {
-            mostrarModalMigracionCompletada(datosEstadisticas);
+            // Si los datos del URL no tienen estadísticas reales, obtenerlas del servidor
+            const tieneEstadisticas = datosEstadisticas && (
+                datosEstadisticas.total_migrados > 0 ||
+                datosEstadisticas.tablas_inspeccionadas > 0 ||
+                datosEstadisticas.tablas_con_datos > 0
+            );
+            
+            if (!tieneEstadisticas) {
+                // Obtener estadísticas frescas del servidor
+                fetch('{% url "datos_archivados:estado_migracion" %}')
+                    .then(r => r.json())
+                    .then(datosServidor => {
+                        mostrarModalMigracionCompletada(datosServidor);
+                    })
+                    .catch(() => {
+                        mostrarModalMigracionCompletada(datosEstadisticas);
+                    });
+            } else {
+                mostrarModalMigracionCompletada(datosEstadisticas);
+            }
             
             // Limpiar URL sin recargar la página
             const newUrl = window.location.pathname;

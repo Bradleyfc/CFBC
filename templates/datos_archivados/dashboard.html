@@ -1178,8 +1178,20 @@ function verificarEstadoMigracion() {
                     notificacionMostrada = true;
                     mostrarNotificacionCompletada();
                     
-                    // Mostrar modal de migración completada con estadísticas
-                    mostrarModalMigracionCompletada(data);
+                    // Si el data actual no tiene estadísticas (puede pasar si el cache ya fue borrado),
+                    // hacer una segunda llamada para obtener la migración completada con sus datos reales
+                    if (!data.total_migrados && !data.tablas_inspeccionadas) {
+                        fetch('{% url "datos_archivados:estado_migracion" %}')
+                            .then(r => r.json())
+                            .then(datosCompletos => {
+                                mostrarModalMigracionCompletada(datosCompletos);
+                            })
+                            .catch(() => {
+                                mostrarModalMigracionCompletada(data);
+                            });
+                    } else {
+                        mostrarModalMigracionCompletada(data);
+                    }
                     
                     // Marcar esta migración como notificada
                     const migracionId = localStorage.getItem('migracion_en_progreso');

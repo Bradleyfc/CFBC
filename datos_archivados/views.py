@@ -650,13 +650,13 @@ def estado_migracion_ajax(request):
             except Exception as e:
                 logger.error(f"Error procesando migración en progreso: {e}")
         
-        # Verificar migración completada recientemente
+        # Verificar migración completada recientemente (ventana de 2 horas para cubrir migraciones largas)
         try:
-            hace_10_minutos = timezone.now() - timedelta(minutes=10)
+            hace_2_horas = timezone.now() - timedelta(hours=2)
             migracion_reciente = MigracionLog.objects.filter(
-                fecha_inicio__gte=hace_10_minutos,
+                fecha_fin__gte=hace_2_horas,
                 estado='completada'
-            ).first()
+            ).order_by('-fecha_fin').first()
             
             if migracion_reciente:
                 total_migrados = safe_int(migracion_reciente.usuarios_migrados)
@@ -672,6 +672,7 @@ def estado_migracion_ajax(request):
                     'tablas_con_datos': safe_int(safe_getattr(migracion_reciente, 'tablas_con_datos', 0)),
                     'tablas_vacias': safe_int(safe_getattr(migracion_reciente, 'tablas_vacias', 0)),
                     'host_origen': safe_str(safe_getattr(migracion_reciente, 'host_origen', '')) or 'N/A',
+                    'base_datos_origen': safe_str(safe_getattr(migracion_reciente, 'base_datos_origen', '')) or 'N/A',
                 }
                 return JsonResponse(data)
         except Exception as e:
