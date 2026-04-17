@@ -74,10 +74,22 @@ def log_document_upload(sender, instance, created, **kwargs):
 @receiver(post_delete, sender=CourseDocument)
 def log_document_deletion(sender, instance, **kwargs):
     """Registra la eliminación de documentos en el log de auditoría"""
-    AuditLog.log_action(
-        user=None,  # No sabemos quién lo eliminó en este punto
+    # Durante un cascade delete (ej. al eliminar el curso), la carpeta y el curso
+    # ya fueron eliminados o están pendientes en la misma transacción.
+    # Pasar folder=... o curso=... causaría una FK violation al hacer commit.
+    # Por eso se omiten esas referencias y solo se guarda el detalle en texto.
+    try:
+        folder_name = instance.folder.name
+        curso_name = instance.folder.curso.name
+        detail = f'Documento "{instance.name}" eliminado de la carpeta "{folder_name}" (curso: {curso_name})'
+    except Exception:
+        detail = f'Documento "{instance.name}" eliminado'
+
+    AuditLog.objects.create(
+        user=None,
         action='document_deleted',
-        curso=instance.folder.curso,
-        folder=instance.folder,
-        details=f'Documento "{instance.name}" eliminado de la carpeta "{instance.folder.name}"'
+        curso=None,
+        folder=None,
+        document=None,
+        details=detail
     )

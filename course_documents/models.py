@@ -172,7 +172,7 @@ class AuditLog(models.Model):
     
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='Usuario')
     action = models.CharField(max_length=50, choices=ACTION_CHOICES, verbose_name='Acción')
-    curso = models.ForeignKey('principal.Curso', on_delete=models.CASCADE, null=True, blank=True, verbose_name='Curso')
+    curso = models.ForeignKey('principal.Curso', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Curso')
     folder = models.ForeignKey(DocumentFolder, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Carpeta')
     document = models.ForeignKey(CourseDocument, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Documento')
     timestamp = models.DateTimeField(auto_now_add=True, verbose_name='Fecha y hora')
