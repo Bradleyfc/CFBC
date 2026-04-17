@@ -21,6 +21,7 @@ from django.contrib.auth.models import Group, User
 from django.db.models import Q, Max
 from datetime import date, datetime
 from django.http import HttpResponse, JsonResponse
+from django.core.paginator import Paginator
 from django.template.loader import get_template
 from xhtml2pdf import pisa
 from io import BytesIO
@@ -472,47 +473,68 @@ class CursoAcademicoDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         curso_academico = self.get_object()
-        
+
         # Obtener los filtros de la URL
         curso_id = self.request.GET.get('curso')
         estudiante_id = self.request.GET.get('estudiante')
-        
-        # Filtrar cursos
+
+        # Páginas activas por sección
+        page_m = self.request.GET.get('page_m', 1)
+        page_c = self.request.GET.get('page_c', 1)
+        page_a = self.request.GET.get('page_a', 1)
+        per_page = 10
+
+        # Filtrar cursos asociados
         cursos = Curso.objects.filter(matriculas__curso_academico=curso_academico).distinct()
         if curso_id:
             cursos = cursos.filter(id=curso_id)
         context['cursos'] = cursos
-        
-        # Filtrar matrículas
-        matriculas = Matriculas.objects.filter(curso_academico=curso_academico)
+
+        # Filtrar matrículas con paginación
+        matriculas_qs = Matriculas.objects.filter(curso_academico=curso_academico).select_related('student', 'course')
         if curso_id:
-            matriculas = matriculas.filter(course_id=curso_id)
+            matriculas_qs = matriculas_qs.filter(course_id=curso_id)
         if estudiante_id:
-            matriculas = matriculas.filter(student_id=estudiante_id)
-        context['matriculas'] = matriculas
-        
-        # Filtrar calificaciones
-        calificaciones = Calificaciones.objects.filter(curso_academico=curso_academico)
+            matriculas_qs = matriculas_qs.filter(student_id=estudiante_id)
+        paginator_m = Paginator(matriculas_qs, per_page)
+        context['matriculas'] = paginator_m.get_page(page_m)
+        context['matriculas_total'] = matriculas_qs.count()
+
+        # Filtrar calificaciones con paginación
+        calificaciones_qs = Calificaciones.objects.filter(curso_academico=curso_academico).select_related('student', 'course').prefetch_related('notas')
         if curso_id:
-            calificaciones = calificaciones.filter(course_id=curso_id)
+            calificaciones_qs = calificaciones_qs.filter(course_id=curso_id)
         if estudiante_id:
-            calificaciones = calificaciones.filter(student_id=estudiante_id)
-        context['calificaciones'] = calificaciones
-        
-        # Filtrar asistencias
-        asistencias = Asistencia.objects.filter(course__matriculas__curso_academico=curso_academico).distinct()
+            calificaciones_qs = calificaciones_qs.filter(student_id=estudiante_id)
+        paginator_c = Paginator(calificaciones_qs, per_page)
+        context['calificaciones'] = paginator_c.get_page(page_c)
+        context['calificaciones_total'] = calificaciones_qs.count()
+
+        # Filtrar asistencias con paginación
+        asistencias_qs = Asistencia.objects.filter(course__matriculas__curso_academico=curso_academico).distinct().select_related('student', 'course')
         if curso_id:
-            asistencias = asistencias.filter(course_id=curso_id)
+            asistencias_qs = asistencias_qs.filter(course_id=curso_id)
         if estudiante_id:
-            asistencias = asistencias.filter(student_id=estudiante_id)
-        context['asistencias'] = asistencias
-        
-        # Agregar listas para los selectores de filtro
+            asistencias_qs = asistencias_qs.filter(student_id=estudiante_id)
+        paginator_a = Paginator(asistencias_qs, per_page)
+        context['asistencias'] = paginator_a.get_page(page_a)
+        context['asistencias_total'] = asistencias_qs.count()
+
+        # Listas para los selectores de filtro
         context['cursos_disponibles'] = Curso.objects.filter(matriculas__curso_academico=curso_academico).distinct()
         context['estudiantes_disponibles'] = User.objects.filter(
             matriculas__curso_academico=curso_academico
         ).distinct()
-        
+
+        # Tab activa (para mantener la pestaña al paginar)
+        context['active_tab'] = self.request.GET.get('tab', 'cursos')
+
+        # Parámetros de filtro actuales para construir URLs de paginación
+        context['filter_params'] = {
+            'curso': curso_id or '',
+            'estudiante': estudiante_id or '',
+        }
+
         return context
         
     def render_to_response(self, context, **response_kwargs):

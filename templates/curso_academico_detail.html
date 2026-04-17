@@ -1,176 +1,521 @@
 {% extends 'base.html' %} {% load static %} {% load custom_filters %} {% block content %}
-<div class="container mt-4">
-    <h2 class="text-center">Detalles del Curso Académico: {{ curso_academico.nombre }}</h2>
-    <p><strong>Activo:</strong> {{ curso_academico.activo|yesno:"Sí,No" }}</p>
-    <p><strong>Archivado:</strong> {{ curso_academico.archivado|yesno:"Sí,No" }}</p>
-    <p><strong>Fecha de Creación:</strong> {{ curso_academico.fecha_creacion }}</p>
 
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">Filtros</h5>
-        </div>
-        <div class="card-body">
-            <form method="GET" class="row g-3">
-                <div class="col-md-6">
-                    <label for="curso" class="form-label">Curso:</label>
-                    <select name="curso" id="curso" class="form-select">
-                        <option value="">Todos</option>
-                        {% for c in cursos_disponibles %}
-                            <option value="{{ c.id }}" {% if request.GET.curso == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <label for="estudiante" class="form-label">Estudiante:</label>
-                    <select name="estudiante" id="estudiante" class="form-select">
-                        <option value="">Todos</option>
-                        {% for e in estudiantes_disponibles %}
-                            <option value="{{ e.id }}" {% if request.GET.estudiante == e.id|stringformat:"s" %}selected{% endif %}>{{ e.first_name }} {{ e.last_name }} ({{ e.username }})</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-12 text-end">
-                    <button type="submit" class="btn btn-primary"><span class="fas material-icons">filter_list</span></i> Filtrar</button>
-                    <a href="{{ request.path }}" class="btn btn-secondary"><span class="fas material-icons">help</span></i> Limpiar Filtros</a>
-                    <a href="{{ request.path }}?{% if request.GET.curso %}curso={{ request.GET.curso }}&{% endif %}{% if request.GET.estudiante %}estudiante={{ request.GET.estudiante }}&{% endif %}pdf=1" class="btn btn-danger"><span class="fas material-icons">description</span></i> Exportar a PDF</a>
-                    <a href="{{ request.path }}?{% if request.GET.curso %}curso={{ request.GET.curso }}&{% endif %}{% if request.GET.estudiante %}estudiante={{ request.GET.estudiante }}&{% endif %}excel=1" class="btn btn-success"><span class="fas material-icons">table_chart</span></i> Exportar a Excel</a>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <h3>Cursos Asociados</h3>
-    {% if cursos %}
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Nombre del Curso</th>
-                <th>Profesor</th>
-                <th>Estado</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for curso in cursos %}
-            <tr>
-                <td>{{ curso.name }}</td>
-                <td>{{ curso.teacher.get_full_name|default:curso.teacher.username }}</td>
-                <td>{{ curso.get_dynamic_status_display }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p>No hay cursos asociados a este curso académico.</p>
-    {% endif %}
-
-    <h3>Matrículas</h3>
-    {% if matriculas %}
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Estudiante</th>
-                <th>Curso</th>
-                <th>Estado Matrícula</th>
-                <th>Fecha Matrícula</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for matricula in matriculas %}
-            <tr>
-                <td>{{ matricula.student.get_full_name|default:matricula.student.username }}</td>
-                <td>{{ matricula.course.name }}</td>
-                <td>{{ matricula.get_estado_display }}</td>
-                <td>{{ matricula.fecha_matricula }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p>No hay matrículas para este curso académico.</p>
-    {% endif %}
-
-    <h3>Calificaciones</h3>
-    {% if calificaciones %}
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Estudiante</th>
-                <th>Curso</th>
-                {% comment %} Determinar el número máximo de notas para crear encabezados dinámicos {% endcomment %}
-                {% with max_notas=0 %}
-                    {% for calificacion in calificaciones %}
-                        {% with num_notas=calificacion.notas.count %}
-                            {% if num_notas > max_notas %}
-                                {% with max_notas=num_notas %}
-                                    {% for i in max_notas|get_range:1 %}
-                                        <th>Nota {{ forloop.counter }}</th>
-                                    {% endfor %}
-                                {% endwith %}
-                            {% endif %}
-                        {% endwith %}
-                    {% endfor %}
-                {% endwith %}
-                <th>Promedio</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for calificacion in calificaciones %}
-            <tr>
-                <td>{{ calificacion.student.get_full_name|default:calificacion.student.username }}</td>
-                <td>{{ calificacion.course.name }}</td>
-                {% comment %} Mostrar notas individuales {% endcomment %}
-                {% with notas=calificacion.notas.all|dictsort:"fecha_creacion" %}
-                    {% for nota in notas %}
-                        <td>{{ nota.valor }}</td>
-                    {% endfor %}
-                    {% comment %} Rellenar con N/A las notas que no existen {% endcomment %}
-                    {% with max_notas=calificaciones|map_max_notas %}
-                        {% with notas_length=notas|length %}
-                                    {% with notas_faltantes=max_notas|subtract:notas_length %}
-                                        {% for i in notas_faltantes|get_range:1 %}
-                                            <td>N/A</td>
-                                        {% endfor %}
-                                    {% endwith %}
-                                {% endwith %}
-                    {% endwith %}
-                {% endwith %}
-                <td>{{ calificacion.average|default:"N/A" }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p>No hay calificaciones para este curso académico.</p>
-    {% endif %}
-
-    <h3>Asistencias</h3>
-    {% if asistencias %}
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Estudiante</th>
-                <th>Curso</th>
-                <th>Fecha</th>
-                <th>Presente</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for asistencia in asistencias %}
-            <tr>
-                <td>{{ asistencia.student.get_full_name|default:asistencia.student.username }}</td>
-                <td>{{ asistencia.course.name }}</td>
-                <td>{{ asistencia.date }}</td>
-                <td>{{ asistencia.presente|yesno:"Sí,No" }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p>No hay registros de asistencia para este curso académico.</p>
-    {% endif %}
-
-    <div class="mt-3">
-        <a href="{% url 'admin:principal_cursoacademico_changelist' %}" class="btn btn-secondary">Volver a la lista de Cursos Académicos</a>
-    </div>
+<!-- Fondo animado -->
+<div class="ca-page-bg">
+  <div class="ca-blob ca-blob-1"></div>
+  <div class="ca-blob ca-blob-2"></div>
+  <div class="ca-blob ca-blob-3"></div>
 </div>
+
+<div class="container-fluid px-4 py-4" style="position:relative;z-index:1;">
+
+  <!-- HEADER -->
+  <div class="ca-glass-card ca-header-card mb-4">
+    <div class="ca-header-inner">
+      <div class="ca-header-icon-wrap">
+        <span class="material-icons ca-header-icon">school</span>
+      </div>
+      <div class="ca-header-text">
+        <h1 class="ca-title">{{ curso_academico.nombre }}</h1>
+        <p class="ca-subtitle">Detalles del Curso Académico</p>
+      </div>
+      <div class="ca-header-badges">
+        {% if curso_academico.activo %}
+          <span class="ca-badge ca-badge-success"><span class="material-icons ca-badge-icon">check_circle</span> Activo</span>
+        {% else %}
+          <span class="ca-badge ca-badge-secondary"><span class="material-icons ca-badge-icon">cancel</span> Inactivo</span>
+        {% endif %}
+        {% if curso_academico.archivado %}
+          <span class="ca-badge ca-badge-warning"><span class="material-icons ca-badge-icon">archive</span> Archivado</span>
+        {% endif %}
+        <span class="ca-badge ca-badge-info"><span class="material-icons ca-badge-icon">calendar_today</span> {{ curso_academico.fecha_creacion }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="ca-glass-card mb-4">
+    <div class="ca-card-header">
+      <span class="material-icons ca-section-icon">filter_list</span>
+      <h3 class="ca-section-title">Filtros</h3>
+    </div>
+    <div class="ca-card-body">
+      <form method="GET" class="ca-filter-form">
+        <input type="hidden" name="tab" value="{{ active_tab }}">
+        <div class="ca-filter-row">
+          <div class="ca-filter-group">
+            <label class="ca-label"><span class="material-icons ca-label-icon">menu_book</span> Curso</label>
+            <select name="curso" id="curso" class="ca-select">
+              <option value="">Todos los cursos</option>
+              {% for c in cursos_disponibles %}
+                <option value="{{ c.id }}" {% if request.GET.curso == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="ca-filter-group">
+            <label class="ca-label"><span class="material-icons ca-label-icon">person</span> Estudiante</label>
+            <select name="estudiante" id="estudiante" class="ca-select">
+              <option value="">Todos los estudiantes</option>
+              {% for e in estudiantes_disponibles %}
+                <option value="{{ e.id }}" {% if request.GET.estudiante == e.id|stringformat:"s" %}selected{% endif %}>{{ e.first_name }} {{ e.last_name }} ({{ e.username }})</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="ca-filter-actions">
+          <button type="submit" class="ca-btn ca-btn-primary"><span class="material-icons">search</span> Filtrar</button>
+          <a href="{{ request.path }}?tab={{ active_tab }}" class="ca-btn ca-btn-secondary"><span class="material-icons">clear</span> Limpiar</a>
+          <a href="{{ request.path }}?{% if request.GET.curso %}curso={{ request.GET.curso }}&{% endif %}{% if request.GET.estudiante %}estudiante={{ request.GET.estudiante }}&{% endif %}pdf=1" class="ca-btn ca-btn-danger"><span class="material-icons">picture_as_pdf</span> PDF</a>
+          <a href="{{ request.path }}?{% if request.GET.curso %}curso={{ request.GET.curso }}&{% endif %}{% if request.GET.estudiante %}estudiante={{ request.GET.estudiante }}&{% endif %}excel=1" class="ca-btn ca-btn-success"><span class="material-icons">table_chart</span> Excel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TABS NAV -->
+  <div class="ca-tabs-nav mb-0">
+    <a href="?tab=cursos{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}" class="ca-tab {% if active_tab == 'cursos' %}ca-tab-active{% endif %}">
+      <span class="material-icons ca-tab-icon">menu_book</span>
+      <span>Cursos</span>
+      <span class="ca-tab-count">{{ cursos|length }}</span>
+    </a>
+    <a href="?tab=matriculas{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}" class="ca-tab {% if active_tab == 'matriculas' %}ca-tab-active{% endif %}">
+      <span class="material-icons ca-tab-icon">how_to_reg</span>
+      <span>Matrículas</span>
+      <span class="ca-tab-count">{{ matriculas_total }}</span>
+    </a>
+    <a href="?tab=calificaciones{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}" class="ca-tab {% if active_tab == 'calificaciones' %}ca-tab-active{% endif %}">
+      <span class="material-icons ca-tab-icon">grade</span>
+      <span>Calificaciones</span>
+      <span class="ca-tab-count">{{ calificaciones_total }}</span>
+    </a>
+    <a href="?tab=asistencias{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}" class="ca-tab {% if active_tab == 'asistencias' %}ca-tab-active{% endif %}">
+      <span class="material-icons ca-tab-icon">event</span>
+      <span>Asistencias</span>
+      <span class="ca-tab-count">{{ asistencias_total }}</span>
+    </a>
+  </div>
+
+  <!-- TAB: CURSOS -->
+  {% if active_tab == 'cursos' %}
+  <div class="ca-glass-card ca-tab-panel">
+    <div class="ca-card-header ca-header-blue">
+      <span class="material-icons ca-section-icon">menu_book</span>
+      <h3 class="ca-section-title">Cursos Asociados</h3>
+      <span class="ca-count-badge">{{ cursos|length }}</span>
+    </div>
+    <div class="ca-card-body ca-table-wrap">
+      {% if cursos %}
+      <table class="ca-table">
+        <thead>
+          <tr>
+            <th><span class="material-icons ca-th-icon">title</span> Nombre del Curso</th>
+            <th><span class="material-icons ca-th-icon">person</span> Profesor</th>
+            <th><span class="material-icons ca-th-icon">info</span> Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for curso in cursos %}
+          <tr>
+            <td>{{ curso.name }}</td>
+            <td>{{ curso.teacher.get_full_name|default:curso.teacher.username }}</td>
+            <td><span class="ca-status-badge">{{ curso.get_dynamic_status_display }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="ca-empty-state">
+        <span class="material-icons ca-empty-icon">menu_book</span>
+        <p>No hay cursos asociados a este curso académico.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- TAB: MATRICULAS -->
+  {% if active_tab == 'matriculas' %}
+  <div class="ca-glass-card ca-tab-panel">
+    <div class="ca-card-header ca-header-green">
+      <span class="material-icons ca-section-icon">how_to_reg</span>
+      <h3 class="ca-section-title">Matrículas</h3>
+      <span class="ca-count-badge">{{ matriculas_total }}</span>
+    </div>
+    <div class="ca-card-body ca-table-wrap">
+      {% if matriculas %}
+      <table class="ca-table">
+        <thead>
+          <tr>
+            <th><span class="material-icons ca-th-icon">person</span> Estudiante</th>
+            <th><span class="material-icons ca-th-icon">menu_book</span> Curso</th>
+            <th><span class="material-icons ca-th-icon">info</span> Estado</th>
+            <th><span class="material-icons ca-th-icon">calendar_today</span> Fecha</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for matricula in matriculas %}
+          <tr>
+            <td>{{ matricula.student.get_full_name|default:matricula.student.username }}</td>
+            <td>{{ matricula.course.name }}</td>
+            <td><span class="ca-status-badge">{{ matricula.get_estado_display }}</span></td>
+            <td>{{ matricula.fecha_matricula }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% if matriculas.has_other_pages %}
+      <div class="ca-pagination">
+        {% if matriculas.has_previous %}
+          <a href="?tab=matriculas&page_m={{ matriculas.previous_page_number }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_left</span></a>
+        {% else %}
+          <span class="ca-page-btn ca-page-disabled"><span class="material-icons">chevron_left</span></span>
+        {% endif %}
+        {% for num in matriculas.paginator.page_range %}
+          {% if matriculas.number == num %}
+            <span class="ca-page-btn ca-page-active">{{ num }}</span>
+          {% elif num > matriculas.number|add:"-3" and num < matriculas.number|add:"3" %}
+            <a href="?tab=matriculas&page_m={{ num }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}" class="ca-page-btn">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+        {% if matriculas.has_next %}
+          <a href="?tab=matriculas&page_m={{ matriculas.next_page_number }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_right</span></a>
+        {% else %}
+          <span class="ca-page-btn ca-page-disabled"><span class="material-icons">chevron_right</span></span>
+        {% endif %}
+        <span class="ca-page-info">Página {{ matriculas.number }} de {{ matriculas.paginator.num_pages }} &mdash; {{ matriculas_total }} registros</span>
+      </div>
+      {% endif %}
+      {% else %}
+      <div class="ca-empty-state">
+        <span class="material-icons ca-empty-icon">how_to_reg</span>
+        <p>No hay matrículas para este curso académico.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- TAB: CALIFICACIONES -->
+  {% if active_tab == 'calificaciones' %}
+  <div class="ca-glass-card ca-tab-panel">
+    <div class="ca-card-header ca-header-purple">
+      <span class="material-icons ca-section-icon">grade</span>
+      <h3 class="ca-section-title">Calificaciones</h3>
+      <span class="ca-count-badge">{{ calificaciones_total }}</span>
+    </div>
+    <div class="ca-card-body ca-table-wrap">
+      {% if calificaciones %}
+      <table class="ca-table">
+        <thead>
+          <tr>
+            <th><span class="material-icons ca-th-icon">person</span> Estudiante</th>
+            <th><span class="material-icons ca-th-icon">menu_book</span> Curso</th>
+            {% with max_notas=0 %}
+              {% for cal in calificaciones %}
+                {% with num_notas=cal.notas.count %}
+                  {% if num_notas > max_notas %}
+                    {% with max_notas=num_notas %}
+                      {% for i in max_notas|get_range:1 %}<th>Nota {{ forloop.counter }}</th>{% endfor %}
+                    {% endwith %}
+                  {% endif %}
+                {% endwith %}
+              {% endfor %}
+            {% endwith %}
+            <th><span class="material-icons ca-th-icon">calculate</span> Promedio</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for calificacion in calificaciones %}
+          <tr>
+            <td>{{ calificacion.student.get_full_name|default:calificacion.student.username }}</td>
+            <td>{{ calificacion.course.name }}</td>
+            {% with notas=calificacion.notas.all|dictsort:"fecha_creacion" %}
+              {% for nota in notas %}<td>{{ nota.valor }}</td>{% endfor %}
+              {% with max_notas=calificaciones|map_max_notas %}
+                {% with notas_length=notas|length %}
+                  {% with notas_faltantes=max_notas|subtract:notas_length %}
+                    {% for i in notas_faltantes|get_range:1 %}<td class="ca-na">N/A</td>{% endfor %}
+                  {% endwith %}
+                {% endwith %}
+              {% endwith %}
+            {% endwith %}
+            <td><strong>{{ calificacion.average|default:"N/A" }}</strong></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% if calificaciones.has_other_pages %}
+      <div class="ca-pagination">
+        {% if calificaciones.has_previous %}
+          <a href="?tab=calificaciones&page_c={{ calificaciones.previous_page_number }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_left</span></a>
+        {% else %}
+          <span class="ca-page-btn ca-page-disabled"><span class="material-icons">chevron_left</span></span>
+        {% endif %}
+        {% for num in calificaciones.paginator.page_range %}
+          {% if calificaciones.number == num %}
+            <span class="ca-page-btn ca-page-active">{{ num }}</span>
+          {% elif num > calificaciones.number|add:"-3" and num < calificaciones.number|add:"3" %}
+            <a href="?tab=calificaciones&page_c={{ num }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}" class="ca-page-btn">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+        {% if calificaciones.has_next %}
+          <a href="?tab=calificaciones&page_c={{ calificaciones.next_page_number }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_right</span></a>
+        {% else %}
+          <span class="ca-page-btn ca-page-disabled"><span class="material-icons">chevron_right</span></span>
+        {% endif %}
+        <span class="ca-page-info">Página {{ calificaciones.number }} de {{ calificaciones.paginator.num_pages }} &mdash; {{ calificaciones_total }} registros</span>
+      </div>
+      {% endif %}
+      {% else %}
+      <div class="ca-empty-state">
+        <span class="material-icons ca-empty-icon">grade</span>
+        <p>No hay calificaciones para este curso académico.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- TAB: ASISTENCIAS -->
+  {% if active_tab == 'asistencias' %}
+  <div class="ca-glass-card ca-tab-panel">
+    <div class="ca-card-header ca-header-orange">
+      <span class="material-icons ca-section-icon">event</span>
+      <h3 class="ca-section-title">Asistencias</h3>
+      <span class="ca-count-badge">{{ asistencias_total }}</span>
+    </div>
+    <div class="ca-card-body ca-table-wrap">
+      {% if asistencias %}
+      <table class="ca-table">
+        <thead>
+          <tr>
+            <th><span class="material-icons ca-th-icon">person</span> Estudiante</th>
+            <th><span class="material-icons ca-th-icon">menu_book</span> Curso</th>
+            <th><span class="material-icons ca-th-icon">calendar_today</span> Fecha</th>
+            <th><span class="material-icons ca-th-icon">check_circle</span> Presente</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for asistencia in asistencias %}
+          <tr>
+            <td>{{ asistencia.student.get_full_name|default:asistencia.student.username }}</td>
+            <td>{{ asistencia.course.name }}</td>
+            <td>{{ asistencia.date }}</td>
+            <td>
+              {% if asistencia.presente %}
+                <span class="ca-badge ca-badge-success"><span class="material-icons ca-badge-icon">check</span> Sí</span>
+              {% else %}
+                <span class="ca-badge ca-badge-danger"><span class="material-icons ca-badge-icon">close</span> No</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% if asistencias.has_other_pages %}
+      <div class="ca-pagination">
+        {% if asistencias.has_previous %}
+          <a href="?tab=asistencias&page_a={{ asistencias.previous_page_number }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_left</span></a>
+        {% else %}
+          <span class="ca-page-btn ca-page-disabled"><span class="material-icons">chevron_left</span></span>
+        {% endif %}
+        {% for num in asistencias.paginator.page_range %}
+          {% if asistencias.number == num %}
+            <span class="ca-page-btn ca-page-active">{{ num }}</span>
+          {% elif num > asistencias.number|add:"-3" and num < asistencias.number|add:"3" %}
+            <a href="?tab=asistencias&page_a={{ num }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}" class="ca-page-btn">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+        {% if asistencias.has_next %}
+          <a href="?tab=asistencias&page_a={{ asistencias.next_page_number }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_right</span></a>
+        {% else %}
+          <span class="ca-page-btn ca-page-disabled"><span class="material-icons">chevron_right</span></span>
+        {% endif %}
+        <span class="ca-page-info">Página {{ asistencias.number }} de {{ asistencias.paginator.num_pages }} &mdash; {{ asistencias_total }} registros</span>
+      </div>
+      {% endif %}
+      {% else %}
+      <div class="ca-empty-state">
+        <span class="material-icons ca-empty-icon">event_busy</span>
+        <p>No hay registros de asistencia para este curso académico.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- VOLVER -->
+  <div class="ca-footer-actions mt-4 mb-4">
+    <a href="{% url 'admin:principal_cursoacademico_changelist' %}" class="ca-btn ca-btn-secondary ca-btn-lg">
+      <span class="material-icons">arrow_back</span> Volver a la lista
+    </a>
+  </div>
+
+</div>
+
+<style>
+/* ---- Fondo animado ---- */
+.ca-page-bg {
+  position: fixed; inset: 0; z-index: 0;
+  background: linear-gradient(135deg, #e0e7ff 0%, #f0f9ff 50%, #ede9fe 100%);
+  overflow: hidden; pointer-events: none;
+}
+.ca-blob {
+  position: absolute; border-radius: 50%;
+  filter: blur(80px); opacity: 0.45;
+  animation: ca-float 12s ease-in-out infinite alternate;
+}
+.ca-blob-1 { width:520px; height:520px; background:radial-gradient(circle,rgba(99,102,241,0.5),rgba(59,130,246,0.2)); top:-120px; left:-100px; animation-duration:14s; }
+.ca-blob-2 { width:400px; height:400px; background:radial-gradient(circle,rgba(16,185,129,0.4),rgba(59,130,246,0.15)); bottom:80px; right:-80px; animation-duration:10s; }
+.ca-blob-3 { width:300px; height:300px; background:radial-gradient(circle,rgba(245,158,11,0.35),rgba(239,68,68,0.15)); top:45%; left:45%; animation-duration:16s; }
+@keyframes ca-float { 0%{transform:translate(0,0) scale(1);} 100%{transform:translate(40px,30px) scale(1.08);} }
+
+/* ---- Glass Card ---- */
+.ca-glass-card {
+  position: relative;
+  background: linear-gradient(135deg, rgba(255,255,255,0.88), rgba(255,255,255,0.65));
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  border-radius: 20px; border: 1px solid rgba(255,255,255,0.35);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.5);
+  overflow: hidden; transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+.ca-glass-card:hover { box-shadow: 0 16px 48px rgba(0,0,0,0.13), 0 4px 16px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.5); transform: translateY(-2px); }
+
+/* ---- Header card ---- */
+.ca-header-card { background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(59,130,246,0.12), rgba(255,255,255,0.75)); }
+.ca-header-inner { display:flex; align-items:center; gap:1.25rem; padding:1.75rem 2rem; flex-wrap:wrap; }
+.ca-header-icon-wrap {
+  width:64px; height:64px; border-radius:18px; flex-shrink:0;
+  background: linear-gradient(135deg, rgba(99,102,241,0.3), rgba(59,130,246,0.2));
+  backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.4);
+  display:flex; align-items:center; justify-content:center;
+  box-shadow: 0 4px 16px rgba(99,102,241,0.2), inset 0 1px 0 rgba(255,255,255,0.4);
+}
+.ca-header-icon { font-size:2rem; color:#4f46e5; }
+.ca-header-text { flex:1; min-width:180px; }
+.ca-title { font-size:1.75rem; font-weight:700; color:#1e1b4b; margin:0 0 0.2rem; line-height:1.2; }
+.ca-subtitle { font-size:0.9rem; color:#6366f1; margin:0; font-weight:500; }
+.ca-header-badges { display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center; }
+
+/* ---- Badges ---- */
+.ca-badge { display:inline-flex; align-items:center; gap:0.25rem; padding:0.3rem 0.75rem; border-radius:20px; font-size:0.78rem; font-weight:600; backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.3); letter-spacing:0.3px; }
+.ca-badge-icon { font-size:0.9rem; }
+.ca-badge-success  { background:linear-gradient(135deg,rgba(34,197,94,0.25),rgba(22,163,74,0.15)); color:#14532d; border-color:rgba(34,197,94,0.3); }
+.ca-badge-secondary{ background:linear-gradient(135deg,rgba(156,163,175,0.3),rgba(107,114,128,0.2)); color:#374151; }
+.ca-badge-warning  { background:linear-gradient(135deg,rgba(245,158,11,0.25),rgba(217,119,6,0.15)); color:#78350f; border-color:rgba(245,158,11,0.3); }
+.ca-badge-info     { background:linear-gradient(135deg,rgba(59,130,246,0.2),rgba(37,99,235,0.12)); color:#1e40af; border-color:rgba(59,130,246,0.3); }
+.ca-badge-danger   { background:linear-gradient(135deg,rgba(239,68,68,0.25),rgba(220,38,38,0.15)); color:#7f1d1d; border-color:rgba(239,68,68,0.3); }
+
+/* ---- Card headers ---- */
+.ca-card-header { display:flex; align-items:center; gap:0.75rem; padding:1.1rem 1.5rem; background:linear-gradient(135deg,rgba(59,130,246,0.15),rgba(37,99,235,0.08)); border-bottom:1px solid rgba(255,255,255,0.25); }
+.ca-header-blue   { background:linear-gradient(135deg,rgba(59,130,246,0.18),rgba(37,99,235,0.10)); }
+.ca-header-green  { background:linear-gradient(135deg,rgba(34,197,94,0.18),rgba(22,163,74,0.10)); }
+.ca-header-purple { background:linear-gradient(135deg,rgba(139,92,246,0.18),rgba(109,40,217,0.10)); }
+.ca-header-orange { background:linear-gradient(135deg,rgba(245,158,11,0.18),rgba(217,119,6,0.10)); }
+.ca-section-icon  { font-size:1.3rem; color:#4f46e5; }
+.ca-header-blue   .ca-section-icon { color:#2563eb; }
+.ca-header-green  .ca-section-icon { color:#16a34a; }
+.ca-header-purple .ca-section-icon { color:#7c3aed; }
+.ca-header-orange .ca-section-icon { color:#d97706; }
+.ca-section-title { font-size:1.05rem; font-weight:700; color:#1e293b; margin:0; flex:1; }
+.ca-count-badge { background:linear-gradient(135deg,rgba(255,255,255,0.5),rgba(255,255,255,0.3)); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.4); border-radius:12px; padding:0.15rem 0.65rem; font-size:0.8rem; font-weight:700; color:#374151; }
+.ca-card-body { padding:1.5rem; }
+
+/* ---- Filtros ---- */
+.ca-filter-form { display:flex; flex-direction:column; gap:1rem; }
+.ca-filter-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+@media(max-width:640px){ .ca-filter-row { grid-template-columns:1fr; } }
+.ca-filter-group { display:flex; flex-direction:column; gap:0.4rem; }
+.ca-label { display:flex; align-items:center; gap:0.3rem; font-size:0.85rem; font-weight:600; color:#374151; }
+.ca-label-icon { font-size:1rem; color:#6366f1; }
+.ca-select { width:100%; padding:0.55rem 0.9rem; border-radius:10px; background:linear-gradient(135deg,rgba(255,255,255,0.5),rgba(255,255,255,0.3)); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.35); color:#374151; font-size:0.875rem; transition:all 0.3s ease; box-shadow:inset 0 1px 3px rgba(0,0,0,0.05); }
+.ca-select:focus { outline:none; border-color:rgba(99,102,241,0.5); box-shadow:0 0 0 3px rgba(99,102,241,0.12); }
+.ca-filter-actions { display:flex; gap:0.6rem; flex-wrap:wrap; }
+
+/* ---- Botones ---- */
+.ca-btn { display:inline-flex; align-items:center; gap:0.35rem; padding:0.55rem 1.1rem; border-radius:10px; font-size:0.875rem; font-weight:600; text-decoration:none; cursor:pointer; border:1px solid rgba(255,255,255,0.25); backdrop-filter:blur(10px); transition:all 0.3s cubic-bezier(0.4,0,0.2,1); box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+.ca-btn:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,0.13); text-decoration:none; }
+.ca-btn .material-icons { font-size:1.1rem; }
+.ca-btn-primary  { background:linear-gradient(135deg,rgba(99,102,241,0.35),rgba(59,130,246,0.25)); color:#1e40af; }
+.ca-btn-secondary{ background:linear-gradient(135deg,rgba(156,163,175,0.3),rgba(107,114,128,0.2)); color:#374151; }
+.ca-btn-danger   { background:linear-gradient(135deg,rgba(239,68,68,0.3),rgba(220,38,38,0.2)); color:#7f1d1d; }
+.ca-btn-success  { background:linear-gradient(135deg,rgba(34,197,94,0.3),rgba(22,163,74,0.2)); color:#14532d; }
+.ca-btn-lg { padding:0.7rem 1.5rem; font-size:0.95rem; border-radius:12px; }
+
+/* ---- TABS ---- */
+.ca-tabs-nav {
+  display:flex; gap:0; flex-wrap:wrap;
+  background:linear-gradient(135deg,rgba(255,255,255,0.7),rgba(255,255,255,0.5));
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  border-radius:16px 16px 0 0; border:1px solid rgba(255,255,255,0.35);
+  border-bottom:none; overflow:hidden;
+  box-shadow:0 4px 16px rgba(0,0,0,0.08);
+}
+.ca-tab {
+  display:flex; align-items:center; gap:0.5rem;
+  padding:0.9rem 1.4rem; font-size:0.875rem; font-weight:600;
+  color:#64748b; text-decoration:none;
+  border-right:1px solid rgba(255,255,255,0.3);
+  transition:all 0.25s ease; position:relative;
+}
+.ca-tab:hover { background:rgba(255,255,255,0.4); color:#374151; text-decoration:none; }
+.ca-tab-active {
+  background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(59,130,246,0.12));
+  color:#4f46e5;
+}
+.ca-tab-active::after {
+  content:''; position:absolute; bottom:0; left:0; right:0;
+  height:3px; background:linear-gradient(90deg,#6366f1,#3b82f6);
+  border-radius:3px 3px 0 0;
+}
+.ca-tab-icon { font-size:1.1rem; }
+.ca-tab-count { background:rgba(99,102,241,0.15); color:#4f46e5; border-radius:10px; padding:0.1rem 0.5rem; font-size:0.75rem; font-weight:700; }
+.ca-tab-active .ca-tab-count { background:rgba(99,102,241,0.25); }
+
+/* Panel conectado a tabs */
+.ca-tab-panel { border-radius:0 16px 16px 16px; }
+
+/* ---- Tabla ---- */
+.ca-table-wrap { overflow-x:auto; }
+.ca-table { width:100%; border-collapse:separate; border-spacing:0; }
+.ca-table thead tr { background:linear-gradient(135deg,rgba(255,255,255,0.4),rgba(255,255,255,0.2)); backdrop-filter:blur(10px); }
+.ca-table th { padding:0.85rem 1rem; text-align:left; font-weight:700; font-size:0.82rem; color:#1e293b; border-bottom:2px solid rgba(99,102,241,0.2); white-space:nowrap; vertical-align:middle; }
+.ca-th-icon { font-size:0.95rem; vertical-align:middle; margin-right:0.2rem; color:#6366f1; }
+.ca-table tbody tr { background:linear-gradient(135deg,rgba(255,255,255,0.3),rgba(255,255,255,0.1)); backdrop-filter:blur(6px); border-bottom:1px solid rgba(255,255,255,0.2); transition:all 0.25s ease; }
+.ca-table tbody tr:hover { background:linear-gradient(135deg,rgba(255,255,255,0.5),rgba(255,255,255,0.3)); transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,0.07); }
+.ca-table td { padding:0.8rem 1rem; color:#374151; font-size:0.875rem; border-bottom:1px solid rgba(0,0,0,0.04); vertical-align:middle; }
+.ca-na { color:#9ca3af; font-style:italic; }
+.ca-status-badge { display:inline-block; padding:0.2rem 0.6rem; border-radius:8px; font-size:0.78rem; font-weight:600; background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(59,130,246,0.1)); color:#3730a3; border:1px solid rgba(99,102,241,0.2); }
+
+/* ---- Paginación ---- */
+.ca-pagination {
+  display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;
+  padding:1rem 0 0.25rem; margin-top:0.75rem;
+  border-top:1px solid rgba(99,102,241,0.1);
+}
+.ca-page-btn {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:36px; height:36px; padding:0 0.5rem;
+  border-radius:8px; font-size:0.875rem; font-weight:600;
+  text-decoration:none; color:#374151;
+  background:linear-gradient(135deg,rgba(255,255,255,0.5),rgba(255,255,255,0.3));
+  backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.35);
+  transition:all 0.25s ease; box-shadow:0 2px 6px rgba(0,0,0,0.06);
+}
+.ca-page-btn:hover { background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(59,130,246,0.12)); color:#4f46e5; transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,0.1); text-decoration:none; }
+.ca-page-btn .material-icons { font-size:1.1rem; }
+.ca-page-active { background:linear-gradient(135deg,rgba(99,102,241,0.35),rgba(59,130,246,0.25)) !important; color:#4f46e5 !important; border-color:rgba(99,102,241,0.4) !important; box-shadow:0 4px 12px rgba(99,102,241,0.2) !important; }
+.ca-page-disabled { opacity:0.35; cursor:not-allowed; pointer-events:none; }
+.ca-page-info { margin-left:auto; font-size:0.8rem; color:#64748b; font-weight:500; }
+
+/* ---- Empty state ---- */
+.ca-empty-state { display:flex; flex-direction:column; align-items:center; gap:0.75rem; padding:2.5rem 1rem; color:#9ca3af; }
+.ca-empty-icon { font-size:2.5rem; opacity:0.4; }
+.ca-empty-state p { margin:0; font-size:0.9rem; }
+
+/* ---- Footer ---- */
+.ca-footer-actions { display:flex; gap:0.75rem; flex-wrap:wrap; }
+</style>
+
 {% endblock %}
