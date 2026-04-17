@@ -6,10 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Noticias - CFBC{% endblock %}</title>
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Material Icons -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Tailwind CSS: local primero, CDN de respaldo -->
+    <link id="tailwind-local" href="{% static 'css/tailwind.css' %}" rel="stylesheet"
+          onerror="this.onerror=null; var s=document.createElement('script'); s.src='https://cdn.tailwindcss.com'; document.head.appendChild(s);">
+
+    <!-- Material Icons: local primero, Google Fonts de respaldo -->
+    <link id="icons-local" href="{% static 'css/icons.css' %}" rel="stylesheet"
+          onerror="this.onerror=null; var l=document.createElement('link'); l.rel='stylesheet'; l.href='https://fonts.googleapis.com/icon?family=Material+Icons'; document.head.appendChild(l);">
     
     <style>
         /* Glassmorphism Header Container */
