@@ -10,9 +10,9 @@
     <link id="tailwind-local" href="{% static 'css/tailwind.css' %}" rel="stylesheet"
           onerror="this.onerror=null; var s=document.createElement('script'); s.src='https://cdn.tailwindcss.com'; document.head.appendChild(s);">
 
-    <!-- Material Icons: local primero, Google Fonts de respaldo -->
-    <link id="icons-local" href="{% static 'css/icons.css' %}" rel="stylesheet"
-          onerror="this.onerror=null; var l=document.createElement('link'); l.rel='stylesheet'; l.href='https://fonts.googleapis.com/icon?family=Material+Icons'; document.head.appendChild(l);">
+    <!-- Material Icons: fuente desde Google Fonts (siempre), clases de utilidad locales -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="{% static 'css/icons.css' %}" rel="stylesheet">
     
     <style>
         /* Glassmorphism Header Container */
