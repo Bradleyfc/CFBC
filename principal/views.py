@@ -1077,6 +1077,7 @@ class ProfileView(DocumentsProfileMixin, BaseContextMixin, TemplateView):
             else:
                 all_courses = Curso.objects.none()
             context['all_courses'] = all_courses
+            context['curso_academico_activo'] = curso_academico_activo
         
         return context
 
