@@ -1499,83 +1499,51 @@ class StudentListNotasView(BaseContextMixin, ListView):
             course = get_object_or_404(Curso, id=course_id)
             context['course'] = course
 
-            # Obtener el curso académico activo
+            # Obtener el curso académico activo (solo para contexto)
             curso_academico_activo = CursoAcademico.objects.filter(activo=True).first()
             context['curso_academico'] = curso_academico_activo
 
-            # Obtener solo las matrículas activas para este curso y curso académico activo
+            # Obtener matrículas activas para este curso y curso académico activo
+            search_query = self.request.GET.get('search_query', '').strip()
             active_enrollments = Matriculas.objects.filter(
                 course=course,
                 activo=True,
-                curso_academico=curso_academico_activo
-            )
+                curso_academico=curso_academico_activo,
+            ).select_related('student')
+
+            if search_query:
+                active_enrollments = active_enrollments.filter(
+                    Q(student__first_name__icontains=search_query) |
+                    Q(student__last_name__icontains=search_query) |
+                    Q(student__username__icontains=search_query)
+                )
 
             student_data = []
             for enrollment in active_enrollments:
                 student = enrollment.student
-                # Buscar calificación por curso, estudiante y curso académico
                 calificacion = Calificaciones.objects.filter(
                     course=course,
                     student=student,
-                    curso_academico=curso_academico_activo
+                    curso_academico=curso_academico_activo,
                 ).first()
 
                 all_notes = []
                 if calificacion:
-                    # Obtener todas las notas individuales relacionadas con esta calificación
                     all_notes = list(calificacion.notas.all().order_by('fecha_creacion'))
 
                 student_data.append({
                     'calificacion_id': calificacion.id if calificacion else None,
-                    'name': student.get_full_name(),
-                    'notas': all_notes, # Lista de notas individuales
+                    'name': student.get_full_name() or student.username,
+                    'notas': all_notes,
                     'average': calificacion.average if calificacion else None,
                     'matricula_id': enrollment.id,
-                    'student_id': student.id, # Add student.id here
+                    'student_id': student.id,
                 })
             context['student_data'] = student_data
         else:
             context['courses'] = CursoAcademico.objects.all()
             context['teachers'] = User.objects.filter(groups__name='Docente')
-        
-        # Obtener el curso académico activo
-        curso_academico_activo = CursoAcademico.objects.filter(activo=True).first()
-        
-        # Obtener solo las matrículas activas para este curso y curso académico activo
-        active_enrollments = Matriculas.objects.filter(
-            course=course, 
-            activo=True,
-            curso_academico=curso_academico_activo
-        )
-        
-        student_data = []
-        for enrollment in active_enrollments:
-            student = enrollment.student
-            # Buscar calificación por curso, estudiante y curso académico
-            calificacion = Calificaciones.objects.filter(
-                course=course, 
-                student=student,
-                curso_academico=curso_academico_activo
-            ).first()
-            
-            all_notes = []
-            notas_list = []
-            if calificacion:
-                # Obtener todas las notas individuales relacionadas con esta calificación
-                notas_list = list(calificacion.notas.all().order_by('fecha_creacion').values_list('valor', flat=True))
 
-            student_data.append({
-                'calificacion_id': calificacion.id if calificacion else None,
-                'name': student.get_full_name(),
-                'notas': notas_list, # Lista de notas individuales
-                'average': calificacion.average if calificacion else None,
-                'matricula_id': enrollment.id,
-                'student_id': student.id, # Add student.id here
-            })
-
-        context['course'] = course
-        context['student_data'] = student_data
-        context['curso_academico'] = curso_academico_activo
         return context
 # Agregar Notas de los estudiantes
 

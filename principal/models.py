@@ -384,8 +384,13 @@ class SolicitudInscripcion(models.Model):
         self.revisado_por = usuario
         self.save()
         
-        # Crear la matrícula
-        curso_academico = self.curso.curso_academico
+        # Crear la matrícula usando el curso académico activo del sistema,
+        # igual que inscribirse_curso, para mantener consistencia
+        curso_academico = CursoAcademico.objects.filter(activo=True).first()
+        # Fallback: si no hay activo, usar el del curso
+        if not curso_academico:
+            curso_academico = self.curso.curso_academico
+
         matricula, created = Matriculas.objects.get_or_create(
             course=self.curso,
             student=self.estudiante,
