@@ -2,7 +2,7 @@ from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User
 from accounts.models import Registro
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from datetime import date
 from decimal import Decimal
@@ -139,14 +139,19 @@ class CursoAcademico(models.Model):
 
 
     def save(self, *args, **kwargs):
-        if self.activo and not self.pk:  # Si es un nuevo curso y se marca como activo
-            # Desactivar y archivar todos los demás cursos académicos activos
-            CursoAcademico.objects.filter(activo=True).update(activo=False, archivado=True)
-        elif self.activo and self.pk: # Si es un curso existente y se está activando
-            # Desactivar y archivar todos los demás cursos académicos activos, excepto este
-            CursoAcademico.objects.filter(activo=True).exclude(pk=self.pk).update(activo=False, archivado=True)
-        
-        # Asegurarse de que si este curso está activo, no esté archivado
+        if self.activo and not self.pk:  # Nuevo curso marcado como activo
+            # Archivar uno a uno para que las señales se disparen correctamente
+            for ca in CursoAcademico.objects.filter(activo=True):
+                ca.activo = False
+                ca.archivado = True
+                ca.save()
+        elif self.activo and self.pk:  # Curso existente que se está activando
+            for ca in CursoAcademico.objects.filter(activo=True).exclude(pk=self.pk):
+                ca.activo = False
+                ca.archivado = True
+                ca.save()
+
+        # Si este curso está activo, no puede estar archivado
         if self.activo:
             self.archivado = False
 
@@ -427,3 +432,51 @@ class RespuestaEstudiante(models.Model):
         verbose_name = '💬 Respuesta de Estudiante'
         verbose_name_plural = '💬 Respuestas de Estudiantes'
         unique_together = [['solicitud', 'pregunta']]
+
+
+# ── Señal: archivar datos cuando un CursoAcademico se archiva ─────────────────
+
+@receiver(pre_save, sender=CursoAcademico)
+def _capturar_estado_anterior_curso_academico(sender, instance, **kwargs):
+    """
+    Guarda el estado anterior de archivado para detectar el cambio en post_save.
+    """
+    if instance.pk:
+        try:
+            anterior = CursoAcademico.objects.get(pk=instance.pk)
+            instance._archivado_anterior = anterior.archivado
+        except CursoAcademico.DoesNotExist:
+            instance._archivado_anterior = False
+    else:
+        instance._archivado_anterior = False
+
+
+@receiver(post_save, sender=CursoAcademico)
+def _archivar_datos_al_archivar_curso_academico(sender, instance, **kwargs):
+    """
+    Cuando un CursoAcademico pasa de activo/inactivo a archivado=True,
+    copia todos sus datos (cursos, matrículas, asistencias, calificaciones)
+    a los modelos de datos_archivados.
+    """
+    archivado_anterior = getattr(instance, '_archivado_anterior', False)
+    recien_archivado = instance.archivado and not archivado_anterior
+
+    if not recien_archivado:
+        return
+
+    try:
+        from datos_archivados.archivado_service import archivar_datos_curso_academico
+        contadores = archivar_datos_curso_academico(instance)
+        if contadores:
+            import logging
+            log = logging.getLogger(__name__)
+            log.info(
+                f"[Señal] Datos del CursoAcademico '{instance.nombre}' archivados: {contadores}"
+            )
+    except Exception as e:
+        import logging
+        log = logging.getLogger(__name__)
+        log.error(
+            f"[Señal] Error al archivar datos del CursoAcademico '{instance.nombre}': {e}",
+            exc_info=True,
+        )

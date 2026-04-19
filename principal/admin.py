@@ -446,47 +446,98 @@ admin.site.register(RespuestaEstudiante, RespuestaEstudianteAdmin)
 def custom_get_app_list(self, request, app_label=None):
     """
     Personaliza la lista de aplicaciones para agrupar los modelos de formularios
+    y separar los datos archivados de cursos de los datos de migración MariaDB.
     """
     app_dict = self._build_app_dict(request, app_label)
-    
-    # Crear una sección personalizada para formularios de inscripción
+
+    # ── Gestión Académica: separar formularios de inscripción ────────────────
     if 'principal' in app_dict:
         principal_app = app_dict['principal']
-        
-        # Separar modelos de formularios de los demás
+
         formularios_models = []
         otros_models = []
-        
+
         for model in principal_app['models']:
             model_name = model['object_name']
-            if model_name in ['FormularioAplicacion', 'PreguntaFormulario', 'OpcionRespuesta', 
-                            'SolicitudInscripcion', 'RespuestaEstudiante']:
+            if model_name in ['FormularioAplicacion', 'PreguntaFormulario', 'OpcionRespuesta',
+                              'SolicitudInscripcion', 'RespuestaEstudiante']:
                 formularios_models.append(model)
             else:
                 otros_models.append(model)
-        
-        # Actualizar la app principal con solo los modelos académicos
+
         principal_app['models'] = otros_models
         principal_app['name'] = 'Gestión Académica'
-        
-        # Crear nueva sección para formularios de inscripción
+
         if formularios_models:
             app_dict['formularios_inscripcion'] = {
                 'name': 'Formularios de Inscripción',
                 'app_label': 'formularios_inscripcion',
                 'app_url': '/admin/principal/',
                 'has_module_perms': True,
-                'models': formularios_models
+                'models': formularios_models,
             }
-    
-    # Ordenar las aplicaciones
-    app_list = sorted(app_dict.values(), key=lambda x: {
+
+    # ── Datos Archivados: separar archivado de cursos de migración MariaDB ───
+    if 'datos_archivados' in app_dict:
+        da_app = app_dict['datos_archivados']
+
+        # Modelos que pertenecen al archivado de cursos académicos del sistema
+        MODELOS_ARCHIVADO_CURSOS = {
+            'CursoAcademicoArchivado',
+            'UsuarioArchivado',
+            'CursoArchivado',
+            'MatriculaArchivada',
+            'CalificacionArchivada',
+            'NotaIndividualArchivada',
+            'AsistenciaArchivada',
+        }
+        # Modelos que pertenecen a la migración de la BD MariaDB antigua
+        MODELOS_MIGRACION_MARIADB = {
+            'DatoArchivadoDinamico',
+            'MigracionLog',
+            'CodigoVerificacionReclamacion',
+        }
+
+        archivado_models = []
+        mariadb_models = []
+
+        for model in da_app['models']:
+            if model['object_name'] in MODELOS_ARCHIVADO_CURSOS:
+                archivado_models.append(model)
+            elif model['object_name'] in MODELOS_MIGRACION_MARIADB:
+                mariadb_models.append(model)
+            else:
+                archivado_models.append(model)  # por defecto al grupo de archivado
+
+        # Reemplazar la app original con solo los modelos de archivado de cursos
+        da_app['models'] = archivado_models
+        da_app['name'] = 'Datos Archivados (Cursos)'
+
+        # Crear sección separada para migración MariaDB
+        if mariadb_models:
+            app_dict['migracion_mariadb'] = {
+                'name': 'Migración Base de Datos MariaDB',
+                'app_label': 'migracion_mariadb',
+                'app_url': '/admin/datos_archivados/',
+                'has_module_perms': True,
+                'models': mariadb_models,
+            }
+
+    # ── Ordenar las secciones ────────────────────────────────────────────────
+    ORDEN = {
         'Gestión Académica': 1,
         'Formularios de Inscripción': 2,
-        'Authentication and Authorization': 3,
-        'Accounts': 4
-    }.get(x['name'], 999))
-    
+        'Datos Archivados (Cursos)': 3,
+        'Migración Base de Datos MariaDB': 4,
+        'Authentication and Authorization': 5,
+        'Accounts': 6,
+    }
+
+    app_list = sorted(
+        app_dict.values(),
+        key=lambda x: ORDEN.get(x['name'], 999)
+    )
+
     return app_list
 
 # Aplicar la personalización al sitio admin

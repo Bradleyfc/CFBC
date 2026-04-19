@@ -203,7 +203,7 @@ class NotaIndividualArchivada(models.Model):
     id_original = models.IntegerField(verbose_name='ID Original en MariaDB')
     calificacion = models.ForeignKey(CalificacionArchivada, on_delete=models.CASCADE, 
                                    related_name='notas_archivadas', verbose_name='Calificación Archivada')
-    valor = models.PositiveIntegerField(verbose_name='Valor de la Nota')
+    valor = models.DecimalField(max_digits=5, decimal_places=2, verbose_name='Valor de la Nota')
     fecha_creacion = models.DateField(verbose_name='Fecha de Creación')
     
     fecha_migracion = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de migración')
