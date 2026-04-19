@@ -457,7 +457,16 @@ def _archivar_datos_al_archivar_curso_academico(sender, instance, **kwargs):
     Cuando un CursoAcademico pasa de activo/inactivo a archivado=True,
     copia todos sus datos (cursos, matrículas, asistencias, calificaciones)
     a los modelos de datos_archivados.
+
+    Si el archivado falla:
+      - Se revierte archivado=True en la base de datos (el curso queda inactivo
+        pero NO archivado, preservando todos sus datos de gestión académica).
+      - Se almacena el error en instance._archivado_error para que la acción
+        de admin pueda mostrarlo como mensaje de error al usuario.
     """
+    import logging
+    log = logging.getLogger(__name__)
+
     archivado_anterior = getattr(instance, '_archivado_anterior', False)
     recien_archivado = instance.archivado and not archivado_anterior
 
@@ -468,15 +477,23 @@ def _archivar_datos_al_archivar_curso_academico(sender, instance, **kwargs):
         from datos_archivados.archivado_service import archivar_datos_curso_academico
         contadores = archivar_datos_curso_academico(instance)
         if contadores:
-            import logging
-            log = logging.getLogger(__name__)
             log.info(
                 f"[Señal] Datos del CursoAcademico '{instance.nombre}' archivados: {contadores}"
             )
+            instance._archivado_exitoso = True
     except Exception as e:
-        import logging
-        log = logging.getLogger(__name__)
         log.error(
             f"[Señal] Error al archivar datos del CursoAcademico '{instance.nombre}': {e}",
             exc_info=True,
         )
+        # Revertir el estado archivado=True para que los datos no queden huérfanos.
+        # Usamos update() para evitar disparar señales de nuevo.
+        CursoAcademico.objects.filter(pk=instance.pk).update(
+            archivado=False,
+            activo=False,
+        )
+        # Actualizar la instancia en memoria también
+        instance.archivado = False
+        instance.activo = False
+        # Guardar el error en la instancia para que el admin lo pueda mostrar
+        instance._archivado_error = str(e)

@@ -1,4 +1,4 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django import forms
 from.models import (
     Curso, Matriculas, Asistencia, Calificaciones, CursoAcademico, NotaIndividual,
@@ -100,39 +100,81 @@ class CursoAcademicoAdmin(admin.ModelAdmin):
     list_filter = ('activo', 'archivado')
     search_fields = ('nombre',)
     actions = ['activar_curso', 'archivar_curso', 'desarchivar_curso']
-    
+
     def activar_curso(self, request, queryset):
-        # Desactivar todos los cursos primero
-        CursoAcademico.objects.all().update(activo=False)
-        # Activar solo el seleccionado
-        if queryset.count() > 0:
-            curso = queryset.first()
-            curso.activar()
-            self.message_user(request, f"El curso {curso.nombre} ha sido activado")
+        if queryset.count() != 1:
+            self.message_user(
+                request,
+                "Selecciona exactamente un curso para activar.",
+                level=messages.WARNING,
+            )
+            return
+
+        curso = queryset.first()
+        # Usar el método activar() para que las señales se disparen correctamente
+        # (no usar .update() que las omite)
+        curso.activar()
+        self.message_user(
+            request,
+            f"El curso '{curso.nombre}' ha sido activado.",
+            level=messages.SUCCESS,
+        )
     activar_curso.short_description = "Activar curso seleccionado (desactiva los demás)"
-    
+
     def archivar_curso(self, request, queryset):
-        # Archivar los cursos seleccionados
-        contador = 0
+        exitosos = []
+        fallidos = []
+
         for curso in queryset:
+            # Llamar archivar() que dispara la señal y el archivado_service
             curso.archivar()
-            contador += 1
-        
-        if contador == 1:
-            self.message_user(request, f"El curso ha sido archivado")
-        else:
-            self.message_user(request, f"{contador} cursos han sido archivados")
+
+            # La señal almacena el error en _archivado_error si falló
+            if hasattr(curso, '_archivado_error'):
+                fallidos.append((curso.nombre, curso._archivado_error))
+            else:
+                exitosos.append(curso.nombre)
+
+        if exitosos:
+            nombres = ', '.join(f"'{n}'" for n in exitosos)
+            self.message_user(
+                request,
+                f"Archivado exitoso: {nombres}. "
+                f"Los datos de gestión académica han sido guardados en datos archivados.",
+                level=messages.SUCCESS,
+            )
+
+        for nombre, error in fallidos:
+            self.message_user(
+                request,
+                (
+                    f"⚠ ERROR al archivar '{nombre}': No se pudieron guardar los datos "
+                    f"en datos archivados. El curso ha quedado INACTIVO pero NO archivado "
+                    f"para preservar todos sus datos. "
+                    f"Revisa los logs del servidor para más detalles. "
+                    f"Detalle técnico: {error}"
+                ),
+                level=messages.ERROR,
+            )
     archivar_curso.short_description = "Archivar cursos seleccionados"
-    
+
     def desarchivar_curso(self, request, queryset):
         # Desarchivar los cursos seleccionados (sin activarlos)
         queryset.update(archivado=False)
         contador = queryset.count()
-        
+
         if contador == 1:
-            self.message_user(request, f"El curso ha sido desarchivado")
+            self.message_user(
+                request,
+                "El curso ha sido desarchivado.",
+                level=messages.SUCCESS,
+            )
         else:
-            self.message_user(request, f"{contador} cursos han sido desarchivados")
+            self.message_user(
+                request,
+                f"{contador} cursos han sido desarchivados.",
+                level=messages.SUCCESS,
+            )
     desarchivar_curso.short_description = "Desarchivar cursos seleccionados (sin activarlos)"
 
     def ver_detalles_curso_academico(self, obj):
