@@ -89,11 +89,11 @@
                                 <td class="course-col">{{ course.name }}</td>
                                 {% for nota in data.notas %}
                                     <td class="nota-col">
-                                        {% if nota is not None %}
-                                            {% if nota >= 6 %}
-                                                <span class="glass-badge glass-badge-success">{{ nota|floatformat:1 }}</span>
+                                        {% if nota.valor is not None %}
+                                            {% if nota.valor >= 6 %}
+                                                <span class="glass-badge glass-badge-success">{{ nota.valor|floatformat:1 }}</span>
                                             {% else %}
-                                                <span class="glass-badge glass-badge-danger">{{ nota|floatformat:1 }}</span>
+                                                <span class="glass-badge glass-badge-danger">{{ nota.valor|floatformat:1 }}</span>
                                             {% endif %}
                                         {% else %}
                                             <span class="glass-badge glass-badge-secondary">N/A</span>
