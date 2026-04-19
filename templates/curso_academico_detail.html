@@ -28,10 +28,29 @@
         {% if curso_academico.archivado %}
           <span class="ca-badge ca-badge-warning"><span class="material-icons ca-badge-icon">archive</span> Archivado</span>
         {% endif %}
+        {% if es_archivado %}
+          <span class="ca-badge ca-badge-info"><span class="material-icons ca-badge-icon">inventory_2</span> Datos desde archivo histórico</span>
+        {% endif %}
         <span class="ca-badge ca-badge-info"><span class="material-icons ca-badge-icon">calendar_today</span> {{ curso_academico.fecha_creacion }}</span>
       </div>
     </div>
   </div>
+
+  {% if sin_datos_archivados %}
+  <!-- AVISO: archivado sin datos en histórico -->
+  <div class="ca-glass-card mb-4" style="border-left: 4px solid #f59e0b;">
+    <div class="ca-card-body" style="display:flex;align-items:center;gap:1rem;">
+      <span class="material-icons" style="font-size:2rem;color:#d97706;">warning</span>
+      <div>
+        <strong style="color:#92400e;">Este curso está marcado como archivado pero no tiene datos en el histórico.</strong>
+        <p style="margin:0.25rem 0 0;color:#78350f;font-size:0.875rem;">
+          Es posible que el archivado haya fallado o se haya realizado manualmente sin pasar por el proceso de archivado automático.
+          Los datos de gestión académica pueden seguir existiendo en el sistema activo.
+        </p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 
   <!-- FILTROS -->
   <div class="ca-glass-card mb-4">
@@ -42,6 +61,30 @@
     <div class="ca-card-body">
       <form method="GET" class="ca-filter-form">
         <input type="hidden" name="tab" value="{{ active_tab }}">
+
+        <!-- Selector de Curso Académico -->
+        <div class="ca-filter-row ca-filter-row-ca">
+          <div class="ca-filter-group ca-filter-group-full">
+            <label class="ca-label"><span class="material-icons ca-label-icon">school</span> Curso Académico</label>
+            <select id="selector-curso-academico" class="ca-select ca-select-ca"
+                    onchange="navegarCursoAcademico(this)"
+                    data-base-url="{% url 'principal:principal_cursoacademico_detail' 0 %}"
+                    data-tab="{{ active_tab }}">
+              {% for ca in todos_los_cursos_academicos %}
+                <option value="{{ ca.pk }}"
+                  {% if ca.pk == curso_academico.pk %}selected{% endif %}>
+                  {{ ca.nombre }}
+                  {% if ca.activo %} — Activo
+                  {% elif ca.archivado %} — Archivado
+                  {% else %} — Inactivo
+                  {% endif %}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Filtros de curso y estudiante -->
         <div class="ca-filter-row">
           <div class="ca-filter-group">
             <label class="ca-label"><span class="material-icons ca-label-icon">menu_book</span> Curso</label>
@@ -71,6 +114,16 @@
       </form>
     </div>
   </div>
+
+  <script>
+  function navegarCursoAcademico(select) {
+    var pk = select.value;
+    var tab = select.dataset.tab || 'cursos';
+    // La URL base tiene /0/ al final; reemplazamos el 0 con el pk real
+    var baseUrl = select.dataset.baseUrl.replace('/0/', '/' + pk + '/');
+    window.location.href = baseUrl + '?tab=' + tab;
+  }
+  </script>
 
   <!-- TABS NAV -->
   <div class="ca-tabs-nav mb-0">
@@ -350,6 +403,12 @@
     <a href="{% url 'admin:principal_cursoacademico_changelist' %}" class="ca-btn ca-btn-secondary ca-btn-lg">
       <span class="material-icons">arrow_back</span> Volver a la lista
     </a>
+    {% if es_archivado %}
+    <span class="ca-badge ca-badge-warning" style="padding:0.5rem 1rem;font-size:0.85rem;">
+      <span class="material-icons ca-badge-icon">inventory_2</span>
+      Datos históricos — Curso Académico Archivado
+    </span>
+    {% endif %}
   </div>
 
 </div>
@@ -427,6 +486,15 @@
 .ca-filter-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
 @media(max-width:640px){ .ca-filter-row { grid-template-columns:1fr; } }
 .ca-filter-group { display:flex; flex-direction:column; gap:0.4rem; }
+.ca-filter-row-ca { grid-template-columns:1fr; }
+.ca-filter-group-full { grid-column: 1 / -1; }
+.ca-select-ca {
+  border: 1.5px solid rgba(99,102,241,0.35);
+  background: linear-gradient(135deg,rgba(99,102,241,0.08),rgba(59,130,246,0.05));
+  font-weight: 600;
+  color: #1e1b4b;
+}
+.ca-select-ca:focus { border-color:rgba(99,102,241,0.6); box-shadow:0 0 0 3px rgba(99,102,241,0.15); }
 .ca-label { display:flex; align-items:center; gap:0.3rem; font-size:0.85rem; font-weight:600; color:#374151; }
 .ca-label-icon { font-size:1rem; color:#6366f1; }
 .ca-select { width:100%; padding:0.55rem 0.9rem; border-radius:10px; background:linear-gradient(135deg,rgba(255,255,255,0.5),rgba(255,255,255,0.3)); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.35); color:#374151; font-size:0.875rem; transition:all 0.3s ease; box-shadow:inset 0 1px 3px rgba(0,0,0,0.05); }

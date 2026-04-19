@@ -465,6 +465,167 @@ def generate_excel(context_dict={}):
 
     return excel_file
 
+
+# ── Adaptadores para datos archivados ─────────────────────────────────────────
+# Estos objetos envuelven los modelos de datos_archivados y exponen la misma
+# interfaz que los modelos de principal, de modo que el template y el generador
+# de Excel no necesitan distinguir entre datos activos y archivados.
+
+class _UsuarioArchivadoAdapter:
+    """Adapta UsuarioArchivado para que se comporte como User en el template."""
+    def __init__(self, ua):
+        self._ua = ua
+        self.id = ua.id
+        self.pk = ua.id
+        self.username = ua.username
+        self.first_name = ua.first_name
+        self.last_name = ua.last_name
+        self.email = ua.email
+
+    def get_full_name(self):
+        nombre = f"{self._ua.first_name} {self._ua.last_name}".strip()
+        return nombre or self._ua.username
+
+    def __str__(self):
+        return self.get_full_name()
+
+
+class _CursoArchivadoAdapter:
+    """Adapta CursoArchivado para que se comporte como Curso en el template."""
+    def __init__(self, ca):
+        self._ca = ca
+        self.id = ca.id
+        self.pk = ca.id
+        self.name = ca.name
+        self.description = ca.description
+        self.area = ca.area
+        self.tipo = ca.tipo
+        self.class_quantity = ca.class_quantity
+        self.status = ca.status
+        self.enrollment_deadline = ca.enrollment_deadline
+        self.start_date = ca.start_date
+        # Exponer teacher como un objeto con get_full_name / username
+        self.teacher = _TeacherProxy(ca)
+        # Exponer curso_academico para compatibilidad con generate_excel
+        self.curso_academico = ca.curso_academico
+
+    def get_dynamic_status_display(self):
+        return dict(self._ca.STATUS_CHOICES).get(self._ca.status, self._ca.status)
+
+    def get_status_display(self):
+        return self.get_dynamic_status_display()
+
+    def __str__(self):
+        return self.name
+
+
+class _TeacherProxy:
+    """Proxy mínimo para el profesor de un CursoArchivado."""
+    def __init__(self, ca):
+        self._ca = ca
+        self.username = ca.teacher_name
+
+    def get_full_name(self):
+        if self._ca.teacher_actual:
+            nombre = self._ca.teacher_actual.get_full_name()
+            return nombre or self._ca.teacher_actual.username
+        return self._ca.teacher_name
+
+    def __str__(self):
+        return self.get_full_name()
+
+
+class _MatriculaArchivadaAdapter:
+    """Adapta MatriculaArchivada para que se comporte como Matriculas en el template."""
+    ESTADO_CHOICES = {
+        'P': 'Pendiente', 'A': 'Aprobado', 'R': 'Reprobado',
+        'L': 'Licencia', 'B': 'Baja',
+    }
+
+    def __init__(self, ma):
+        self._ma = ma
+        self.id = ma.id
+        self.pk = ma.id
+        self.activo = ma.activo
+        self.fecha_matricula = ma.fecha_matricula
+        self.estado = ma.estado
+        self.student = _UsuarioArchivadoAdapter(ma.student)
+        self.course = _CursoArchivadoAdapter(ma.course)
+
+    def get_estado_display(self):
+        return self.ESTADO_CHOICES.get(self._ma.estado, self._ma.estado)
+
+    def __str__(self):
+        return str(self._ma)
+
+
+class _NotaArchivadaAdapter:
+    """Adapta NotaIndividualArchivada para que se comporte como NotaIndividual."""
+    def __init__(self, nota):
+        self.id = nota.id
+        self.valor = nota.valor
+        self.fecha_creacion = nota.fecha_creacion
+
+    def __str__(self):
+        return str(self.valor)
+
+
+class _NotasManager:
+    """Simula el manager .notas de Calificaciones para datos archivados."""
+    def __init__(self, notas_archivadas_qs):
+        self._notas = [_NotaArchivadaAdapter(n) for n in notas_archivadas_qs]
+
+    def all(self):
+        return self._notas
+
+    def count(self):
+        return len(self._notas)
+
+
+class _CalificacionArchivadaAdapter:
+    """Adapta CalificacionArchivada para que se comporte como Calificaciones en el template."""
+    def __init__(self, ca):
+        self._ca = ca
+        self.id = ca.id
+        self.pk = ca.id
+        self.average = ca.average
+        self.student = _UsuarioArchivadoAdapter(ca.student)
+        self.course = _CursoArchivadoAdapter(ca.course)
+        # Exponer .notas con la misma interfaz que el manager de NotaIndividual
+        self.notas = _NotasManager(ca.notas_archivadas.all())
+
+    def __str__(self):
+        return str(self._ca)
+
+
+class _AsistenciaArchivadaAdapter:
+    """Adapta AsistenciaArchivada para que se comporte como Asistencia en el template."""
+    def __init__(self, aa):
+        self._aa = aa
+        self.id = aa.id
+        self.pk = aa.id
+        self.presente = aa.presente
+        self.date = aa.date
+        self.student = _UsuarioArchivadoAdapter(aa.student)
+        self.course = _CursoArchivadoAdapter(aa.course)
+
+    def __str__(self):
+        return str(self._aa)
+
+
+def _estudiantes_de_archivado(ca_archivado):
+    """Devuelve los UsuarioArchivado únicos matriculados en un CursoAcademicoArchivado."""
+    from datos_archivados.models import MatriculaArchivada
+    ids = (
+        MatriculaArchivada.objects
+        .filter(course__curso_academico=ca_archivado)
+        .values_list('student_id', flat=True)
+        .distinct()
+    )
+    from datos_archivados.models import UsuarioArchivado
+    return UsuarioArchivado.objects.filter(id__in=ids)
+
+
 class CursoAcademicoDetailView(DetailView):
     model = CursoAcademico
     template_name = 'curso_academico_detail.html'
@@ -484,47 +645,23 @@ class CursoAcademicoDetailView(DetailView):
         page_a = self.request.GET.get('page_a', 1)
         per_page = 10
 
-        # Filtrar cursos asociados
-        cursos = Curso.objects.filter(matriculas__curso_academico=curso_academico).distinct()
-        if curso_id:
-            cursos = cursos.filter(id=curso_id)
-        context['cursos'] = cursos
-
-        # Filtrar matrículas con paginación
-        matriculas_qs = Matriculas.objects.filter(curso_academico=curso_academico).select_related('student', 'course')
-        if curso_id:
-            matriculas_qs = matriculas_qs.filter(course_id=curso_id)
-        if estudiante_id:
-            matriculas_qs = matriculas_qs.filter(student_id=estudiante_id)
-        paginator_m = Paginator(matriculas_qs, per_page)
-        context['matriculas'] = paginator_m.get_page(page_m)
-        context['matriculas_total'] = matriculas_qs.count()
-
-        # Filtrar calificaciones con paginación
-        calificaciones_qs = Calificaciones.objects.filter(curso_academico=curso_academico).select_related('student', 'course').prefetch_related('notas')
-        if curso_id:
-            calificaciones_qs = calificaciones_qs.filter(course_id=curso_id)
-        if estudiante_id:
-            calificaciones_qs = calificaciones_qs.filter(student_id=estudiante_id)
-        paginator_c = Paginator(calificaciones_qs, per_page)
-        context['calificaciones'] = paginator_c.get_page(page_c)
-        context['calificaciones_total'] = calificaciones_qs.count()
-
-        # Filtrar asistencias con paginación
-        asistencias_qs = Asistencia.objects.filter(course__matriculas__curso_academico=curso_academico).distinct().select_related('student', 'course')
-        if curso_id:
-            asistencias_qs = asistencias_qs.filter(course_id=curso_id)
-        if estudiante_id:
-            asistencias_qs = asistencias_qs.filter(student_id=estudiante_id)
-        paginator_a = Paginator(asistencias_qs, per_page)
-        context['asistencias'] = paginator_a.get_page(page_a)
-        context['asistencias_total'] = asistencias_qs.count()
-
-        # Listas para los selectores de filtro
-        context['cursos_disponibles'] = Curso.objects.filter(matriculas__curso_academico=curso_academico).distinct()
-        context['estudiantes_disponibles'] = User.objects.filter(
-            matriculas__curso_academico=curso_academico
-        ).distinct()
+        # ── Determinar fuente de datos ────────────────────────────────────────
+        # Si el curso está archivado, los datos viven en datos_archivados.
+        # Si está activo (o inactivo pero no archivado), los datos están en principal.
+        if curso_academico.archivado:
+            context.update(
+                self._context_desde_archivados(
+                    curso_academico, curso_id, estudiante_id,
+                    page_m, page_c, page_a, per_page,
+                )
+            )
+        else:
+            context.update(
+                self._context_desde_principal(
+                    curso_academico, curso_id, estudiante_id,
+                    page_m, page_c, page_a, per_page,
+                )
+            )
 
         # Tab activa (para mantener la pestaña al paginar)
         context['active_tab'] = self.request.GET.get('tab', 'cursos')
@@ -535,7 +672,174 @@ class CursoAcademicoDetailView(DetailView):
             'estudiante': estudiante_id or '',
         }
 
+        # Todos los cursos académicos para el selector de navegación
+        context['todos_los_cursos_academicos'] = CursoAcademico.objects.all().order_by('-fecha_creacion')
+
         return context
+
+    # ── Fuente: gestión académica (curso activo / no archivado) ───────────────
+    def _context_desde_principal(
+        self, curso_academico, curso_id, estudiante_id,
+        page_m, page_c, page_a, per_page,
+    ):
+        cursos = Curso.objects.filter(
+            matriculas__curso_academico=curso_academico
+        ).distinct()
+        if curso_id:
+            cursos = cursos.filter(id=curso_id)
+
+        matriculas_qs = Matriculas.objects.filter(
+            curso_academico=curso_academico
+        ).select_related('student', 'course')
+        if curso_id:
+            matriculas_qs = matriculas_qs.filter(course_id=curso_id)
+        if estudiante_id:
+            matriculas_qs = matriculas_qs.filter(student_id=estudiante_id)
+
+        calificaciones_qs = Calificaciones.objects.filter(
+            curso_academico=curso_academico
+        ).select_related('student', 'course').prefetch_related('notas')
+        if curso_id:
+            calificaciones_qs = calificaciones_qs.filter(course_id=curso_id)
+        if estudiante_id:
+            calificaciones_qs = calificaciones_qs.filter(student_id=estudiante_id)
+
+        asistencias_qs = Asistencia.objects.filter(
+            course__matriculas__curso_academico=curso_academico
+        ).distinct().select_related('student', 'course')
+        if curso_id:
+            asistencias_qs = asistencias_qs.filter(course_id=curso_id)
+        if estudiante_id:
+            asistencias_qs = asistencias_qs.filter(student_id=estudiante_id)
+
+        paginator_m = Paginator(matriculas_qs, per_page)
+        paginator_c = Paginator(calificaciones_qs, per_page)
+        paginator_a = Paginator(asistencias_qs, per_page)
+
+        return {
+            'cursos': cursos,
+            'matriculas': paginator_m.get_page(page_m),
+            'matriculas_total': matriculas_qs.count(),
+            'calificaciones': paginator_c.get_page(page_c),
+            'calificaciones_total': calificaciones_qs.count(),
+            'asistencias': paginator_a.get_page(page_a),
+            'asistencias_total': asistencias_qs.count(),
+            'cursos_disponibles': Curso.objects.filter(
+                matriculas__curso_academico=curso_academico
+            ).distinct(),
+            'estudiantes_disponibles': User.objects.filter(
+                matriculas__curso_academico=curso_academico
+            ).distinct(),
+            'es_archivado': False,
+        }
+
+    # ── Fuente: datos archivados (curso archivado) ────────────────────────────
+    def _context_desde_archivados(
+        self, curso_academico, curso_id, estudiante_id,
+        page_m, page_c, page_a, per_page,
+    ):
+        from datos_archivados.models import (
+            CursoAcademicoArchivado,
+            CursoArchivado,
+            MatriculaArchivada,
+            CalificacionArchivada,
+            AsistenciaArchivada,
+        )
+
+        # Buscar el registro archivado correspondiente
+        ca_archivado = CursoAcademicoArchivado.objects.filter(
+            id_original=curso_academico.pk
+        ).first()
+
+        if ca_archivado is None:
+            # El curso está marcado como archivado pero aún no tiene datos en
+            # datos_archivados (p.ej. archivado manualmente sin pasar por el servicio).
+            # Devolver contexto vacío con indicador para que el template lo informe.
+            return {
+                'cursos': [],
+                'matriculas': Paginator([], per_page).get_page(1),
+                'matriculas_total': 0,
+                'calificaciones': Paginator([], per_page).get_page(1),
+                'calificaciones_total': 0,
+                'asistencias': Paginator([], per_page).get_page(1),
+                'asistencias_total': 0,
+                'cursos_disponibles': [],
+                'estudiantes_disponibles': [],
+                'es_archivado': True,
+                'sin_datos_archivados': True,
+            }
+
+        # ── Cursos ────────────────────────────────────────────────────────────
+        cursos_qs = CursoArchivado.objects.filter(
+            curso_academico=ca_archivado
+        ).select_related('teacher_actual')
+        if curso_id:
+            cursos_qs = cursos_qs.filter(id=curso_id)
+
+        # Adaptar CursoArchivado para que el template pueda usar los mismos
+        # atributos que usa con Curso (name, teacher.get_full_name, get_dynamic_status_display)
+        cursos_adaptados = [_CursoArchivadoAdapter(c) for c in cursos_qs]
+
+        # ── Matrículas ────────────────────────────────────────────────────────
+        matriculas_qs = MatriculaArchivada.objects.filter(
+            course__curso_academico=ca_archivado
+        ).select_related('student', 'course')
+        if curso_id:
+            matriculas_qs = matriculas_qs.filter(course_id=curso_id)
+        if estudiante_id:
+            matriculas_qs = matriculas_qs.filter(student_id=estudiante_id)
+
+        matriculas_adaptadas = [_MatriculaArchivadaAdapter(m) for m in matriculas_qs]
+
+        # ── Calificaciones ────────────────────────────────────────────────────
+        calificaciones_qs = CalificacionArchivada.objects.filter(
+            course__curso_academico=ca_archivado
+        ).select_related('student', 'course').prefetch_related('notas_archivadas')
+        if curso_id:
+            calificaciones_qs = calificaciones_qs.filter(course_id=curso_id)
+        if estudiante_id:
+            calificaciones_qs = calificaciones_qs.filter(student_id=estudiante_id)
+
+        calificaciones_adaptadas = [_CalificacionArchivadaAdapter(c) for c in calificaciones_qs]
+
+        # ── Asistencias ───────────────────────────────────────────────────────
+        asistencias_qs = AsistenciaArchivada.objects.filter(
+            course__curso_academico=ca_archivado
+        ).select_related('student', 'course')
+        if curso_id:
+            asistencias_qs = asistencias_qs.filter(course_id=curso_id)
+        if estudiante_id:
+            asistencias_qs = asistencias_qs.filter(student_id=estudiante_id)
+
+        asistencias_adaptadas = [_AsistenciaArchivadaAdapter(a) for a in asistencias_qs]
+
+        # ── Selectores de filtro ──────────────────────────────────────────────
+        cursos_disponibles = [
+            _CursoArchivadoAdapter(c)
+            for c in CursoArchivado.objects.filter(curso_academico=ca_archivado)
+        ]
+        estudiantes_disponibles = [
+            _UsuarioArchivadoAdapter(u)
+            for u in _estudiantes_de_archivado(ca_archivado)
+        ]
+
+        paginator_m = Paginator(matriculas_adaptadas, per_page)
+        paginator_c = Paginator(calificaciones_adaptadas, per_page)
+        paginator_a = Paginator(asistencias_adaptadas, per_page)
+
+        return {
+            'cursos': cursos_adaptados,
+            'matriculas': paginator_m.get_page(page_m),
+            'matriculas_total': len(matriculas_adaptadas),
+            'calificaciones': paginator_c.get_page(page_c),
+            'calificaciones_total': len(calificaciones_adaptadas),
+            'asistencias': paginator_a.get_page(page_a),
+            'asistencias_total': len(asistencias_adaptadas),
+            'cursos_disponibles': cursos_disponibles,
+            'estudiantes_disponibles': estudiantes_disponibles,
+            'es_archivado': True,
+            'sin_datos_archivados': False,
+        }
         
     def render_to_response(self, context, **response_kwargs):
         # Verificar si se solicita PDF
@@ -1100,6 +1404,11 @@ class ProfileView(DocumentsProfileMixin, BaseContextMixin, TemplateView):
                 all_courses = Curso.objects.none()
             context['all_courses'] = all_courses
             context['curso_academico_activo'] = curso_academico_activo
+            # Todos los cursos académicos archivados, para que la secretaria
+            # pueda acceder a sus detalles históricos desde el perfil
+            context['cursos_academicos_archivados'] = CursoAcademico.objects.filter(
+                archivado=True
+            ).order_by('-fecha_creacion')
         
         return context
 
