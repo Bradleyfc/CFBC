@@ -3,6 +3,26 @@
 
 {% block title %}{{ noticia.titulo }} - Noticias CFBC{% endblock %}
 
+{% block extra_meta %}
+{% if noticia.visibilidad == 'indexable' %}
+<meta name="robots" content="index, follow">
+{% if noticia.meta_descripcion %}
+<meta name="description" content="{{ noticia.meta_descripcion }}">
+{% else %}
+<meta name="description" content="{{ noticia.resumen }}">
+{% endif %}
+<meta property="og:title" content="{{ noticia.titulo }}">
+<meta property="og:description" content="{{ noticia.meta_descripcion|default:noticia.resumen }}">
+{% if noticia.imagen_principal %}
+<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ noticia.imagen_principal.url }}">
+{% endif %}
+<meta property="og:url" content="{{ request.build_absolute_uri }}">
+<meta property="og:type" content="article">
+{% else %}
+<meta name="robots" content="noindex, nofollow">
+{% endif %}
+{% endblock %}
+
 {% block extra_css %}
 <style>
     .noticia-content {

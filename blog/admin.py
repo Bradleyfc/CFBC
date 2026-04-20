@@ -9,8 +9,8 @@ class CategoriaAdmin(admin.ModelAdmin):
 
 @admin.register(Noticia)
 class NoticiaAdmin(admin.ModelAdmin):
-    list_display = ['titulo', 'categoria', 'autor', 'estado', 'destacada', 'fecha_publicacion']
-    list_filter = ['estado', 'categoria', 'destacada', 'fecha_publicacion']
+    list_display = ['titulo', 'categoria', 'autor', 'estado', 'visibilidad', 'destacada', 'fecha_publicacion']
+    list_filter = ['estado', 'visibilidad', 'categoria', 'destacada', 'fecha_publicacion']
     search_fields = ['titulo', 'contenido']
     prepopulated_fields = {'slug': ('titulo',)}
     date_hierarchy = 'fecha_publicacion'
@@ -21,7 +21,7 @@ class NoticiaAdmin(admin.ModelAdmin):
             'fields': ('titulo', 'slug', 'resumen', 'contenido', 'imagen_principal')
         }),
         ('Clasificación', {
-            'fields': ('categoria', 'autor', 'estado', 'destacada')
+            'fields': ('categoria', 'autor', 'estado', 'visibilidad', 'destacada')
         }),
         ('Fechas', {
             'fields': ('fecha_publicacion',)

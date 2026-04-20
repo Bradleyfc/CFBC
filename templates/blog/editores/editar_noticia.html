@@ -242,154 +242,6 @@
         display: none;
     }
 </style>
-
-    .glass-button-primary::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-        transition: left 0.6s ease;
-        pointer-events: none;
-    }
-
-    .glass-button-primary:hover {
-        background: linear-gradient(135deg, rgba(96, 165, 250, 0.9) 0%, rgba(59, 130, 246, 1) 100%);
-        transform: translateY(-2px) scale(1.02);
-        box-shadow: 
-            0 12px 40px rgba(59, 130, 246, 0.4),
-            inset 0 1px 0 rgba(255, 255, 255, 0.6),
-            0 0 30px rgba(59, 130, 246, 0.3);
-    }
-
-    .glass-button-primary:hover::before {
-        left: 100%;
-    }
-
-    .glass-button-secondary {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(249, 250, 251, 0.8) 100%);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(209, 213, 219, 0.4);
-        color: #374151;
-        box-shadow: 
-            0 8px 32px rgba(0, 0, 0, 0.1),
-            inset 0 1px 0 rgba(255, 255, 255, 0.6);
-        position: relative;
-        overflow: hidden;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .glass-button-secondary::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
-        transition: left 0.6s ease;
-        pointer-events: none;
-    }
-
-    .glass-button-secondary:hover {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 197, 253, 0.2) 100%);
-        border-color: rgba(59, 130, 246, 0.3);
-        transform: translateY(-2px) scale(1.02);
-        box-shadow: 
-            0 12px 40px rgba(0, 0, 0, 0.15),
-            inset 0 1px 0 rgba(255, 255, 255, 0.8),
-            0 0 25px rgba(59, 130, 246, 0.2);
-        color: #1e40af;
-    }
-
-    .glass-button-secondary:hover::before {
-        left: 100%;
-    }
-
-    .glass-button-success {
-        background: linear-gradient(135deg, rgba(34, 197, 94, 0.8) 0%, rgba(22, 163, 74, 0.9) 100%);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(134, 239, 172, 0.3);
-        box-shadow: 
-            0 8px 32px rgba(34, 197, 94, 0.3),
-            inset 0 1px 0 rgba(134, 239, 172, 0.4);
-        position: relative;
-        overflow: hidden;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .glass-button-success:hover {
-        background: linear-gradient(135deg, rgba(74, 222, 128, 0.9) 0%, rgba(34, 197, 94, 1) 100%);
-        transform: translateY(-2px) scale(1.02);
-        box-shadow: 
-            0 12px 40px rgba(34, 197, 94, 0.4),
-            inset 0 1px 0 rgba(255, 255, 255, 0.6),
-            0 0 30px rgba(34, 197, 94, 0.3);
-    }
-
-    .glass-button-danger {
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.8) 0%, rgba(220, 38, 38, 0.9) 100%);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(252, 165, 165, 0.3);
-        box-shadow: 
-            0 8px 32px rgba(239, 68, 68, 0.3),
-            inset 0 1px 0 rgba(252, 165, 165, 0.4);
-        position: relative;
-        overflow: hidden;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .glass-button-danger:hover {
-        background: linear-gradient(135deg, rgba(248, 113, 113, 0.9) 0%, rgba(239, 68, 68, 1) 100%);
-        transform: translateY(-2px) scale(1.02);
-        box-shadow: 
-            0 12px 40px rgba(239, 68, 68, 0.4),
-            inset 0 1px 0 rgba(255, 255, 255, 0.6),
-            0 0 30px rgba(239, 68, 68, 0.3);
-    }
-
-    /* Glass Input Fields */
-    .glass-input {
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(209, 213, 219, 0.3);
-        transition: all 0.3s ease;
-    }
-
-    .glass-input:focus {
-        background: rgba(255, 255, 255, 0.95);
-        border-color: rgba(59, 130, 246, 0.5);
-        box-shadow: 
-            0 0 0 3px rgba(59, 130, 246, 0.1),
-            0 4px 20px rgba(59, 130, 246, 0.1);
-    }
-
-    /* Glass Sections */
-    .glass-section {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(249, 250, 251, 0.8) 100%);
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        box-shadow: 
-            0 8px 32px rgba(0, 0, 0, 0.1),
-            inset 0 1px 0 rgba(255, 255, 255, 0.6);
-        transition: all 0.3s ease;
-    }
-
-    .glass-section:hover {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(249, 250, 251, 0.9) 100%);
-        transform: translateY(-1px);
-        box-shadow: 
-            0 12px 40px rgba(0, 0, 0, 0.15),
-            inset 0 1px 0 rgba(255, 255, 255, 0.8);
-    }
-</style>
 {% endblock %}
 
 {% block botones_accion %}
@@ -501,6 +353,24 @@
                             </select>
                             {% if form.estado.errors %}
                                 <div class="text-red-600 text-sm mt-1">{{ form.estado.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Visibilidad -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <span class="material-icons text-sm align-middle mr-1">lock</span>
+                                {{ form.visibilidad.label }}
+                            </label>
+                            <select name="{{ form.visibilidad.name }}"
+                                    class="glass-input w-full px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                {% for choice in form.visibilidad.field.choices %}
+                                    <option value="{{ choice.0 }}" {% if form.visibilidad.value == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                                {% endfor %}
+                            </select>
+                            <div id="visibilidad-hint" class="mt-2 text-xs text-gray-500 p-2 rounded-md bg-gray-50 border border-gray-200"></div>
+                            {% if form.visibilidad.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.visibilidad.errors }}</div>
                             {% endif %}
                         </div>
                         
@@ -619,6 +489,20 @@ document.addEventListener('DOMContentLoaded', function() {
             fileButton.innerHTML = '<span class="material-icons mr-2 text-sm">cloud_upload</span>{% if noticia.imagen_principal %}Cambiar Imagen{% else %}Elegir Imagen{% endif %}';
         }
     });
+
+    // Hint dinámico de visibilidad
+    const visibilidadSelect = document.querySelector('select[name="visibilidad"]');
+    const visibilidadHint = document.getElementById('visibilidad-hint');
+    const hints = {
+        'solo_registrados': '🔒 Solo los usuarios que hayan iniciado sesión podrán ver esta noticia.',
+        'publico': '🌐 Cualquier persona que visite la página podrá ver esta noticia, pero no aparecerá en Google.',
+        'indexable': '🔍 Cualquier persona puede verla y además aparecerá en buscadores como Google.'
+    };
+    function updateHint() {
+        visibilidadHint.textContent = hints[visibilidadSelect.value] || '';
+    }
+    visibilidadSelect.addEventListener('change', updateHint);
+    updateHint();
 });
 </script>
 {% endblock %}

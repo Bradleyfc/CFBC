@@ -12,6 +12,10 @@ from .forms import ComentarioForm, NoticiaForm
 def lista_noticias(request):
     """Vista para mostrar todas las noticias publicadas"""
     noticias = Noticia.objects.filter(estado='publicado').select_related('categoria', 'autor')
+
+    # Filtrar por visibilidad: si el usuario no está autenticado, excluir las de solo_registrados
+    if not request.user.is_authenticated:
+        noticias = noticias.exclude(visibilidad='solo_registrados')
     
     # Filtro por categoría
     categoria_slug = request.GET.get('categoria')
@@ -34,10 +38,13 @@ def lista_noticias(request):
     page_obj = paginator.get_page(page_number)
     
     # Noticias destacadas para el sidebar
-    noticias_destacadas = Noticia.objects.filter(
-        estado='publicado', 
+    noticias_destacadas_qs = Noticia.objects.filter(
+        estado='publicado',
         destacada=True
-    )[:5]
+    )
+    if not request.user.is_authenticated:
+        noticias_destacadas_qs = noticias_destacadas_qs.exclude(visibilidad='solo_registrados')
+    noticias_destacadas = noticias_destacadas_qs[:5]
     
     # Categorías para el menú
     categorias = Categoria.objects.all()
@@ -59,6 +66,11 @@ def detalle_noticia(request, slug):
         slug=slug,
         estado='publicado'
     )
+
+    # Aplicar restricción de visibilidad
+    if noticia.visibilidad == 'solo_registrados' and not request.user.is_authenticated:
+        from django.contrib.auth.views import redirect_to_login
+        return redirect_to_login(request.get_full_path())
     
     # Comentarios de la noticia
     comentarios = noticia.comentarios.filter(activo=True).select_related('autor')
@@ -105,6 +117,10 @@ def noticias_por_categoria(request, slug):
         categoria=categoria,
         estado='publicado'
     ).select_related('autor')
+
+    # Filtrar por visibilidad
+    if not request.user.is_authenticated:
+        noticias = noticias.exclude(visibilidad='solo_registrados')
     
     # Paginación
     paginator = Paginator(noticias, 6)

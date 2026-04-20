@@ -278,6 +278,24 @@
                             {% endif %}
                         </div>
                         
+                        <!-- Visibilidad -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <span class="material-icons text-sm align-middle mr-1">lock</span>
+                                {{ form.visibilidad.label }}
+                            </label>
+                            <select name="{{ form.visibilidad.name }}"
+                                    class="glass-input w-full px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                {% for choice in form.visibilidad.field.choices %}
+                                    <option value="{{ choice.0 }}" {% if form.visibilidad.value == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                                {% endfor %}
+                            </select>
+                            <div id="visibilidad-hint" class="mt-2 text-xs text-gray-500 p-2 rounded-md bg-gray-50 border border-gray-200"></div>
+                            {% if form.visibilidad.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.visibilidad.errors }}</div>
+                            {% endif %}
+                        </div>
+
                         <div class="mb-4">
                             <div class="flex items-center">
                                 <input type="checkbox" name="{{ form.destacada.name }}" id="{{ form.destacada.id_for_label }}"
@@ -377,6 +395,41 @@ document.addEventListener('DOMContentLoaded', function() {
             fileButton.innerHTML = '<span class="material-icons mr-2 text-sm">cloud_upload</span>Elegir Imagen';
         }
     });
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('imagen-input');
+    const fileSelected = document.getElementById('file-selected');
+    const fileName = document.getElementById('file-name');
+    const fileButton = document.querySelector('.glass-file-button');
+
+    fileInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+            const file = e.target.files[0];
+            fileName.textContent = file.name;
+            fileSelected.style.display = 'block';
+            fileButton.innerHTML = '<span class="material-icons mr-2 text-sm">check</span>Imagen Seleccionada';
+        } else {
+            fileSelected.style.display = 'none';
+            fileButton.innerHTML = '<span class="material-icons mr-2 text-sm">cloud_upload</span>Elegir Imagen';
+        }
+    });
+
+    // Hint dinámico de visibilidad
+    const visibilidadSelect = document.querySelector('select[name="visibilidad"]');
+    const visibilidadHint = document.getElementById('visibilidad-hint');
+    const hints = {
+        'solo_registrados': '🔒 Solo los usuarios que hayan iniciado sesión podrán ver esta noticia.',
+        'publico': '🌐 Cualquier persona que visite la página podrá ver esta noticia, pero no aparecerá en Google.',
+        'indexable': '🔍 Cualquier persona puede verla y además aparecerá en buscadores como Google.'
+    };
+    function updateHint() {
+        visibilidadHint.textContent = hints[visibilidadSelect.value] || '';
+    }
+    visibilidadSelect.addEventListener('change', updateHint);
+    updateHint();
 });
 </script>
 {% endblock %}

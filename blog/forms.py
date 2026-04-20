@@ -21,7 +21,7 @@ class NoticiaForm(forms.ModelForm):
         model = Noticia
         fields = [
             'titulo', 'resumen', 'contenido', 'imagen_principal', 
-            'categoria', 'estado', 'destacada', 'fecha_publicacion', 
+            'categoria', 'estado', 'visibilidad', 'destacada', 'fecha_publicacion', 
             'meta_descripcion'
         ]
         widgets = {
@@ -49,6 +49,9 @@ class NoticiaForm(forms.ModelForm):
             'estado': forms.Select(attrs={
                 'class': 'form-select'
             }),
+            'visibilidad': forms.Select(attrs={
+                'class': 'form-select'
+            }),
             'destacada': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
             }),
@@ -68,6 +71,7 @@ class NoticiaForm(forms.ModelForm):
             'imagen_principal': 'Imagen principal',
             'categoria': 'Categoría',
             'estado': 'Estado',
+            'visibilidad': 'Visibilidad',
             'destacada': 'Noticia destacada',
             'fecha_publicacion': 'Fecha de publicación',
             'meta_descripcion': 'Meta descripción (SEO)'

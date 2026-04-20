@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Noticias - CFBC{% endblock %}</title>
+    {% block extra_meta %}{% endblock %}
     
     <!-- Tailwind CSS: local primero, CDN de respaldo -->
     <link id="tailwind-local" href="{% static 'css/tailwind.css' %}" rel="stylesheet"
@@ -508,7 +509,7 @@
     {% endif %}
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="{% block main_class %}max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8{% endblock %}">
         {% block content %}{% endblock %}
     </main>
 
@@ -540,7 +541,7 @@
         z-index: 2;
     }
 
-    .glass-section {
+    .glass-footer-section {
         backdrop-filter: blur(10px);
         background: rgba(255, 255, 255, 0.05);
         border: 1px solid rgba(255, 255, 255, 0.1);
@@ -550,7 +551,7 @@
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .glass-section:hover {
+    .glass-footer-section:hover {
         background: rgba(255, 255, 255, 0.08);
         border-color: rgba(255, 255, 255, 0.2);
         box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
@@ -678,12 +679,12 @@
     <footer class="glass-footer py-4 mt-8">
         <div class="glass-footer-content container mx-auto px-4">
             <div class="flex flex-col md:flex-row gap-3">
-                <div class="glass-section w-full md:w-[40%]">
+                <div class="glass-footer-section w-full md:w-[40%]">
                     <h5 class="text-white text-lg font-bold mb-3 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Centro Fray Bartolomé de las Casas</h5>
                     <p class="text-gray-200 leading-relaxed text-sm">Formación integral y educación de calidad para el desarrollo personal y
                         profesional.</p>
                 </div>
-                <div class="glass-section w-full md:w-[20%]">
+                <div class="glass-footer-section w-full md:w-[20%]">
                     <h6 class="text-white text-base font-bold mb-3 bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">Enlaces Rápidos</h6>
                     <ul class="space-y-2">
                         <li><a href="{% url 'principal:home' %}" class="glass-link text-gray-200 hover:text-white no-underline text-sm">Inicio</a></li>
@@ -692,7 +693,7 @@
                         <li><a href="#" class="glass-link text-gray-200 hover:text-white no-underline text-sm">Contacto</a></li>
                     </ul>
                 </div>
-                <div class="glass-section w-full md:w-[40%]">
+                <div class="glass-footer-section w-full md:w-[40%]">
                     <h6 class="text-white text-base font-bold mb-3 bg-gradient-to-r from-red-400 to-pink-400 bg-clip-text text-transparent">Contacto</h6>
                     <div class="space-y-2">
                         <div class="contact-item">

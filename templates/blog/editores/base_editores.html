@@ -245,15 +245,65 @@
         background: #ffffff;
         min-height: 100vh;
     }
+
+    /* Clases de grid faltantes en el CSS compilado */
+    @media (min-width: 768px) {
+        .md\:col-span-3 {
+            grid-column: span 3 / span 3;
+        }
+        .md\:col-span-4 {
+            grid-column: span 4 / span 4;
+        }
+    }
+
+    /* Layout del panel de editor: sidebar + contenido principal */
+    .editor-layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    @media (min-width: 768px) {
+        .editor-layout {
+            grid-template-columns: 1fr 3fr;
+        }
+    }
+
+    /* Grid interno del dashboard */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    @media (min-width: 768px) {
+        .stats-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+    }
+
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    @media (min-width: 768px) {
+        .actions-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+    }
 </style>
 {% endblock %}
+
+{% block main_class %}py-0 px-0{% endblock %}
 
 {% block content %}
 <div class="min-h-screen py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="editor-layout">
             <!-- Sidebar Navigation -->
-            <div class="md:col-span-1">
+            <div>
                 <div class="glass-sidebar p-6">
                     <h5 class="flex items-center text-lg font-semibold text-gray-800 mb-6">
                         <span class="material-icons mr-2">edit</span>
@@ -298,7 +348,7 @@
             </div>
             
             <!-- Main Content -->
-            <div class="md:col-span-3">
+            <div>
                 <div class="glass-editor-container p-6">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-2xl font-bold text-gray-800">{% block titulo_pagina %}Panel de Editor{% endblock %}</h2>

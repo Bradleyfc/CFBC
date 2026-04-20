@@ -28,6 +28,12 @@ class Noticia(models.Model):
         ('publicado', 'Publicado'),
         ('archivado', 'Archivado'),
     ]
+
+    VISIBILIDAD_CHOICES = [
+        ('solo_registrados', 'Solo usuarios registrados'),
+        ('publico', 'Público (cualquier visitante)'),
+        ('indexable', 'Público e indexable en buscadores'),
+    ]
     
     titulo = models.CharField(max_length=200)
     slug = models.SlugField(max_length=200, unique=True, blank=True)
@@ -37,6 +43,12 @@ class Noticia(models.Model):
     categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE, related_name='noticias')
     autor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='noticias')
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='borrador')
+    visibilidad = models.CharField(
+        max_length=20,
+        choices=VISIBILIDAD_CHOICES,
+        default='publico',
+        help_text="Controla quién puede ver esta noticia y si aparece en buscadores"
+    )
     destacada = models.BooleanField(default=False, help_text="Marcar como noticia destacada")
     
     # Fechas
