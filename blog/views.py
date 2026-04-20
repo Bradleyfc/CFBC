@@ -79,10 +79,13 @@ def detalle_noticia(request, slug):
     comentario_form = ComentarioForm()
     
     # Noticias relacionadas (misma categoría)
-    noticias_relacionadas = Noticia.objects.filter(
+    noticias_relacionadas_qs = Noticia.objects.filter(
         categoria=noticia.categoria,
         estado='publicado'
-    ).exclude(id=noticia.id)[:4]
+    ).exclude(id=noticia.id)
+    if not request.user.is_authenticated:
+        noticias_relacionadas_qs = noticias_relacionadas_qs.exclude(visibilidad='solo_registrados')
+    noticias_relacionadas = noticias_relacionadas_qs[:4]
     
     context = {
         'noticia': noticia,
