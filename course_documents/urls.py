@@ -45,4 +45,34 @@ urlpatterns = [
     path('student/<int:curso_id>/history/', 
          views.StudentDocumentHistoryView.as_view(), 
          name='student_history'),
+
+    # Admin: gestión de documentos por curso académico
+    path('admin/documentos/',
+         views.AdminDocumentosView.as_view(),
+         name='admin_documentos'),
+
+    path('admin/documentos/diagnostico/',
+         views.AdminDiagnosticoView.as_view(),
+         name='admin_diagnostico'),
+
+    path('admin/documentos/eliminar/<int:document_id>/',
+         views.AdminEliminarDocumentoView.as_view(),
+         name='admin_eliminar_documento'),
+
+    path('admin/documentos/carpeta/<int:folder_id>/eliminar/',
+         views.AdminEliminarCarpetaView.as_view(),
+         name='admin_eliminar_carpeta'),
+
+    path('admin/documentos/curso/<int:curso_id>/eliminar-todos/',
+         views.AdminEliminarTodosCursoView.as_view(),
+         name='admin_eliminar_todos_curso'),
+
+    # Eliminación directa desde disco (cuando los registros BD no existen)
+    path('admin/documentos/disco/archivo/eliminar/',
+         views.AdminEliminarArchivoDiscoView.as_view(),
+         name='admin_eliminar_archivo_disco'),
+
+    path('admin/documentos/disco/curso/<int:curso_id>/eliminar/',
+         views.AdminEliminarCarpetaDiscoView.as_view(),
+         name='admin_eliminar_carpeta_disco'),
 ]

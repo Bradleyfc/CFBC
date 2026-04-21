@@ -1,0 +1,537 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Documentos - Administración{% endblock %}
+
+{% block content %}
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12 min-h-screen">
+    <div class="absolute inset-0 opacity-30"
+        style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;">
+    </div>
+
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+
+        <!-- Header -->
+        <div class="mb-6 flex items-center justify-between flex-wrap gap-3">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">🗂️ Gestión de Documentos</h1>
+                <p class="text-gray-600 mt-1">Administra los documentos almacenados por curso académico</p>
+            </div>
+            <a href="{% url 'principal:profile' %}"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/60 backdrop-blur border border-white/80 text-gray-700 font-medium hover:bg-white/80 transition-all">
+                <span class="material-icons text-base">arrow_back</span>
+                Volver al perfil
+            </a>
+        </div>
+
+        <!-- Mensajes -->
+        {% if messages %}
+        <div class="mb-4 space-y-2">
+            {% for message in messages %}
+            <div class="{% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-error{% else %}alert-info{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Selector de Curso Académico -->
+        <div class="bg-white/70 backdrop-blur-md rounded-2xl border border-white/80 shadow-lg p-6 mb-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                <span class="material-icons text-blue-500">school</span>
+                Seleccionar Curso Académico
+            </h2>
+            <form method="get" class="flex flex-wrap gap-3 items-end">
+                <div class="flex-1 min-w-[200px]">
+                    <label class="block text-sm font-medium text-gray-600 mb-1">Curso Académico</label>
+                    <select name="curso_academico"
+                            class="w-full rounded-xl border border-gray-200 bg-white/80 px-4 py-2.5 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                        <option value="">-- Selecciona un curso académico --</option>
+                        {% for ca in cursos_academicos %}
+                        <option value="{{ ca.id }}"
+                            {% if curso_academico_sel and curso_academico_sel.id == ca.id %}selected{% endif %}>
+                            {{ ca.nombre }}
+                            {% if ca.activo %}(Activo){% elif ca.archivado %}(Archivado){% endif %}
+                            — {{ ca.total_documentos }} doc{% if ca.total_documentos != 1 %}s{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit"
+                        class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors flex items-center gap-2">
+                    <span class="material-icons text-base">search</span>
+                    Ver documentos
+                </button>
+            </form>
+        </div>
+
+        {% if curso_academico_sel %}
+        <!-- Resumen -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white/70 backdrop-blur-md rounded-2xl border border-white/80 shadow p-5 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+                    <span class="material-icons text-blue-600">description</span>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Total documentos</p>
+                    <p class="text-2xl font-bold text-blue-700">{{ total_docs_sel }}</p>
+                </div>
+            </div>
+            <div class="bg-white/70 backdrop-blur-md rounded-2xl border border-white/80 shadow p-5 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
+                    <span class="material-icons text-purple-600">storage</span>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Espacio utilizado</p>
+                    <p class="text-2xl font-bold text-purple-700">{{ total_size_sel|filesizeformat }}</p>
+                </div>
+            </div>
+            <div class="bg-white/70 backdrop-blur-md rounded-2xl border border-white/80 shadow p-5 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl {% if curso_academico_sel.archivado %}bg-orange-100{% else %}bg-green-100{% endif %} flex items-center justify-center">
+                    <span class="material-icons {% if curso_academico_sel.archivado %}text-orange-600{% else %}text-green-600{% endif %}">
+                        {% if curso_academico_sel.archivado %}archive{% else %}check_circle{% endif %}
+                    </span>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Estado</p>
+                    <p class="text-lg font-bold {% if curso_academico_sel.archivado %}text-orange-700{% else %}text-green-700{% endif %}">
+                        {% if curso_academico_sel.archivado %}Archivado{% elif curso_academico_sel.activo %}Activo{% else %}Inactivo{% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de cursos con documentos -->
+        {% if cursos_con_docs %}
+        <div class="space-y-4">
+            {% for item in cursos_con_docs %}
+            <div class="bg-white/70 backdrop-blur-md rounded-2xl border border-white/80 shadow-lg overflow-hidden">
+                <!-- Cabecera del curso -->
+                <div class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 border-b border-white/60">
+                    <div class="flex items-center gap-3">
+                        <span class="material-icons text-blue-500">class</span>
+                        <div>
+                            <h3 class="font-bold text-gray-800 text-lg">{{ item.curso_nombre }}</h3>
+                            <p class="text-sm text-gray-500">
+                                Profesor: {{ item.profesor_nombre }}
+                                &nbsp;·&nbsp;
+                                {{ item.total_docs }} documento{% if item.total_docs != 1 %}s{% endif %}
+                                &nbsp;·&nbsp;
+                                {{ item.total_size|filesizeformat }}
+                            </p>
+                        </div>
+                    </div>
+                    <!-- Botón eliminar todos -->
+                    {% if item.desde_disco or not item.curso_id %}
+                    <form id="form-todos-disco-{{ item.curso_id|default:'0' }}" method="post"
+                          action="{% url 'course_documents:admin_eliminar_carpeta_disco' item.curso_id|default:'0' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="curso_academico_id" value="{% if curso_academico_sel %}{{ curso_academico_sel.id }}{% else %}sin_ca{% endif %}">
+                        <button type="button"
+                                onclick="abrirModalEliminar('todos-disco-{{ item.curso_id|default:'0' }}', 'TODOS los archivos del curso', '{{ item.curso_nombre|escapejs }}')"
+                                class="inline-flex items-center gap-1.5 px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 font-semibold rounded-xl transition-colors text-sm">
+                            <span class="material-icons text-base">delete_sweep</span>Eliminar todos
+                        </button>
+                    </form>
+                    {% else %}
+                    <form id="form-todos-bd-{{ item.curso_id }}" method="post"
+                          action="{% url 'course_documents:admin_eliminar_todos_curso' item.curso_id %}">
+                        {% csrf_token %}
+                        <button type="button"
+                                onclick="abrirModalEliminar('todos-bd-{{ item.curso_id }}', 'TODOS los documentos del curso', '{{ item.curso_nombre|escapejs }}')"
+                                class="inline-flex items-center gap-1.5 px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 font-semibold rounded-xl transition-colors text-sm">
+                            <span class="material-icons text-base">delete_sweep</span>Eliminar todos
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+
+                <!-- Carpetas -->
+                <div class="p-4 space-y-3">
+                    {% for carpeta_item in item.carpetas %}
+                    <div class="rounded-xl border border-gray-100 bg-white/50 overflow-hidden">
+                        <!-- Cabecera carpeta -->
+                        <div class="flex items-center justify-between px-4 py-3 bg-gray-50/80 border-b border-gray-100">
+                            <div class="flex items-center gap-2">
+                                <span class="material-icons text-yellow-500 text-lg">folder</span>
+                                <span class="font-semibold text-gray-700">{{ carpeta_item.folder_nombre }}</span>
+                                <span class="text-xs text-gray-400 ml-1">{{ carpeta_item.cantidad }} archivo{% if carpeta_item.cantidad != 1 %}s{% endif %}</span>
+                            </div>
+                            {% if carpeta_item.desde_disco %}
+                            <form id="form-carpeta-disco-{{ item.curso_id }}-{{ carpeta_item.folder_id }}" method="post"
+                                  action="{% url 'course_documents:admin_eliminar_carpeta_disco' item.curso_id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="folder_id" value="{{ carpeta_item.folder_id }}">
+                                <input type="hidden" name="curso_academico_id" value="{% if curso_academico_sel %}{{ curso_academico_sel.id }}{% else %}sin_ca{% endif %}">
+                                <button type="button"
+                                        onclick="abrirModalEliminar('carpeta-disco-{{ item.curso_id }}-{{ carpeta_item.folder_id }}', 'la carpeta', '{{ carpeta_item.folder_nombre|escapejs }}')"
+                                        class="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-100 hover:bg-orange-200 text-orange-700 font-medium rounded-lg transition-colors text-xs">
+                                    <span class="material-icons text-sm">folder_delete</span>Eliminar carpeta
+                                </button>
+                            </form>
+                            {% elif carpeta_item.folder_id %}
+                            <form id="form-carpeta-bd-{{ carpeta_item.folder_id }}" method="post"
+                                  action="{% url 'course_documents:admin_eliminar_carpeta' carpeta_item.folder_id %}">
+                                {% csrf_token %}
+                                <button type="button"
+                                        onclick="abrirModalEliminar('carpeta-bd-{{ carpeta_item.folder_id }}', 'la carpeta', '{{ carpeta_item.folder_nombre|escapejs }}')"
+                                        class="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-100 hover:bg-orange-200 text-orange-700 font-medium rounded-lg transition-colors text-xs">
+                                    <span class="material-icons text-sm">folder_delete</span>Eliminar carpeta
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+
+                        <!-- Archivos -->
+                        <div class="divide-y divide-gray-50">
+                            {% if carpeta_item.desde_disco %}
+                            {% for archivo in carpeta_item.archivos %}
+                            <div class="flex items-center justify-between px-4 py-3 hover:bg-gray-50/60 transition-colors">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <span class="material-icons text-gray-400 text-lg flex-shrink-0">insert_drive_file</span>
+                                    <div class="min-w-0">
+                                        <p class="font-medium text-gray-700 truncate">{{ archivo.nombre }}</p>
+                                        <p class="text-xs text-gray-400">{{ archivo.size|filesizeformat }}</p>
+                                    </div>
+                                </div>
+                                <form id="form-archivo-disco-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" method="post"
+                                      action="{% url 'course_documents:admin_eliminar_archivo_disco' %}"
+                                      class="ml-3 flex-shrink-0">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="rel_path" value="{{ archivo.rel_path }}">
+                                    <input type="hidden" name="curso_academico_id" value="{% if curso_academico_sel %}{{ curso_academico_sel.id }}{% else %}sin_ca{% endif %}">
+                                    <button type="button"
+                                            onclick="abrirModalEliminar('archivo-disco-{{ forloop.parentloop.counter }}-{{ forloop.counter }}', 'el archivo', '{{ archivo.nombre|escapejs }}')"
+                                            class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 font-medium rounded-lg transition-colors text-xs">
+                                        <span class="material-icons text-sm">delete</span>Eliminar
+                                    </button>
+                                </form>
+                            </div>
+                            {% endfor %}
+                            {% else %}
+                            {% for doc in carpeta_item.documentos %}
+                            <div class="flex items-center justify-between px-4 py-3 hover:bg-gray-50/60 transition-colors">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <span class="material-icons text-gray-400 text-lg flex-shrink-0">insert_drive_file</span>
+                                    <div class="min-w-0">
+                                        <p class="font-medium text-gray-700 truncate">{{ doc.name }}</p>
+                                        <p class="text-xs text-gray-400">
+                                            {{ doc.get_file_size_display }}
+                                            &nbsp;·&nbsp; {{ doc.uploaded_at|date:"d/m/Y H:i" }}
+                                            {% if doc.uploaded_by %}&nbsp;·&nbsp; {{ doc.uploaded_by.get_full_name|default:doc.uploaded_by.username }}{% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                                <form id="form-doc-bd-{{ doc.id }}" method="post"
+                                      action="{% url 'course_documents:admin_eliminar_documento' doc.id %}"
+                                      class="ml-3 flex-shrink-0">
+                                    {% csrf_token %}
+                                    <button type="button"
+                                            onclick="abrirModalEliminar('doc-bd-{{ doc.id }}', 'el documento', '{{ doc.name|escapejs }}')"
+                                            class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 font-medium rounded-lg transition-colors text-xs">
+                                        <span class="material-icons text-sm">delete</span>Eliminar
+                                    </button>
+                                </form>
+                            </div>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% else %}
+        <div class="bg-white/70 backdrop-blur-md rounded-2xl border border-white/80 shadow p-10 text-center">
+            <span class="material-icons text-5xl text-gray-300 mb-3 block">folder_off</span>
+            <p class="text-gray-500 text-lg font-medium">No hay documentos en este curso académico</p>
+            <p class="text-gray-400 text-sm mt-1">Los profesores aún no han subido documentos en este período.</p>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="bg-white/70 backdrop-blur-md rounded-2xl border border-white/80 shadow p-10 text-center">
+            <span class="material-icons text-5xl text-blue-200 mb-3 block">school</span>
+            <p class="text-gray-500 text-lg font-medium">Selecciona un curso académico</p>
+            <p class="text-gray-400 text-sm mt-1">Elige un curso académico del selector para ver y gestionar sus documentos.</p>
+        </div>
+        {% endif %}
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- MODAL DE CONFIRMACIÓN DE ELIMINACIÓN (glassmorphism)                   -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div id="deleteConfirmModal" class="glass-modal hidden">
+    <div class="glass-modal-overlay"></div>
+    <div class="glass-modal-container">
+        <div class="glass-modal-content">
+            <div class="glass-modal-header">
+                <div class="glass-modal-icon glass-icon-red">
+                    <span class="material-icons">warning</span>
+                </div>
+                <h3 class="glass-modal-title">Confirmar Eliminación</h3>
+            </div>
+            <div class="glass-modal-body">
+                <p class="text-gray-700 text-center mb-4">
+                    ¿Estás seguro de que quieres eliminar
+                    <span id="deleteModalTipo" class="font-medium"></span>
+                    <strong id="deleteModalNombre" class="text-red-700"></strong>?
+                </p>
+                <div class="glass-warning-box">
+                    <div class="flex items-center">
+                        <span class="material-icons text-red-500 mr-2">error</span>
+                        <span class="text-sm text-red-700">
+                            Esta acción eliminará el elemento permanentemente y no se puede deshacer.
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-modal-footer">
+                <button type="button"
+                        class="glass-btn glass-btn-secondary flex-1"
+                        onclick="hideDeleteModal()">
+                    <span class="glass-btn-content">
+                        <span class="material-icons mr-2">close</span>
+                        Cancelar
+                    </span>
+                    <div class="glass-btn-glow"></div>
+                </button>
+                <button type="button"
+                        id="deleteModalConfirmar"
+                        class="glass-btn glass-btn-danger flex-1">
+                    <span class="glass-btn-content">
+                        <span class="material-icons mr-2">delete</span>
+                        Eliminar
+                    </span>
+                    <div class="glass-btn-glow"></div>
+                </button>
+            </div>
+            <div class="glass-modal-glow glass-glow-red"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* ── Glassmorphism modal ─────────────────────────────────────────────────── */
+.glass-modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.glass-modal.show { opacity: 1; visibility: visible; }
+
+.glass-modal-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    cursor: pointer;
+}
+.glass-modal-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1rem;
+    position: relative;
+    z-index: 10;
+}
+.glass-modal-content {
+    position: relative;
+    max-width: 28rem;
+    width: 100%;
+    border-radius: 24px;
+    overflow: hidden;
+    transform: scale(0.9) translateY(20px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(135deg,
+        rgba(255,255,255,0.95) 0%,
+        rgba(255,255,255,0.85) 50%,
+        rgba(255,255,255,0.9) 100%);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    box-shadow:
+        0 25px 80px rgba(0,0,0,0.15),
+        0 12px 40px rgba(0,0,0,0.1),
+        0 6px 20px rgba(0,0,0,0.08),
+        inset 0 1px 0 rgba(255,255,255,0.8),
+        inset 0 -1px 0 rgba(0,0,0,0.05);
+    border: 1px solid rgba(255,255,255,0.4);
+}
+.glass-modal.show .glass-modal-content {
+    transform: scale(1) translateY(0);
+}
+.glass-modal-glow {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    transform: translate(-50%,-50%);
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.3;
+}
+.glass-modal-header {
+    padding: 2rem 2rem 1rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.3);
+    position: relative; z-index: 2;
+}
+.glass-modal-icon {
+    width: 4rem; height: 4rem;
+    margin: 0 auto 1rem;
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.6);
+    border: 1px solid rgba(255,255,255,0.3);
+}
+.glass-icon-red {
+    background: linear-gradient(135deg, rgba(239,68,68,0.2) 0%, rgba(220,38,38,0.1) 100%);
+    color: #7f1d1d;
+}
+.glass-modal-title {
+    font-size: 1.5rem; font-weight: 700;
+    color: #374151; margin: 0;
+    text-shadow: 0 1px 2px rgba(255,255,255,0.5);
+}
+.glass-modal-body {
+    padding: 1.5rem 2rem;
+    position: relative; z-index: 2;
+}
+.glass-modal-footer {
+    padding: 1rem 2rem 2rem;
+    display: flex; gap: 1rem;
+    position: relative; z-index: 2;
+}
+.glass-warning-box {
+    background: linear-gradient(135deg, rgba(254,226,226,0.8) 0%, rgba(252,165,165,0.6) 100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 12px;
+    padding: 0.875rem;
+    margin-top: 1rem;
+}
+.glass-glow-red {
+    background: radial-gradient(circle, rgba(239,68,68,0.15) 0%, transparent 70%);
+}
+
+/* ── Glassmorphism buttons ───────────────────────────────────────────────── */
+.glass-btn {
+    position: relative;
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 0.75rem 1.5rem;
+    border-radius: 14px;
+    font-size: 0.875rem; font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid;
+    overflow: hidden;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.06),
+                inset 0 1px 0 rgba(255,255,255,0.4);
+}
+.glass-btn-content {
+    position: relative; z-index: 2;
+    display: flex; align-items: center;
+}
+.glass-btn-glow {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 0; height: 0;
+    border-radius: 50%;
+    transform: translate(-50%,-50%);
+    transition: all 0.5s ease;
+    pointer-events: none;
+}
+.glass-btn:hover .glass-btn-glow {
+    width: 200%; height: 200%;
+    opacity: 0.6;
+}
+.glass-btn-danger {
+    background: linear-gradient(135deg, rgba(239,68,68,0.25) 0%, rgba(220,38,38,0.15) 50%, rgba(185,28,28,0.1) 100%);
+    color: #7f1d1d;
+    border-color: rgba(239,68,68,0.3);
+}
+.glass-btn-danger .glass-btn-glow {
+    background: radial-gradient(circle, rgba(239,68,68,0.2) 0%, transparent 70%);
+}
+.glass-btn-danger:hover {
+    background: linear-gradient(135deg, rgba(239,68,68,0.35) 0%, rgba(220,38,38,0.25) 50%, rgba(185,28,28,0.15) 100%);
+    border-color: rgba(239,68,68,0.5);
+    color: #991b1b;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(239,68,68,0.2), 0 4px 12px rgba(0,0,0,0.1),
+                inset 0 1px 0 rgba(255,255,255,0.5);
+}
+.glass-btn-secondary {
+    background: linear-gradient(135deg, rgba(107,114,128,0.25) 0%, rgba(75,85,99,0.15) 50%, rgba(55,65,81,0.1) 100%);
+    color: #374151;
+    border-color: rgba(107,114,128,0.3);
+}
+.glass-btn-secondary .glass-btn-glow {
+    background: radial-gradient(circle, rgba(107,114,128,0.2) 0%, transparent 70%);
+}
+.glass-btn-secondary:hover {
+    background: linear-gradient(135deg, rgba(107,114,128,0.35) 0%, rgba(75,85,99,0.25) 50%, rgba(55,65,81,0.15) 100%);
+    border-color: rgba(107,114,128,0.5);
+    color: #1f2937;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(107,114,128,0.15), 0 4px 12px rgba(0,0,0,0.08),
+                inset 0 1px 0 rgba(255,255,255,0.5);
+}
+</style>
+
+<script>
+let _formIdPendiente = null;
+
+function abrirModalEliminar(formId, tipo, nombre) {
+    _formIdPendiente = formId;
+    document.getElementById('deleteModalTipo').textContent = tipo + ' ';
+    document.getElementById('deleteModalNombre').textContent = '"' + nombre + '"';
+    const modal = document.getElementById('deleteConfirmModal');
+    modal.classList.remove('hidden');
+    requestAnimationFrame(() => modal.classList.add('show'));
+    document.addEventListener('keydown', _escHandler);
+}
+
+function hideDeleteModal() {
+    const modal = document.getElementById('deleteConfirmModal');
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        _formIdPendiente = null;
+    }, 400);
+    document.removeEventListener('keydown', _escHandler);
+}
+
+function _escHandler(e) {
+    if (e.key === 'Escape') hideDeleteModal();
+}
+
+document.getElementById('deleteModalConfirmar').addEventListener('click', function () {
+    if (!_formIdPendiente) return;
+    const form = document.getElementById('form-' + _formIdPendiente);
+    if (form) {
+        hideDeleteModal();
+        setTimeout(() => form.submit(), 420);
+    }
+});
+
+document.getElementById('deleteConfirmModal').addEventListener('click', function (e) {
+    if (e.target.classList.contains('glass-modal-overlay')) hideDeleteModal();
+});
+</script>
+
+{% endblock %}

@@ -282,6 +282,19 @@ def archivar_datos_curso_academico(curso_academico):
 
             # ── 5. Archivar Asistencias ───────────────────────────────────────
             cursos_ids = list(cursos_archivados_map.keys())
+
+            # Ampliar cursos_ids para incluir TODOS los cursos del CA,
+            # incluyendo los finalizados que pueden no estar en cursos_archivados_map
+            # (porque sus matrículas/calificaciones ya no existen)
+            todos_cursos_del_ca = list(
+                Curso.objects.filter(
+                    curso_academico=curso_academico
+                ).values_list('pk', flat=True)
+            )
+            for cid in todos_cursos_del_ca:
+                if cid not in cursos_ids:
+                    cursos_ids.append(cid)
+
             asistencias_qs = Asistencia.objects.filter(
                 course__pk__in=cursos_ids
             ).select_related('student', 'course')
@@ -354,7 +367,28 @@ def archivar_datos_curso_academico(curso_academico):
                 PreguntaFormulario.objects.filter(formulario=formulario).delete()
             formularios_qs.delete()
 
-            # 6g. Cursos (al final, después de eliminar todos sus dependientes)
+            # ── 6g. Cursos (al final, después de eliminar todos sus dependientes)
+            # IMPORTANTE: antes de eliminar los Curso, desvinculamos las carpetas
+            # de documentos para que no se eliminen en cascada. Las carpetas
+            # conservan su curso_academico y sus archivos físicos intactos.
+            from course_documents.models import DocumentFolder as DocFolder
+
+            # Primero: aseguramos que TODAS las carpetas de estos cursos tengan
+            # curso_academico asignado (cubre cursos finalizados sin CA en carpeta)
+            carpetas_sin_ca = DocFolder.objects.filter(
+                curso__pk__in=cursos_ids,
+                curso_academico__isnull=True
+            )
+            for carpeta in carpetas_sin_ca:
+                carpeta.curso_academico = curso_academico
+                carpeta.save(update_fields=['curso_academico'])
+
+            # Segundo: desvincular el curso de TODAS las carpetas de estos cursos
+            # (usando cursos_ids que incluye todos los cursos del CA, incluso finalizados)
+            DocFolder.objects.filter(
+                curso__pk__in=cursos_ids
+            ).update(curso=None)
+
             Curso.objects.filter(
                 curso_academico=curso_academico
             ).delete()

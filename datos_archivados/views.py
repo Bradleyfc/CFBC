@@ -5014,3 +5014,6 @@ def combinar_datos_seleccionadas(request):
         'message': f'Combinación selectiva iniciada para {len(tablas_seleccionadas)} tablas. Puede seguir el progreso en tiempo real.',
         'tablas_seleccionadas': tablas_seleccionadas
     })
+
+
+# ─────────────────────────────────────────────────────────────────────────────

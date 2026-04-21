@@ -14,7 +14,8 @@ def course_document_upload_path(instance, filename):
 
 class DocumentFolder(models.Model):
     """Carpeta para organizar documentos por curso"""
-    curso = models.ForeignKey('principal.Curso', on_delete=models.CASCADE, related_name='document_folders', verbose_name='Curso')
+    curso = models.ForeignKey('principal.Curso', on_delete=models.SET_NULL, null=True, blank=True, related_name='document_folders', verbose_name='Curso')
+    curso_academico = models.ForeignKey('principal.CursoAcademico', on_delete=models.SET_NULL, null=True, blank=True, related_name='document_folders', verbose_name='Curso Académico')
     name = models.CharField(max_length=255, verbose_name='Nombre de la carpeta')
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Creado por')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de creación')
@@ -24,7 +25,9 @@ class DocumentFolder(models.Model):
         verbose_name = '📁 Carpeta de Documentos'
         verbose_name_plural = '📁 Carpetas de Documentos'
         ordering = ['name']
-        unique_together = [['curso', 'name']]  # No permitir carpetas con el mismo nombre en el mismo curso
+        # unique_together solo aplica cuando curso no es NULL
+        # (Django no soporta unique_together con campos nullable de forma nativa,
+        # se maneja en clean())
 
     def __str__(self):
         return f"{self.name} - {self.curso.name}"
@@ -33,22 +36,32 @@ class DocumentFolder(models.Model):
         from django.core.exceptions import ValidationError
         import re
         
-        # Validar que el nombre no esté vacío después de quitar espacios
         if not self.name or not self.name.strip():
             raise ValidationError({'name': 'El nombre de la carpeta no puede estar vacío.'})
         
-        # Validar caracteres especiales no permitidos
         if re.search(r'[<>:"/\\|?*]', self.name):
             raise ValidationError({'name': 'El nombre de la carpeta contiene caracteres no permitidos.'})
         
-        # Validar longitud máxima
-        if len(self.name.strip()) > 200:  # Reducir límite para dar margen
+        if len(self.name.strip()) > 200:
             raise ValidationError({'name': 'El nombre de la carpeta es demasiado largo (máximo 200 caracteres).'})
         
-        # Limpiar espacios al inicio y final
         self.name = self.name.strip()
 
+        # Validar unicidad de nombre dentro del mismo curso (cuando curso no es NULL)
+        if self.curso_id:
+            qs = DocumentFolder.objects.filter(curso_id=self.curso_id, name=self.name)
+            if self.pk:
+                qs = qs.exclude(pk=self.pk)
+            if qs.exists():
+                raise ValidationError({'name': 'Ya existe una carpeta con ese nombre en este curso.'})
+
     def save(self, *args, **kwargs):
+        # Auto-poblar curso_academico desde el curso si no está asignado
+        if self.curso_id and not self.curso_academico_id:
+            try:
+                self.curso_academico = self.curso.curso_academico
+            except Exception:
+                pass
         self.full_clean()
         super().save(*args, **kwargs)
 

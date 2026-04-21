@@ -31,6 +31,13 @@
                 </div>
                 <span class="glass-link-text">Ver Datos Migrados</span>
             </a>
+
+            <a href="{% url 'course_documents:admin_documentos' %}" class="glass-link glass-link-teal">
+                <div class="glass-link-icon glass-icon-teal">
+                    <span class="fa material-icons">folder_delete</span>
+                </div>
+                <span class="glass-link-text">Gestión de Documentos</span>
+            </a>
         </div>
     </div>
 </div>
@@ -120,6 +127,11 @@
         color: #1e40af;
     }
 
+    .glass-content .glass-icon-teal {
+        background: linear-gradient(135deg, rgba(20, 184, 166, 0.3), rgba(13, 148, 136, 0.2));
+        color: #134e4a;
+    }
+
     /* Glass Link Text - SCOPED */
     .glass-content .glass-link-text {
         font-weight: 600;
@@ -136,6 +148,10 @@
 
     .glass-content .glass-link-outline .glass-link-text {
         color: #1e40af;
+    }
+
+    .glass-content .glass-link-teal .glass-link-text {
+        color: #134e4a;
     }
 
     /* Chevron color - SCOPED */
