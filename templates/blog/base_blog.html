@@ -17,6 +17,7 @@
     <link href="{% static 'css/icons.css' %}" rel="stylesheet">
     
     <style>
+        /* Updated: 2026-04-21 16:30 - Dropdown moved to body with JS */
         /* Glassmorphism Header Container */
         .glass-header-container {
             /* Fondo azul oscuro sólido */
@@ -230,51 +231,69 @@
         }
 
         /* Dropdown Menu Glassmorphism */
-        .glass-dropdown {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 12px;
+        #user-dropdown.glass-dropdown {
+            background: rgba(15, 30, 80, 0.9) !important;
+            backdrop-filter: blur(24px) !important;
+            -webkit-backdrop-filter: blur(24px) !important;
+            border: 1px solid rgba(147, 197, 253, 0.35) !important;
+            border-radius: 14px !important;
             box-shadow: 
-                0 8px 32px rgba(0, 0, 0, 0.2),
-                inset 0 1px 0 rgba(255, 255, 255, 0.4);
-            z-index: 9999 !important;
-            min-width: 200px;
-            position: fixed;
+                0 8px 32px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(147, 197, 253, 0.3) !important;
+            z-index: 99999 !important;
+            width: 200px !important;
+            max-width: 200px !important;
+            min-width: 200px !important;
+            position: fixed !important;
             opacity: 0;
             visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.3s ease;
+            transform: translateY(-8px) scale(0.95);
+            transition: all 0.2s ease;
             pointer-events: none;
+            display: block !important;
         }
 
-        .glass-dropdown.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-            pointer-events: auto;
+        #user-dropdown.glass-dropdown.show {
+            opacity: 1 !important;
+            visibility: visible !important;
+            transform: translateY(0) scale(1) !important;
+            pointer-events: auto !important;
+        }
+
+        #user-dropdown.glass-dropdown > div {
+            width: 200px !important;
+            max-width: 200px !important;
+            padding: 6px !important;
+            box-sizing: border-box !important;
         }
 
         .glass-dropdown a {
-            transition: all 0.2s ease;
-            color: #374151 !important;
-            display: flex;
+            transition: all 0.15s ease;
+            color: rgba(255, 255, 255, 0.95) !important;
+            display: flex !important;
             align-items: center;
-            padding: 0.75rem 1rem;
-            text-decoration: none;
+            padding: 0.6rem 0.9rem !important;
+            text-decoration: none !important;
+            font-size: 0.875rem !important;
+            border-radius: 8px !important;
+            white-space: nowrap !important;
         }
 
         .glass-dropdown a:hover {
-            background: rgba(59, 130, 246, 0.1);
-            border-radius: 8px;
-            color: #1e40af !important;
+            background: rgba(96, 165, 250, 0.35) !important;
+            color: white !important;
         }
 
-        /* Asegurar que el dropdown sea visible */
+        .glass-dropdown hr {
+            border-color: rgba(147, 197, 253, 0.3) !important;
+            margin: 6px 8px !important;
+        }
+
+        /* Asegurar que el dropdown sea visible y no heredar del contenedor */
         .dropdown-container {
-            position: relative;
-            z-index: 9999;
+            position: relative !important;
+            z-index: 9999 !important;
+            display: inline-block !important;
         }
 
         /* Prevenir scroll horizontal global */
@@ -299,14 +318,14 @@
 
         /* Mobile Menu Glassmorphism */
         .glass-mobile-menu {
-            background: rgba(30, 64, 175, 0.95);
+            background: rgba(30, 64, 175, 0.75);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(59, 130, 246, 0.3);
+            border: 1px solid rgba(59, 130, 246, 0.25);
             border-radius: 15px;
             box-shadow: 
                 0 8px 32px rgba(0, 0, 0, 0.3),
-                inset 0 1px 0 rgba(147, 197, 253, 0.3);
+                inset 0 1px 0 rgba(147, 197, 253, 0.2);
         }
 
         /* Asegurar visibilidad del texto */
@@ -349,9 +368,9 @@
 <body class="bg-gray-50">
     <!-- Glassmorphism Header Container -->
     <div class="container mx-auto px-4" style="position: relative; z-index: 1000;">
-        <header class="glass-header-container flex flex-wrap items-center justify-between py-4 mb-4 mx-4 mt-3">
+        <header class="glass-header-container flex flex-wrap items-center justify-between py-4 mb-4 mx-4 mt-3 px-6">
             <!-- Left Side: Logo and Inicio -->
-            <div class="flex items-center space-x-4 ml-8">
+            <div class="flex items-center space-x-4 ml-4">
                 <a href="{% url 'blog:lista_noticias' %}" class="glass-logo flex items-center font-bold text-xl">
                     <span class="material-icons mr-2">article</span>
                     Noticias CFBC
@@ -389,14 +408,14 @@
 
                 <!-- User Menu -->
                 {% if user.is_authenticated %}
-                    <div class="dropdown-container">
+                    <div class="dropdown-container" style="position: relative;">
                         <button class="glass-nav-link flex items-center" id="user-menu-button">
                             <span class="material-icons mr-1">person</span>
                             {{ user.username }}
                             <span class="material-icons ml-1">arrow_drop_down</span>
                         </button>
-                        <div class="glass-dropdown" id="user-dropdown">
-                            <div class="py-1">
+                        <div class="glass-dropdown" id="user-dropdown" style="width: 200px !important; position: absolute !important; right: 0 !important; left: auto !important;">
+                            <div class="py-1" style="width: 200px;">
                                 {% if user.groups.all|length > 0 %}
                                     {% for group in user.groups.all %}
                                         {% if group.name == 'Editor' %}
@@ -433,63 +452,74 @@
             </div>
 
             <!-- Mobile menu button -->
-            <div class="md:hidden">
-                <button type="button" class="glass-nav-link" onclick="toggleMobileMenu()">
+            <div class="md:hidden relative mr-8">
+                <button type="button" class="glass-nav-link" onclick="toggleMobileMenu()" id="mobile-menu-button">
                     <span class="material-icons">menu</span>
                 </button>
-            </div>
-
-            <!-- Mobile Navigation Menu -->
-            <div id="mobile-menu" class="md:hidden hidden w-full mt-4">
-                <div class="glass-mobile-menu px-4 py-3 space-y-2">
-                    <a href="{% url 'principal:home' %}" class="block glass-nav-link text-center">
-                        Inicio
-                    </a>
-                    {% for categoria in categorias %}
-                    <a href="{% url 'blog:categoria_noticias' categoria.slug %}" class="block glass-nav-link text-center">
-                        {{ categoria.nombre }}
-                    </a>
-                    {% endfor %}
-                    
-                    <!-- Mobile Search -->
-                    <form class="mt-4" method="GET" action="{% url 'blog:lista_noticias' %}">
-                        <div class="relative">
-                            <input type="search" name="q" placeholder="Buscar noticias..." 
-                                   value="{{ request.GET.q }}"
-                                   class="glass-search-input w-full px-4 py-2 pr-10 rounded-lg">
-                            <button type="submit" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-white">
-                                <span class="material-icons">search</span>
-                            </button>
-                        </div>
-                    </form>
-                    
-                    {% if user.is_authenticated %}
-                        <div class="border-t border-blue-600 pt-2 mt-4">
-                            <span class="block text-blue-200 px-3 py-1 text-sm">{{ user.username }}</span>
-                            {% if user.groups.all|length > 0 %}
-                                {% for group in user.groups.all %}
-                                    {% if group.name == 'Editor' %}
-                                        <a href="{% url 'blog:panel_editores' %}" class="block glass-nav-link text-center mt-2">
-                                            Panel de Editor
-                                        </a>
-                                    {% endif %}
-                                {% endfor %}
-                            {% endif %}
-                            {% if user.is_staff %}
-                            <a href="{% url 'admin:index' %}" class="block glass-nav-link text-center mt-2">
-                                Admin
-                            </a>
-                            {% endif %}
-                            <a href="#" onclick="document.getElementById('logout-form').submit(); return false;" 
-                               class="block glass-nav-link text-center mt-2">
-                                Cerrar Sesión
-                            </a>
-                        </div>
-                    {% else %}
-                        <a href="{% url 'login' %}" class="block glass-button-oval text-center mt-4">
-                            Iniciar Sesión
+                
+                <!-- Mobile Navigation Menu - Dropdown Style -->
+                <div id="mobile-menu" class="hidden absolute right-0 top-full mt-2 w-80 z-50">
+                    <div class="glass-mobile-menu px-4 py-3 space-y-2 rounded-2xl shadow-2xl">
+                        <a href="{% url 'principal:home' %}" class="block glass-nav-link text-center text-sm py-2">
+                            Inicio
                         </a>
-                    {% endif %}
+                        {% for categoria in categorias %}
+                        <a href="{% url 'blog:categoria_noticias' categoria.slug %}" class="block glass-nav-link text-center text-sm py-2">
+                            {{ categoria.nombre }}
+                        </a>
+                        {% endfor %}
+                        
+                        <!-- Mobile Search -->
+                        <form class="mt-3 pt-3 border-t border-blue-500 border-opacity-30" method="GET" action="{% url 'blog:lista_noticias' %}">
+                            <div class="relative">
+                                <input type="search" name="q" placeholder="Buscar..." 
+                                       value="{{ request.GET.q }}"
+                                       class="glass-search-input w-full px-3 py-2 pr-10 rounded-lg text-sm">
+                                <button type="submit" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-white">
+                                    <span class="material-icons text-sm">search</span>
+                                </button>
+                            </div>
+                        </form>
+                        
+                        {% if user.is_authenticated %}
+                            <div class="border-t border-blue-500 border-opacity-30 pt-3 mt-3">
+                                <div class="text-center mb-3">
+                                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-blue-500 bg-opacity-30 text-blue-100">
+                                        <span class="material-icons text-sm mr-1.5">person</span>
+                                        {{ user.username }}
+                                    </span>
+                                </div>
+                                
+                                <div class="flex flex-col items-center gap-2">
+                                    {% if user.groups.all|length > 0 %}
+                                        {% for group in user.groups.all %}
+                                            {% if group.name == 'Editor' %}
+                                                <a href="{% url 'blog:panel_editores' %}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium bg-blue-500 bg-opacity-70 text-white hover:bg-opacity-90 transition-all shadow-sm">
+                                                    <span class="material-icons text-base leading-none">edit</span>
+                                                    Panel de Editor
+                                                </a>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                    {% if user.is_staff %}
+                                    <a href="{% url 'admin:index' %}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium bg-purple-500 bg-opacity-70 text-white hover:bg-opacity-90 transition-all shadow-sm">
+                                        <span class="material-icons text-base leading-none">settings</span>
+                                        Admin
+                                    </a>
+                                    {% endif %}
+                                    <a href="#" onclick="document.getElementById('logout-form').submit(); return false;" 
+                                       class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium bg-red-500 bg-opacity-70 text-white hover:bg-opacity-90 transition-all shadow-sm">
+                                        <span class="material-icons text-base leading-none">logout</span>
+                                        Cerrar Sesión
+                                    </a>
+                                </div>
+                            </div>
+                        {% else %}
+                            <a href="{% url 'login' %}" class="block text-center mt-4 glass-button-oval">
+                                Iniciar Sesión
+                            </a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </header>
@@ -756,25 +786,79 @@
             const userMenuButton = document.getElementById('user-menu-button');
             const userDropdown = document.getElementById('user-dropdown');
             
+            console.log('Dropdown script loaded');
+            console.log('Button:', userMenuButton);
+            console.log('Dropdown:', userDropdown);
+            
             if (userMenuButton && userDropdown) {
                 let timeoutId;
                 
-                // Position dropdown
+                // Mover el dropdown al body para evitar herencia de estilos
+                console.log('Moving dropdown to body');
+                document.body.appendChild(userDropdown);
+                console.log('Dropdown moved, parent is now:', userDropdown.parentElement);
+                
+                // Forzar estilos directamente en el elemento
+                userDropdown.style.cssText = `
+                    width: 200px !important;
+                    max-width: 200px !important;
+                    min-width: 200px !important;
+                    position: fixed !important;
+                    z-index: 99999 !important;
+                    background: rgba(15, 30, 80, 0.9) !important;
+                    backdrop-filter: blur(24px) !important;
+                    border: 1px solid rgba(147, 197, 253, 0.35) !important;
+                    border-radius: 14px !important;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(147, 197, 253, 0.3) !important;
+                    opacity: 0;
+                    visibility: hidden;
+                    transform: translateY(-8px) scale(0.95);
+                    transition: all 0.2s ease;
+                    pointer-events: none;
+                    display: block !important;
+                `;
+                
+                // Forzar ancho en el div interno también
+                const innerDiv = userDropdown.querySelector('div');
+                if (innerDiv) {
+                    innerDiv.style.cssText = `
+                        width: 200px !important;
+                        max-width: 200px !important;
+                        padding: 6px !important;
+                        box-sizing: border-box !important;
+                    `;
+                }
+                
+                // Función para posicionar el dropdown
                 function positionDropdown() {
                     const buttonRect = userMenuButton.getBoundingClientRect();
+                    userDropdown.style.position = 'fixed';
                     userDropdown.style.top = (buttonRect.bottom + 8) + 'px';
-                    userDropdown.style.right = (window.innerWidth - buttonRect.right) + 'px';
+                    userDropdown.style.left = (buttonRect.right - 200) + 'px';
+                    userDropdown.style.width = '200px';
+                    userDropdown.style.right = 'auto';
+                    console.log('Dropdown positioned at:', userDropdown.style.left, userDropdown.style.top);
                 }
                 
                 userMenuButton.addEventListener('mouseenter', function() {
                     clearTimeout(timeoutId);
                     positionDropdown();
+                    userDropdown.style.opacity = '1';
+                    userDropdown.style.visibility = 'visible';
+                    userDropdown.style.transform = 'translateY(0) scale(1)';
+                    userDropdown.style.pointerEvents = 'auto';
                     userDropdown.classList.add('show');
+                    console.log('Dropdown shown, width:', userDropdown.offsetWidth);
                 });
                 
                 userMenuButton.addEventListener('mouseleave', function() {
                     timeoutId = setTimeout(function() {
+                        userDropdown.style.opacity = '0';
+                        userDropdown.style.visibility = 'hidden';
+                        userDropdown.style.transform = 'translateY(-8px) scale(0.95)';
+                        userDropdown.style.pointerEvents = 'none';
                         userDropdown.classList.remove('show');
+                        console.log('Dropdown hidden');
                     }, 150);
                 });
                 
@@ -783,11 +867,21 @@
                 });
                 
                 userDropdown.addEventListener('mouseleave', function() {
+                    userDropdown.style.opacity = '0';
+                    userDropdown.style.visibility = 'hidden';
+                    userDropdown.style.transform = 'translateY(-8px) scale(0.95)';
+                    userDropdown.style.pointerEvents = 'none';
                     userDropdown.classList.remove('show');
                 });
                 
-                // Reposition on window resize
-                window.addEventListener('resize', positionDropdown);
+                // Reposicionar en resize
+                window.addEventListener('resize', function() {
+                    if (userDropdown.classList.contains('show')) {
+                        positionDropdown();
+                    }
+                });
+            } else {
+                console.error('Button or dropdown not found!');
             }
         });
     </script>
