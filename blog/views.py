@@ -75,8 +75,8 @@ def detalle_noticia(request, slug):
     # Comentarios de la noticia
     comentarios = noticia.comentarios.filter(activo=True).select_related('autor')
     
-    # Formulario para nuevos comentarios
-    comentario_form = ComentarioForm()
+    # Formulario para nuevos comentarios (solo si la noticia permite comentarios)
+    comentario_form = ComentarioForm() if noticia.permitir_comentarios else None
     
     # Noticias relacionadas (misma categoría)
     noticias_relacionadas_qs = Noticia.objects.filter(
@@ -100,6 +100,10 @@ def detalle_noticia(request, slug):
 def agregar_comentario(request, slug):
     """Vista para agregar un comentario a una noticia"""
     noticia = get_object_or_404(Noticia, slug=slug, estado='publicado')
+
+    if not noticia.permitir_comentarios:
+        messages.error(request, 'Esta noticia no permite comentarios.')
+        return redirect('blog:detalle_noticia', slug=slug)
     
     if request.method == 'POST':
         form = ComentarioForm(request.POST)

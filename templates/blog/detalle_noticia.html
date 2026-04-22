@@ -120,27 +120,34 @@
                 Comentarios ({{ comentarios.count }})
             </h3>
             
-            {% if user.is_authenticated %}
-                <!-- New Comment Form -->
-                <div class="bg-gray-50 rounded-lg p-6 mb-6">
-                    <h5 class="text-lg font-medium text-gray-900 mb-4">Agregar comentario</h5>
-                    <form method="post" action="{% url 'blog:agregar_comentario' noticia.slug %}">
-                        {% csrf_token %}
-                        <div class="mb-4">
-                            {{ comentario_form.as_p }}
-                        </div>
-                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors">
-                            <span class="material-icons mr-2 text-sm">send</span>
-                            Publicar comentario
-                        </button>
-                    </form>
-                </div>
-            {% else %}
-                <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-6">
-                    <div class="flex items-center">
-                        <span class="material-icons mr-2">info</span>
-                        <span><a href="{% url 'login' %}" class="font-medium hover:underline">Inicia sesión</a> para poder comentar.</span>
+            {% if noticia.permitir_comentarios %}
+                {% if user.is_authenticated %}
+                    <!-- New Comment Form -->
+                    <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                        <h5 class="text-lg font-medium text-gray-900 mb-4">Agregar comentario</h5>
+                        <form method="post" action="{% url 'blog:agregar_comentario' noticia.slug %}">
+                            {% csrf_token %}
+                            <div class="mb-4">
+                                {{ comentario_form.as_p }}
+                            </div>
+                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors">
+                                <span class="material-icons mr-2 text-sm">send</span>
+                                Publicar comentario
+                            </button>
+                        </form>
                     </div>
+                {% else %}
+                    <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-6">
+                        <div class="flex items-center">
+                            <span class="material-icons mr-2">info</span>
+                            <span><a href="{% url 'login' %}" class="font-medium hover:underline">Inicia sesión</a> para poder comentar.</span>
+                        </div>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="bg-gray-100 border border-gray-300 text-gray-600 px-4 py-3 rounded mb-6 flex items-center">
+                    <span class="material-icons mr-2">comments_disabled</span>
+                    Los comentarios están desactivados para esta noticia.
                 </div>
             {% endif %}
 

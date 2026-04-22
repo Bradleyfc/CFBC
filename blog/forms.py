@@ -21,8 +21,8 @@ class NoticiaForm(forms.ModelForm):
         model = Noticia
         fields = [
             'titulo', 'resumen', 'contenido', 'imagen_principal', 
-            'categoria', 'estado', 'visibilidad', 'destacada', 'fecha_publicacion', 
-            'meta_descripcion'
+            'categoria', 'estado', 'visibilidad', 'destacada', 'permitir_comentarios',
+            'fecha_publicacion', 'meta_descripcion'
         ]
         widgets = {
             'titulo': forms.TextInput(attrs={
@@ -55,6 +55,9 @@ class NoticiaForm(forms.ModelForm):
             'destacada': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
             }),
+            'permitir_comentarios': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
             'fecha_publicacion': forms.DateTimeInput(attrs={
                 'class': 'form-control',
                 'type': 'datetime-local'
@@ -73,6 +76,7 @@ class NoticiaForm(forms.ModelForm):
             'estado': 'Estado',
             'visibilidad': 'Visibilidad',
             'destacada': 'Noticia destacada',
+            'permitir_comentarios': 'Permitir comentarios',
             'fecha_publicacion': 'Fecha de publicación',
             'meta_descripcion': 'Meta descripción (SEO)'
         }

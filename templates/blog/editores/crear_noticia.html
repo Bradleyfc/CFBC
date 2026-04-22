@@ -309,6 +309,22 @@
                                 <div class="text-red-600 text-sm mt-1">{{ form.destacada.errors }}</div>
                             {% endif %}
                         </div>
+
+                        <div class="mb-4">
+                            <div class="flex items-center">
+                                <input type="checkbox" name="{{ form.permitir_comentarios.name }}" id="{{ form.permitir_comentarios.id_for_label }}"
+                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                       {% if form.permitir_comentarios.value != False %}checked{% endif %}>
+                                <label for="{{ form.permitir_comentarios.id_for_label }}" class="ml-2 block text-sm text-gray-700">
+                                    <span class="material-icons text-sm align-middle mr-1">comment</span>
+                                    {{ form.permitir_comentarios.label }}
+                                </label>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1 ml-6">Si lo desactivas, los usuarios no podrán comentar esta noticia.</p>
+                            {% if form.permitir_comentarios.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.permitir_comentarios.errors }}</div>
+                            {% endif %}
+                        </div>
                         
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.fecha_publicacion.label }}</label>

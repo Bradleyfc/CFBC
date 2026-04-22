@@ -50,6 +50,7 @@ class Noticia(models.Model):
         help_text="Controla quién puede ver esta noticia y si aparece en buscadores"
     )
     destacada = models.BooleanField(default=False, help_text="Marcar como noticia destacada")
+    permitir_comentarios = models.BooleanField(default=True, help_text="Permitir que los usuarios comenten esta noticia")
     
     # Fechas
     fecha_creacion = models.DateTimeField(auto_now_add=True)
