@@ -109,7 +109,7 @@
             {% endif %}
 
             <div class="p-6 noticia-content prose max-w-none">
-                {{ noticia.contenido|linebreaks }}
+                {{ noticia.contenido|safe }}
             </div>
         </article>
 

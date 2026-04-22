@@ -317,8 +317,10 @@
                     
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.contenido.label }}</label>
-                        <textarea name="{{ form.contenido.name }}" rows="12"
-                                  class="glass-input w-full px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">{{ form.contenido.value|default:'' }}</textarea>
+                        <!-- Editor Quill -->
+                        <div id="quill-editor" style="height: 400px; border-radius: 8px; background: white;"></div>
+                        <!-- Textarea oculto que guarda el HTML -->
+                        <textarea name="{{ form.contenido.name }}" id="id_contenido" style="display:none;">{{ form.contenido.value|default:'' }}</textarea>
                         {% if form.contenido.errors %}
                             <div class="text-red-600 text-sm mt-1">{{ form.contenido.errors }}</div>
                         {% endif %}
@@ -519,6 +521,44 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     visibilidadSelect.addEventListener('change', updateHint);
     updateHint();
+});
+</script>
+
+<!-- Quill.js - Editor de texto gratuito sin API key -->
+<link href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const textarea = document.getElementById('id_contenido');
+
+    const quill = new Quill('#quill-editor', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                [{ 'font': [] }, { 'size': ['small', false, 'large', 'huge'] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'color': [] }, { 'background': [] }],
+                [{ 'align': [] }],
+                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                [{ 'indent': '-1' }, { 'indent': '+1' }],
+                ['blockquote', 'code-block'],
+                ['link', 'image'],
+                ['clean']
+            ]
+        },
+        placeholder: 'Escribe el contenido de la noticia aquí...',
+    });
+
+    // Cargar contenido existente si hay
+    if (textarea.value) {
+        quill.root.innerHTML = textarea.value;
+    }
+
+    // Sincronizar con el textarea al enviar el formulario
+    const form = textarea.closest('form');
+    form.addEventListener('submit', function() {
+        textarea.value = quill.root.innerHTML;
+    });
 });
 </script>
 {% endblock %}
