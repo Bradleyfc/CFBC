@@ -80,7 +80,7 @@
             <header class="p-6 border-b border-gray-200">
                 <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{{ noticia.titulo }}</h1>
                 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+                <div class="grid grid-cols-1 gap-4 items-start">
                     <div class="md:col-span-2">
                         <p class="text-lg text-gray-600 mb-4">{{ noticia.resumen }}</p>
                         <div class="flex flex-wrap gap-4 text-sm text-gray-500">
@@ -97,33 +97,13 @@
                             </div>
                         </div>
                     </div>
-                    <div class="md:text-right">
-                        <!-- Share Buttons -->
-                        <div class="flex md:justify-end gap-2">
-                            <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" 
-                               target="_blank" 
-                               class="inline-flex items-center px-3 py-2 border border-blue-600 text-blue-600 text-sm font-medium rounded-md hover:bg-blue-600 hover:text-white transition-colors">
-                                <span class="material-icons text-sm">share</span>
-                            </a>
-                            <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri }}&text={{ noticia.titulo }}" 
-                               target="_blank" 
-                               class="inline-flex items-center px-3 py-2 border border-blue-400 text-blue-400 text-sm font-medium rounded-md hover:bg-blue-400 hover:text-white transition-colors">
-                                <span class="material-icons text-sm">share</span>
-                            </a>
-                            <a href="https://wa.me/?text={{ noticia.titulo }} {{ request.build_absolute_uri }}" 
-                               target="_blank" 
-                               class="inline-flex items-center px-3 py-2 border border-green-600 text-green-600 text-sm font-medium rounded-md hover:bg-green-600 hover:text-white transition-colors">
-                                <span class="material-icons text-sm">share</span>
-                            </a>
-                        </div>
-                    </div>
                 </div>
             </header>
 
             {% if noticia.imagen_principal %}
-                <div class="p-6">
+                <div class="px-6 pb-2">
                     <img src="{{ noticia.imagen_principal.url }}" 
-                         class="w-full max-h-96 object-cover rounded-lg shadow-md" 
+                         class="w-full max-h-64 object-cover rounded-lg shadow-md" 
                          alt="{{ noticia.titulo }}">
                 </div>
             {% endif %}

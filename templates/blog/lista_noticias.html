@@ -24,55 +24,68 @@
         {% endif %}
 
         {% if page_obj %}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {% for noticia in page_obj %}
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 {% if noticia.destacada %}noticia-destacada{% endif %}">
-                        {% if noticia.imagen_principal %}
-                            <img src="{{ noticia.imagen_principal.url }}" 
-                                 class="w-full h-48 object-cover" 
-                                 alt="{{ noticia.titulo }}">
-                        {% else %}
-                            <div class="w-full h-48 bg-gray-200 flex items-center justify-content-center">
-                                <span class="material-icons text-gray-400 text-4xl">image</span>
-                            </div>
-                        {% endif %}
-                        
-                        <div class="p-6 flex flex-col h-full">
-                            {% if noticia.destacada %}
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mb-3 w-fit">
-                                    <span class="material-icons text-sm mr-1">star</span>
-                                    Destacada
-                                </span>
+                    <div class="glass-card-news group">
+                        <!-- Image Container with Overlay -->
+                        <div class="relative overflow-hidden rounded-t-2xl" style="height: 192px; min-height: 192px; max-height: 192px;">
+                            {% if noticia.imagen_principal %}
+                                <img src="{{ noticia.imagen_principal.url }}" 
+                                     class="w-full object-cover transition-all duration-500 group-hover:scale-110" 
+                                     style="height: 192px !important; min-height: 192px !important; max-height: 192px !important; width: 100% !important;"
+                                     alt="{{ noticia.titulo }}">
+                            {% else %}
+                                <div class="w-full flex items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300" style="height: 192px;">
+                                    <span class="material-icons text-gray-400 text-5xl">image</span>
+                                </div>
                             {% endif %}
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        </div>
+
+                        <!-- Card Content with Glass Effect -->
+                        <div class="glass-content-news p-4 flex flex-col flex-1">
+                            <!-- Badges -->
+                            <div class="flex flex-wrap gap-1.5 mb-2">
+                                {% if noticia.destacada %}
+                                    <span class="glass-tag-mini glass-tag-warning inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
+                                        <span class="material-icons text-xs mr-1">star</span>
+                                        Destacada
+                                    </span>
+                                {% endif %}
+                                <span class="glass-tag-mini glass-tag-primary inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
+                                    {{ noticia.categoria.nombre }}
+                                </span>
+                            </div>
                             
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mb-3 w-fit">
-                                {{ noticia.categoria.nombre }}
-                            </span>
-                            
-                            <h5 class="text-xl font-semibold mb-3 flex-grow">
-                                <a href="{{ noticia.get_absolute_url }}" class="text-gray-900 hover:text-blue-600 transition-colors">
+                            <!-- Title with Glow Effect -->
+                            <h5 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-shadow-glow transition-all duration-300">
+                                <a href="{{ noticia.get_absolute_url }}" class="hover:text-blue-600">
                                     {{ noticia.titulo }}
                                 </a>
                             </h5>
                             
-                            <p class="text-gray-600 mb-4 flex-grow">{{ noticia.resumen }}</p>
+                            <!-- Summary -->
+                            <p class="text-gray-600 text-sm mb-3 line-clamp-3 flex-1">{{ noticia.resumen|truncatechars:120 }}</p>
                             
-                            <div class="mt-auto">
-                                <div class="text-sm text-gray-500 mb-3">
-                                    <div class="flex items-center mb-1">
-                                        <span class="material-icons text-sm mr-1">person</span>
-                                        {{ noticia.autor.get_full_name|default:noticia.autor.username }}
-                                    </div>
-                                    <div class="flex items-center">
-                                        <span class="material-icons text-sm mr-1">event</span>
-                                        {{ noticia.fecha_publicacion|date:"d/m/Y" }}
-                                    </div>
+                            <!-- Meta Info -->
+                            <div class="flex items-center gap-3 text-xs text-gray-500 mb-3">
+                                <div class="flex items-center gap-1">
+                                    <span class="material-icons text-xs">person</span>
+                                    <span>{{ noticia.autor.get_full_name|default:noticia.autor.username|truncatechars:20 }}</span>
                                 </div>
-                                
+                                <div class="flex items-center gap-1">
+                                    <span class="material-icons text-xs">event</span>
+                                    <span>{{ noticia.fecha_publicacion|date:"d/m/Y" }}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Action Button - siempre al fondo -->
+                            <div class="mt-auto">
                                 <a href="{{ noticia.get_absolute_url }}" 
-                                   class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors">
+                                   class="glass-button-news inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300">
                                     Leer más
-                                    <span class="material-icons ml-1 text-sm">arrow_forward</span>
+                                    <span class="material-icons text-sm">arrow_forward</span>
                                 </a>
                             </div>
                         </div>
@@ -179,4 +192,110 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Glassmorphism News Cards */
+    .glass-card-news {
+        position: relative;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            0 4px 16px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        transform: translateY(0);
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Forzar tamaño igual en todas las imágenes */
+    .glass-card-news img {
+        width: 100% !important;
+        height: 192px !important;
+        min-height: 192px !important;
+        max-height: 192px !important;
+        object-fit: cover !important;
+        object-position: center !important;
+    }
+
+    .glass-card-news:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 
+            0 20px 60px rgba(0, 0, 0, 0.2),
+            0 8px 24px rgba(0, 0, 0, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .glass-content-news {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Glass Tags */
+    .glass-tag-mini {
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .glass-tag-primary {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.15));
+        color: #1e40af;
+    }
+
+    .glass-tag-warning {
+        background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.15));
+        color: #92400e;
+    }
+
+    /* Text Glow Effect */
+    .group:hover .text-shadow-glow {
+        text-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Glass Button */
+    .glass-button-news {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(37, 99, 235, 0.7));
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+
+    .glass-button-news:hover {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 1), rgba(37, 99, 235, 0.9));
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+        transform: translateY(-2px);
+    }
+
+    /* Line Clamp Utilities */
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .line-clamp-3 {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+</style>
 {% endblock %}
