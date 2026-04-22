@@ -129,14 +129,17 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ noticia.categoria.nombre }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ noticia.fecha_creacion|date:"d/m/Y" }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <div class="flex space-x-2">
+                                <div class="flex space-x-3">
                                     <a href="{% url 'blog:editar_noticia' noticia.pk %}" 
-                                       class="glass-button px-3 py-1 text-gray-700 text-xs rounded-lg">
+                                       class="glass-button px-3 py-1.5 text-gray-700 text-xs rounded-lg inline-flex items-center gap-1"
+                                       title="Editar noticia">
                                         <span class="material-icons text-xs">edit</span>
                                     </a>
                                     {% if noticia.estado == 'publicado' %}
                                         <a href="{{ noticia.get_absolute_url }}" 
-                                           class="glass-button-success px-3 py-1 text-xs rounded-lg" target="_blank">
+                                           class="glass-button glass-button-success px-3 py-1.5 text-xs rounded-lg inline-flex items-center gap-1"
+                                           target="_blank"
+                                           title="Ver noticia publicada">
                                             <span class="material-icons text-xs">visibility</span>
                                         </a>
                                     {% endif %}
