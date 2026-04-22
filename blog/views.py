@@ -263,6 +263,40 @@ def eliminar_noticia(request, pk):
     
     return render(request, 'blog/editores/eliminar_noticia.html', {'noticia': noticia})
 
+# Vista para gestionar comentarios de una noticia
+@user_passes_test(es_editor)
+def gestionar_comentarios(request, pk):
+    """Gestionar comentarios de una noticia"""
+    noticia = get_object_or_404(Noticia, pk=pk)
+
+    if noticia.autor != request.user and not request.user.is_staff:
+        messages.error(request, 'No tienes permisos para gestionar esta noticia.')
+        return redirect('blog:mis_noticias')
+
+    comentarios = noticia.comentarios.all().select_related('autor').order_by('-fecha_creacion')
+
+    return render(request, 'blog/editores/gestionar_comentarios.html', {
+        'noticia': noticia,
+        'comentarios': comentarios,
+    })
+
+# Vista para eliminar un comentario
+@user_passes_test(es_editor)
+def eliminar_comentario(request, pk):
+    """Eliminar un comentario"""
+    comentario = get_object_or_404(Comentario, pk=pk)
+    noticia = comentario.noticia
+
+    if noticia.autor != request.user and not request.user.is_staff:
+        messages.error(request, 'No tienes permisos para eliminar este comentario.')
+        return redirect('blog:mis_noticias')
+
+    if request.method == 'POST':
+        comentario.delete()
+        messages.success(request, 'Comentario eliminado exitosamente.')
+
+    return redirect('blog:gestionar_comentarios', pk=noticia.pk)
+
 # Vista para gestionar categorías
 @user_passes_test(es_editor)
 def gestionar_categorias(request):

@@ -226,22 +226,30 @@
                     <!-- Botones -->
                     <div class="mt-auto flex gap-2">
                         <a href="{% url 'blog:editar_noticia' noticia.pk %}" 
-                           class="glass-button flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 text-gray-700 text-xs font-medium rounded-lg transition-all">
-                            <span class="material-icons text-xs">edit</span>
-                            Editar
+                           class="glass-button flex-1 inline-flex items-center justify-center px-3 py-2 text-gray-700 rounded-lg transition-all"
+                           title="Editar noticia">
+                            <span class="material-icons text-sm">edit</span>
                         </a>
                         {% if noticia.estado == 'publicado' %}
                             <a href="{{ noticia.get_absolute_url }}" 
-                               class="glass-button-success glass-button inline-flex items-center justify-center px-3 py-2 text-xs rounded-lg transition-all" 
-                               target="_blank" title="Ver publicada">
-                                <span class="material-icons text-xs">visibility</span>
+                               class="glass-button glass-button-success flex-1 inline-flex items-center justify-center px-3 py-2 rounded-lg transition-all" 
+                               target="_blank" title="Ver noticia publicada">
+                                <span class="material-icons text-sm">visibility</span>
+                            </a>
+                        {% endif %}
+                        {% if noticia.comentarios.count > 0 %}
+                            <a href="{% url 'blog:gestionar_comentarios' noticia.pk %}"
+                               class="glass-button flex-1 inline-flex items-center justify-center px-3 py-2 rounded-lg transition-all relative"
+                               title="Gestionar comentarios ({{ noticia.comentarios.count }})">
+                                <span class="material-icons text-sm">comment</span>
+                                <span class="absolute -top-1.5 -right-1.5 bg-blue-500 text-white rounded-full w-4 h-4 flex items-center justify-center leading-none" style="font-size:10px;">{{ noticia.comentarios.count }}</span>
                             </a>
                         {% endif %}
                         <button type="button"
                            onclick="showDeleteModal('{{ noticia.pk }}', '{{ noticia.titulo|escapejs }}')"
-                           class="glass-button glass-button-danger inline-flex items-center justify-center gap-1 px-3 py-2 text-xs font-medium rounded-lg transition-all">
-                            <span class="material-icons text-xs">delete</span>
-                            Eliminar
+                           class="glass-button glass-button-danger flex-1 inline-flex items-center justify-center px-3 py-2 rounded-lg transition-all"
+                           title="Eliminar noticia">
+                            <span class="material-icons text-sm">delete</span>
                         </button>
                     </div>
                 </div>

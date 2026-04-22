@@ -16,5 +16,7 @@ urlpatterns = [
     path('editores/crear/', views.crear_noticia, name='crear_noticia'),
     path('editores/editar/<int:pk>/', views.editar_noticia, name='editar_noticia'),
     path('editores/eliminar/<int:pk>/', views.eliminar_noticia, name='eliminar_noticia'),
+    path('editores/comentarios/<int:pk>/', views.gestionar_comentarios, name='gestionar_comentarios'),
+    path('editores/comentarios/eliminar/<int:pk>/', views.eliminar_comentario, name='eliminar_comentario'),
     path('editores/categorias/', views.gestionar_categorias, name='gestionar_categorias'),
 ]
