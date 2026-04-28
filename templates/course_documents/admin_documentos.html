@@ -128,7 +128,7 @@
                         {% csrf_token %}
                         <input type="hidden" name="curso_academico_id" value="{% if curso_academico_sel %}{{ curso_academico_sel.id }}{% else %}sin_ca{% endif %}">
                         <button type="button"
-                                onclick="abrirModalEliminar('todos-disco-{{ item.curso_id|default:'0' }}', 'TODOS los archivos del curso', '{{ item.curso_nombre|escapejs }}')"
+                                onclick="abrirModalEliminar('todos-disco-{{ item.curso_id|default:&quot;0&quot; }}', 'TODOS los archivos del curso', '{{ item.curso_nombre|escapejs }}')"
                                 class="inline-flex items-center gap-1.5 px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 font-semibold rounded-xl transition-colors text-sm">
                             <span class="material-icons text-base">delete_sweep</span>Eliminar todos
                         </button>
