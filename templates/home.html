@@ -3,203 +3,621 @@
 
 {% block content %}
 
-<h1 class="text-5xl md:text-6xl font-bold text-center my-12 drop-shadow-lg">CENTRO FRAY BARTOLOME DE LAS CASAS</h1>
+<style>
+  /* Layout responsivo de dos columnas para la home */
+  #home-layout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    padding: 1.5rem 1rem;
+    max-width: 80rem;
+    margin: 0 auto;
+  }
+  #left-column {
+    flex: 0 0 260px;
+    width: 260px;
+    min-width: 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  #right-column {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  /* En pantallas pequeñas: columnas apiladas a ancho completo */
+  @media (max-width: 767px) {
+    #left-column,
+    #right-column {
+      flex: 0 0 100%;
+      width: 100%;
+    }
+  }
+</style>
 
-{% if request.user.is_authenticated %}
-<hr class="border-gray-300 my-4">
-<div class="container mx-auto px-4">
-<h2 class="text-center text-2xl font-semibold text-gray-700">Bienvenido {{ user.username | upper }}</h2>
-</div>
-{% endif %}
-<br>
-<br>
-<br>
-  <h3 class="text-center text-gray-600 text-3xl font-semibold mb-8">Nuestros Cursos</h3>
+{# ═══════════════════════════════════════════════════════════════════════════ #}
+{# TAREA 4: Hero Section (Req 2.1–2.5)                                        #}
+{# ═══════════════════════════════════════════════════════════════════════════ #}
+<section id="hero-section" style="
+  position: relative;
+  width: 100%;
+  height: 320px;
+  overflow: hidden;
+  background-color: #1e3a5f;
+">
+  {# ── Placeholder de foto: gradiente animado que simula una imagen real ── #}
+  {# Cuando tengas la foto, reemplaza este div por:                          #}
+  {# <img src="{% static 'img/hero_cfbc.jpg' %}" ...>                        #}
+  <div style="
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg,
+      #0f2744 0%,
+      #1a3f6f 20%,
+      #2563a8 40%,
+      #1e4d8c 55%,
+      #0d3060 70%,
+      #1a3f6f 85%,
+      #0f2744 100%
+    );
+    background-size: 400% 400%;
+    animation: heroShimmer 8s ease infinite;
+  "></div>
 
-<br>
-<br>  
-        
-        <div id="carouselCursos" class="relative max-w-4xl mx-auto">
-                <div class="carousel-inner overflow-hidden">
-                  {% for group in grouped_courses %}
-                  <div class="carousel-item {% if forloop.first %}block{% else %}hidden{% endif %}" data-slide="{{ forloop.counter0 }}">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      {% for course in group %}
-                      <div class="course-card">
-                        <div class="image-container relative overflow-hidden rounded-lg group cursor-pointer">
-                          <img src="{% if course.image %}{{ course.image.url }}{% else %}{% static 'img/default_course.jpg' %}{% endif %}" class="w-full h-40 object-cover transition-transform duration-300 group-hover:scale-110" alt="{{ course.name }}">
-                          <div class="overlay absolute inset-0 bg-black bg-opacity-70 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-center p-4">
-                            <h5 class="text-lg font-semibold mb-2">{{ course.name }}</h5>
-                            <p class="text-sm">{{ course.description }}</p>
-                          </div>
-                        </div>
-                      </div>
-                      {% endfor %}
-                    </div>
-                  </div>
-                  {% endfor %}
-                </div>
-                <button class="carousel-control-prev absolute left-0 top-1/2 transform -translate-y-1/2 text-white text-opacity-60 hover:text-opacity-100 transition-all duration-300 p-2" type="button" onclick="prevSlide('carouselCursos')">
-                  <span class="fa material-icons text-3xl drop-shadow-lg">arrow_back</span></i>
-                  <span class="sr-only">Previous</span>
-                </button>
-                <button class="carousel-control-next absolute right-0 top-1/2 transform -translate-y-1/2 text-white text-opacity-60 hover:text-opacity-100 transition-all duration-300 p-2" type="button" onclick="nextSlide('carouselCursos')">
-                  <span class="fa material-icons text-3xl drop-shadow-lg">arrow_back</span></i>
-                  <span class="sr-only">Next</span>
-                </button>
+  {# ── Patrón de puntos decorativo para dar textura ── #}
+  <div style="
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+    background-size: 28px 28px;
+  "></div>
+
+  {# ── Icono de imagen placeholder centrado ── #}
+  <div style="
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  ">
+    <div style="
+      border: 2px dashed rgba(255,255,255,0.2);
+      border-radius: 12px;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: rgba(255,255,255,0.25);
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    ">
+      <span class="material-icons" style="font-size:1.4rem; opacity:0.5;">image</span>
+      Foto de portada — pendiente
+    </div>
+  </div>
+
+  {# ── Overlay oscuro semitransparente sobre la foto ── #}
+  <div style="
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.35) 0%,
+      rgba(0,0,0,0.55) 60%,
+      rgba(0,0,0,0.70) 100%
+    );
+  "></div>
+
+  {# ── Contenido superpuesto: saludo + título ── #}
+  <div style="
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 1.5rem;
+    text-align: center;
+  ">
+    {% if request.user.is_authenticated %}
+    <p style="color: #93c5fd; font-size: 0.95rem; font-weight: 500; margin-bottom: 0.5rem; letter-spacing: 0.05em;">
+      Bienvenido, <strong style="color: #ffffff;">{{ request.user.username }}</strong>
+    </p>
+    {% endif %}
+    <h1 style="
+      color: #ffffff;
+      font-size: clamp(1.6rem, 4vw, 3rem);
+      font-weight: 800;
+      line-height: 1.2;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.6);
+      letter-spacing: -0.01em;
+    ">
+      Centro Fray Bartolomé de las Casas
+    </h1>
+    <p style="color: rgba(255,255,255,0.65); font-size: 0.9rem; margin-top: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase;">
+      Formación · Fe · Comunidad
+    </p>
+  </div>
+
+  <style>
+    @keyframes heroShimmer {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+  </style>
+</section>
+
+{# ═══════════════════════════════════════════════════════════════════════════ #}
+{# TAREA 3: Layout de dos columnas (Req 1.1–1.4)                              #}
+{# En móvil: columnas apiladas (left primero, luego right)                    #}
+{# En md+: columna izquierda fija 280px + columna derecha ocupa el resto      #}
+{# Usamos flexbox con CSS inline para garantizar el layout sin depender       #}
+{# de clases arbitrarias de Tailwind que pueden no estar compiladas           #}
+{# ═══════════════════════════════════════════════════════════════════════════ #}
+<div id="home-layout">
+
+  {# ─────────────────────────────────────────────────────────────────────── #}
+  {# Left Column — ancho fijo 260px en escritorio, ancho completo en móvil   #}
+  {# ─────────────────────────────────────────────────────────────────────── #}
+  <aside id="left-column">
+
+    {# ─────────────────────────────────────────────────────────────────── #}
+    {# TAREA 5: Area_Nav (Req 3.1–3.5)                                     #}
+    {# ─────────────────────────────────────────────────────────────────── #}
+    <div id="area-nav" class="bg-blue-900 bg-opacity-90 rounded-xl overflow-hidden shadow-lg">
+      <div class="px-4 py-3 border-b border-blue-700">
+        <h2 class="text-white font-bold text-sm uppercase tracking-widest flex items-center gap-2">
+          <span class="material-icons text-blue-300 text-base">school</span>
+          Áreas de Cursos
+        </h2>
+      </div>
+      <nav aria-label="Áreas de cursos">
+        <ul class="divide-y divide-blue-800">
+
+          <li>
+            <a href="{% url 'principal:listado_cursos' %}?area=idiomas"
+               class="flex items-center gap-3 px-4 py-3 text-blue-100 hover:bg-blue-700 hover:text-white transition-colors duration-200 group">
+              <span class="material-icons text-blue-300 group-hover:text-white text-xl">translate</span>
+              <span class="font-medium">Idiomas</span>
+            </a>
+          </li>
+
+          <li>
+            <a href="{% url 'principal:listado_cursos' %}?area=humanidades"
+               class="flex items-center gap-3 px-4 py-3 text-blue-100 hover:bg-blue-700 hover:text-white transition-colors duration-200 group">
+              <span class="material-icons text-blue-300 group-hover:text-white text-xl">menu_book</span>
+              <span class="font-medium">Humanidades</span>
+            </a>
+          </li>
+
+          <li>
+            <a href="{% url 'principal:listado_cursos' %}?area=computacion"
+               class="flex items-center gap-3 px-4 py-3 text-blue-100 hover:bg-blue-700 hover:text-white transition-colors duration-200 group">
+              <span class="material-icons text-blue-300 group-hover:text-white text-xl">computer</span>
+              <span class="font-medium">Computación</span>
+            </a>
+          </li>
+
+          <li>
+            <a href="{% url 'principal:listado_cursos' %}?area=diseno"
+               class="flex items-center gap-3 px-4 py-3 text-blue-100 hover:bg-blue-700 hover:text-white transition-colors duration-200 group">
+              <span class="material-icons text-blue-300 group-hover:text-white text-xl">palette</span>
+              <span class="font-medium">Diseño</span>
+            </a>
+          </li>
+
+          <li>
+            <a href="{% url 'principal:listado_cursos' %}?area=teologia"
+               class="flex items-center gap-3 px-4 py-3 text-blue-100 hover:bg-blue-700 hover:text-white transition-colors duration-200 group">
+              <span class="material-icons text-blue-300 group-hover:text-white text-xl">church</span>
+              <span class="font-medium">Teología</span>
+            </a>
+          </li>
+
+          <li>
+            <a href="{% url 'principal:listado_cursos' %}?area=adolescentes"
+               class="flex items-center gap-3 px-4 py-3 text-blue-100 hover:bg-blue-700 hover:text-white transition-colors duration-200 group">
+              <span class="material-icons text-blue-300 group-hover:text-white text-xl">groups</span>
+              <span class="font-medium">Adolescentes</span>
+            </a>
+          </li>
+
+        </ul>
+      </nav>
+    </div>
+
+    {# ─────────────────────────────────────────────────────────────────── #}
+    {# TAREA 6: Categoria_Nav (Req 4.1–4.5)                               #}
+    {# ─────────────────────────────────────────────────────────────────── #}
+    <div id="categoria-nav" class="bg-blue-900 bg-opacity-90 rounded-xl overflow-hidden shadow-lg">
+      <div class="px-4 py-3 border-b border-blue-700">
+        <h2 class="text-white font-bold text-sm uppercase tracking-widest flex items-center gap-2">
+          <span class="material-icons text-blue-300 text-base">newspaper</span>
+          Categorías de Noticias
+        </h2>
+      </div>
+      <nav aria-label="Categorías de noticias">
+        {% if categorias_con_noticias %}
+        <ul class="divide-y divide-blue-800">
+          {% for categoria in categorias_con_noticias %}
+          <li>
+            <a href="{% url 'blog:categoria_noticias' categoria.slug %}"
+               class="flex items-center gap-3 px-4 py-3 text-blue-100 hover:bg-blue-700 hover:text-white transition-colors duration-200 group">
+              <span class="material-icons text-blue-300 group-hover:text-white text-xl">label</span>
+              <span class="font-medium">{{ categoria.nombre }}</span>
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="px-4 py-4 text-blue-300 text-sm italic">No hay categorías disponibles</p>
+        {% endif %}
+      </nav>
+    </div>
+
+  </aside>
+
+  {# ─────────────────────────────────────────────────────────────────────── #}
+  {# Right Column — ocupa el espacio restante                                #}
+  {# ─────────────────────────────────────────────────────────────────────── #}
+  <main id="right-column">
+
+<style>
+/* ── Carrusel de 3 tarjetas ─────────────────────────────────────── */
+.tri-carousel { position: relative; }
+
+.tri-carousel-track {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  transition: none;
+}
+
+/* Cada "página" del carrusel muestra 3 tarjetas */
+.tri-page { display: none; gap: 1rem; padding: 1rem; }
+.tri-page.active { display: flex; }
+
+/* Tarjeta de curso */
+.card-curso {
+  flex: 1;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s, background 0.2s;
+  min-width: 0;
+}
+.card-curso:hover { transform: translateY(-3px); background: rgba(255,255,255,0.12); }
+
+.card-curso img {
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  display: block;
+}
+.card-curso-placeholder {
+  width: 100%;
+  height: 130px;
+  background: linear-gradient(135deg, #1e3a5f 0%, #2563a8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.card-curso-body { padding: 0.75rem; flex: 1; display: flex; flex-direction: column; gap: 0.4rem; }
+.card-badge {
+  display: inline-block;
+  background: #2563eb;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  width: fit-content;
+}
+.card-title { color: #fff; font-size: 0.85rem; font-weight: 700; line-height: 1.3; }
+.card-desc  { color: #93c5fd; font-size: 0.75rem; line-height: 1.4; flex: 1; }
+.card-footer { margin-top: auto; padding-top: 0.5rem; }
+.card-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fff;
+  color: #1e3a5f;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.card-btn:hover { background: #dbeafe; }
+
+/* Tarjeta de noticia */
+.card-noticia {
+  flex: 1;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s, background 0.2s;
+  min-width: 0;
+}
+.card-noticia:hover { transform: translateY(-3px); background: rgba(255,255,255,0.12); }
+.card-noticia img {
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  display: block;
+}
+.card-noticia-placeholder {
+  width: 100%;
+  height: 130px;
+  background: linear-gradient(135deg, #1e3a5f 0%, #0f766e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.card-noticia-body { padding: 0.75rem; flex: 1; display: flex; flex-direction: column; gap: 0.4rem; }
+.card-date { color: #7dd3fc; font-size: 0.68rem; }
+
+/* Controles del carrusel */
+.tri-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem 0.75rem;
+}
+.tri-btn {
+  background: rgba(255,255,255,0.15);
+  border: none;
+  color: #fff;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.tri-btn:hover { background: rgba(255,255,255,0.3); }
+.tri-dots { display: flex; gap: 6px; align-items: center; }
+.tri-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s, transform 0.2s;
+}
+.tri-dot.active { background: #fff; transform: scale(1.3); }
+
+/* Responsive: en móvil mostrar 1 tarjeta por fila */
+@media (max-width: 600px) {
+  .tri-page { flex-direction: column; }
+  .card-curso, .card-noticia { flex: none; width: 100%; }
+}
+</style>
+
+    {# ── Carrusel de Cursos Activos (3 tarjetas por página) ─────────────── #}
+    <div id="course-carousel" style="background:linear-gradient(135deg, #0f2744 0%, #1a3f6f 25%, #2563a8 50%, #1e4d8c 70%, #0d3060 100%); border-radius:12px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.3);">
+      <div style="padding:0.75rem 1rem; border-bottom:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; gap:0.5rem;">
+        <span class="material-icons" style="color:#93c5fd; font-size:1.2rem;">school</span>
+        <h2 style="color:#fff; font-weight:700; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.08em; margin:0;">Cursos Activos</h2>
+      </div>
+
+      {% if cursos_grupos_3 %}
+      <div class="tri-carousel" id="cc-wrap">
+        {% for grupo in cursos_grupos_3 %}
+        <div class="tri-page {% if forloop.first %}active{% endif %}">
+          {% for curso in grupo %}
+          <div class="card-curso">
+            {% if curso.image %}
+            <img src="{{ curso.image.url }}" alt="{{ curso.name }}">
+            {% else %}
+            <div class="card-curso-placeholder">
+              <span class="material-icons" style="color:rgba(255,255,255,0.3); font-size:2.5rem;">school</span>
+            </div>
+            {% endif %}
+            <div class="card-curso-body">
+              <span class="card-badge">{{ curso.get_area_display }}</span>
+              <div class="card-title">{{ curso.name }}</div>
+              <div class="card-desc">{{ curso.description|truncatechars:80 }}</div>
+              <div class="card-footer">
+                {% if request.user.is_authenticated and curso.status == 'I' %}
+                <a href="{% url 'principal:inscribirse_curso' curso.id %}" class="card-btn">
+                  <span class="material-icons" style="font-size:0.9rem;">how_to_reg</span>
+                  Inscribirse
+                </a>
+                {% else %}
+                {% if curso.status == 'I' %}
+                <span style="color:#4ade80; font-size:0.72rem; font-weight:600;">{{ curso.get_status_display }}</span>
+                {% elif curso.status == 'P' %}
+                <span style="color:#fbbf24; font-size:0.72rem; font-weight:600;">{{ curso.get_status_display }}</span>
+                {% else %}
+                <span style="color:#94a3b8; font-size:0.72rem; font-weight:600;">{{ curso.get_status_display }}</span>
+                {% endif %}
+                {% endif %}
               </div>
-
-<br>
-<br>
-<br>
-
-<!-- Sección de Noticias -->
-{% if grouped_noticias %}
-<h3 class="text-center text-gray-600 text-3xl font-semibold mb-8">Últimas Noticias</h3>
-
-<br>
-<br>
-
-<div id="carouselNoticias" class="relative max-w-4xl mx-auto">
-  <div class="carousel-inner overflow-hidden">
-    {% for group in grouped_noticias %}
-    <div class="carousel-item {% if forloop.first %}block{% else %}hidden{% endif %}" data-slide="{{ forloop.counter0 }}">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {% for noticia in group %}
-        <div class="news-card">
-          <div class="image-container relative overflow-hidden rounded-lg group cursor-pointer">
-            <img src="{% if noticia.imagen_principal %}{{ noticia.imagen_principal.url }}{% else %}{% static 'img/default_news.jpg' %}{% endif %}" class="w-full h-40 object-cover transition-transform duration-300 group-hover:scale-110" alt="{{ noticia.titulo }}">
-            <div class="overlay absolute inset-0 bg-black bg-opacity-70 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-center p-4">
-              <h6 class="text-lg font-semibold mb-2">{{ noticia.titulo|truncatechars:50 }}</h6>
-              <p class="text-sm mb-2">{{ noticia.resumen|truncatechars:80 }}</p>
-              <small class="text-gray-300 mb-3">{{ noticia.fecha_publicacion|date:"d/m/Y" }}</small>
-              <a href="{% url 'blog:detalle_noticia' noticia.slug %}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors duration-300">Leer más</a>
             </div>
           </div>
+          {% endfor %}
         </div>
         {% endfor %}
       </div>
+
+      <div class="tri-controls">
+        <button class="tri-btn" onclick="triPrev('cc'); triReset('cc');" aria-label="Anterior">
+          <span class="material-icons" style="font-size:1.1rem;">chevron_left</span>
+        </button>
+        <div class="tri-dots" id="cc-dots"></div>
+        <button class="tri-btn" onclick="triNext('cc'); triReset('cc');" aria-label="Siguiente">
+          <span class="material-icons" style="font-size:1.1rem;">chevron_right</span>
+        </button>
+      </div>
+
+      {% else %}
+      <div style="padding:3rem 1.5rem; text-align:center;">
+        <span class="material-icons" style="color:#3b82f6; font-size:3rem; display:block; margin-bottom:0.5rem;">school</span>
+        <p style="color:#93c5fd; font-size:0.9rem;">No hay cursos disponibles actualmente</p>
+      </div>
+      {% endif %}
     </div>
-    {% endfor %}
-  </div>
-  <button class="carousel-control-prev absolute left-0 top-1/2 transform -translate-y-1/2 text-white text-opacity-60 hover:text-opacity-100 transition-all duration-300 p-2" type="button" onclick="prevSlideNews('carouselNoticias')">
-    <span class="fa material-icons text-3xl drop-shadow-lg">arrow_back</span></i>
-    <span class="sr-only">Previous</span>
-  </button>
-  <button class="carousel-control-next absolute right-0 top-1/2 transform -translate-y-1/2 text-white text-opacity-60 hover:text-opacity-100 transition-all duration-300 p-2" type="button" onclick="nextSlideNews('carouselNoticias')">
-    <span class="fa material-icons text-3xl drop-shadow-lg">arrow_back</span></i>
-    <span class="sr-only">Next</span>
-  </button>
+
+    {# ── Carrusel de Noticias (3 tarjetas por página) ────────────────────── #}
+    {% if noticias_grupos_3 %}
+    <div id="news-carousel" style="background:linear-gradient(135deg, #0f2744 0%, #1a3f6f 25%, #2563a8 50%, #1e4d8c 70%, #0d3060 100%); border-radius:12px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.3);">
+      <div style="padding:0.75rem 1rem; border-bottom:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; gap:0.5rem;">
+        <span class="material-icons" style="color:#93c5fd; font-size:1.2rem;">newspaper</span>
+        <h2 style="color:#fff; font-weight:700; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.08em; margin:0;">Últimas Noticias</h2>
+      </div>
+
+      <div class="tri-carousel" id="nc-wrap">
+        {% for grupo in noticias_grupos_3 %}
+        <div class="tri-page {% if forloop.first %}active{% endif %}">
+          {% for noticia in grupo %}
+          <div class="card-noticia">
+            {% if noticia.imagen_principal %}
+            <img src="{{ noticia.imagen_principal.url }}" alt="{{ noticia.titulo }}">
+            {% else %}
+            <div class="card-noticia-placeholder">
+              <span class="material-icons" style="color:rgba(255,255,255,0.3); font-size:2.5rem;">newspaper</span>
+            </div>
+            {% endif %}
+            <div class="card-noticia-body">
+              {% if noticia.categoria %}
+              <span class="card-badge" style="background:#0f766e;">{{ noticia.categoria.nombre }}</span>
+              {% endif %}
+              <div class="card-title">{{ noticia.titulo }}</div>
+              <div class="card-desc">{{ noticia.resumen|truncatechars:80 }}</div>
+              <div class="card-footer">
+                <div class="card-date">
+                  <span class="material-icons" style="font-size:0.75rem; vertical-align:middle;">calendar_today</span>
+                  {{ noticia.fecha_publicacion|date:"d/m/Y" }}
+                </div>
+                <a href="{% url 'blog:detalle_noticia' noticia.slug %}" class="card-btn" style="margin-top:0.4rem; background:#e0f2fe; color:#0c4a6e;">
+                  <span class="material-icons" style="font-size:0.9rem;">open_in_new</span>
+                  Leer más
+                </a>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="tri-controls">
+        <button class="tri-btn" onclick="triPrev('nc'); triReset('nc');" aria-label="Anterior">
+          <span class="material-icons" style="font-size:1.1rem;">chevron_left</span>
+        </button>
+        <div class="tri-dots" id="nc-dots"></div>
+        <button class="tri-btn" onclick="triNext('nc'); triReset('nc');" aria-label="Siguiente">
+          <span class="material-icons" style="font-size:1.1rem;">chevron_right</span>
+        </button>
+      </div>
+
+      <div style="padding:0.5rem 1rem 0.75rem; text-align:right; border-top:1px solid rgba(255,255,255,0.08);">
+        <a href="{% url 'blog:lista_noticias' %}" style="color:#7dd3fc; font-size:0.78rem; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+          Ver todas las noticias
+          <span class="material-icons" style="font-size:0.9rem;">arrow_forward</span>
+        </a>
+      </div>
+    </div>
+    {% endif %}
+
+  </main>
 </div>
 
-<br>
-<div class="text-center mt-8">
-  <a href="{% url 'blog:lista_noticias' %}" class="inline-block bg-transparent border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white px-6 py-2 rounded-lg transition-colors duration-300">Ver todas las noticias</a>
-</div>
-{% endif %}
-        
-
+{# ── JavaScript: carrusel de 3 tarjetas con auto-avance cada 5s ─────────── #}
 <script>
-// JavaScript personalizado para carruseles de Tailwind
-let currentSlide = 0;
-let currentNewsSlide = 0;
-const totalSlides = document.querySelectorAll('#carouselCursos .carousel-item').length;
-const totalNewsSlides = document.querySelectorAll('#carouselNoticias .carousel-item').length;
-let coursesInterval;
-let newsInterval;
+/**
+ * TriCarousel — carrusel de páginas de 3 tarjetas.
+ * Cada "página" es un .tri-page con 3 .card-* dentro.
+ * Auto-avance cada 5 segundos. Navegación manual con botones y dots.
+ */
+var triCarousels = {};
 
-function showSlide(slideIndex) {
-    const slides = document.querySelectorAll('#carouselCursos .carousel-item');
-    
-    // Ocultar todas las slides
-    slides.forEach(slide => {
-        slide.classList.add('hidden');
-        slide.classList.remove('block');
+function triInit(id) {
+  var wrap  = document.getElementById(id + '-wrap');
+  if (!wrap) return;
+
+  var pages = wrap.querySelectorAll('.tri-page');
+  var dots  = document.getElementById(id + '-dots');
+  if (!pages.length) return;
+
+  // Crear dots
+  if (dots) {
+    dots.innerHTML = '';
+    pages.forEach(function(_, i) {
+      var d = document.createElement('button');
+      d.className = 'tri-dot' + (i === 0 ? ' active' : '');
+      d.setAttribute('aria-label', 'Página ' + (i + 1));
+      d.onclick = function() { triGo(id, i); triReset(id); };
+      dots.appendChild(d);
     });
-    
-    // Mostrar la slide actual
-    if (slides[slideIndex]) {
-        slides[slideIndex].classList.remove('hidden');
-        slides[slideIndex].classList.add('block');
-    }
+  }
+
+  triCarousels[id] = { pages: pages, dots: dots, current: 0, timer: null };
+
+  // Solo auto-avanzar si hay más de una página
+  if (pages.length > 1) {
+    triCarousels[id].timer = setInterval(function() {
+      triNext(id);
+    }, 5000);
+  }
 }
 
-function showNewsSlide(slideIndex) {
-    const slides = document.querySelectorAll('#carouselNoticias .carousel-item');
-    
-    // Ocultar todas las slides
-    slides.forEach(slide => {
-        slide.classList.add('hidden');
-        slide.classList.remove('block');
+function triGo(id, index) {
+  var c = triCarousels[id];
+  if (!c) return;
+  c.pages.forEach(function(p) { p.classList.remove('active'); });
+  c.pages[index].classList.add('active');
+  if (c.dots) {
+    c.dots.querySelectorAll('.tri-dot').forEach(function(d, i) {
+      d.classList.toggle('active', i === index);
     });
-    
-    // Mostrar la slide actual
-    if (slides[slideIndex]) {
-        slides[slideIndex].classList.remove('hidden');
-        slides[slideIndex].classList.add('block');
-    }
+  }
+  c.current = index;
 }
 
-function nextSlide(carouselId) {
-    currentSlide = (currentSlide + 1) % totalSlides;
-    showSlide(currentSlide);
-    resetCoursesInterval();
+function triNext(id) {
+  var c = triCarousels[id];
+  if (!c) return;
+  triGo(id, (c.current + 1) % c.pages.length);
 }
 
-function prevSlide(carouselId) {
-    currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
-    showSlide(currentSlide);
-    resetCoursesInterval();
+function triPrev(id) {
+  var c = triCarousels[id];
+  if (!c) return;
+  triGo(id, (c.current - 1 + c.pages.length) % c.pages.length);
 }
 
-function nextSlideNews(carouselId) {
-    currentNewsSlide = (currentNewsSlide + 1) % totalNewsSlides;
-    showNewsSlide(currentNewsSlide);
-    resetNewsInterval();
+function triReset(id) {
+  var c = triCarousels[id];
+  if (!c || c.pages.length <= 1) return;
+  clearInterval(c.timer);
+  c.timer = setInterval(function() { triNext(id); }, 5000);
 }
 
-function prevSlideNews(carouselId) {
-    currentNewsSlide = (currentNewsSlide - 1 + totalNewsSlides) % totalNewsSlides;
-    showNewsSlide(currentNewsSlide);
-    resetNewsInterval();
-}
-
-function autoAdvanceCourses() {
-    currentSlide = (currentSlide + 1) % totalSlides;
-    showSlide(currentSlide);
-}
-
-function autoAdvanceNews() {
-    currentNewsSlide = (currentNewsSlide + 1) % totalNewsSlides;
-    showNewsSlide(currentNewsSlide);
-}
-
-function resetCoursesInterval() {
-    clearInterval(coursesInterval);
-    coursesInterval = setInterval(autoAdvanceCourses, 3000);
-}
-
-function resetNewsInterval() {
-    clearInterval(newsInterval);
-    newsInterval = setInterval(autoAdvanceNews, 3000);
-}
-
-// Inicializar carruseles
 document.addEventListener('DOMContentLoaded', function() {
-    showSlide(0);
-    if (totalNewsSlides > 0) {
-        showNewsSlide(0);
-    }
-    
-    // Iniciar auto-avance para carrusel de cursos
-    if (totalSlides > 1) {
-        coursesInterval = setInterval(autoAdvanceCourses, 3000);
-    }
-    
-    // Iniciar auto-avance para carrusel de noticias
-    if (totalNewsSlides > 1) {
-        newsInterval = setInterval(autoAdvanceNews, 3000);
-    }
+  triInit('cc');  // carrusel de cursos
+  triInit('nc');  // carrusel de noticias
 });
 </script>
 

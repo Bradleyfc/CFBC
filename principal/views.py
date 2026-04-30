@@ -28,7 +28,7 @@ from io import BytesIO
 import openpyxl
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from accounts.models import Registro
-from blog.models import Noticia
+from blog.models import Noticia, Categoria
 try:
     from course_documents.indicator_service import ContentIndicatorService
 except ImportError:
@@ -888,7 +888,10 @@ class HomeView(DocumentsCourseMixin, BaseContextMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         curso_academico_activo = CursoAcademico.objects.filter(activo=True).first()
         if curso_academico_activo:
-            courses = Curso.objects.filter(curso_academico=curso_academico_activo)
+            courses = Curso.objects.filter(
+                curso_academico=curso_academico_activo,
+                status__in=['I', 'P']
+            )
         else:
             courses = Curso.objects.none()
         
@@ -903,16 +906,37 @@ class HomeView(DocumentsCourseMixin, BaseContextMixin, TemplateView):
             else:
                 curso.formulario_aplicacion = None
         
-        # Group courses into chunks of four for the carousel
+        # Group courses into chunks of four for the carousel (compatibilidad con otros templates)
         grouped_courses = [courses[i:i + 4] for i in range(0, len(courses), 4)]
         context['grouped_courses'] = grouped_courses
+
+        # Lista plana de cursos activos para el nuevo template
+        context['cursos_activos'] = list(courses)
+        
+        # Grupos de 3 para el carrusel de la home
+        courses_list = list(courses)
+        context['cursos_grupos_3'] = [courses_list[i:i+3] for i in range(0, len(courses_list), 3)]
         
         # Obtener las noticias publicadas más recientes
         noticias = Noticia.objects.filter(estado='publicado').order_by('-fecha_publicacion')[:8]
         
-        # Agrupar noticias en chunks de 4 para el carousel
+        # Agrupar noticias en chunks de 4 para el carousel (compatibilidad con otros templates)
         grouped_noticias = [noticias[i:i + 4] for i in range(0, len(noticias), 4)]
         context['grouped_noticias'] = grouped_noticias
+
+        # Lista plana de noticias publicadas para el nuevo template
+        context['noticias_publicadas'] = list(noticias)
+        
+        # Grupos de 3 para el carrusel de noticias de la home
+        noticias_list = list(noticias)
+        context['noticias_grupos_3'] = [noticias_list[i:i+3] for i in range(0, len(noticias_list), 3)]
+
+        # Categorías que tienen al menos una noticia publicada
+        categorias = Categoria.objects.filter(
+            noticias__estado='publicado'
+        ).distinct().order_by('nombre')
+        context['categorias_con_noticias'] = categorias
+
         student = self.request.user if self.request.user.is_authenticated else None
         
         # Crear conjuntos de IDs de cursos con solicitudes pendientes y rechazadas
