@@ -32,9 +32,25 @@
     display: block !important;
   }
 
-  /* Título principal con efectos modernos */
+  /* Animación del gradiente del hero (igual que home.html) */
+  @keyframes heroShimmer {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Título principal con gradiente animado igual al fondo del hero */
   .main-title {
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8, #1e40af) !important;
+    background: linear-gradient(135deg,
+      #0f2744 0%,
+      #1a3f6f 20%,
+      #2563a8 40%,
+      #1e4d8c 55%,
+      #0d3060 70%,
+      #1a3f6f 85%,
+      #0f2744 100%
+    ) !important;
+    background-size: 400% 400% !important;
     -webkit-background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
     background-clip: text !important;
@@ -43,35 +59,13 @@
     text-align: center !important;
     margin-bottom: 1rem !important;
     position: relative !important;
-    text-shadow: 0 4px 8px rgba(59, 130, 246, 0.3) !important;
     letter-spacing: 1px !important;
+    animation: heroShimmer 8s ease infinite !important;
   }
 
+  .main-title::before,
   .main-title::after {
-    content: '' !important;
-    position: absolute !important;
-    bottom: -8px !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    width: 80px !important;
-    height: 3px !important;
-    background: linear-gradient(90deg, transparent, #3b82f6, transparent) !important;
-    border-radius: 2px !important;
-    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5) !important;
-  }
-
-  /* Animación sutil para el título */
-  @keyframes titleGlow {
-    0%, 100% {
-      text-shadow: 0 4px 8px rgba(59, 130, 246, 0.3) !important;
-    }
-    50% {
-      text-shadow: 0 4px 20px rgba(59, 130, 246, 0.6) !important;
-    }
-  }
-
-  .main-title {
-    animation: titleGlow 3s ease-in-out infinite !important;
+    display: none !important;
   }
 
   /* Responsive para el título */
@@ -80,8 +74,6 @@
       font-size: 2rem !important;
     }
   }
-
-  /* Logo con efectos glassmorphism avanzados */
   .glass-logo-wrapper {
     display: inline-block !important;
     position: relative !important;
@@ -599,10 +591,9 @@
   }
 </style>
 
-<div class="container mx-auto px-4">
+<div class="container mx-auto px-4" style="margin-bottom: 1.5rem;">
   <h1 class="main-title">OPCIONES DE RESPUESTA</h1>
 </div>
-<hr class="border-gray-300 mb-6">
 
 <div class="max-w-4xl mx-auto px-4 py-8">
   <div class="text-center mb-6">
