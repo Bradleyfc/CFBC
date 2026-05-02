@@ -439,18 +439,20 @@
               <div class="card-title">{{ curso.name }}</div>
               <div class="card-desc">{{ curso.description|truncatechars:80 }}</div>
               <div class="card-footer">
-                {% if request.user.is_authenticated and curso.status == 'I' %}
+                {% if request.user.is_authenticated and curso.get_dynamic_status == 'I' %}
                 <a href="{% url 'principal:inscribirse_curso' curso.id %}" class="card-btn">
                   <span class="material-icons" style="font-size:0.9rem;">how_to_reg</span>
                   Inscribirse
                 </a>
                 {% else %}
-                {% if curso.status == 'I' %}
-                <span style="color:#4ade80; font-size:0.72rem; font-weight:600;">{{ curso.get_status_display }}</span>
-                {% elif curso.status == 'P' %}
-                <span style="color:#fbbf24; font-size:0.72rem; font-weight:600;">{{ curso.get_status_display }}</span>
+                {% if curso.get_dynamic_status == 'I' %}
+                <span style="color:#4ade80; font-size:0.72rem; font-weight:600;">{{ curso.get_dynamic_status_display }}</span>
+                {% elif curso.get_dynamic_status == 'P' %}
+                <span style="color:#fbbf24; font-size:0.72rem; font-weight:600;">{{ curso.get_dynamic_status_display }}</span>
+                {% elif curso.get_dynamic_status == 'IT' %}
+                <span style="color:#60a5fa; font-size:0.72rem; font-weight:600;">{{ curso.get_dynamic_status_display }}</span>
                 {% else %}
-                <span style="color:#94a3b8; font-size:0.72rem; font-weight:600;">{{ curso.get_status_display }}</span>
+                <span style="color:#94a3b8; font-size:0.72rem; font-weight:600;">{{ curso.get_dynamic_status_display }}</span>
                 {% endif %}
                 {% endif %}
               </div>

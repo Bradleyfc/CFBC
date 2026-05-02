@@ -888,9 +888,11 @@ class HomeView(DocumentsCourseMixin, BaseContextMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         curso_academico_activo = CursoAcademico.objects.filter(activo=True).first()
         if curso_academico_activo:
+            # Incluir todos los estados activos: inscripción, plazo terminado y en progreso.
+            # Se excluye 'F' (Finalizado) porque esos cursos ya no son relevantes en la home.
             courses = Curso.objects.filter(
                 curso_academico=curso_academico_activo,
-                status__in=['I', 'P']
+                status__in=['I', 'IT', 'P']
             )
         else:
             courses = Curso.objects.none()
