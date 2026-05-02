@@ -250,7 +250,7 @@
               <!-- Fecha límite -->
               <div class="glass-detail-item-medium flex-1">
                 {% if course.enrollment_deadline %}
-                <div class="glass-icon-medium {% if course.get_dynamic_status == 'I' %}pulse-red-icon{% endif %}">
+                <div class="glass-icon-medium {% if course.get_dynamic_status == 'I' %}pulse-red-icon{% endif %} curso-tooltip curso-tooltip-left" data-tooltip="Fecha límite de inscripción">
                   <span class="fa material-icons {% if course.get_dynamic_status == 'I' %}pulse-red-text{% endif %}">schedule</span></i>
                 </div>
                 <span class="text-gray-700 text-sm font-medium {% if course.get_dynamic_status == 'I' %}pulse-red-text{% endif %}">{{course.enrollment_deadline|date:"d/m"}}</span>
@@ -260,7 +260,7 @@
               <!-- Fecha inicio -->
               <div class="glass-detail-item-medium flex-1">
                 {% if course.start_date %}
-                <div class="glass-icon-medium {% if course.get_dynamic_status == 'IT' %}pulse-red-icon{% endif %}">
+                <div class="glass-icon-medium {% if course.get_dynamic_status == 'IT' %}pulse-red-icon{% endif %} curso-tooltip" data-tooltip="Fecha de inicio del curso">
                   <span class="bi material-icons {% if course.get_dynamic_status == 'IT' %}pulse-red-text{% endif %}">play_circle</span></i>
                 </div>
                 <span class="text-gray-700 text-sm font-medium {% if course.get_dynamic_status == 'IT' %}pulse-red-text{% endif %}">{{course.start_date|date:"d/m"}}</span>
@@ -431,6 +431,92 @@
 
 <!-- Advanced Glassmorphism Styles -->
 <style>
+  /* ── Tooltip para iconos de fecha ── */
+  .curso-tooltip {
+    position: relative;
+    cursor: default;
+  }
+  /* Tooltip genérico (fecha de inicio — centrado) */
+  .curso-tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) scale(0.9);
+    background: rgba(15, 23, 42, 0.92);
+    color: #f1f5f9;
+    font-size: 0.7rem;
+    font-weight: 500;
+    white-space: nowrap;
+    padding: 4px 10px;
+    border-radius: 6px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    z-index: 50;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  }
+  .curso-tooltip::before {
+    content: '';
+    position: absolute;
+    bottom: calc(100% + 2px);
+    left: 50%;
+    transform: translateX(-50%) scale(0.9);
+    border: 5px solid transparent;
+    border-top-color: rgba(15, 23, 42, 0.92);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    z-index: 50;
+  }
+  .curso-tooltip:hover::after,
+  .curso-tooltip:hover::before {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+
+  /* Tooltip fecha límite — alineado a la izquierda del icono, texto en dos líneas */
+  .curso-tooltip-left::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    transform: translateX(0) scale(0.9);
+    background: rgba(15, 23, 42, 0.92);
+    color: #f1f5f9;
+    font-size: 0.7rem;
+    font-weight: 500;
+    white-space: normal;
+    width: 7rem;
+    text-align: center;
+    padding: 5px 8px;
+    border-radius: 6px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    z-index: 50;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    line-height: 1.3;
+  }
+  .curso-tooltip-left::before {
+    content: '';
+    position: absolute;
+    bottom: calc(100% + 2px);
+    left: 14px;
+    transform: translateX(0) scale(0.9);
+    border: 5px solid transparent;
+    border-top-color: rgba(15, 23, 42, 0.92);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    z-index: 50;
+  }
+  .curso-tooltip-left:hover::after,
+  .curso-tooltip-left:hover::before {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+
   /* Base Glass Card - Altura fija para todos los roles */
   .glass-card {
     position: relative;
