@@ -238,7 +238,7 @@ def obtener_contexto_noticias():
     return ctx
 
 
-
+def renderizar_template_seguro(template_name: str, context: dict) -> str:
     """
     Renderiza un template Django con manejo de errores.
     Usa RequestFactory para simular un request sin servidor.
@@ -282,6 +282,79 @@ def embeber_imagenes_media(html: str) -> str:
     return re.sub(r'src="(/media/[^"]+)"', reemplazar, html)
 
 
+def inyectar_assets_en_html_completo(html: str, css_font: str) -> str:
+    """
+    Para templates que ya generan un HTML completo (con su propio <head>),
+    inyecta las fuentes y CSS directamente antes de </head> en lugar de
+    envolver el HTML en otro documento.
+    """
+    tailwind_css  = leer_css(CSS_TAILWIND)
+    icons_css     = leer_css(CSS_ICONS)
+    doc_icons_css = leer_css(CSS_DOC_ICONS)
+
+    # Limpiar tags Django residuales
+    html = re.sub(r'\{%[^%]*%\}', '', html)
+    html = re.sub(r'\{\{[^}]*\}\}', '', html)
+
+    bloque_css = f"""
+  <style>/* Material Icons (base64) */
+    {css_font}
+  </style>
+  <style>/* Tailwind CSS */
+    {tailwind_css}
+  </style>
+  <style>/* Icons CSS */
+    {icons_css}
+  </style>
+  <style>/* Document Icons CSS */
+    {doc_icons_css}
+  </style>
+  <style>
+    *, *::before, *::after {{ box-sizing: border-box; }}
+    body {{ margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; background: #f1f5f9; }}
+    a {{ color: inherit; }}
+    img {{ max-width: 100%; }}
+  </style>"""
+
+    # Inyectar justo antes de </head>
+    if '</head>' in html:
+        html = html.replace('</head>', bloque_css + '\n</head>', 1)
+    else:
+        # Fallback: insertar al inicio
+        html = bloque_css + html
+
+    # Eliminar links a CSS externos que no funcionarán offline
+    html = re.sub(r'<link[^>]+href="[^"]*cdn[^"]*"[^>]*>', '', html)
+    html = re.sub(r'<link[^>]+href="[^"]*static[^"]*\.css[^"]*"[^>]*>', '', html)
+    html = re.sub(r'<script[^>]+src="[^"]*cdn[^"]*"[^>]*></script>', '', html)
+
+    return html
+
+
+
+    """
+    Convierte URLs de imágenes /media/... a base64 si los archivos existen.
+    """
+    media_root = BASE_DIR / "media"
+
+    def reemplazar(m):
+        src = m.group(1)
+        if src.startswith("/media/"):
+            ruta = media_root / src[7:]  # quitar /media/
+            if ruta.exists():
+                ext = ruta.suffix.lower()
+                mime_map = {".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+                            ".png": "image/png", ".gif": "image/gif",
+                            ".webp": "image/webp", ".svg": "image/svg+xml"}
+                mime = mime_map.get(ext, "image/jpeg")
+                data = ruta.read_bytes()
+                b64  = base64.b64encode(data).decode("ascii")
+                return f'src="data:{mime};base64,{b64}"'
+        return m.group(0)
+
+    return re.sub(r'src="(/media/[^"]+)"', reemplazar, html)
+
+
 def generar_pagina(titulo: str, template: str, contexto: dict,
                    salida: str, css_font: str):
     print(f"\n{'─'*55}")
@@ -294,8 +367,15 @@ def generar_pagina(titulo: str, template: str, contexto: dict,
     print("  [2] Embebiendo imágenes de media…")
     html_renderizado = embeber_imagenes_media(html_renderizado)
 
-    print("  [3] Construyendo HTML autocontenido…")
-    html_final = construir_html_completo(titulo, html_renderizado, css_font)
+    # Detectar si el template ya genera un HTML completo (tiene su propio DOCTYPE)
+    es_html_completo = '<!DOCTYPE' in html_renderizado[:500] or '<html' in html_renderizado[:500]
+
+    if es_html_completo:
+        print("  [3] Inyectando assets en HTML existente…")
+        html_final = inyectar_assets_en_html_completo(html_renderizado, css_font)
+    else:
+        print("  [3] Construyendo HTML autocontenido…")
+        html_final = construir_html_completo(titulo, html_renderizado, css_font)
 
     with open(salida, "w", encoding="utf-8") as f:
         f.write(html_final)
