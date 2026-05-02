@@ -24,6 +24,8 @@
 {% endblock %}
 
 {% block extra_css %}
+<!-- Quill CSS para renderizar correctamente el contenido formateado -->
+<link href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css" rel="stylesheet">
 <style>
     .noticia-content {
         line-height: 1.8;
@@ -34,6 +36,39 @@
         padding-left: 15px;
         margin-bottom: 20px;
     }
+    /* Estilos de alineación generados por Quill */
+    .noticia-content .ql-align-justify {
+        text-align: justify;
+    }
+    .noticia-content .ql-align-center {
+        text-align: center;
+    }
+    .noticia-content .ql-align-right {
+        text-align: right;
+    }
+    .noticia-content .ql-align-left {
+        text-align: left;
+    }
+    /* Estilos de indentación de Quill */
+    .noticia-content .ql-indent-1 { padding-left: 3em; }
+    .noticia-content .ql-indent-2 { padding-left: 6em; }
+    .noticia-content .ql-indent-3 { padding-left: 9em; }
+    .noticia-content .ql-indent-4 { padding-left: 12em; }
+    .noticia-content .ql-indent-5 { padding-left: 15em; }
+    /* Tamaños de fuente de Quill */
+    .noticia-content .ql-size-small { font-size: 0.75em; }
+    .noticia-content .ql-size-large { font-size: 1.5em; }
+    .noticia-content .ql-size-huge  { font-size: 2.5em; }
+    /* Estilos generales del contenido */
+    .noticia-content p { margin-bottom: 1em; }
+    .noticia-content h1, .noticia-content h2, .noticia-content h3 { font-weight: bold; margin: 1em 0 0.5em; }
+    .noticia-content ul, .noticia-content ol { padding-left: 1.5em; margin-bottom: 1em; }
+    .noticia-content ul { list-style-type: disc; }
+    .noticia-content ol { list-style-type: decimal; }
+    .noticia-content blockquote { border-left: 4px solid #ccc; padding-left: 1em; color: #666; margin: 1em 0; }
+    .noticia-content a { color: #2563eb; text-decoration: underline; }
+    .noticia-content img { max-width: 100%; height: auto; border-radius: 0.5rem; margin: 1em 0; }
+    .noticia-content pre { background: #f3f4f6; padding: 1em; border-radius: 0.5rem; overflow-x: auto; }
 </style>
 {% endblock %}
 
@@ -108,7 +143,7 @@
                 </div>
             {% endif %}
 
-            <div class="p-6 noticia-content prose max-w-none">
+            <div class="p-6 noticia-content">
                 {{ noticia.contenido|safe }}
             </div>
         </article>
