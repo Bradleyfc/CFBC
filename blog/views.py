@@ -11,7 +11,7 @@ from .forms import ComentarioForm, NoticiaForm
 
 def lista_noticias(request):
     """Vista para mostrar todas las noticias publicadas"""
-    noticias = Noticia.objects.filter(estado='publicado').select_related('categoria', 'autor').order_by('-fecha_publicacion', '-fecha_creacion')
+    noticias = Noticia.objects.filter(estado='publicado').select_related('categoria', 'autor').order_by('-fecha_actualizacion', '-fecha_creacion')
 
     # Filtrar por visibilidad: si el usuario no está autenticado, excluir las de solo_registrados
     if not request.user.is_authenticated:
@@ -123,7 +123,7 @@ def noticias_por_categoria(request, slug):
     noticias = Noticia.objects.filter(
         categoria=categoria,
         estado='publicado'
-    ).select_related('categoria', 'autor').order_by('-fecha_publicacion', '-fecha_creacion')
+    ).select_related('categoria', 'autor').order_by('-fecha_actualizacion', '-fecha_creacion')
 
     # Filtrar por visibilidad
     if not request.user.is_authenticated:
