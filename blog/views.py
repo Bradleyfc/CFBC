@@ -11,7 +11,7 @@ from .forms import ComentarioForm, NoticiaForm
 
 def lista_noticias(request):
     """Vista para mostrar todas las noticias publicadas"""
-    noticias = Noticia.objects.filter(estado='publicado').select_related('categoria', 'autor')
+    noticias = Noticia.objects.filter(estado='publicado').select_related('categoria', 'autor').order_by('-fecha_publicacion', '-fecha_creacion')
 
     # Filtrar por visibilidad: si el usuario no está autenticado, excluir las de solo_registrados
     if not request.user.is_authenticated:
@@ -44,10 +44,10 @@ def lista_noticias(request):
     )
     if not request.user.is_authenticated:
         noticias_destacadas_qs = noticias_destacadas_qs.exclude(visibilidad='solo_registrados')
-    noticias_destacadas = noticias_destacadas_qs[:5]
+    noticias_destacadas = noticias_destacadas_qs[:10]
     
-    # Categorías para el menú
-    categorias = Categoria.objects.all()
+    # Categorías para el menú (máximo 10)
+    categorias = Categoria.objects.all()[:10]
     
     context = {
         'page_obj': page_obj,
@@ -123,27 +123,38 @@ def noticias_por_categoria(request, slug):
     noticias = Noticia.objects.filter(
         categoria=categoria,
         estado='publicado'
-    ).select_related('autor')
+    ).select_related('categoria', 'autor').order_by('-fecha_publicacion', '-fecha_creacion')
 
     # Filtrar por visibilidad
     if not request.user.is_authenticated:
         noticias = noticias.exclude(visibilidad='solo_registrados')
-    
+
     # Paginación
     paginator = Paginator(noticias, 6)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
-    # Categorías para el menú
-    categorias = Categoria.objects.all()
-    
+
+    # Noticias destacadas para el sidebar
+    noticias_destacadas_qs = Noticia.objects.filter(
+        estado='publicado',
+        destacada=True
+    )
+    if not request.user.is_authenticated:
+        noticias_destacadas_qs = noticias_destacadas_qs.exclude(visibilidad='solo_registrados')
+    noticias_destacadas = noticias_destacadas_qs[:10]
+
+    # Categorías para el menú (máximo 10)
+    categorias = Categoria.objects.all()[:10]
+
     context = {
         'categoria': categoria,
         'page_obj': page_obj,
+        'noticias_destacadas': noticias_destacadas,
         'categorias': categorias,
+        'categoria_actual': slug,
     }
-    
-    return render(request, 'blog/categoria_noticias.html', context)
+
+    return render(request, 'blog/lista_noticias.html', context)
 
 # Función para verificar si el usuario es editor
 def es_editor(user):

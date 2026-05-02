@@ -9,293 +9,594 @@
     {% endif %}
 {% endblock %}
 
-{% block content %}
-<div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-    <!-- Main Content -->
-    <div class="lg:col-span-3">
-        {% if busqueda %}
-            <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-6">
-                <div class="flex items-center">
-                    <span class="material-icons mr-2">search</span>
-                    <span>Resultados de búsqueda para: <strong>"{{ busqueda }}"</strong>
-                    ({{ page_obj.paginator.count }} resultado{{ page_obj.paginator.count|pluralize }})</span>
-                </div>
-            </div>
-        {% endif %}
-
-        {% if page_obj %}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {% for noticia in page_obj %}
-                    <div class="glass-card-news group">
-                        <!-- Image Container with Overlay -->
-                        <div class="relative overflow-hidden rounded-t-2xl" style="height: 192px; min-height: 192px; max-height: 192px;">
-                            {% if noticia.imagen_principal %}
-                                <img src="{{ noticia.imagen_principal.url }}" 
-                                     class="w-full object-cover transition-all duration-500 group-hover:scale-110" 
-                                     style="height: 192px !important; min-height: 192px !important; max-height: 192px !important; width: 100% !important;"
-                                     alt="{{ noticia.titulo }}">
-                            {% else %}
-                                <div class="w-full flex items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300" style="height: 192px;">
-                                    <span class="material-icons text-gray-400 text-5xl">image</span>
-                                </div>
-                            {% endif %}
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-                            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                        </div>
-
-                        <!-- Card Content with Glass Effect -->
-                        <div class="glass-content-news p-4 flex flex-col flex-1">
-                            <!-- Badges -->
-                            <div class="flex flex-wrap gap-1.5 mb-2">
-                                {% if noticia.destacada %}
-                                    <span class="glass-tag-mini glass-tag-warning inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
-                                        <span class="material-icons text-xs mr-1">star</span>
-                                        Destacada
-                                    </span>
-                                {% endif %}
-                                <span class="glass-tag-mini glass-tag-primary inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
-                                    {{ noticia.categoria.nombre }}
-                                </span>
-                            </div>
-                            
-                            <!-- Title with Glow Effect -->
-                            <h5 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-shadow-glow transition-all duration-300">
-                                <a href="{{ noticia.get_absolute_url }}" class="hover:text-blue-600">
-                                    {{ noticia.titulo }}
-                                </a>
-                            </h5>
-                            
-                            <!-- Summary -->
-                            <p class="text-gray-600 text-sm mb-3 line-clamp-3 flex-1">{{ noticia.resumen|truncatechars:120 }}</p>
-                            
-                            <!-- Meta Info -->
-                            <div class="flex items-center gap-3 text-xs text-gray-500 mb-3">
-                                <div class="flex items-center gap-1">
-                                    <span class="material-icons text-xs">person</span>
-                                    <span>{{ noticia.autor.get_full_name|default:noticia.autor.username|truncatechars:20 }}</span>
-                                </div>
-                                <div class="flex items-center gap-1">
-                                    <span class="material-icons text-xs">event</span>
-                                    <span>{{ noticia.fecha_publicacion|date:"d/m/Y" }}</span>
-                                </div>
-                            </div>
-                            
-                            <!-- Action Button - siempre al fondo -->
-                            <div class="mt-auto">
-                                <a href="{{ noticia.get_absolute_url }}" 
-                                   class="glass-button-news inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300">
-                                    Leer más
-                                    <span class="material-icons text-sm">arrow_forward</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-            <!-- Pagination -->
-            {% if page_obj.has_other_pages %}
-                <nav aria-label="Paginación de noticias" class="mt-8">
-                    <div class="flex justify-center">
-                        <div class="flex space-x-1">
-                            {% if page_obj.has_previous %}
-                                <a href="?page=1{% if busqueda %}&q={{ busqueda }}{% endif %}" 
-                                   class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 hover:text-gray-700">
-                                    <span class="material-icons text-sm">first_page</span>
-                                </a>
-                                <a href="?page={{ page_obj.previous_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}" 
-                                   class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700">
-                                    <span class="material-icons text-sm">chevron_left</span>
-                                </a>
-                            {% endif %}
-
-                            {% for num in page_obj.paginator.page_range %}
-                                {% if page_obj.number == num %}
-                                    <span class="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-300">
-                                        {{ num }}
-                                    </span>
-                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                                    <a href="?page={{ num }}{% if busqueda %}&q={{ busqueda }}{% endif %}" 
-                                       class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700">
-                                        {{ num }}
-                                    </a>
-                                {% endif %}
-                            {% endfor %}
-
-                            {% if page_obj.has_next %}
-                                <a href="?page={{ page_obj.next_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}" 
-                                   class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700">
-                                    <span class="material-icons text-sm">chevron_right</span>
-                                </a>
-                                <a href="?page={{ page_obj.paginator.num_pages }}{% if busqueda %}&q={{ busqueda }}{% endif %}" 
-                                   class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 hover:text-gray-700">
-                                    <span class="material-icons text-sm">last_page</span>
-                                </a>
-                            {% endif %}
-                        </div>
-                    </div>
-                </nav>
-            {% endif %}
-        {% else %}
-            <div class="text-center py-16">
-                <span class="material-icons text-gray-400 text-6xl mb-4 block">article</span>
-                <h3 class="text-2xl font-semibold text-gray-900 mb-2">No hay noticias disponibles</h3>
-                <p class="text-gray-600">Vuelve pronto para ver las últimas noticias.</p>
-            </div>
-        {% endif %}
-    </div>
-
-    <!-- Sidebar -->
-    <div class="lg:col-span-1">
-        <div class="bg-gray-50 p-6 rounded-lg">
-            <!-- Featured News -->
-            {% if noticias_destacadas %}
-                <h5 class="flex items-center text-lg font-semibold text-gray-900 mb-4">
-                    <span class="material-icons text-yellow-500 mr-2">star</span>
-                    Noticias Destacadas
-                </h5>
-                <div class="space-y-4 mb-6">
-                    {% for noticia in noticias_destacadas %}
-                        <div class="bg-white p-4 rounded-lg shadow-sm">
-                            <h6 class="font-medium mb-2">
-                                <a href="{{ noticia.get_absolute_url }}" class="text-gray-900 hover:text-blue-600 transition-colors">
-                                    {{ noticia.titulo|truncatechars:60 }}
-                                </a>
-                            </h6>
-                            <div class="flex items-center text-sm text-gray-500">
-                                <span class="material-icons text-sm mr-1">event</span>
-                                {{ noticia.fecha_publicacion|date:"d/m/Y" }}
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-                <hr class="border-gray-200 mb-6">
-            {% endif %}
-
-            <!-- Categories -->
-            <h5 class="flex items-center text-lg font-semibold text-gray-900 mb-4">
-                <span class="material-icons mr-2">category</span>
-                Categorías
-            </h5>
-            <div class="space-y-2">
-                <a href="{% url 'blog:lista_noticias' %}" 
-                   class="flex items-center justify-between p-3 rounded-lg transition-colors {% if not categoria_actual %}bg-blue-100 text-blue-700{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
-                    <span>Todas las categorías</span>
-                </a>
-                {% for categoria in categorias %}
-                    <a href="{% url 'blog:categoria_noticias' categoria.slug %}" 
-                       class="flex items-center justify-between p-3 rounded-lg transition-colors {% if categoria_actual == categoria.slug %}bg-blue-100 text-blue-700{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
-                        <span>{{ categoria.nombre }}</span>
-                        <span class="bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded-full">{{ categoria.noticias.count }}</span>
-                    </a>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
 {% block extra_css %}
 <style>
-    /* Glassmorphism News Cards */
-    .glass-card-news {
-        position: relative;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        box-shadow: 
-            0 8px 32px rgba(0, 0, 0, 0.1),
-            0 4px 16px rgba(0, 0, 0, 0.1),
-            inset 0 1px 0 rgba(255, 255, 255, 0.3);
-        overflow: hidden;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        transform: translateY(0);
-        display: flex;
-        flex-direction: column;
+  /* ── Layout de dos columnas (igual que home) ─────────────────────── */
+  #noticias-layout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    padding: 1.5rem 0;
+  }
+  #noticias-left {
+    flex: 0 0 260px;
+    width: 260px;
+    min-width: 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  #noticias-right {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  @media (max-width: 767px) {
+    #noticias-left,
+    #noticias-right {
+      flex: 0 0 100%;
+      width: 100%;
     }
+  }
 
-    /* Forzar tamaño igual en todas las imágenes */
-    .glass-card-news img {
-        width: 100% !important;
-        height: 192px !important;
-        min-height: 192px !important;
-        max-height: 192px !important;
-        object-fit: cover !important;
-        object-position: center !important;
-    }
+  /* ── Glassmorphism News Cards ────────────────────────────────────── */
+  .glass-card-news {
+    position: relative;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.2);
+    box-shadow:
+      0 8px 32px rgba(0,0,0,0.1),
+      0 4px 16px rgba(0,0,0,0.1),
+      inset 0 1px 0 rgba(255,255,255,0.3);
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
+    transform: translateY(0);
+    display: flex;
+    flex-direction: column;
+  }
+  .glass-card-news img {
+    width: 100% !important;
+    height: 160px !important;
+    min-height: 160px !important;
+    max-height: 160px !important;
+    object-fit: cover !important;
+    object-position: center !important;
+  }
+  .glass-card-news:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow:
+      0 20px 60px rgba(0,0,0,0.2),
+      0 8px 24px rgba(0,0,0,0.15),
+      inset 0 1px 0 rgba(255,255,255,0.4);
+    border-color: rgba(255,255,255,0.3);
+  }
+  .glass-content-news {
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.8));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .glass-tag-mini {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+  }
+  .glass-tag-primary {
+    background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(37,99,235,0.15));
+    color: #1e40af;
+  }
+  .glass-tag-warning {
+    background: linear-gradient(135deg, rgba(251,191,36,0.2), rgba(245,158,11,0.15));
+    color: #92400e;
+  }
+  .glass-button-news {
+    background: linear-gradient(135deg, rgba(59,130,246,0.8), rgba(37,99,235,0.7));
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 4px 12px rgba(59,130,246,0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .glass-button-news:hover {
+    background: linear-gradient(135deg, rgba(59,130,246,1), rgba(37,99,235,0.9));
+    box-shadow: 0 6px 20px rgba(59,130,246,0.5);
+    transform: translateY(-2px);
+  }
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 
-    .glass-card-news:hover {
-        transform: translateY(-8px) scale(1.02);
-        box-shadow: 
-            0 20px 60px rgba(0, 0, 0, 0.2),
-            0 8px 24px rgba(0, 0, 0, 0.15),
-            inset 0 1px 0 rgba(255, 255, 255, 0.4);
-        border-color: rgba(255, 255, 255, 0.3);
-    }
+  /* ══════════════════════════════════════════════════════════════════
+     SIDEBAR GLASSMORPHISM — fondo blanco/neutro, letras negras
+     ══════════════════════════════════════════════════════════════════ */
 
-    .glass-content-news {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8));
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-    }
+  .sidebar-glass-card {
+    position: relative;
+    /* Vidrio blanco semitransparente */
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border-radius: 18px;
+    /* Borde superior más brillante — luz incidente */
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    border-bottom-color: rgba(200, 215, 235, 0.4);
+    /* Sombras en capas para profundidad */
+    box-shadow:
+      0 2px 0  rgba(255, 255, 255, 0.9),    /* línea de luz superior */
+      0 6px 20px rgba(0, 0, 0, 0.10),        /* sombra suave */
+      0 20px 40px rgba(0, 0, 0, 0.07),       /* sombra difusa */
+      inset 0 1px 0 rgba(255, 255, 255, 0.95), /* brillo interior top */
+      inset 0 -1px 0 rgba(0, 0, 0, 0.04);   /* profundidad interior bottom */
+    overflow: hidden;
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+  }
 
-    /* Glass Tags */
-    .glass-tag-mini {
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
-    }
+  /* Reflejo diagonal en la mitad superior */
+  .sidebar-glass-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 45%;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.45) 0%,
+      transparent 100%
+    );
+    border-radius: 18px 18px 0 0;
+    pointer-events: none;
+    z-index: 0;
+  }
 
-    .glass-tag-primary {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.15));
-        color: #1e40af;
-    }
+  /* Línea de acento izquierda — azul para Categorías */
+  .sidebar-glass-card::after {
+    content: '';
+    position: absolute;
+    top: 14px; bottom: 14px; left: 0;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: linear-gradient(
+      180deg,
+      rgba(59, 130, 246, 0.8) 0%,
+      rgba(37, 99, 235, 0.5) 50%,
+      rgba(59, 130, 246, 0.2) 100%
+    );
+    pointer-events: none;
+  }
 
-    .glass-tag-warning {
-        background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.15));
-        color: #92400e;
-    }
+  /* Variante dorada para "Destacadas" */
+  .sidebar-glass-card.accent-yellow::after {
+    background: linear-gradient(
+      180deg,
+      rgba(234, 179, 8, 0.9) 0%,
+      rgba(202, 138, 4, 0.6) 50%,
+      rgba(234, 179, 8, 0.2) 100%
+    );
+  }
 
-    /* Text Glow Effect */
-    .group:hover .text-shadow-glow {
-        text-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
-    }
+  .sidebar-glass-card:hover {
+    box-shadow:
+      0 2px 0  rgba(255, 255, 255, 0.95),
+      0 10px 28px rgba(0, 0, 0, 0.14),
+      0 28px 50px rgba(0, 0, 0, 0.09),
+      inset 0 1px 0 rgba(255, 255, 255, 1),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+    transform: translateY(-2px);
+  }
 
-    /* Glass Button */
-    .glass-button-news {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(37, 99, 235, 0.7));
-        color: white;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-    }
+  /* ── Cabecera ──────────────────────────────────────────────────── */
+  .sidebar-glass-header {
+    position: relative;
+    z-index: 1;
+    padding: 0.75rem 1rem 0.65rem 1.1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+    display: flex;
+    align-items: center;
+  }
 
-    .glass-button-news:hover {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 1), rgba(37, 99, 235, 0.9));
-        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
-        transform: translateY(-2px);
-    }
+  .sidebar-glass-header h2 {
+    color: #111827;          /* negro casi puro */
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
 
-    /* Line Clamp Utilities */
-    .line-clamp-2 {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
+  /* ── Ítems de noticias destacadas ─────────────────────────────── */
+  .sidebar-noticia-item {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 0.65rem;
+    padding: 0.7rem 1rem 0.7rem 1.1rem;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    transition: background 0.22s ease;
+  }
+  .sidebar-noticia-item:last-child { border-bottom: none; }
+  .sidebar-noticia-item:hover {
+    background: rgba(59, 130, 246, 0.06);
+  }
 
-    .line-clamp-3 {
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
+  /* Miniatura */
+  .sidebar-noticia-img {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+  }
+  .sidebar-noticia-item:hover .sidebar-noticia-img {
+    transform: scale(1.06);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+  }
+
+  .sidebar-noticia-placeholder {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid rgba(0, 0, 0, 0.07);
+  }
+
+  /* Texto */
+  .sidebar-noticia-titulo {
+    color: #111827;
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: color 0.2s ease;
+  }
+  .sidebar-noticia-item:hover .sidebar-noticia-titulo {
+    color: #1d4ed8;
+  }
+
+  .sidebar-noticia-fecha {
+    color: #6b7280;
+    font-size: 0.67rem;
+    margin-top: 0.3rem;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .sidebar-empty {
+    position: relative;
+    z-index: 1;
+    padding: 1rem;
+    color: #9ca3af;
+    font-size: 0.8rem;
+    font-style: italic;
+    text-align: center;
+  }
+
+  /* ── Ítems de categorías ─────────────────────────────────────── */
+  .sidebar-cat-item {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.62rem 1rem 0.62rem 1.1rem;
+    text-decoration: none;
+    color: #1f2937;
+    font-size: 0.82rem;
+    font-weight: 500;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    transition: background 0.22s ease, color 0.22s ease;
+  }
+  .sidebar-cat-item:last-child { border-bottom: none; }
+
+  .sidebar-cat-item:hover {
+    background: rgba(59, 130, 246, 0.07);
+    color: #1d4ed8;
+  }
+  .sidebar-cat-item:hover .cat-icon { color: #2563eb; transform: scale(1.12); }
+
+  .sidebar-cat-item.active {
+    background: rgba(59, 130, 246, 0.10);
+    color: #1d4ed8;
+    font-weight: 700;
+  }
+  .sidebar-cat-item.active .cat-icon { color: #2563eb; }
+
+  .cat-icon {
+    color: #9ca3af;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+    transition: color 0.22s ease, transform 0.22s ease;
+  }
+
+  .cat-label {
+    flex: 1;
+    margin-left: 0.55rem;
+  }
+
+  .sidebar-cat-badge {
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    color: #6b7280;
+    transition: background 0.22s ease, color 0.22s ease;
+    flex-shrink: 0;
+  }
+  .sidebar-cat-item:hover .sidebar-cat-badge,
+  .sidebar-cat-item.active .sidebar-cat-badge {
+    background: rgba(59, 130, 246, 0.15);
+    color: #1d4ed8;
+    border-color: rgba(59, 130, 246, 0.25);
+  }
 </style>
+{% endblock %}
+
+{% block content %}
+
+{# ── Barra de búsqueda ──────────────────────────────────────────────────── #}
+<form method="get" action="{% url 'blog:lista_noticias' %}" class="mb-4">
+  <div style="display:flex; gap:0.5rem; align-items:center;">
+    <input type="text" name="q" value="{{ busqueda|default:'' }}"
+           placeholder="Buscar noticias…"
+           style="flex:1; padding:0.5rem 0.9rem; border-radius:10px; border:1px solid rgba(255,255,255,0.2);
+                  background:rgba(255,255,255,0.12); color:#fff; font-size:0.875rem; outline:none;"
+           class="glass-search-input">
+    <button type="submit"
+            style="padding:0.5rem 1rem; border-radius:10px; background:rgba(59,130,246,0.7);
+                   border:1px solid rgba(147,197,253,0.3); color:#fff; cursor:pointer;
+                   display:flex; align-items:center; gap:4px; font-size:0.875rem; transition:background 0.2s;"
+            onmouseover="this.style.background='rgba(59,130,246,1)'"
+            onmouseout="this.style.background='rgba(59,130,246,0.7)'">
+      <span class="material-icons" style="font-size:1.1rem;">search</span>
+      Buscar
+    </button>
+    {% if busqueda %}
+    <a href="{% url 'blog:lista_noticias' %}"
+       style="padding:0.5rem 0.9rem; border-radius:10px; background:rgba(255,255,255,0.1);
+              border:1px solid rgba(255,255,255,0.2); color:#93c5fd; font-size:0.875rem;
+              text-decoration:none; display:flex; align-items:center; gap:4px;">
+      <span class="material-icons" style="font-size:1rem;">close</span>
+      Limpiar
+    </a>
+    {% endif %}
+  </div>
+  {% if busqueda %}
+  <p style="color:#93c5fd; font-size:0.8rem; margin-top:0.4rem;">
+    {{ page_obj.paginator.count }} resultado{{ page_obj.paginator.count|pluralize }} para
+    "<strong style="color:#fff;">{{ busqueda }}</strong>"
+  </p>
+  {% endif %}
+</form>
+
+{# ── Layout dos columnas ────────────────────────────────────────────────── #}
+<div id="noticias-layout">
+
+  {# ── Columna izquierda ─────────────────────────────────────────────── #}
+  <aside id="noticias-left">
+
+    {# Tarjeta: Categorías #}
+    <div class="sidebar-glass-card">
+      <div class="sidebar-glass-header">
+        <h2>
+          <span class="material-icons" style="font-size:1rem; color:#2563eb;">label</span>
+          Categorías
+        </h2>
+      </div>
+      <nav aria-label="Categorías de noticias">
+        <a href="{% url 'blog:lista_noticias' %}"
+           class="sidebar-cat-item {% if not categoria_actual %}active{% endif %}">
+          <span class="material-icons cat-icon">apps</span>
+          <span class="cat-label">Todas</span>
+        </a>
+        {% for categoria in categorias %}
+          <a href="{% url 'blog:categoria_noticias' categoria.slug %}"
+             class="sidebar-cat-item {% if categoria_actual == categoria.slug %}active{% endif %}">
+            <span class="material-icons cat-icon">label</span>
+            <span class="cat-label">{{ categoria.nombre }}</span>
+            <span class="sidebar-cat-badge">{{ categoria.noticias.count }}</span>
+          </a>
+        {% endfor %}
+      </nav>
+    </div>
+
+    {# Tarjeta: Noticias Destacadas #}
+    <div class="sidebar-glass-card accent-yellow">
+      <div class="sidebar-glass-header">
+        <h2>
+          <span class="material-icons" style="font-size:1rem; color:#ca8a04;">star</span>
+          Noticias Destacadas
+        </h2>
+      </div>
+      {% if noticias_destacadas %}
+        <nav aria-label="Noticias destacadas">
+          {% for noticia in noticias_destacadas %}
+            <a href="{{ noticia.get_absolute_url }}" class="sidebar-noticia-item">
+              {% if noticia.imagen_principal %}
+                <img src="{{ noticia.imagen_principal.url }}" alt="{{ noticia.titulo }}" class="sidebar-noticia-img">
+              {% else %}
+                <div class="sidebar-noticia-placeholder">
+                  <span class="material-icons" style="font-size:1.3rem; color:#93c5fd;">article</span>
+                </div>
+              {% endif %}
+              <div style="min-width:0; flex:1;">
+                <p class="sidebar-noticia-titulo">{{ noticia.titulo }}</p>
+                <p class="sidebar-noticia-fecha">
+                  <span class="material-icons" style="font-size:0.7rem;">event</span>
+                  {{ noticia.fecha_publicacion|date:"d/m/Y" }}
+                </p>
+              </div>
+            </a>
+          {% endfor %}
+        </nav>
+      {% else %}
+        <p class="sidebar-empty">No hay noticias destacadas</p>
+      {% endif %}
+    </div>
+
+  </aside>
+
+  {# ── Columna derecha: noticias ─────────────────────────────────────── #}
+  <main id="noticias-right">
+
+    {% if page_obj %}
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:1rem;">
+        {% for noticia in page_obj %}
+          <div class="glass-card-news group">
+            {# Imagen #}
+            <div class="relative overflow-hidden" style="height:160px; min-height:160px; max-height:160px;">
+              {% if noticia.imagen_principal %}
+                <img src="{{ noticia.imagen_principal.url }}"
+                     class="w-full object-cover transition-all duration-500 group-hover:scale-110"
+                     alt="{{ noticia.titulo }}">
+              {% else %}
+                <div class="w-full flex items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300"
+                     style="height:160px;">
+                  <span class="material-icons text-gray-400 text-5xl">image</span>
+                </div>
+              {% endif %}
+              <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+              <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            </div>
+
+            {# Contenido #}
+            <div class="glass-content-news p-4 flex flex-col flex-1">
+              {# Badges #}
+              <div class="flex flex-wrap gap-1.5 mb-2">
+                {% if noticia.destacada %}
+                  <span class="glass-tag-mini glass-tag-warning inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
+                    <span class="material-icons text-xs mr-1">star</span>Destacada
+                  </span>
+                {% endif %}
+                <span class="glass-tag-mini glass-tag-primary inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
+                  {{ noticia.categoria.nombre }}
+                </span>
+              </div>
+
+              {# Título #}
+              <h5 class="text-base font-bold text-gray-900 mb-2 line-clamp-2">
+                <a href="{{ noticia.get_absolute_url }}" class="hover:text-blue-600 transition-colors">
+                  {{ noticia.titulo }}
+                </a>
+              </h5>
+
+              {# Resumen #}
+              <p class="text-gray-600 text-sm mb-3 line-clamp-3 flex-1">{{ noticia.resumen|truncatechars:110 }}</p>
+
+              {# Meta #}
+              <div class="flex items-center gap-3 text-xs text-gray-500 mb-3">
+                <div class="flex items-center gap-1">
+                  <span class="material-icons text-xs">person</span>
+                  <span>{{ noticia.autor.get_full_name|default:noticia.autor.username|truncatechars:18 }}</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <span class="material-icons text-xs">event</span>
+                  <span>{{ noticia.fecha_publicacion|date:"d/m/Y" }}</span>
+                </div>
+              </div>
+
+              {# Botón #}
+              <div class="mt-auto">
+                <a href="{{ noticia.get_absolute_url }}"
+                   class="glass-button-news inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300">
+                  Leer más
+                  <span class="material-icons text-sm">arrow_forward</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      {# Paginación #}
+      {% if page_obj.has_other_pages %}
+        <nav aria-label="Paginación de noticias" class="mt-6">
+          <div class="flex justify-center">
+            <div class="flex space-x-1">
+              {% if page_obj.has_previous %}
+                <a href="?page=1{% if busqueda %}&q={{ busqueda }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}"
+                   class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50">
+                  <span class="material-icons text-sm">first_page</span>
+                </a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}"
+                   class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50">
+                  <span class="material-icons text-sm">chevron_left</span>
+                </a>
+              {% endif %}
+
+              {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                  <span class="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-300">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                  <a href="?page={{ num }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}"
+                     class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50">
+                    {{ num }}
+                  </a>
+                {% endif %}
+              {% endfor %}
+
+              {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}"
+                   class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50">
+                  <span class="material-icons text-sm">chevron_right</span>
+                </a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}"
+                   class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50">
+                  <span class="material-icons text-sm">last_page</span>
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        </nav>
+      {% endif %}
+
+    {% else %}
+      <div class="text-center py-16">
+        <span class="material-icons text-gray-400 text-6xl mb-4 block">article</span>
+        <h3 class="text-2xl font-semibold text-gray-900 mb-2">No hay noticias disponibles</h3>
+        <p class="text-gray-600">
+          {% if busqueda %}
+            No se encontraron resultados para "<strong>{{ busqueda }}</strong>".
+          {% else %}
+            Vuelve pronto para ver las últimas noticias.
+          {% endif %}
+        </p>
+      </div>
+    {% endif %}
+
+  </main>
+
+</div>
 {% endblock %}
