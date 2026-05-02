@@ -15,345 +15,278 @@
             {% endif %}
 
             <style>
-              /* Glassmorphism Header Container */
               .glass-header-container {
-                /* Fondo azul oscuro sólido */
                 background: rgba(30, 64, 175, 0.9);
-                /* Gradiente azul por encima para el efecto glass */
-                background-image: linear-gradient(135deg, 
-                  rgba(59, 130, 246, 0.3), 
-                  rgba(30, 64, 175, 0.1)
-                );
+                background-image: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(30, 64, 175, 0.1));
                 backdrop-filter: blur(20px);
                 -webkit-backdrop-filter: blur(20px);
                 border: 1px solid rgba(59, 130, 246, 0.4);
                 border-radius: 20px;
-                box-shadow: 
-                  0 8px 32px rgba(0, 0, 0, 0.3),
-                  inset 0 1px 0 rgba(147, 197, 253, 0.4);
+                box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(147,197,253,0.4);
                 position: relative;
                 overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0.75rem 1.5rem;
+                margin: 0.75rem 1rem;
               }
-
               .glass-header-container::before {
                 content: '';
                 position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 1px;
-                background: linear-gradient(90deg, transparent, rgba(147, 197, 253, 0.6), transparent);
+                top: 0; left: 0; right: 0; height: 1px;
+                background: linear-gradient(90deg, transparent, rgba(147,197,253,0.6), transparent);
                 pointer-events: none;
               }
 
-              .glass-header-container::after {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: -100%;
-                width: 100%;
-                height: 100%;
-                background: linear-gradient(90deg, transparent, rgba(147, 197, 253, 0.3), transparent);
-                animation: shimmer 3s infinite;
-                pointer-events: none;
-              }
-
-              @keyframes shimmer {
-                0% { left: -100%; }
-                100% { left: 100%; }
-              }
-
-              /* Navigation Links con Glassmorphism - Más suaves y transparentes */
-              .glass-nav-link, .nav-link {
-                /* Fondo muy transparente */
+              .glass-nav-link {
                 background: rgba(59, 130, 246, 0.15);
-                /* Gradiente muy sutil */
-                background-image: linear-gradient(135deg, 
-                  rgba(59, 130, 246, 0.2), 
-                  rgba(37, 99, 235, 0.05)
-                );
                 backdrop-filter: blur(8px);
                 -webkit-backdrop-filter: blur(8px);
                 border: 1px solid rgba(147, 197, 253, 0.1);
                 border-radius: 10px;
                 transition: all 0.15s ease;
-                position: relative;
-                overflow: hidden;
-                box-shadow: 
-                  0 2px 8px rgba(0, 0, 0, 0.1),
-                  inset 0 1px 0 rgba(147, 197, 253, 0.2);
-                padding: 0.75rem 1.25rem !important;
-                font-size: 1rem !important;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(147,197,253,0.2);
+                padding: 0.45rem 0.9rem;
+                font-size: 0.9rem;
+                color: white !important;
+                text-decoration: none !important;
+                display: inline-flex;
+                align-items: center;
+                white-space: nowrap;
+              }
+              .glass-nav-link:hover {
+                background: rgba(59, 130, 246, 0.35);
+                transform: translateY(-1px);
+                color: white !important;
               }
 
-              .glass-nav-link::before, .nav-link::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: linear-gradient(135deg, rgba(147, 197, 253, 0.1), transparent);
-                opacity: 0;
-                transition: opacity 0.15s ease;
-                pointer-events: none;
-              }
-
-              .glass-nav-link:hover, .nav-link:hover {
-                /* Hover más sutil */
-                background: rgba(59, 130, 246, 0.3);
-                background-image: linear-gradient(135deg, 
-                  rgba(96, 165, 250, 0.35), 
-                  rgba(59, 130, 246, 0.15)
-                );
-                border-color: rgba(147, 197, 253, 0.2);
-                transform: translateY(-1px) scale(1.01);
-                box-shadow: 
-                  0 4px 15px rgba(0, 0, 0, 0.2),
-                  inset 0 1px 0 rgba(147, 197, 253, 0.4),
-                  0 0 10px rgba(59, 130, 246, 0.2);
-              }
-
-              .glass-nav-link:hover::before, .nav-link:hover::before {
-                opacity: 1;
-              }
-
-              /* Botones de Autenticación con Glassmorphism */
               .glass-button-oval {
-                /* Fondo azul oscuro sólido */
                 background: rgba(30, 64, 175, 0.8);
-                background-image: linear-gradient(135deg, 
-                  rgba(59, 130, 246, 0.5), 
-                  rgba(30, 64, 175, 0.3)
-                );
                 backdrop-filter: blur(15px);
                 -webkit-backdrop-filter: blur(15px);
                 border: 1px solid rgba(147, 197, 253, 0.6);
                 border-radius: 20px;
                 transition: all 0.2s ease;
-                position: relative;
-                overflow: hidden;
-                box-shadow: 
-                  0 6px 20px rgba(0, 0, 0, 0.3),
-                  inset 0 1px 0 rgba(147, 197, 253, 0.7);
-                padding: 0.4rem 1rem !important;
-                font-size: 1rem !important;
+                box-shadow: 0 6px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(147,197,253,0.7);
+                padding: 0.4rem 1rem;
+                font-size: 0.9rem;
+                color: white !important;
+                text-decoration: none !important;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.3rem;
               }
-
-              .glass-button-oval::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: -100%;
-                width: 100%;
-                height: 100%;
-                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-                transition: left 0.5s ease;
-                pointer-events: none;
-              }
-
-              .glass-button-oval:hover {
-                background: rgba(147, 197, 253, 0.9);
-                background-image: linear-gradient(135deg, 
-                  rgba(147, 197, 253, 0.8), 
-                  rgba(96, 165, 250, 0.6)
-                );
-                color: #1e40af !important;
-                transform: translateY(-2px) scale(1.05);
-                box-shadow: 
-                  0 10px 30px rgba(0, 0, 0, 0.4),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.8),
-                  0 0 25px rgba(59, 130, 246, 0.6);
-              }
-
-              .glass-button-oval:hover::before {
-                left: 100%;
-              }
-
               .glass-button-oval-solid {
-                background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
+                background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,255,255,0.85));
                 backdrop-filter: blur(15px);
-                -webkit-backdrop-filter: blur(15px);
-                border: 1px solid rgba(255, 255, 255, 0.4);
+                border: 1px solid rgba(255,255,255,0.4);
                 border-radius: 20px;
-                color: #1e40af;
+                color: #1e40af !important;
                 transition: all 0.2s ease;
-                position: relative;
-                overflow: hidden;
-                box-shadow: 
-                  0 6px 20px rgba(0, 0, 0, 0.15),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.5);
-                padding: 0.4rem 1rem !important;
-                font-size: 1rem !important;
+                box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+                padding: 0.4rem 1rem;
+                font-size: 0.9rem;
+                text-decoration: none !important;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.3rem;
               }
-
-              .glass-button-oval-solid::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: linear-gradient(135deg, #1e40af, #3b82f6);
-                opacity: 0;
-                transition: opacity 0.15s ease;
-                pointer-events: none;
-              }
-
-              .glass-button-oval-solid:hover {
-                transform: translateY(-2px) scale(1.05);
-                background: linear-gradient(135deg, #1e40af, #3b82f6) !important;
-                color: white !important;
-                box-shadow: 
-                  0 10px 30px rgba(30, 64, 175, 0.3),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.2),
-                  0 0 25px rgba(59, 130, 246, 0.4);
-              }
-
-              .glass-button-oval-solid:hover i,
-              .glass-button-oval-solid:hover span {
-                color: white !important;
-                z-index: 10;
-                position: relative;
-              }
-
-              .glass-button-oval-solid:hover::before {
-                opacity: 0;
-              }
-
-              /* Efectos de profundidad para el logo - Más suave */
               .glass-logo {
-                /* Fondo muy transparente */
                 background: rgba(59, 130, 246, 0.2);
-                background-image: linear-gradient(135deg, 
-                  rgba(59, 130, 246, 0.25), 
-                  rgba(37, 99, 235, 0.1)
-                );
                 backdrop-filter: blur(8px);
-                -webkit-backdrop-filter: blur(8px);
                 border: 1px solid rgba(147, 197, 253, 0.3);
                 border-radius: 12px;
                 transition: all 0.3s ease;
-                box-shadow: 
-                  0 2px 8px rgba(0, 0, 0, 0.15),
-                  inset 0 1px 0 rgba(147, 197, 253, 0.3);
-                padding: 0.75rem 1.25rem !important;
-              }
-
-              .glass-logo:hover {
-                transform: translateY(-1px) scale(1.02);
-                box-shadow: 
-                  0 4px 15px rgba(0, 0, 0, 0.2),
-                  inset 0 1px 0 rgba(147, 197, 253, 0.4),
-                  0 0 10px rgba(59, 130, 246, 0.3);
-              }
-
-              /* Animaciones de pulso para botones */
-              .btn-login-pulse {
-                animation: pulse-glow 2s infinite;
+                padding: 0.45rem 0.9rem;
+                color: white !important;
+                text-decoration: none !important;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.3rem;
+                font-weight: 700;
+                font-size: 1rem;
+                flex-shrink: 0;
               }
 
               @keyframes pulse-glow {
-                0%, 100% {
-                  box-shadow: 
-                    0 6px 20px rgba(0, 0, 0, 0.1),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-                    0 0 0 rgba(255, 255, 255, 0.4);
-                }
-                50% {
-                  box-shadow: 
-                    0 6px 20px rgba(0, 0, 0, 0.1),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-                    0 0 20px rgba(255, 255, 255, 0.6);
-                }
+                0%,100% { box-shadow: 0 6px 20px rgba(0,0,0,0.1), 0 0 0 rgba(255,255,255,0.4); }
+                50%      { box-shadow: 0 6px 20px rgba(0,0,0,0.1), 0 0 20px rgba(255,255,255,0.6); }
+              }
+              .btn-login-pulse { animation: pulse-glow 2s infinite; }
+
+              /* Nav escritorio */
+              #header-nav-desktop {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                list-style: none;
+                margin: 0;
+                padding: 0;
+                flex: 1;
+                justify-content: center;
+              }
+              #header-auth-desktop {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                flex-shrink: 0;
               }
 
-              /* Asegurar visibilidad del texto */
-              .glass-header-container .text-white {
-                color: white !important;
-                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-              }
+              /* Botón hamburguesa — oculto en escritorio */
+              #header-hamburger { display: none; }
 
-              .glass-nav-link, .nav-link, .glass-logo, .glass-button-oval {
-                color: white !important;
+              /* Menú móvil — oculto por defecto */
+              #header-mobile-menu {
+                display: none;
+                margin: 0 1rem 0.75rem;
+              }
+              .glass-mobile-menu {
+                background: rgba(15, 30, 100, 0.92);
+                backdrop-filter: blur(24px);
+                -webkit-backdrop-filter: blur(24px);
+                border: 1px solid rgba(59, 130, 246, 0.3);
+                border-radius: 16px;
+                box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+                padding: 0.75rem;
+              }
+              .glass-mobile-menu a {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.6rem 0.75rem;
+                color: rgba(255,255,255,0.92) !important;
                 text-decoration: none !important;
+                border-radius: 10px;
+                font-size: 0.9rem;
+                transition: background 0.2s;
+              }
+              .glass-mobile-menu a:hover { background: rgba(59,130,246,0.28); }
+              .glass-mobile-divider {
+                height: 1px;
+                background: rgba(255,255,255,0.15);
+                margin: 0.4rem 0;
               }
 
-              .glass-button-oval-solid {
-                color: #1e40af !important;
-              }
-
-
-
-              /* Mover botones un poco a la izquierda */
-              .flex-shrink-0 {
-                margin-right: 0px;
-              }
-
-              /* Separar el botón de iniciar sesión más a la izquierda */
-              a[href*="login"].glass-button-oval {
-                margin-right: 25px;
-              }
-
-              /* Responsive adjustments */
-              @media (max-width: 768px) {
+              /* ── Responsive: móvil ≤ 767px ── */
+              @media (max-width: 767px) {
                 .glass-header-container {
-                  border-radius: 15px;
+                  border-radius: 14px;
                   margin: 0.5rem;
+                  padding: 0.6rem 1rem;
                 }
-                
-                .glass-nav-link, .nav-link {
-                  border-radius: 8px;
-                  padding: 0.5rem 1rem !important;
-                  font-size: 0.95rem !important;
-                }
-                
-                .glass-button-oval, .glass-button-oval-solid {
-                  border-radius: 20px;
-                }
-
-                .glass-logo {
-                  border-radius: 10px;
-                  padding: 0.5rem 1rem !important;
-                }
-
-
+                #header-nav-desktop,
+                #header-auth-desktop { display: none !important; }
+                #header-hamburger    { display: inline-flex !important; }
               }
+
+              html, body { overflow-x: hidden; max-width: 100vw; }
             </style>
-            <header
-              class="glass-header-container flex flex-wrap items-center justify-between py-4 mb-4 mx-4 mt-3">
 
+            <header class="glass-header-container">
 
-              <ul class="flex flex-wrap justify-center space-x-4 mb-2 md:mb-0 flex-grow">
-                <li><a href="{% url 'principal:home' %}" class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Inicio</a></li>
+              {# Logo #}
+              <a href="{% url 'principal:home' %}" class="glass-logo">
+                <span class="material-icons" style="font-size:1.2rem;">home</span>
+                CFBC
+              </a>
+
+              {# Nav escritorio #}
+              <ul id="header-nav-desktop">
+                <li><a href="{% url 'principal:home' %}" class="glass-nav-link">Inicio</a></li>
                 {% if group_name == 'Secretaría' %}
-                <li><a href="{% url 'principal:cursos' %}" class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Administrar Cursos</a></li>
-                <li><a href="{% url 'principal:registro_respuestas_general' %}"
-                    class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Registro de Respuestas</a></li>
-                {% elif group_name == 'Administración' %}
-                <li><a href="{% url 'principal:cursos' %}" class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Nuestros Cursos</a></li>
-                {% elif group_name == 'Profesores' %}
-                <li><a href="{% url 'principal:cursos' %}" class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Nuestros Cursos</a></li>
+                  <li><a href="{% url 'principal:cursos' %}" class="glass-nav-link">Administrar Cursos</a></li>
+                  <li><a href="{% url 'principal:registro_respuestas_general' %}" class="glass-nav-link">Registro de Respuestas</a></li>
                 {% else %}
-                <li><a href="{% url 'principal:cursos' %}" class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Nuestros Cursos</a></li>
+                  <li><a href="{% url 'principal:cursos' %}" class="glass-nav-link">Nuestros Cursos</a></li>
                 {% endif %}
-                <li><a href="{% url 'blog:lista_noticias' %}" class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Noticias</a></li>
-                <li><a href="#" class="glass-nav-link text-white px-4 py-2 no-underline font-medium text-base">Acerca de</a></li>
+                <li><a href="{% url 'blog:lista_noticias' %}" class="glass-nav-link">Noticias</a></li>
+                <li><a href="#" class="glass-nav-link">Acerca de</a></li>
               </ul>
-              <div class="flex items-center justify-end flex-shrink-0" style="padding-right: 2rem;">
+
+              {# Auth escritorio #}
+              <div id="header-auth-desktop">
                 {% if request.user.is_authenticated %}
-                <div class="list-none">
-                  <a class="glass-nav-link text-white px-4 py-2 no-underline font-semibold text-base" href="{% url 'principal:profile' %}">{{group_name}} |
-                    {{user.username}}</a>
-                </div>
+                  <a href="{% url 'principal:profile' %}" class="glass-nav-link">
+                    <span class="material-icons" style="font-size:1rem;">person</span>
+                    {{ group_name }} | {{ user.username }}
+                  </a>
                 {% else %}
-                <a href="{% url 'login' %}" class="glass-button-oval text-white px-4 py-2 mr-3 no-underline font-medium text-base {% if request.resolver_match.url_name == 'login' %}btn-login-no-pulse{% else %}btn-login-pulse{% endif %}">
-                  <span class="fa material-icons mr-2">login</span></i> Iniciar Sesión
-                </a>
-                <a href="{% url 'principal:registro' %}" class="glass-button-oval-solid text-blue-600 px-4 py-2 no-underline font-medium text-base -ml-2">
-                  <span class="fa material-icons mr-2">person</span></i> Registrarse
-                </a>
+                  <a href="{% url 'login' %}" class="glass-button-oval {% if request.resolver_match.url_name != 'login' %}btn-login-pulse{% endif %}">
+                    <span class="material-icons" style="font-size:1rem;">login</span>Iniciar Sesión
+                  </a>
+                  <a href="{% url 'principal:registro' %}" class="glass-button-oval-solid">
+                    <span class="material-icons" style="font-size:1rem;">person_add</span>Registrarse
+                  </a>
                 {% endif %}
               </div>
+
+              {# Hamburguesa móvil #}
+              <button type="button" id="header-hamburger" class="glass-nav-link"
+                      onclick="toggleHeaderMenu()" aria-label="Menú"
+                      style="padding:0.45rem 0.6rem; cursor:pointer; border:none;">
+                <span class="material-icons" id="header-menu-icon">menu</span>
+              </button>
+
             </header>
+
+            {# Menú móvil desplegable #}
+            <div id="header-mobile-menu">
+              <div class="glass-mobile-menu">
+                <a href="{% url 'principal:home' %}">
+                  <span class="material-icons" style="font-size:1rem;">home</span>Inicio
+                </a>
+                {% if group_name == 'Secretaría' %}
+                  <a href="{% url 'principal:cursos' %}">
+                    <span class="material-icons" style="font-size:1rem;">manage_accounts</span>Administrar Cursos
+                  </a>
+                  <a href="{% url 'principal:registro_respuestas_general' %}">
+                    <span class="material-icons" style="font-size:1rem;">assignment</span>Registro de Respuestas
+                  </a>
+                {% else %}
+                  <a href="{% url 'principal:cursos' %}">
+                    <span class="material-icons" style="font-size:1rem;">school</span>Nuestros Cursos
+                  </a>
+                {% endif %}
+                <a href="{% url 'blog:lista_noticias' %}">
+                  <span class="material-icons" style="font-size:1rem;">newspaper</span>Noticias
+                </a>
+                <a href="#">
+                  <span class="material-icons" style="font-size:1rem;">info</span>Acerca de
+                </a>
+                <div class="glass-mobile-divider"></div>
+                {% if request.user.is_authenticated %}
+                  <a href="{% url 'principal:profile' %}">
+                    <span class="material-icons" style="font-size:1rem;">person</span>{{ group_name }} | {{ user.username }}
+                  </a>
+                {% else %}
+                  <a href="{% url 'login' %}">
+                    <span class="material-icons" style="font-size:1rem;">login</span>Iniciar Sesión
+                  </a>
+                  <a href="{% url 'principal:registro' %}">
+                    <span class="material-icons" style="font-size:1rem;">person_add</span>Registrarse
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+
+            <script>
+              function toggleHeaderMenu() {
+                var menu = document.getElementById('header-mobile-menu');
+                var icon = document.getElementById('header-menu-icon');
+                var open = menu.style.display === 'block';
+                menu.style.display = open ? 'none' : 'block';
+                icon.textContent   = open ? 'menu' : 'close';
+              }
+              document.addEventListener('click', function(e) {
+                var menu = document.getElementById('header-mobile-menu');
+                var btn  = document.getElementById('header-hamburger');
+                if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+                  menu.style.display = 'none';
+                  var icon = document.getElementById('header-menu-icon');
+                  if (icon) icon.textContent = 'menu';
+                }
+              });
+            </script>
+
           </div>
