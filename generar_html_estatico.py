@@ -192,7 +192,53 @@ def obtener_contexto_cursos():
     return ctx
 
 
-def renderizar_template_seguro(template_name: str, context: dict) -> str:
+def obtener_contexto_noticias():
+    """Obtiene datos reales de la base de datos para la página de noticias."""
+    from django.core.paginator import Paginator
+
+    ctx = {
+        "page_obj": None,
+        "noticias_destacadas": [],
+        "categorias": [],
+        "busqueda": "",
+        "categoria_actual": None,
+    }
+
+    if Noticia:
+        try:
+            noticias_qs = list(
+                Noticia.objects.filter(estado="publicado")
+                .select_related("categoria", "autor")
+                .order_by("-fecha_actualizacion", "-fecha_creacion")
+            )
+            paginator = Paginator(noticias_qs, 6)
+            ctx["page_obj"] = paginator.get_page(1)
+            print(f"  ✓ {len(noticias_qs)} noticias cargadas")
+        except Exception as e:
+            print(f"  ⚠ Error cargando noticias: {e}")
+
+        try:
+            destacadas = list(
+                Noticia.objects.filter(estado="publicado", destacada=True)
+                .order_by("-fecha_actualizacion")[:10]
+            )
+            ctx["noticias_destacadas"] = destacadas
+            print(f"  ✓ {len(destacadas)} noticias destacadas")
+        except Exception as e:
+            print(f"  ⚠ Error cargando destacadas: {e}")
+
+    if Categoria:
+        try:
+            cats = list(Categoria.objects.all()[:10])
+            ctx["categorias"] = cats
+            print(f"  ✓ {len(cats)} categorías cargadas")
+        except Exception as e:
+            print(f"  ⚠ Error cargando categorías: {e}")
+
+    return ctx
+
+
+
     """
     Renderiza un template Django con manejo de errores.
     Usa RequestFactory para simular un request sin servidor.
@@ -272,7 +318,7 @@ def main():
         sys.exit(1)
 
     # Página de inicio
-    print("\n[1/2] Página de Inicio")
+    print("\n[1/3] Página de Inicio")
     ctx_home = obtener_contexto_home()
     generar_pagina(
         titulo   = "Centro Fray Bartolomé de las Casas — Inicio",
@@ -283,7 +329,7 @@ def main():
     )
 
     # Página de cursos
-    print("\n[2/2] Página de Cursos")
+    print("\n[2/3] Página de Cursos")
     ctx_cursos = obtener_contexto_cursos()
     generar_pagina(
         titulo   = "Centro Fray Bartolomé de las Casas — Cursos",
@@ -293,9 +339,24 @@ def main():
         css_font = css_font,
     )
 
+    # Página de noticias
+    print("\n[3/3] Página de Noticias")
+    ctx_noticias = obtener_contexto_noticias()
+    generar_pagina(
+        titulo   = "Centro Fray Bartolomé de las Casas — Noticias",
+        template = "blog/lista_noticias.html",
+        contexto = ctx_noticias,
+        salida   = "pagina_noticias_offline.html",
+        css_font = css_font,
+    )
+
     print("\n" + "=" * 55)
     print("  Archivos generados:")
-    for f in ["pagina_inicio_offline.html", "pagina_cursos_offline.html"]:
+    for f in [
+        "pagina_inicio_offline.html",
+        "pagina_cursos_offline.html",
+        "pagina_noticias_offline.html",
+    ]:
         if os.path.exists(f):
             print(f"    • {f}  ({os.path.getsize(f)//1024} KB)")
     print("=" * 55)
