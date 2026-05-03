@@ -170,61 +170,67 @@
     {# ─────────────────────────────────────────────────────────────────── #}
     {# TAREA 5: Area_Nav (Req 3.1–3.5)                                     #}
     {# ─────────────────────────────────────────────────────────────────── #}
-    <div id="area-nav" class="bg-blue-900 bg-opacity-90 rounded-xl overflow-hidden shadow-lg">
-      <div class="px-4 py-3 border-b border-blue-700">
-        <h2 class="text-white font-bold text-sm uppercase tracking-widest flex items-center gap-2">
-          <span class="material-icons text-blue-300 text-base">school</span>
+    <div id="area-nav" style="background:linear-gradient(135deg, #0f2744 0%, #1a3f6f 25%, #2563a8 50%, #1e4d8c 70%, #0d3060 100%);border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.3);">
+      <div style="padding:0.75rem 1rem;border-bottom:1px solid rgba(255,255,255,0.1);">
+        <h2 style="color:#fff;font-weight:700;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;display:flex;align-items:center;gap:0.5rem;margin:0;">
+          <span class="material-icons" style="font-family:'Material Icons';font-size:1rem;color:#93c5fd;">school</span>
           Áreas de Cursos
         </h2>
       </div>
       <nav aria-label="Áreas de cursos">
-        <ul class="divide-y divide-blue-800">
+        <ul style="list-style:none;margin:0;padding:0;">
 
-          <li>
+          <li style="border-bottom:1px solid rgba(255,255,255,0.08);">
             <a href="{% url 'principal:listado_cursos' %}?area=idiomas"
-               class="flex items-center gap-3 px-4 py-3 text-blue-100 hover:bg-blue-700 hover:text-white transition-colors duration-200 group">
-              <span class="material-icons text-blue-300 group-hover:text-white text-xl">translate</span>
-              <span class="font-medium">Idiomas</span>
+               style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;color:#dbeafe;text-decoration:none;transition:background 0.2s;"
+               onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
+              <span class="material-icons" style="font-family:'Material Icons';color:#93c5fd;font-size:1.25rem;">translate</span>
+              <span style="font-weight:500;">Idiomas</span>
             </a>
           </li>
 
-          <li>
+          <li style="border-bottom:1px solid rgba(255,255,255,0.08);">
             <a href="{% url 'principal:listado_cursos' %}?area=humanidades"
-               class="flex items-center gap-3 px-4 py-3 text-blue-100 hover:bg-blue-700 hover:text-white transition-colors duration-200 group">
-              <span class="material-icons text-blue-300 group-hover:text-white text-xl">menu_book</span>
-              <span class="font-medium">Humanidades</span>
+               style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;color:#dbeafe;text-decoration:none;transition:background 0.2s;"
+               onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
+              <span class="material-icons" style="font-family:'Material Icons';color:#93c5fd;font-size:1.25rem;">menu_book</span>
+              <span style="font-weight:500;">Humanidades</span>
             </a>
           </li>
 
-          <li>
+          <li style="border-bottom:1px solid rgba(255,255,255,0.08);">
             <a href="{% url 'principal:listado_cursos' %}?area=computacion"
-               class="flex items-center gap-3 px-4 py-3 text-blue-100 hover:bg-blue-700 hover:text-white transition-colors duration-200 group">
-              <span class="material-icons text-blue-300 group-hover:text-white text-xl">computer</span>
-              <span class="font-medium">Computación</span>
+               style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;color:#dbeafe;text-decoration:none;transition:background 0.2s;"
+               onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
+              <span class="material-icons" style="font-family:'Material Icons';color:#93c5fd;font-size:1.25rem;">computer</span>
+              <span style="font-weight:500;">Computación</span>
             </a>
           </li>
 
-          <li>
+          <li style="border-bottom:1px solid rgba(255,255,255,0.08);">
             <a href="{% url 'principal:listado_cursos' %}?area=diseno"
-               class="flex items-center gap-3 px-4 py-3 text-blue-100 hover:bg-blue-700 hover:text-white transition-colors duration-200 group">
-              <span class="material-icons text-blue-300 group-hover:text-white text-xl">palette</span>
-              <span class="font-medium">Diseño</span>
+               style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;color:#dbeafe;text-decoration:none;transition:background 0.2s;"
+               onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
+              <span class="material-icons" style="font-family:'Material Icons';color:#93c5fd;font-size:1.25rem;">palette</span>
+              <span style="font-weight:500;">Diseño</span>
             </a>
           </li>
 
-          <li>
+          <li style="border-bottom:1px solid rgba(255,255,255,0.08);">
             <a href="{% url 'principal:listado_cursos' %}?area=teologia"
-               class="flex items-center gap-3 px-4 py-3 text-blue-100 hover:bg-blue-700 hover:text-white transition-colors duration-200 group">
-              <span class="material-icons text-blue-300 group-hover:text-white text-xl">auto_stories</span>
-              <span class="font-medium">Teología</span>
+               style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;color:#dbeafe;text-decoration:none;transition:background 0.2s;"
+               onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
+              <span class="material-icons" style="font-family:'Material Icons';color:#93c5fd;font-size:1.25rem;">auto_stories</span>
+              <span style="font-weight:500;">Teología</span>
             </a>
           </li>
 
           <li>
             <a href="{% url 'principal:listado_cursos' %}?area=adolescentes"
-               class="flex items-center gap-3 px-4 py-3 text-blue-100 hover:bg-blue-700 hover:text-white transition-colors duration-200 group">
-              <span class="material-icons text-blue-300 group-hover:text-white text-xl">groups</span>
-              <span class="font-medium">Adolescentes</span>
+               style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;color:#dbeafe;text-decoration:none;transition:background 0.2s;"
+               onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
+              <span class="material-icons" style="font-family:'Material Icons';color:#93c5fd;font-size:1.25rem;">groups</span>
+              <span style="font-weight:500;">Adolescentes</span>
             </a>
           </li>
 
@@ -235,28 +241,29 @@
     {# ─────────────────────────────────────────────────────────────────── #}
     {# TAREA 6: Categoria_Nav (Req 4.1–4.5)                               #}
     {# ─────────────────────────────────────────────────────────────────── #}
-    <div id="categoria-nav" class="bg-blue-900 bg-opacity-90 rounded-xl overflow-hidden shadow-lg">
-      <div class="px-4 py-3 border-b border-blue-700">
-        <h2 class="text-white font-bold text-sm uppercase tracking-widest flex items-center gap-2">
-          <span class="material-icons text-blue-300 text-base">newspaper</span>
+    <div id="categoria-nav" style="background:linear-gradient(135deg, #0f2744 0%, #1a3f6f 25%, #2563a8 50%, #1e4d8c 70%, #0d3060 100%);border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.3);">
+      <div style="padding:0.75rem 1rem;border-bottom:1px solid rgba(255,255,255,0.1);">
+        <h2 style="color:#fff;font-weight:700;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;display:flex;align-items:center;gap:0.5rem;margin:0;">
+          <span class="material-icons" style="font-family:'Material Icons';font-size:1rem;color:#93c5fd;">article</span>
           Categorías de Noticias
         </h2>
       </div>
       <nav aria-label="Categorías de noticias">
         {% if categorias_con_noticias %}
-        <ul class="divide-y divide-blue-800">
+        <ul style="list-style:none;margin:0;padding:0;">
           {% for categoria in categorias_con_noticias %}
-          <li>
+          <li style="border-bottom:1px solid rgba(255,255,255,0.08);">
             <a href="{% url 'blog:categoria_noticias' categoria.slug %}"
-               class="flex items-center gap-3 px-4 py-3 text-blue-100 hover:bg-blue-700 hover:text-white transition-colors duration-200 group">
-              <span class="material-icons text-blue-300 group-hover:text-white text-xl">label</span>
-              <span class="font-medium">{{ categoria.nombre }}</span>
+               style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;color:#dbeafe;text-decoration:none;transition:background 0.2s;"
+               onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
+              <span class="material-icons" style="font-family:'Material Icons';color:#93c5fd;font-size:1.25rem;">label</span>
+              <span style="font-weight:500;">{{ categoria.nombre }}</span>
             </a>
           </li>
           {% endfor %}
         </ul>
         {% else %}
-        <p class="px-4 py-4 text-blue-300 text-sm italic">No hay categorías disponibles</p>
+        <p style="padding:1rem;color:#93c5fd;font-size:0.875rem;font-style:italic;margin:0;">No hay categorías disponibles</p>
         {% endif %}
       </nav>
     </div>
