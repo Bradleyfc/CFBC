@@ -140,7 +140,13 @@
                     <tbody>
                         {% for asistencia in asistencias %}
                         <tr>
-                            <td>{{ asistencia.student.first_name }} {{ asistencia.student.last_name }}</td>
+                            <td>
+                                {% if asistencia.student.first_name or asistencia.student.last_name %}
+                                    {{ asistencia.student.first_name }} {{ asistencia.student.last_name }}
+                                {% else %}
+                                    {{ asistencia.student.username }}
+                                {% endif %}
+                            </td>
                             <td>{{ asistencia.course.name }}</td>
                             <td>{{ asistencia.date|date:"d/m/Y" }}</td>
                             <td>

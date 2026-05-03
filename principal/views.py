@@ -1483,7 +1483,7 @@ class CalificacionesListView(BaseContextMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().select_related('student', 'course', 'curso_academico')
 
         # Filtering by CursoAcademico
         curso_academico_id = self.request.GET.get('curso_academico')
@@ -1495,8 +1495,8 @@ class CalificacionesListView(BaseContextMixin, ListView):
         if curso_id:
             queryset = queryset.filter(course__id=curso_id)
 
-        # Filtering by Estudiante
-        student_id = self.request.GET.get('student')
+        # Filtering by Estudiante — acepta tanto 'student' como 'estudiante'
+        student_id = self.request.GET.get('student') or self.request.GET.get('estudiante')
         if student_id:
             queryset = queryset.filter(student__id=student_id)
 
@@ -1554,9 +1554,7 @@ class AsistenciasListView(ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        queryset = super().get_queryset()
-
-        # Filtrar por Curso Académico
+        queryset = super().get_queryset().select_related('student', 'course')
         curso_academico_id = self.request.GET.get('curso_academico')
         if curso_academico_id:
             queryset = queryset.filter(course__curso_academico__id=curso_academico_id)

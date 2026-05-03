@@ -97,7 +97,13 @@
                     <tbody>
                         {% for calificacion in calificaciones %}
                         <tr>
-                            <td>{{ calificacion.student.first_name }} {{ calificacion.student.last_name }}</td>
+                            <td>
+                                {% if calificacion.student.first_name or calificacion.student.last_name %}
+                                    {{ calificacion.student.first_name }} {{ calificacion.student.last_name }}
+                                {% else %}
+                                    {{ calificacion.student.username }}
+                                {% endif %}
+                            </td>
                             <td>{{ calificacion.course.name }}</td>
                             <td>{{ calificacion.curso_academico.nombre }}</td>
                             <td>
