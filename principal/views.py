@@ -4534,3 +4534,23 @@ def exportar_detalles_historial_pdf(request, user_id):
     
     messages.error(request, 'Error al generar el PDF')
     return redirect('principal:detalles_historial_usuario', user_id=user_id)
+
+
+# ── API AJAX para el admin: verificar si hay curso académico activo ───────────
+
+from django.contrib.admin.views.decorators import staff_member_required
+
+@staff_member_required
+def api_hay_curso_activo(request):
+    """
+    Endpoint AJAX usado por el admin para verificar si existe algún
+    CursoAcademico activo antes de restaurar uno archivado.
+
+    Retorna JSON:
+        { "hay_activo": true/false, "nombre": "2024-2025" | null }
+    """
+    from django.http import JsonResponse
+    curso_activo = CursoAcademico.objects.filter(activo=True).first()
+    if curso_activo:
+        return JsonResponse({'hay_activo': True, 'nombre': curso_activo.nombre})
+    return JsonResponse({'hay_activo': False, 'nombre': None})

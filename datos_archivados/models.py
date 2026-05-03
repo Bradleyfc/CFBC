@@ -120,6 +120,7 @@ class CursoArchivado(models.Model):
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='curso', verbose_name='Tipo')
     teacher_id_original = models.IntegerField(verbose_name='ID Original del Profesor en MariaDB')
     teacher_name = models.CharField(max_length=200, verbose_name='Nombre del Profesor')
+    image = models.CharField(max_length=255, blank=True, null=True, verbose_name='Ruta de imagen')
     class_quantity = models.PositiveIntegerField(default=0, verbose_name='Cantidad de Clases')
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='I', verbose_name='Estado')
     curso_academico = models.ForeignKey(CursoAcademicoArchivado, on_delete=models.CASCADE, 

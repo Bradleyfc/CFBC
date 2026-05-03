@@ -439,16 +439,19 @@ class RespuestaEstudiante(models.Model):
 @receiver(pre_save, sender=CursoAcademico)
 def _capturar_estado_anterior_curso_academico(sender, instance, **kwargs):
     """
-    Guarda el estado anterior de archivado para detectar el cambio en post_save.
+    Guarda el estado anterior de archivado y activo para detectar cambios en post_save.
     """
     if instance.pk:
         try:
             anterior = CursoAcademico.objects.get(pk=instance.pk)
             instance._archivado_anterior = anterior.archivado
+            instance._activo_anterior = anterior.activo
         except CursoAcademico.DoesNotExist:
             instance._archivado_anterior = False
+            instance._activo_anterior = False
     else:
         instance._archivado_anterior = False
+        instance._activo_anterior = False
 
 
 @receiver(post_save, sender=CursoAcademico)
@@ -497,3 +500,64 @@ def _archivar_datos_al_archivar_curso_academico(sender, instance, **kwargs):
         instance.activo = False
         # Guardar el error en la instancia para que el admin lo pueda mostrar
         instance._archivado_error = str(e)
+
+
+@receiver(post_save, sender=CursoAcademico)
+def _restaurar_datos_al_activar_curso_academico(sender, instance, **kwargs):
+    """
+    Cuando un CursoAcademico que estaba archivado pasa a activo=True,
+    y no hay ningún otro curso activo en el sistema,
+    restaura todos sus datos desde datos_archivados de vuelta a principal.
+
+    Condiciones para restaurar:
+      - El curso acaba de activarse (activo=True y antes era False o archivado=True).
+      - Tiene datos guardados en datos_archivados (CursoAcademicoArchivado).
+
+    Si la restauración falla:
+      - Se almacena el error en instance._restaurado_error para que el admin lo muestre.
+      - El curso permanece activo (los datos archivados siguen intactos).
+    """
+    import logging
+    log = logging.getLogger(__name__)
+
+    activo_anterior = getattr(instance, '_activo_anterior', False)
+    archivado_anterior = getattr(instance, '_archivado_anterior', False)
+
+    # Solo actuar si el curso acaba de activarse y antes estaba archivado o inactivo
+    recien_activado = instance.activo and not activo_anterior
+    venia_archivado = archivado_anterior
+
+    if not recien_activado or not venia_archivado:
+        return
+
+    # Verificar si hay datos archivados para este curso
+    from datos_archivados.restore_service import hay_datos_archivados, restaurar_datos_curso_academico, RestauradoError
+
+    if not hay_datos_archivados(instance):
+        log.info(
+            f"[Señal] CursoAcademico '{instance.nombre}' activado sin datos archivados. "
+            f"No se restaura nada."
+        )
+        return
+
+    try:
+        contadores = restaurar_datos_curso_academico(instance)
+        if contadores:
+            log.info(
+                f"[Señal] Datos del CursoAcademico '{instance.nombre}' restaurados: {contadores}"
+            )
+            instance._restaurado_exitoso = True
+            instance._restaurado_contadores = contadores
+    except RestauradoError as e:
+        log.error(
+            f"[Señal] Error al restaurar datos del CursoAcademico '{instance.nombre}': {e}",
+            exc_info=True,
+        )
+        instance._restaurado_error = str(e)
+    except Exception as e:
+        log.error(
+            f"[Señal] Error inesperado al restaurar datos del CursoAcademico "
+            f"'{instance.nombre}': {e}",
+            exc_info=True,
+        )
+        instance._restaurado_error = str(e)

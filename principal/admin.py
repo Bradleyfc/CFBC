@@ -101,6 +101,9 @@ class CursoAcademicoAdmin(admin.ModelAdmin):
     search_fields = ('nombre',)
     actions = ['activar_curso', 'archivar_curso', 'desarchivar_curso']
 
+    class Media:
+        js = ('admin/js/curso_academico_admin.js',)
+
     def activar_curso(self, request, queryset):
         if queryset.count() != 1:
             self.message_user(
@@ -111,14 +114,51 @@ class CursoAcademicoAdmin(admin.ModelAdmin):
             return
 
         curso = queryset.first()
+
+        # Verificar si tiene datos archivados para informar al usuario
+        from datos_archivados.restore_service import hay_datos_archivados
+        tiene_datos_archivados = curso.archivado and hay_datos_archivados(curso)
+
         # Usar el método activar() para que las señales se disparen correctamente
         # (no usar .update() que las omite)
         curso.activar()
-        self.message_user(
-            request,
-            f"El curso '{curso.nombre}' ha sido activado.",
-            level=messages.SUCCESS,
-        )
+
+        # Verificar resultado de la restauración
+        if hasattr(curso, '_restaurado_error'):
+            self.message_user(
+                request,
+                (
+                    f"El curso '{curso.nombre}' fue activado, pero ocurrió un error "
+                    f"al restaurar sus datos archivados. Los datos archivados se conservan intactos. "
+                    f"Detalle: {curso._restaurado_error}"
+                ),
+                level=messages.ERROR,
+            )
+        elif hasattr(curso, '_restaurado_exitoso') and curso._restaurado_exitoso:
+            c = curso._restaurado_contadores
+            self.message_user(
+                request,
+                (
+                    f"El curso '{curso.nombre}' ha sido activado y sus datos han sido restaurados: "
+                    f"{c['cursos']} cursos, {c['matriculas']} matrículas, "
+                    f"{c['calificaciones']} calificaciones, {c['notas']} notas, "
+                    f"{c['asistencias']} asistencias."
+                ),
+                level=messages.SUCCESS,
+            )
+        elif tiene_datos_archivados:
+            # Tenía datos archivados pero la señal no reportó éxito ni error (no debería pasar)
+            self.message_user(
+                request,
+                f"El curso '{curso.nombre}' ha sido activado.",
+                level=messages.SUCCESS,
+            )
+        else:
+            self.message_user(
+                request,
+                f"El curso '{curso.nombre}' ha sido activado.",
+                level=messages.SUCCESS,
+            )
     activar_curso.short_description = "Activar curso seleccionado (desactiva los demás)"
 
     def archivar_curso(self, request, queryset):
