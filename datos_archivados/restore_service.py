@@ -288,13 +288,41 @@ def restaurar_datos_curso_academico(curso_academico):
                 if created:
                     contadores['asistencias'] += 1
 
+            # ── 5. Reconectar carpetas de documentos ─────────────────────────
+            # Al archivar, las DocumentFolder quedaron con curso=None pero
+            # conservaron curso_academico y curso_id_original.
+            # Las reconectamos al Curso restaurado usando curso_id_original.
+            from course_documents.models import DocumentFolder
+
+            for ca in cursos_archivados:
+                curso_nuevo = cursos_map.get(ca.pk)
+                if curso_nuevo is None:
+                    continue
+
+                reconectadas = DocumentFolder.objects.filter(
+                    curso__isnull=True,
+                    curso_academico=curso_academico,
+                    curso_id_original=ca.id_original,
+                )
+                if reconectadas.exists():
+                    reconectadas.update(curso=curso_nuevo)
+                    contadores['carpetas_documentos'] = (
+                        contadores.get('carpetas_documentos', 0) + reconectadas.count()
+                    )
+
+            logger.info(
+                f"Carpetas de documentos reconectadas: "
+                f"{contadores.get('carpetas_documentos', 0)}"
+            )
+
             logger.info(
                 f"Restauración completada para '{curso_academico.nombre}': "
                 f"{contadores['cursos']} cursos, "
                 f"{contadores['matriculas']} matrículas, "
                 f"{contadores['calificaciones']} calificaciones, "
                 f"{contadores['notas']} notas, "
-                f"{contadores['asistencias']} asistencias."
+                f"{contadores['asistencias']} asistencias, "
+                f"{contadores.get('carpetas_documentos', 0)} carpetas de documentos."
             )
 
             # ── 5. Eliminar datos de datos_archivados ─────────────────────────

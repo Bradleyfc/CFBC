@@ -142,7 +142,8 @@ class CursoAcademicoAdmin(admin.ModelAdmin):
                     f"El curso '{curso.nombre}' ha sido activado y sus datos han sido restaurados: "
                     f"{c['cursos']} cursos, {c['matriculas']} matrículas, "
                     f"{c['calificaciones']} calificaciones, {c['notas']} notas, "
-                    f"{c['asistencias']} asistencias."
+                    f"{c['asistencias']} asistencias, "
+                    f"{c.get('carpetas_documentos', 0)} carpetas de documentos."
                 ),
                 level=messages.SUCCESS,
             )

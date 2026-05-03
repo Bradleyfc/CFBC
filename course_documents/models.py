@@ -16,6 +16,7 @@ class DocumentFolder(models.Model):
     """Carpeta para organizar documentos por curso"""
     curso = models.ForeignKey('principal.Curso', on_delete=models.SET_NULL, null=True, blank=True, related_name='document_folders', verbose_name='Curso')
     curso_academico = models.ForeignKey('principal.CursoAcademico', on_delete=models.SET_NULL, null=True, blank=True, related_name='document_folders', verbose_name='Curso Académico')
+    curso_id_original = models.IntegerField(null=True, blank=True, verbose_name='ID original del curso (para restauración)', editable=False)
     name = models.CharField(max_length=255, verbose_name='Nombre de la carpeta')
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Creado por')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de creación')
@@ -62,6 +63,9 @@ class DocumentFolder(models.Model):
                 self.curso_academico = self.curso.curso_academico
             except Exception:
                 pass
+        # Guardar el id del curso para poder restaurar la vinculación después del archivado
+        if self.curso_id:
+            self.curso_id_original = self.curso_id
         self.full_clean()
         super().save(*args, **kwargs)
 
