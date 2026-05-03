@@ -97,7 +97,13 @@
                     <tbody>
                         {% for matricula in matriculas %}
                         <tr>
-                            <td>{{ matricula.student.username }}</td>
+                            <td>
+                                {% if matricula.student.first_name or matricula.student.last_name %}
+                                    {{ matricula.student.first_name }} {{ matricula.student.last_name }}
+                                {% else %}
+                                    {{ matricula.student.username }}
+                                {% endif %}
+                            </td>
                             <td>{{ matricula.curso_academico.nombre }}</td>
                             <td>{{ matricula.course.name }}</td>
                             <td>{{ matricula.fecha_matricula|date:"d/m/Y" }}</td>
