@@ -183,24 +183,120 @@ def export_matriculas_excel(request):
     curso_id = request.GET.get('curso')
     student_id = request.GET.get('student')
 
-    matriculas = Matriculas.objects.all()
+    # Aplicar los mismos filtros que MatriculasListView
+    matriculas = Matriculas.objects.select_related(
+        'student', 'course', 'curso_academico'
+    ).all()
 
     if curso_academico_id:
-        matriculas = matriculas.filter(course__curso_academico__id=curso_academico_id)
+        matriculas = matriculas.filter(curso_academico__id=curso_academico_id)
     if curso_id:
         matriculas = matriculas.filter(course__id=curso_id)
     if student_id:
         matriculas = matriculas.filter(student__id=student_id)
 
-    context = {
-        'matriculas': matriculas,
-        'curso_academico': CursoAcademico.objects.get(id=curso_academico_id) if curso_academico_id else None,
+    matriculas = matriculas.order_by('course__name', 'student__first_name', 'student__last_name')
+
+    # ── Estilos ───────────────────────────────────────────────────────────────
+    header_font   = Font(name='Arial', bold=True, color='FFFFFF')
+    header_fill   = PatternFill(start_color='003366', end_color='003366', fill_type='solid')
+    center        = Alignment(horizontal='center', vertical='center')
+    left_align    = Alignment(horizontal='left',   vertical='center')
+    thin_border   = Border(
+        left=Side(style='thin'), right=Side(style='thin'),
+        top=Side(style='thin'),  bottom=Side(style='thin')
+    )
+    estado_fills = {
+        'A': PatternFill(start_color='C6EFCE', end_color='C6EFCE', fill_type='solid'),  # Aprobado - verde
+        'P': PatternFill(start_color='FFEB9C', end_color='FFEB9C', fill_type='solid'),  # Pendiente - amarillo
+        'R': PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid'),  # Reprobado - rojo
+        'L': PatternFill(start_color='BDD7EE', end_color='BDD7EE', fill_type='solid'),  # Licencia - azul
+        'B': PatternFill(start_color='D9D9D9', end_color='D9D9D9', fill_type='solid'),  # Baja - gris
     }
-    
-    # Generar el archivo Excel
-    output = generate_excel(context)
-    response = HttpResponse(output.getvalue(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename=matriculas.xlsx'
+    estado_fonts = {
+        'A': Font(name='Arial', bold=True, color='276221'),
+        'P': Font(name='Arial', bold=True, color='7D5A00'),
+        'R': Font(name='Arial', bold=True, color='9C0006'),
+        'L': Font(name='Arial', bold=True, color='1F4E79'),
+        'B': Font(name='Arial', bold=True, color='595959'),
+    }
+
+    wb = openpyxl.Workbook()
+    wb.remove(wb.active)  # eliminar hoja vacía por defecto
+
+    # Agrupar matrículas por curso
+    cursos_vistos = {}
+    for m in matriculas:
+        cid = m.course.id
+        if cid not in cursos_vistos:
+            cursos_vistos[cid] = {'course': m.course, 'matriculas': []}
+        cursos_vistos[cid]['matriculas'].append(m)
+
+    if not cursos_vistos:
+        ws = wb.create_sheet(title="Sin datos")
+        ws['A1'] = "No se encontraron matrículas con los filtros seleccionados."
+    else:
+        HEADERS = ['Estudiante', 'Curso Académico', 'Fecha de Matrícula', 'Estado']
+
+        for cid, grupo in cursos_vistos.items():
+            course = grupo['course']
+            mats   = grupo['matriculas']
+            sheet_title = course.name[:31]
+
+            ws = wb.create_sheet(title=sheet_title)
+
+            # Fila 1: título del curso
+            ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(HEADERS))
+            tc = ws.cell(row=1, column=1, value=f"Matrículas — {course.name}")
+            tc.font = Font(name='Arial', bold=True, size=13, color='FFFFFF')
+            tc.fill = PatternFill(start_color='001F4D', end_color='001F4D', fill_type='solid')
+            tc.alignment = center
+            ws.row_dimensions[1].height = 26
+
+            # Fila 2: encabezados
+            for col, h in enumerate(HEADERS, 1):
+                c = ws.cell(row=2, column=col, value=h)
+                c.font = header_font
+                c.fill = header_fill
+                c.alignment = center
+                c.border = thin_border
+
+            # Filas de datos
+            for row_num, m in enumerate(mats, 3):
+                nombre = m.student.get_full_name() or m.student.username
+                ca_nombre = m.curso_academico.nombre if m.curso_academico else '—'
+                fecha = m.fecha_matricula.strftime('%d/%m/%Y') if m.fecha_matricula else '—'
+                estado_display = m.get_estado_display()
+
+                valores = [nombre, ca_nombre, fecha, estado_display]
+                for col, val in enumerate(valores, 1):
+                    c = ws.cell(row=row_num, column=col, value=val)
+                    c.alignment = left_align if col == 1 else center
+                    c.border = thin_border
+
+                # Color en la columna Estado
+                estado_cell = ws.cell(row=row_num, column=4)
+                if m.estado in estado_fills:
+                    estado_cell.fill = estado_fills[m.estado]
+                    estado_cell.font = estado_fonts[m.estado]
+
+            # Anchos de columna
+            ws.column_dimensions['A'].width = 30
+            ws.column_dimensions['B'].width = 22
+            ws.column_dimensions['C'].width = 18
+            ws.column_dimensions['D'].width = 14
+
+            ws.freeze_panes = 'A3'
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    response = HttpResponse(
+        output.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="matriculas.xlsx"'
     return response
 
 # Función auxiliar para generar PDF
@@ -1547,34 +1643,28 @@ class StudentCourseAttendanceView(BaseContextMixin, ListView):
 
 
 # Vistas para Asistencias
-class AsistenciasListView(ListView):
-    model = Asistencia
+class AsistenciasListView(BaseContextMixin, ListView):
+    model = Matriculas
     template_name = 'asistencias_list.html'
-    context_object_name = 'asistencias'
+    context_object_name = 'matriculas'
     paginate_by = 10
 
     def get_queryset(self):
-        queryset = super().get_queryset().select_related('student', 'course')
+        queryset = Matriculas.objects.select_related('student', 'course', 'curso_academico').filter(activo=True)
+
         curso_academico_id = self.request.GET.get('curso_academico')
         if curso_academico_id:
-            queryset = queryset.filter(course__curso_academico__id=curso_academico_id)
+            queryset = queryset.filter(curso_academico__id=curso_academico_id)
 
-        # Filtrar por Curso
         curso_id = self.request.GET.get('curso')
         if curso_id:
             queryset = queryset.filter(course__id=curso_id)
 
-        # Filtrar por Estudiante
         estudiante_id = self.request.GET.get('estudiante')
         if estudiante_id:
             queryset = queryset.filter(student__id=estudiante_id)
 
-        # Filtrar por Fecha
-        fecha_asistencia = self.request.GET.get('fecha')
-        if fecha_asistencia:
-            queryset = queryset.filter(date=fecha_asistencia)
-
-        return queryset
+        return queryset.order_by('student__first_name', 'student__last_name', 'student__username')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1582,26 +1672,376 @@ class AsistenciasListView(ListView):
         context['cursos'] = Curso.objects.all()
         context['estudiantes'] = User.objects.filter(groups__name='Estudiantes')
         context['selected_curso_academico'] = self.request.GET.get('curso_academico')
-        
-        # Calcular porcentaje de asistencia cuando se filtra por curso y estudiante
-        curso_id = self.request.GET.get('curso')
-        estudiante_id = self.request.GET.get('estudiante')
-        
-        if curso_id and estudiante_id:
-            # Obtener todas las asistencias del estudiante en el curso
-            total_asistencias = Asistencia.objects.filter(course_id=curso_id, student_id=estudiante_id).count()
-            presentes = Asistencia.objects.filter(course_id=curso_id, student_id=estudiante_id, presente=True).count()
-            
-            if total_asistencias > 0:
-                porcentaje = (presentes / total_asistencias) * 100
-                context['porcentaje_asistencia'] = round(porcentaje, 2)
-                context['total_asistencias'] = total_asistencias
-                context['presentes'] = presentes
-                context['ausentes'] = total_asistencias - presentes
         context['selected_curso'] = self.request.GET.get('curso')
         context['selected_estudiante'] = self.request.GET.get('estudiante')
-        context['selected_fecha'] = self.request.GET.get('fecha')
         return context
+
+
+class AsistenciaDetalleEstudianteView(BaseContextMixin, TemplateView):
+    """Vista de detalle de asistencias de un estudiante en un curso (para secretaria)."""
+    template_name = 'asistencias_detalle_estudiante.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        student_id = self.kwargs['student_id']
+        course_id = self.kwargs['course_id']
+
+        student = get_object_or_404(User, id=student_id)
+        course = get_object_or_404(Curso, id=course_id)
+
+        asistencias = Asistencia.objects.filter(
+            student=student, course=course
+        ).order_by('date')
+
+        total = asistencias.count()
+        presentes = asistencias.filter(presente=True).count()
+        ausentes = total - presentes
+        porcentaje = round((presentes / total) * 100, 2) if total > 0 else 0
+
+        context['student'] = student
+        context['course'] = course
+        context['asistencias'] = asistencias
+        context['total'] = total
+        context['presentes'] = presentes
+        context['ausentes'] = ausentes
+        context['porcentaje'] = porcentaje
+        return context
+
+
+@login_required
+def export_asistencias_curso_excel(request, course_id):
+    """
+    Exporta a Excel una tabla con todos los estudiantes del curso,
+    sus asistencias por fecha y su porcentaje de asistencia.
+    """
+    course = get_object_or_404(Curso, id=course_id)
+
+    # Obtener matrículas activas del curso
+    matriculas = Matriculas.objects.filter(
+        course=course, activo=True
+    ).select_related('student').order_by('student__first_name', 'student__last_name', 'student__username')
+
+    # Obtener todas las fechas únicas con asistencias registradas, ordenadas
+    fechas = list(
+        Asistencia.objects.filter(course=course)
+        .values_list('date', flat=True)
+        .distinct()
+        .order_by('date')
+    )
+
+    # Estilos
+    header_font       = Font(name='Arial', bold=True, color='FFFFFF')
+    header_fill       = PatternFill(start_color='003366', end_color='003366', fill_type='solid')
+    subheader_fill    = PatternFill(start_color='1F5C99', end_color='1F5C99', fill_type='solid')
+    presente_fill     = PatternFill(start_color='C6EFCE', end_color='C6EFCE', fill_type='solid')
+    ausente_fill      = PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid')
+    pct_ok_fill       = PatternFill(start_color='C6EFCE', end_color='C6EFCE', fill_type='solid')
+    pct_warn_fill     = PatternFill(start_color='FFEB9C', end_color='FFEB9C', fill_type='solid')
+    pct_bad_fill      = PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid')
+    center            = Alignment(horizontal='center', vertical='center')
+    left              = Alignment(horizontal='left',   vertical='center')
+    thin_border       = Border(
+        left=Side(style='thin'), right=Side(style='thin'),
+        top=Side(style='thin'),  bottom=Side(style='thin')
+    )
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Asistencias"
+
+    # ── Fila 1: título del curso ──────────────────────────────────────────────
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(fechas) + 4)
+    title_cell = ws.cell(row=1, column=1, value=f"Asistencias — {course.name}")
+    title_cell.font = Font(name='Arial', bold=True, size=14, color='FFFFFF')
+    title_cell.fill = PatternFill(start_color='001F4D', end_color='001F4D', fill_type='solid')
+    title_cell.alignment = center
+    ws.row_dimensions[1].height = 28
+
+    # ── Fila 2: encabezados ───────────────────────────────────────────────────
+    headers_fijos = ['Estudiante', 'Total Clases', 'Presentes', 'Ausentes']
+    col_offset = len(headers_fijos) + 1   # columna donde empiezan las fechas
+
+    for col, h in enumerate(headers_fijos, 1):
+        c = ws.cell(row=2, column=col, value=h)
+        c.font = header_font
+        c.fill = header_fill
+        c.alignment = center
+        c.border = thin_border
+
+    for i, fecha in enumerate(fechas):
+        c = ws.cell(row=2, column=col_offset + i, value=fecha.strftime('%d/%m/%Y'))
+        c.font = header_font
+        c.fill = subheader_fill
+        c.alignment = center
+        c.border = thin_border
+
+    # columna % al final
+    col_pct = col_offset + len(fechas)
+    c = ws.cell(row=2, column=col_pct, value='% Asistencia')
+    c.font = header_font
+    c.fill = header_fill
+    c.alignment = center
+    c.border = thin_border
+
+    # ── Filas de datos ────────────────────────────────────────────────────────
+    for row_num, matricula in enumerate(matriculas, 3):
+        student = matricula.student
+        nombre = student.get_full_name() or student.username
+
+        # Asistencias de este estudiante indexadas por fecha
+        asistencias_qs = Asistencia.objects.filter(student=student, course=course)
+        asistencias_dict = {a.date: a.presente for a in asistencias_qs}
+
+        total   = len(fechas)
+        present = sum(1 for f in fechas if asistencias_dict.get(f) is True)
+        absent  = total - present
+        pct     = round((present / total) * 100, 1) if total > 0 else 0.0
+
+        # Nombre
+        c = ws.cell(row=row_num, column=1, value=nombre)
+        c.alignment = left
+        c.border = thin_border
+
+        # Total / Presentes / Ausentes
+        for col, val in zip([2, 3, 4], [total, present, absent]):
+            c = ws.cell(row=row_num, column=col, value=val)
+            c.alignment = center
+            c.border = thin_border
+
+        # Columnas de fechas
+        for i, fecha in enumerate(fechas):
+            presente = asistencias_dict.get(fecha)
+            if presente is True:
+                texto = '✓'
+                fill  = presente_fill
+            elif presente is False:
+                texto = '✗'
+                fill  = ausente_fill
+            else:
+                texto = '—'
+                fill  = None
+            c = ws.cell(row=row_num, column=col_offset + i, value=texto)
+            c.alignment = center
+            c.border = thin_border
+            if fill:
+                c.fill = fill
+
+        # % Asistencia
+        c = ws.cell(row=row_num, column=col_pct, value=f'{pct}%')
+        c.alignment = center
+        c.border = thin_border
+        if pct >= 75:
+            c.fill = pct_ok_fill
+            c.font = Font(name='Arial', bold=True, color='276221')
+        elif pct >= 50:
+            c.fill = pct_warn_fill
+            c.font = Font(name='Arial', bold=True, color='7D5A00')
+        else:
+            c.fill = pct_bad_fill
+            c.font = Font(name='Arial', bold=True, color='9C0006')
+
+    # ── Ajustar anchos de columna ─────────────────────────────────────────────
+    ws.column_dimensions['A'].width = 30   # Nombre
+    for col in ['B', 'C', 'D']:
+        ws.column_dimensions[col].width = 14
+    for i in range(len(fechas)):
+        col_letter = ws.cell(row=2, column=col_offset + i).column_letter
+        ws.column_dimensions[col_letter].width = 12
+    ws.column_dimensions[ws.cell(row=2, column=col_pct).column_letter].width = 14
+
+    # Congelar la primera columna y la fila de encabezados
+    ws.freeze_panes = 'B3'
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    filename = f"asistencias_{course.name.replace(' ', '_')}.xlsx"
+    response = HttpResponse(
+        output.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+
+@login_required
+def export_asistencias_excel(request):
+    """
+    Exporta a Excel las asistencias según los filtros activos de la página
+    asistencias_list (curso_academico, curso, estudiante).
+    Genera una hoja por cada curso presente en los resultados.
+    """
+    # ── Aplicar los mismos filtros que AsistenciasListView ────────────────────
+    matriculas = Matriculas.objects.select_related(
+        'student', 'course', 'curso_academico'
+    ).filter(activo=True)
+
+    curso_academico_id = request.GET.get('curso_academico')
+    if curso_academico_id:
+        matriculas = matriculas.filter(curso_academico__id=curso_academico_id)
+
+    curso_id = request.GET.get('curso')
+    if curso_id:
+        matriculas = matriculas.filter(course__id=curso_id)
+
+    estudiante_id = request.GET.get('estudiante')
+    if estudiante_id:
+        matriculas = matriculas.filter(student__id=estudiante_id)
+
+    matriculas = matriculas.order_by(
+        'course__name', 'student__first_name', 'student__last_name', 'student__username'
+    )
+
+    # ── Estilos ───────────────────────────────────────────────────────────────
+    header_font    = Font(name='Arial', bold=True, color='FFFFFF')
+    header_fill    = PatternFill(start_color='003366', end_color='003366', fill_type='solid')
+    subheader_fill = PatternFill(start_color='1F5C99', end_color='1F5C99', fill_type='solid')
+    presente_fill  = PatternFill(start_color='C6EFCE', end_color='C6EFCE', fill_type='solid')
+    ausente_fill   = PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid')
+    pct_ok_fill    = PatternFill(start_color='C6EFCE', end_color='C6EFCE', fill_type='solid')
+    pct_warn_fill  = PatternFill(start_color='FFEB9C', end_color='FFEB9C', fill_type='solid')
+    pct_bad_fill   = PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid')
+    center         = Alignment(horizontal='center', vertical='center')
+    left_align     = Alignment(horizontal='left',   vertical='center')
+    thin_border    = Border(
+        left=Side(style='thin'), right=Side(style='thin'),
+        top=Side(style='thin'),  bottom=Side(style='thin')
+    )
+
+    wb = openpyxl.Workbook()
+    wb.remove(wb.active)   # eliminar hoja vacía por defecto
+
+    # ── Agrupar matrículas por curso ──────────────────────────────────────────
+    from itertools import groupby
+    from operator import attrgetter
+
+    cursos_vistos = {}
+    for matricula in matriculas:
+        cid = matricula.course.id
+        if cid not in cursos_vistos:
+            cursos_vistos[cid] = {'course': matricula.course, 'matriculas': []}
+        cursos_vistos[cid]['matriculas'].append(matricula)
+
+    if not cursos_vistos:
+        # Sin datos: devolver Excel con mensaje
+        ws = wb.create_sheet(title="Sin datos")
+        ws['A1'] = "No se encontraron estudiantes con los filtros seleccionados."
+    else:
+        for cid, grupo in cursos_vistos.items():
+            course      = grupo['course']
+            mats        = grupo['matriculas']
+            sheet_title = course.name[:31]   # Excel limita a 31 chars
+
+            # Fechas únicas del curso ordenadas
+            fechas = list(
+                Asistencia.objects.filter(course=course)
+                .values_list('date', flat=True)
+                .distinct()
+                .order_by('date')
+            )
+
+            ws = wb.create_sheet(title=sheet_title)
+            col_offset = 5   # Estudiante + Total + Presentes + Ausentes + (empieza en col 5)
+
+            # Fila 1: título
+            total_cols = col_offset + len(fechas)   # última col = %
+            ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=total_cols)
+            tc = ws.cell(row=1, column=1, value=f"Asistencias — {course.name}")
+            tc.font = Font(name='Arial', bold=True, size=13, color='FFFFFF')
+            tc.fill = PatternFill(start_color='001F4D', end_color='001F4D', fill_type='solid')
+            tc.alignment = center
+            ws.row_dimensions[1].height = 26
+
+            # Fila 2: encabezados fijos
+            for col, h in enumerate(['Estudiante', 'Total Clases', 'Presentes', 'Ausentes'], 1):
+                c = ws.cell(row=2, column=col, value=h)
+                c.font = header_font; c.fill = header_fill
+                c.alignment = center; c.border = thin_border
+
+            # Encabezados de fechas
+            for i, fecha in enumerate(fechas):
+                c = ws.cell(row=2, column=col_offset + i, value=fecha.strftime('%d/%m/%Y'))
+                c.font = header_font; c.fill = subheader_fill
+                c.alignment = center; c.border = thin_border
+
+            # Columna % al final
+            col_pct = col_offset + len(fechas)
+            c = ws.cell(row=2, column=col_pct, value='% Asistencia')
+            c.font = header_font; c.fill = header_fill
+            c.alignment = center; c.border = thin_border
+
+            # Filas de datos
+            for row_num, matricula in enumerate(mats, 3):
+                student = matricula.student
+                nombre  = student.get_full_name() or student.username
+
+                asistencias_dict = {
+                    a.date: a.presente
+                    for a in Asistencia.objects.filter(student=student, course=course)
+                }
+
+                total   = len(fechas)
+                present = sum(1 for f in fechas if asistencias_dict.get(f) is True)
+                absent  = total - present
+                pct     = round((present / total) * 100, 1) if total > 0 else 0.0
+
+                c = ws.cell(row=row_num, column=1, value=nombre)
+                c.alignment = left_align; c.border = thin_border
+
+                for col, val in zip([2, 3, 4], [total, present, absent]):
+                    c = ws.cell(row=row_num, column=col, value=val)
+                    c.alignment = center; c.border = thin_border
+
+                for i, fecha in enumerate(fechas):
+                    presente = asistencias_dict.get(fecha)
+                    if presente is True:
+                        texto, fill = '✓', presente_fill
+                    elif presente is False:
+                        texto, fill = '✗', ausente_fill
+                    else:
+                        texto, fill = '—', None
+                    c = ws.cell(row=row_num, column=col_offset + i, value=texto)
+                    c.alignment = center; c.border = thin_border
+                    if fill:
+                        c.fill = fill
+
+                c = ws.cell(row=row_num, column=col_pct, value=f'{pct}%')
+                c.alignment = center; c.border = thin_border
+                if pct >= 75:
+                    c.fill = pct_ok_fill
+                    c.font = Font(name='Arial', bold=True, color='276221')
+                elif pct >= 50:
+                    c.fill = pct_warn_fill
+                    c.font = Font(name='Arial', bold=True, color='7D5A00')
+                else:
+                    c.fill = pct_bad_fill
+                    c.font = Font(name='Arial', bold=True, color='9C0006')
+
+            # Anchos de columna
+            ws.column_dimensions['A'].width = 30
+            for col in ['B', 'C', 'D']:
+                ws.column_dimensions[col].width = 14
+            for i in range(len(fechas)):
+                ws.column_dimensions[
+                    ws.cell(row=2, column=col_offset + i).column_letter
+                ].width = 12
+            ws.column_dimensions[
+                ws.cell(row=2, column=col_pct).column_letter
+            ].width = 14
+
+            ws.freeze_panes = 'B3'
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    response = HttpResponse(
+        output.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="asistencias.xlsx"'
+    return response
 
 
 class StudentCourseNotesView(BaseContextMixin, ListView):
