@@ -361,6 +361,35 @@
     {% endfor %}
   </div>
 
+  <!-- Paginación -->
+  {% if is_paginated %}
+  <div class="flex justify-center items-center gap-2 mt-8 flex-wrap">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}"
+       class="pag-btn">‹</a>
+    {% else %}
+    <button class="pag-btn" disabled>‹</button>
+    {% endif %}
+
+    <span class="pag-info">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+
+    {% for i in page_obj.paginator.page_range %}
+      {% if page_obj.number == i %}
+        <span class="pag-btn pag-btn-active">{{ i }}</span>
+      {% elif i == 1 or i == page_obj.paginator.num_pages or i >= page_obj.number|add:"-2" and i <= page_obj.number|add:"2" %}
+        <a href="?page={{ i }}" class="pag-btn">{{ i }}</a>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}"
+       class="pag-btn">›</a>
+    {% else %}
+    <button class="pag-btn" disabled>›</button>
+    {% endif %}
+  </div>
+  {% endif %}
+
 </div>
 
 <!-- Modal de Confirmación de Eliminación -->
@@ -2528,6 +2557,48 @@
   .glass-button-ultra:hover {
     transform: translateY(-1px);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  }
+
+  /* ── Paginación de cursos ── */
+  .pag-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.25rem;
+    height: 2.25rem;
+    padding: 0 0.625rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.2));
+    color: #374151;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    user-select: none;
+    backdrop-filter: blur(10px);
+  }
+  .pag-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(37,99,235,0.1));
+    color: #1e40af;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  }
+  .pag-btn-active {
+    background: linear-gradient(135deg, rgba(59,130,246,0.4), rgba(37,99,235,0.3));
+    color: #1e40af;
+    border-color: rgba(59,130,246,0.5);
+    font-weight: 700;
+  }
+  .pag-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .pag-info {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin: 0 0.25rem;
   }
 </style>
 

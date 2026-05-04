@@ -2349,27 +2349,53 @@ class CoursesView(BaseContextMixin, TemplateView):
             courses = Curso.objects.none()
         student = self.request.user if self.request.user.is_authenticated else None
 
-        for item in courses:
-            if student:
-                registration = Matriculas.objects.filter(
-                    course=item, student=student).first()
-                item.is_enrolled = registration is not None
+        # Obtener solicitudes pendientes y rechazadas del estudiante de una sola vez
+        cursos_con_solicitudes_pendientes = set()
+        cursos_con_solicitudes_rechazadas = set()
+        if student and student.is_authenticated:
+            cursos_con_solicitudes_pendientes = set(
+                SolicitudInscripcion.objects.filter(
+                    estudiante=student, estado='pendiente'
+                ).values_list('curso_id', flat=True)
+            )
+            cursos_con_solicitudes_rechazadas = set(
+                SolicitudInscripcion.objects.filter(
+                    estudiante=student, estado='rechazada'
+                ).values_list('curso_id', flat=True)
+            )
+
+        # Obtener formularios de aplicación de una sola vez
+        formularios = FormularioAplicacion.objects.all()
+        formularios_por_curso = {f.curso_id: f for f in formularios}
+
+        courses_list = list(courses)
+        for item in courses_list:
+            if student and student.is_authenticated:
+                item.is_enrolled = Matriculas.objects.filter(
+                    course=item, student=student).exists()
+                item.tiene_solicitud_pendiente  = item.id in cursos_con_solicitudes_pendientes
+                item.tiene_solicitud_rechazada  = item.id in cursos_con_solicitudes_rechazadas
             else:
                 item.is_enrolled = False
+                item.tiene_solicitud_pendiente  = False
+                item.tiene_solicitud_rechazada  = False
 
-            # Calcular el conteo de inscripciones para todos los cursos
-            enrollment_count = Matriculas.objects.filter(course=item).count()
-            item.enrollment_count = enrollment_count
+            item.enrollment_count = Matriculas.objects.filter(course=item).count()
+            item.formulario_aplicacion = formularios_por_curso.get(item.id)
 
-        context['courses'] = courses
-        # Asegurarse de que group_name esté en el contexto
+        # Paginación: 8 tarjetas por página
+        paginator   = Paginator(courses_list, 8)
+        page_number = self.request.GET.get('page', 1)
+        page_obj    = paginator.get_page(page_number)
+
+        context['courses']   = page_obj          # ahora es el objeto de página
+        context['page_obj']  = page_obj
+        context['is_paginated'] = paginator.num_pages > 1
+
         user = self.request.user
         if user.is_authenticated:
             group = Group.objects.filter(user=user).first()
-            if group:
-                context['group_name'] = group.name
-            else:
-                context['group_name'] = None
+            context['group_name'] = group.name if group else None
         else:
             context['group_name'] = None
 
