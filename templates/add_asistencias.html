@@ -30,7 +30,9 @@
                 </ol>
             </nav>
             
-            <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">Agregar Asistencia</h2>
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">
+                {% if modo_modificar %}Modificar Asistencia{% else %}Agregar Asistencia{% endif %}
+            </h2>
             <p class="text-center text-gray-600">{{ course.name }}</p>
         </div>
 
@@ -38,11 +40,34 @@
         <div class="glass-card">
             <div class="glass-header">
                 <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    {% if modo_modificar %}
+                    <span class="fa material-icons mr-2">edit</span></i>
+                    Modificar Asistencia Existente
+                    {% else %}
                     <span class="fa material-icons mr-2">add_circle</span></i>
                     Registrar Asistencia
+                    {% endif %}
                 </h3>
             </div>
             <div class="glass-content">
+                {% if messages %}
+                <div class="mb-4">
+                    {% for message in messages %}
+                    <div class="glass-alert {% if message.tags == 'error' %}glass-alert-danger{% else %}glass-alert-info{% endif %} mb-2">
+                        <span class="fa material-icons mr-2">{% if message.tags == 'error' %}error{% else %}info{% endif %}</span>
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if modo_modificar %}
+                <div class="glass-alert glass-alert-warning mb-6">
+                    <span class="fa material-icons mr-2">warning</span></i>
+                    <span>Se ha alcanzado el límite de clases del curso (<strong>{{ course.class_quantity }}</strong>). Solo puedes modificar asistencias de fechas ya registradas.</span>
+                </div>
+                {% endif %}
+
                 <form action="{% url 'principal:add_asistencias' course_id=course.id %}" method="post">
                     {% csrf_token %}
                     
@@ -70,8 +95,12 @@
                             Marcar estudiantes ausentes
                         </h4>
                         <p class="text-sm text-gray-600 mb-4">
+                            {% if modo_modificar %}
+                            Seleccione la fecha de la clase a modificar y marque los estudiantes que NO asistieron.
+                            {% else %}
                             Seleccione únicamente los estudiantes que NO asistieron a la clase. 
                             Los estudiantes no marcados se registrarán como presentes.
+                            {% endif %}
                         </p>
                         
                         {% if matriculas %}
@@ -115,8 +144,13 @@
                             Cancelar
                         </a>
                         <button type="submit" class="glass-button glass-button-success">
+                            {% if modo_modificar %}
+                            <span class="fa material-icons mr-2">save</span></i>
+                            Guardar Cambios
+                            {% else %}
                             <span class="fa material-icons mr-2">add_circle</span></i>
                             Registrar Asistencia
+                            {% endif %}
                         </button>
                     </div>
                 </form>
@@ -293,6 +327,16 @@
     .glass-alert-info {
         background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
         color: #1e3a8a;
+    }
+
+    .glass-alert-warning {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.1));
+        color: #78350f;
+    }
+
+    .glass-alert-danger {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
+        color: #7f1d1d;
     }
 </style>
 

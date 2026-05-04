@@ -91,10 +91,17 @@
                         Registro de Asistencias
                     </h3>
                     <div class="flex flex-wrap gap-2">
+                        {% if clases_restantes > 0 %}
                         <a href="{% url 'principal:add_asistencias' course.id %}" class="glass-button glass-button-success">
                             <span class="fa material-icons mr-2">add_circle</span></i>
                             Agregar asistencia
                         </a>
+                        {% else %}
+                        <a href="{% url 'principal:add_asistencias' course.id %}" class="glass-button glass-button-warning">
+                            <span class="fa material-icons mr-2">edit</span></i>
+                            Modificar asistencias
+                        </a>
+                        {% endif %}
                         <a href="#" 
                            class="glass-button glass-button-danger" 
                            onclick="showUndoModal(); return false;">
@@ -110,7 +117,7 @@
                     <table class="glass-table">
                         <thead>
                             <tr>
-                                <th class="min-w-48">Estudiante</th>
+                                <th>Estudiante</th>
                                 {% regroup asistencias by date as asistencias_por_fecha %}
                                 {% for fecha in asistencias_por_fecha %}
                                     <th class="w-32 text-center">{{ fecha.grouper|date:"d/m/Y" }}</th>
@@ -120,7 +127,7 @@
                         <tbody>
                             {% for matricula in matriculas %}
                             <tr>
-                                <td class="font-medium min-w-48">{{ matricula.student.get_full_name|default:matricula.student.username }}</td>
+                                <td class="font-medium">{{ matricula.student.get_full_name|default:matricula.student.username }}</td>
                                 {% for fecha in asistencias_por_fecha %}
                                     <td class="text-center w-32">
                                         {% with asistencia=asistencias|filter_asistencia:matricula.student.id|filter_by_date:fecha.grouper %}
@@ -319,6 +326,11 @@
         color: #7f1d1d;
     }
 
+    .glass-button-warning {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(217, 119, 6, 0.2));
+        color: #78350f;
+    }
+
     /* Glass Input */
     .glass-input-compact {
         width: 100%;
@@ -345,7 +357,6 @@
         width: 100%;
         border-collapse: separate;
         border-spacing: 0;
-        table-layout: fixed;
     }
 
     .glass-table thead tr {
@@ -364,6 +375,34 @@
 
     .glass-table th.text-center {
         text-align: center;
+    }
+
+    /* Columna fija del estudiante */
+    .glass-table th:first-child,
+    .glass-table td:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        min-width: 180px;
+        max-width: 220px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .glass-table th:first-child {
+        background: linear-gradient(135deg, rgba(219, 234, 254, 0.97), rgba(191, 219, 254, 0.97));
+        z-index: 3;
+        box-shadow: 2px 0 6px rgba(0,0,0,0.08);
+    }
+
+    .glass-table td:first-child {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.97), rgba(248, 250, 252, 0.97));
+        box-shadow: 2px 0 6px rgba(0,0,0,0.06);
+    }
+
+    .glass-table tbody tr:hover td:first-child {
+        background: linear-gradient(135deg, rgba(239, 246, 255, 0.98), rgba(219, 234, 254, 0.98));
     }
 
     .glass-table tbody tr {

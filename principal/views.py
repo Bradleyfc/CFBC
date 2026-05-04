@@ -2247,10 +2247,17 @@ class AddAsistenciaView(LoginRequiredMixin, TemplateView):
         matriculas = Matriculas.objects.filter(course=course)
         # Obtener las asistencias existentes para este curso
         asistencias = Asistencia.objects.order_by('date')
+
+        # Calcular clases restantes para determinar el modo (agregar vs modificar)
+        asistencias_registradas = Asistencia.objects.filter(course=course).values('date').distinct().count()
+        clases_restantes = course.class_quantity - asistencias_registradas
+
         context['course'] = course
         context['matriculas'] = matriculas
         context['asistencias'] = asistencias
         context['today'] = date.today()
+        context['clases_restantes'] = clases_restantes
+        context['modo_modificar'] = clases_restantes <= 0
         return context
 
     def post(self, request, course_id):
@@ -2258,7 +2265,19 @@ class AddAsistenciaView(LoginRequiredMixin, TemplateView):
         matriculas = Matriculas.objects.filter(course=course)
 
         if request.method == 'POST':
-            date = request.POST.get('date')
+            date_str = request.POST.get('date')
+
+            # Calcular clases restantes
+            asistencias_registradas = Asistencia.objects.filter(course=course).values('date').distinct().count()
+            clases_restantes = course.class_quantity - asistencias_registradas
+
+            # Verificar si la fecha ya tiene asistencias registradas
+            fecha_ya_existe = Asistencia.objects.filter(course=course, date=date_str).exists()
+
+            # Si no quedan clases y la fecha es nueva, bloquear
+            if clases_restantes <= 0 and not fecha_ya_existe:
+                messages.error(request, "No quedan clases disponibles. Solo puedes modificar asistencias de fechas ya registradas.")
+                return redirect('principal:add_asistencias', course_id=course_id)
 
             for matricula in matriculas:
                 absent = request.POST.get('asistencia_' + str(matricula.id))
@@ -2266,13 +2285,14 @@ class AddAsistenciaView(LoginRequiredMixin, TemplateView):
                 asistencia, created = Asistencia.objects.get_or_create(
                     student=matricula.student,
                     course=course,
-                    date=date,
+                    date=date_str,
                     defaults={'presente': not bool(absent)}
                 )
                 # Si el registro ya existía, actualizar el estado de presente
                 if not created:
                     asistencia.presente = not bool(absent)
                     asistencia.save()
+
         # Redirigir a la misma página para mostrar las asistencias actualizadas
         return redirect('principal:asistencias', course_id=course_id)
 
