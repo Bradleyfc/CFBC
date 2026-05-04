@@ -31,7 +31,12 @@ Thumbs.db
 
 # Archivos estáticos y medios (generados automáticamente)
 staticfiles/
-media/
+
+# Ignorar media/ pero permitir la carpeta default con imágenes del proyecto
+media/*
+!media/default/
+media/default/*
+!media/default/plantilla.jpg
 
 # Logs
 *.log
