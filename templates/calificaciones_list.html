@@ -67,10 +67,6 @@
                             <span class="fa material-icons mr-2">arrow_back</span></i>
                             Volver
                         </a>
-                        <a href="#" onclick="checkCalificacionesBeforeExport('pdf')" class="glass-button glass-button-danger">
-                            <span class="fa material-icons mr-2">article</span></i>
-                            Exportar PDF
-                        </a>
                         <a href="#" onclick="checkCalificacionesBeforeExport('excel')" class="glass-button glass-button-success">
                             <span class="fa material-icons mr-2">table_chart</span></i>
                             Exportar Excel
@@ -91,7 +87,7 @@
                             <th>Curso</th>
                             <th>Curso Académico</th>
                             <th>Promedio</th>
-                            <th>Detalle de Notas</th>
+                            <th class="text-center">Detalle de Notas</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -118,17 +114,11 @@
                                 {% endif %}
                             </td>
                             <td>
-                                {% if calificacion.notas.all %}
-                                    <div class="space-y-1">
-                                        {% for nota in calificacion.notas.all %}
-                                            <div class="text-xs bg-gray-100 rounded px-2 py-1">
-                                                Nota: {{ nota.valor }} ({{ nota.fecha_creacion|date:"d/m/Y" }})
-                                            </div>
-                                        {% endfor %}
-                                    </div>
-                                {% else %}
-                                    <span class="text-gray-500 text-sm italic">No hay notas registradas</span>
-                                {% endif %}
+                                <a href="{% url 'principal:calificacion_detalle_estudiante' student_id=calificacion.student.id course_id=calificacion.course.id %}"
+                                   class="glass-button glass-button-primary text-xs px-3 py-1">
+                                    <span class="fa material-icons mr-1">visibility</span></i>
+                                    Ver
+                                </a>
                             </td>
                         </tr>
                         {% endfor %}

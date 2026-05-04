@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Asistencias — {{ student.get_full_name|default:student.username }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            color: #333;
+            font-size: 13px;
+        }
+
+        /* Encabezado */
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+            border-bottom: 2px solid #003366;
+            padding-bottom: 12px;
+        }
+        .header h1 {
+            font-size: 20px;
+            color: #003366;
+            margin: 0 0 4px 0;
+        }
+        .header p {
+            margin: 2px 0;
+            color: #555;
+            font-size: 12px;
+        }
+
+        /* Tarjetas de resumen */
+        .resumen {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 8px;
+            margin-bottom: 20px;
+        }
+        .resumen td {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 12px;
+            text-align: center;
+            background-color: #f8f9fa;
+            width: 25%;
+        }
+        .resumen-label {
+            font-size: 11px;
+            color: #777;
+            margin-bottom: 4px;
+        }
+        .resumen-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .color-blue     { color: #1F5C99; }
+        .color-green    { color: #276221; }
+        .color-red      { color: #9C0006; }
+        .color-ok       { color: #276221; }
+        .color-warn     { color: #7D5A00; }
+        .color-bad      { color: #9C0006; }
+
+        /* Tabla de asistencias */
+        h2 {
+            font-size: 14px;
+            color: #003366;
+            border-bottom: 1px solid #003366;
+            padding-bottom: 4px;
+            margin-bottom: 10px;
+        }
+        table.notas {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table.notas thead tr {
+            background-color: #003366;
+            color: white;
+        }
+        table.notas th {
+            padding: 8px 10px;
+            text-align: center;
+            font-size: 12px;
+        }
+        table.notas td {
+            padding: 7px 10px;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 12px;
+        }
+        table.notas tr:nth-child(even) td {
+            background-color: #f5f5f5;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .badge-presente  { background-color: #C6EFCE; color: #276221; }
+        .badge-ausente   { background-color: #FFC7CE; color: #9C0006; }
+
+        /* Pie de página */
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 10px;
+            color: #aaa;
+            border-top: 1px solid #ddd;
+            padding-top: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Encabezado -->
+    <div class="header">
+        <h1>Detalle de Asistencias</h1>
+        <p><strong>Estudiante:</strong>
+            {% if student.first_name or student.last_name %}
+                {{ student.first_name }} {{ student.last_name }}
+            {% else %}
+                {{ student.username }}
+            {% endif %}
+        </p>
+        <p><strong>Curso:</strong> {{ course.name }}</p>
+        {% if course.curso_academico %}
+        <p><strong>Curso Académico:</strong> {{ course.curso_academico.nombre }}</p>
+        {% endif %}
+    </div>
+
+    <!-- Resumen -->
+    <table class="resumen">
+        <tr>
+            <td>
+                <div class="resumen-label">Total Clases</div>
+                <div class="resumen-value color-blue">{{ total }}</div>
+            </td>
+            <td>
+                <div class="resumen-label">Presentes</div>
+                <div class="resumen-value color-green">{{ presentes }}</div>
+            </td>
+            <td>
+                <div class="resumen-label">Ausentes</div>
+                <div class="resumen-value color-red">{{ ausentes }}</div>
+            </td>
+            <td>
+                <div class="resumen-label">% Asistencia</div>
+                {% if porcentaje >= 75 %}
+                    <div class="resumen-value color-ok">{{ porcentaje }}%</div>
+                {% elif porcentaje >= 50 %}
+                    <div class="resumen-value color-warn">{{ porcentaje }}%</div>
+                {% else %}
+                    <div class="resumen-value color-bad">{{ porcentaje }}%</div>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    <!-- Tabla de asistencias -->
+    <h2>Registro de Asistencias</h2>
+
+    {% if asistencias %}
+    <table class="notas">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Fecha</th>
+                <th>Asistencia</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for asistencia in asistencias %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ asistencia.date|date:"d/m/Y" }}</td>
+                <td>
+                    {% if asistencia.presente %}
+                        <span class="badge badge-presente">✓ Presente</span>
+                    {% else %}
+                        <span class="badge badge-ausente">✗ Ausente</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color:#777; font-style:italic;">No hay asistencias registradas para este estudiante en este curso.</p>
+    {% endif %}
+
+    <div class="footer">
+        Documento generado automáticamente &mdash; {{ course.name }}
+    </div>
+
+</body>
+</html>

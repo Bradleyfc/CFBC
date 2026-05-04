@@ -1642,6 +1642,217 @@ class StudentCourseAttendanceView(BaseContextMixin, ListView):
         return context
 
 
+class CalificacionDetalleEstudianteView(BaseContextMixin, TemplateView):
+    """Vista de detalle de calificaciones de un estudiante en un curso (para secretaria)."""
+    template_name = 'calificacion_detalle_estudiante.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        student_id = self.kwargs['student_id']
+        course_id  = self.kwargs['course_id']
+
+        student = get_object_or_404(User, id=student_id)
+        course  = get_object_or_404(Curso, id=course_id)
+
+        calificacion = Calificaciones.objects.filter(
+            student=student, course=course
+        ).prefetch_related('notas').first()
+
+        notas = calificacion.notas.all().order_by('fecha_creacion') if calificacion else []
+
+        context['student']      = student
+        context['course']       = course
+        context['calificacion'] = calificacion
+        context['notas']        = notas
+        return context
+
+
+@login_required
+def export_calificacion_pdf(request, student_id, course_id):
+    """Exporta el detalle de calificaciones de un estudiante en un curso como PDF."""
+    student      = get_object_or_404(User, id=student_id)
+    course       = get_object_or_404(Curso, id=course_id)
+    calificacion = Calificaciones.objects.filter(
+        student=student, course=course
+    ).prefetch_related('notas').first()
+    notas = list(calificacion.notas.all().order_by('fecha_creacion')) if calificacion else []
+
+    context = {
+        'student':      student,
+        'course':       course,
+        'calificacion': calificacion,
+        'notas':        notas,
+    }
+    return render_to_pdf('calificacion_detalle_pdf.html', context)
+
+
+@login_required
+def export_calificaciones_excel(request):
+    """
+    Exporta calificaciones a Excel según los filtros activos.
+    Una hoja por curso. Columnas: Estudiante, Nota 1, Nota 2, ..., Promedio.
+    """
+    curso_academico_id = request.GET.get('curso_academico')
+    curso_id           = request.GET.get('curso')
+    estudiante_id      = request.GET.get('estudiante')
+
+    # Mismos filtros que CalificacionesListView
+    calificaciones = Calificaciones.objects.select_related(
+        'student', 'course', 'curso_academico'
+    ).prefetch_related('notas')
+
+    if curso_academico_id:
+        calificaciones = calificaciones.filter(curso_academico__id=curso_academico_id)
+    if curso_id:
+        calificaciones = calificaciones.filter(course__id=curso_id)
+    if estudiante_id:
+        calificaciones = calificaciones.filter(student__id=estudiante_id)
+
+    calificaciones = calificaciones.order_by(
+        'course__name', 'student__first_name', 'student__last_name', 'student__username'
+    )
+
+    # ── Estilos ───────────────────────────────────────────────────────────────
+    header_font    = Font(name='Arial', bold=True, color='FFFFFF')
+    header_fill    = PatternFill(start_color='003366', end_color='003366', fill_type='solid')
+    nota_fill      = PatternFill(start_color='1F5C99', end_color='1F5C99', fill_type='solid')
+    aprobado_fill  = PatternFill(start_color='C6EFCE', end_color='C6EFCE', fill_type='solid')
+    reprobado_fill = PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid')
+    na_fill        = PatternFill(start_color='F2F2F2', end_color='F2F2F2', fill_type='solid')
+    aprobado_font  = Font(name='Arial', bold=True, color='276221')
+    reprobado_font = Font(name='Arial', bold=True, color='9C0006')
+    na_font        = Font(name='Arial', color='595959')
+    center         = Alignment(horizontal='center', vertical='center')
+    left_align     = Alignment(horizontal='left',   vertical='center')
+    thin_border    = Border(
+        left=Side(style='thin'), right=Side(style='thin'),
+        top=Side(style='thin'),  bottom=Side(style='thin')
+    )
+
+    wb = openpyxl.Workbook()
+    wb.remove(wb.active)
+
+    # Agrupar por curso
+    cursos_vistos = {}
+    for cal in calificaciones:
+        cid = cal.course.id
+        if cid not in cursos_vistos:
+            cursos_vistos[cid] = {'course': cal.course, 'calificaciones': []}
+        cursos_vistos[cid]['calificaciones'].append(cal)
+
+    if not cursos_vistos:
+        ws = wb.create_sheet(title="Sin datos")
+        ws['A1'] = "No se encontraron calificaciones con los filtros seleccionados."
+    else:
+        for cid, grupo in cursos_vistos.items():
+            course = grupo['course']
+            cals   = grupo['calificaciones']
+            sheet_title = course.name[:31]
+
+            # Determinar el máximo de notas en este curso
+            max_notas = max((cal.notas.count() for cal in cals), default=0)
+
+            ws = wb.create_sheet(title=sheet_title)
+
+            # Fila 1: título
+            total_cols = 2 + max_notas + 1   # Estudiante + CursoAcad + notas + Promedio
+            ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=total_cols)
+            tc = ws.cell(row=1, column=1, value=f"Calificaciones — {course.name}")
+            tc.font = Font(name='Arial', bold=True, size=13, color='FFFFFF')
+            tc.fill = PatternFill(start_color='001F4D', end_color='001F4D', fill_type='solid')
+            tc.alignment = center
+            ws.row_dimensions[1].height = 26
+
+            # Fila 2: encabezados
+            headers_fijos = ['Estudiante', 'Curso Académico']
+            for col, h in enumerate(headers_fijos, 1):
+                c = ws.cell(row=2, column=col, value=h)
+                c.font = header_font; c.fill = header_fill
+                c.alignment = center; c.border = thin_border
+
+            for i in range(max_notas):
+                c = ws.cell(row=2, column=3 + i, value=f'Nota {i + 1}')
+                c.font = header_font; c.fill = nota_fill
+                c.alignment = center; c.border = thin_border
+
+            col_prom = 3 + max_notas
+            c = ws.cell(row=2, column=col_prom, value='Promedio')
+            c.font = header_font; c.fill = header_fill
+            c.alignment = center; c.border = thin_border
+
+            # Filas de datos
+            for row_num, cal in enumerate(cals, 3):
+                nombre    = cal.student.get_full_name() or cal.student.username
+                ca_nombre = cal.curso_academico.nombre if cal.curso_academico else '—'
+                notas     = list(cal.notas.all().order_by('fecha_creacion'))
+
+                c = ws.cell(row=row_num, column=1, value=nombre)
+                c.alignment = left_align; c.border = thin_border
+
+                c = ws.cell(row=row_num, column=2, value=ca_nombre)
+                c.alignment = center; c.border = thin_border
+
+                # Notas individuales
+                for i in range(max_notas):
+                    c = ws.cell(row=row_num, column=3 + i)
+                    c.border = thin_border
+                    c.alignment = center
+                    if i < len(notas):
+                        val = float(notas[i].valor)
+                        c.value = val
+                        if val >= 6:
+                            c.fill = aprobado_fill
+                            c.font = aprobado_font
+                        else:
+                            c.fill = reprobado_fill
+                            c.font = reprobado_font
+                    else:
+                        c.value = '—'
+                        c.fill = na_fill
+                        c.font = na_font
+
+                # Promedio
+                c = ws.cell(row=row_num, column=col_prom)
+                c.border = thin_border; c.alignment = center
+                if cal.average is not None:
+                    prom = float(cal.average)
+                    c.value = round(prom, 1)
+                    if prom >= 6:
+                        c.fill = aprobado_fill
+                        c.font = Font(name='Arial', bold=True, color='276221')
+                    else:
+                        c.fill = reprobado_fill
+                        c.font = Font(name='Arial', bold=True, color='9C0006')
+                else:
+                    c.value = 'N/A'
+                    c.fill = na_fill
+                    c.font = na_font
+
+            # Anchos de columna
+            ws.column_dimensions['A'].width = 30
+            ws.column_dimensions['B'].width = 22
+            for i in range(max_notas):
+                ws.column_dimensions[
+                    ws.cell(row=2, column=3 + i).column_letter
+                ].width = 10
+            ws.column_dimensions[
+                ws.cell(row=2, column=col_prom).column_letter
+            ].width = 12
+
+            ws.freeze_panes = 'A3'
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    response = HttpResponse(
+        output.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="calificaciones.xlsx"'
+    return response
+
+
 # Vistas para Asistencias
 class AsistenciasListView(BaseContextMixin, ListView):
     model = Matriculas
@@ -1706,6 +1917,33 @@ class AsistenciaDetalleEstudianteView(BaseContextMixin, TemplateView):
         context['ausentes'] = ausentes
         context['porcentaje'] = porcentaje
         return context
+
+
+@login_required
+def export_asistencia_detalle_pdf(request, student_id, course_id):
+    """Exporta el detalle de asistencias de un estudiante en un curso como PDF."""
+    student = get_object_or_404(User, id=student_id)
+    course  = get_object_or_404(Curso, id=course_id)
+
+    asistencias = Asistencia.objects.filter(
+        student=student, course=course
+    ).order_by('date')
+
+    total    = asistencias.count()
+    presentes = asistencias.filter(presente=True).count()
+    ausentes  = total - presentes
+    porcentaje = round((presentes / total) * 100, 2) if total > 0 else 0
+
+    context = {
+        'student':    student,
+        'course':     course,
+        'asistencias': asistencias,
+        'total':      total,
+        'presentes':  presentes,
+        'ausentes':   ausentes,
+        'porcentaje': porcentaje,
+    }
+    return render_to_pdf('asistencia_detalle_pdf.html', context)
 
 
 @login_required
