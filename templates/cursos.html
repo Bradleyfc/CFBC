@@ -165,7 +165,7 @@
         <!-- Card Content with Glass Effect -->
         <div class="glass-content p-3">
           <!-- Original Content -->
-          <div id="original-content-{{course.id}}" class="flex-1">
+          <div id="original-content-{{course.id}}" class="flex-1 flex flex-col">
             <!-- Title with Glow Effect and Options Button -->
             <div class="flex items-start justify-between gap-2 mb-2">
               <h3 class="text-base font-bold text-gray-900 line-clamp-2 group-hover:text-shadow-glow transition-all duration-300 min-h-[2rem] flex-1">
@@ -274,9 +274,9 @@
             </div>
 
             <!-- Action Buttons Section - Always at bottom -->
-            <div class="mt-auto">
-              <!-- Course Status Badge - Centered at bottom with pulsing animation -->
-              <div class="text-center mb-2">
+            <div class="status-badge-container">
+              <!-- Course Status Badge - Anchored to bottom -->
+              <div class="text-center">
                 {% if course.get_dynamic_status == 'F' %}
                 <span class="glass-badge glass-badge-red text-xs px-1 py-0.5 pulse-badge" style="font-size: 10px; line-height: 1.2;">
                   {{course.get_dynamic_status_display|upper}}
@@ -293,18 +293,6 @@
                 <span class="glass-badge glass-badge-blue text-xs px-1 py-0.5 pulse-badge" style="font-size: 10px; line-height: 1.2;">
                   {{course.get_dynamic_status_display|upper}}
                 </span>
-                {% endif %}
-              </div>
-
-              <!-- Action Buttons for Students - Standardized spacing -->
-              <div class="min-h-[2rem]">
-                {% if group_name == 'Estudiantes' %}
-                {% tiene_solicitud_pendiente user.id course.id as tiene_solicitud_pendiente %}
-                {% tiene_solicitud_rechazada user.id course.id as tiene_solicitud_rechazada %}
-                
-                {% else %}
-                <!-- Espacio reservado para mantener altura consistente en vista de secretaria -->
-                <div class="min-h-[1.2rem]"></div>
                 {% endif %}
               </div>
             </div>
@@ -616,6 +604,7 @@
   /* Glass Content Area - Espaciado restaurado al tamaño original */
   .glass-content {
     padding: 24px;
+    padding-bottom: 48px; /* espacio para el badge anclado al fondo */
     position: relative;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
     backdrop-filter: blur(10px);
@@ -623,8 +612,20 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    min-height: 296px; /* Altura restaurada al tamaño original */
+    min-height: 296px;
+  }
+
+  /* Badge de estado siempre anclado al borde inferior de la tarjeta */
+  .status-badge-container {
+    position: absolute;
+    bottom: 12px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    pointer-events: none;
+  }
+  .status-badge-container .glass-badge {
+    pointer-events: auto;
   }
 
   /* Glass Badges */
