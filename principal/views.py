@@ -672,10 +672,16 @@ class _NotasManager:
         self._notas = [_NotaArchivadaAdapter(n) for n in notas_archivadas_qs]
 
     def all(self):
-        return self._notas
+        return _NotasList(self._notas)
 
     def count(self):
         return len(self._notas)
+
+
+class _NotasList(list):
+    """Lista de notas que soporta .order_by() para compatibilidad con generate_excel."""
+    def order_by(self, *args):
+        return self  # ya viene ordenada por fecha_creacion desde el queryset
 
 
 class _CalificacionArchivadaAdapter:
@@ -739,6 +745,7 @@ class CursoAcademicoDetailView(DetailView):
         page_m = self.request.GET.get('page_m', 1)
         page_c = self.request.GET.get('page_c', 1)
         page_a = self.request.GET.get('page_a', 1)
+        page_cur = self.request.GET.get('page_cur', 1)
         per_page = 10
 
         # ── Determinar fuente de datos ────────────────────────────────────────
@@ -748,14 +755,14 @@ class CursoAcademicoDetailView(DetailView):
             context.update(
                 self._context_desde_archivados(
                     curso_academico, curso_id, estudiante_id,
-                    page_m, page_c, page_a, per_page,
+                    page_m, page_c, page_a, page_cur, per_page,
                 )
             )
         else:
             context.update(
                 self._context_desde_principal(
                     curso_academico, curso_id, estudiante_id,
-                    page_m, page_c, page_a, per_page,
+                    page_m, page_c, page_a, page_cur, per_page,
                 )
             )
 
@@ -776,13 +783,13 @@ class CursoAcademicoDetailView(DetailView):
     # ── Fuente: gestión académica (curso activo / no archivado) ───────────────
     def _context_desde_principal(
         self, curso_academico, curso_id, estudiante_id,
-        page_m, page_c, page_a, per_page,
+        page_m, page_c, page_a, page_cur, per_page,
     ):
-        cursos = Curso.objects.filter(
-            matriculas__curso_academico=curso_academico
+        cursos_qs = Curso.objects.filter(
+            curso_academico=curso_academico
         ).distinct()
         if curso_id:
-            cursos = cursos.filter(id=curso_id)
+            cursos_qs = cursos_qs.filter(id=curso_id)
 
         matriculas_qs = Matriculas.objects.filter(
             curso_academico=curso_academico
@@ -808,20 +815,34 @@ class CursoAcademicoDetailView(DetailView):
         if estudiante_id:
             asistencias_qs = asistencias_qs.filter(student_id=estudiante_id)
 
-        paginator_m = Paginator(matriculas_qs, per_page)
-        paginator_c = Paginator(calificaciones_qs, per_page)
-        paginator_a = Paginator(asistencias_qs, per_page)
+        # Para el tab de asistencias mostramos matrículas únicas (estudiante+curso)
+        # con el total de asistencias de cada uno
+        asistencias_matriculas_qs = Matriculas.objects.filter(
+            curso_academico=curso_academico
+        ).select_related('student', 'course').order_by(
+            'student__first_name', 'student__last_name', 'student__username'
+        )
+        if curso_id:
+            asistencias_matriculas_qs = asistencias_matriculas_qs.filter(course_id=curso_id)
+        if estudiante_id:
+            asistencias_matriculas_qs = asistencias_matriculas_qs.filter(student_id=estudiante_id)
+
+        paginator_cur = Paginator(cursos_qs, per_page)
+        paginator_m   = Paginator(matriculas_qs, per_page)
+        paginator_c   = Paginator(calificaciones_qs, per_page)
+        paginator_a   = Paginator(asistencias_matriculas_qs, per_page)
 
         return {
-            'cursos': cursos,
+            'cursos': paginator_cur.get_page(page_cur),
+            'cursos_total': cursos_qs.count(),
             'matriculas': paginator_m.get_page(page_m),
             'matriculas_total': matriculas_qs.count(),
             'calificaciones': paginator_c.get_page(page_c),
             'calificaciones_total': calificaciones_qs.count(),
             'asistencias': paginator_a.get_page(page_a),
-            'asistencias_total': asistencias_qs.count(),
+            'asistencias_total': asistencias_matriculas_qs.count(),
             'cursos_disponibles': Curso.objects.filter(
-                matriculas__curso_academico=curso_academico
+                curso_academico=curso_academico
             ).distinct(),
             'estudiantes_disponibles': User.objects.filter(
                 matriculas__curso_academico=curso_academico
@@ -832,7 +853,7 @@ class CursoAcademicoDetailView(DetailView):
     # ── Fuente: datos archivados (curso archivado) ────────────────────────────
     def _context_desde_archivados(
         self, curso_academico, curso_id, estudiante_id,
-        page_m, page_c, page_a, per_page,
+        page_m, page_c, page_a, page_cur, per_page,
     ):
         from datos_archivados.models import (
             CursoAcademicoArchivado,
@@ -852,7 +873,8 @@ class CursoAcademicoDetailView(DetailView):
             # datos_archivados (p.ej. archivado manualmente sin pasar por el servicio).
             # Devolver contexto vacío con indicador para que el template lo informe.
             return {
-                'cursos': [],
+                'cursos': Paginator([], per_page).get_page(1),
+                'cursos_total': 0,
                 'matriculas': Paginator([], per_page).get_page(1),
                 'matriculas_total': 0,
                 'calificaciones': Paginator([], per_page).get_page(1),
@@ -899,15 +921,18 @@ class CursoAcademicoDetailView(DetailView):
         calificaciones_adaptadas = [_CalificacionArchivadaAdapter(c) for c in calificaciones_qs]
 
         # ── Asistencias ───────────────────────────────────────────────────────
-        asistencias_qs = AsistenciaArchivada.objects.filter(
+        # Para el tab de asistencias mostramos matrículas archivadas únicas
+        asistencias_matriculas_qs = MatriculaArchivada.objects.filter(
             course__curso_academico=ca_archivado
-        ).select_related('student', 'course')
+        ).select_related('student', 'course').order_by(
+            'student__first_name', 'student__last_name', 'student__username'
+        )
         if curso_id:
-            asistencias_qs = asistencias_qs.filter(course_id=curso_id)
+            asistencias_matriculas_qs = asistencias_matriculas_qs.filter(course_id=curso_id)
         if estudiante_id:
-            asistencias_qs = asistencias_qs.filter(student_id=estudiante_id)
+            asistencias_matriculas_qs = asistencias_matriculas_qs.filter(student_id=estudiante_id)
 
-        asistencias_adaptadas = [_AsistenciaArchivadaAdapter(a) for a in asistencias_qs]
+        asistencias_adaptadas = [_MatriculaArchivadaAdapter(m) for m in asistencias_matriculas_qs]
 
         # ── Selectores de filtro ──────────────────────────────────────────────
         cursos_disponibles = [
@@ -919,12 +944,14 @@ class CursoAcademicoDetailView(DetailView):
             for u in _estudiantes_de_archivado(ca_archivado)
         ]
 
+        paginator_cur = Paginator(cursos_adaptados, per_page)
         paginator_m = Paginator(matriculas_adaptadas, per_page)
         paginator_c = Paginator(calificaciones_adaptadas, per_page)
         paginator_a = Paginator(asistencias_adaptadas, per_page)
 
         return {
-            'cursos': cursos_adaptados,
+            'cursos': paginator_cur.get_page(page_cur),
+            'cursos_total': len(cursos_adaptados),
             'matriculas': paginator_m.get_page(page_m),
             'matriculas_total': len(matriculas_adaptadas),
             'calificaciones': paginator_c.get_page(page_c),
@@ -952,8 +979,43 @@ class CursoAcademicoDetailView(DetailView):
                 return response
         # Verificar si se solicita Excel
         elif 'excel' in self.request.GET:
-            # Generar archivo Excel
-            excel_file = generate_excel(context)
+            # Construir contexto para Excel con asistencias reales (no matrículas)
+            excel_context = dict(context)
+            curso_academico = context['curso_academico']
+            curso_id     = self.request.GET.get('curso')
+            estudiante_id = self.request.GET.get('estudiante')
+
+            if curso_academico.archivado:
+                from datos_archivados.models import (
+                    CursoAcademicoArchivado, AsistenciaArchivada
+                )
+                ca_archivado = CursoAcademicoArchivado.objects.filter(
+                    id_original=curso_academico.pk
+                ).first()
+                if ca_archivado:
+                    asistencias_qs = AsistenciaArchivada.objects.filter(
+                        course__curso_academico=ca_archivado
+                    ).select_related('student', 'course')
+                    if curso_id:
+                        asistencias_qs = asistencias_qs.filter(course_id=curso_id)
+                    if estudiante_id:
+                        asistencias_qs = asistencias_qs.filter(student_id=estudiante_id)
+                    excel_context['asistencias'] = [
+                        _AsistenciaArchivadaAdapter(a) for a in asistencias_qs
+                    ]
+                else:
+                    excel_context['asistencias'] = []
+            else:
+                asistencias_qs = Asistencia.objects.filter(
+                    course__matriculas__curso_academico=curso_academico
+                ).distinct().select_related('student', 'course')
+                if curso_id:
+                    asistencias_qs = asistencias_qs.filter(course_id=curso_id)
+                if estudiante_id:
+                    asistencias_qs = asistencias_qs.filter(student_id=estudiante_id)
+                excel_context['asistencias'] = asistencias_qs
+
+            excel_file = generate_excel(excel_context)
             if excel_file:
                 response = HttpResponse(excel_file.getvalue(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
                 filename = f"curso_academico_{context['curso_academico'].nombre}.xlsx"
@@ -1915,6 +1977,45 @@ class AsistenciaDetalleEstudianteView(BaseContextMixin, TemplateView):
         context['total'] = total
         context['presentes'] = presentes
         context['ausentes'] = ausentes
+        context['porcentaje'] = porcentaje
+        return context
+
+
+class AsistenciaDetalleArchivadoView(BaseContextMixin, TemplateView):
+    """Vista de detalle de asistencias archivadas de un estudiante en un curso."""
+    template_name = 'asistencias_detalle_archivado.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from datos_archivados.models import (
+            UsuarioArchivado, MatriculaArchivada, AsistenciaArchivada
+        )
+
+        student_id = self.kwargs['student_id']
+        course_id  = self.kwargs['course_id']
+
+        student = get_object_or_404(UsuarioArchivado, id=student_id)
+        matricula = get_object_or_404(
+            MatriculaArchivada,
+            student=student, course_id=course_id
+        )
+        course = matricula.course
+
+        asistencias = AsistenciaArchivada.objects.filter(
+            student=student, course=course
+        ).order_by('date')
+
+        total     = asistencias.count()
+        presentes = asistencias.filter(presente=True).count()
+        ausentes  = total - presentes
+        porcentaje = round((presentes / total) * 100, 2) if total > 0 else 0
+
+        context['student']    = _UsuarioArchivadoAdapter(student)
+        context['course']     = _CursoArchivadoAdapter(course)
+        context['asistencias'] = [_AsistenciaArchivadaAdapter(a) for a in asistencias]
+        context['total']      = total
+        context['presentes']  = presentes
+        context['ausentes']   = ausentes
         context['porcentaje'] = porcentaje
         return context
 

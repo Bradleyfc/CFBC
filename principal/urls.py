@@ -43,6 +43,7 @@ urlpatterns = [
     path('asistencias_list/', views.AsistenciasListView.as_view(), name='asistencias_list'),
     path('asistencias_list/estudiante/<int:student_id>/curso/<int:course_id>/', views.AsistenciaDetalleEstudianteView.as_view(), name='asistencia_detalle_estudiante'),
     path('asistencias_list/estudiante/<int:student_id>/curso/<int:course_id>/pdf/', views.export_asistencia_detalle_pdf, name='export_asistencia_detalle_pdf'),
+    path('asistencias_list/archivado/estudiante/<int:student_id>/curso/<int:course_id>/', views.AsistenciaDetalleArchivadoView.as_view(), name='asistencia_detalle_archivado'),
     path('asistencias_list/export-excel/', views.export_asistencias_excel, name='export_asistencias_excel'),
     path('asistencias_list/curso/<int:course_id>/export-excel/', views.export_asistencias_curso_excel, name='export_asistencias_curso_excel'),
     path('cursos/<int:course_id>/addasistencias/', views.AddAsistenciaView.as_view(),name='add_asistencias' ),

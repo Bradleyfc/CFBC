@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12">
+    <div class="absolute inset-0 opacity-30"
+        style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;">
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+
+        <!-- Header -->
+        <div class="mb-6">
+            <div class="mb-4 flex flex-wrap gap-2">
+                <a href="javascript:history.back()" class="glass-button glass-button-secondary">
+                    <span class="fa material-icons mr-2">arrow_back</span></i>
+                    Volver
+                </a>
+                <span class="glass-button glass-button-warning" style="cursor:default;">
+                    <span class="fa material-icons mr-2">inventory_2</span></i>
+                    Datos Históricos Archivados
+                </span>
+            </div>
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-1">Detalle de Asistencias</h2>
+            <p class="text-center text-gray-600">
+                <strong>
+                    {% if student.first_name or student.last_name %}
+                        {{ student.first_name }} {{ student.last_name }}
+                    {% else %}
+                        {{ student.username }}
+                    {% endif %}
+                </strong>
+                &mdash; {{ course.name }}
+            </p>
+        </div>
+
+        <!-- Resumen -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="glass-card">
+                <div class="glass-content text-center py-4">
+                    <div class="text-sm text-gray-500 mb-1">Total Clases</div>
+                    <div class="text-4xl font-bold text-blue-600">{{ total }}</div>
+                </div>
+            </div>
+            <div class="glass-card">
+                <div class="glass-content text-center py-4">
+                    <div class="text-sm text-gray-500 mb-1">Presentes</div>
+                    <div class="text-4xl font-bold text-green-600">{{ presentes }}</div>
+                </div>
+            </div>
+            <div class="glass-card">
+                <div class="glass-content text-center py-4">
+                    <div class="text-sm text-gray-500 mb-1">Ausentes</div>
+                    <div class="text-4xl font-bold text-red-600">{{ ausentes }}</div>
+                </div>
+            </div>
+            <div class="glass-card">
+                <div class="glass-content text-center py-4">
+                    <div class="text-sm text-gray-500 mb-1">% Asistencia</div>
+                    {% if porcentaje >= 75 %}
+                        <div class="text-4xl font-bold text-green-600">{{ porcentaje }}%</div>
+                    {% elif porcentaje >= 50 %}
+                        <div class="text-4xl font-bold text-yellow-600">{{ porcentaje }}%</div>
+                    {% else %}
+                        <div class="text-4xl font-bold text-red-600">{{ porcentaje }}%</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de asistencias -->
+        <div class="glass-card">
+            <div class="glass-header">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <span class="fa material-icons mr-2">event</span></i>
+                    Registro de Asistencias
+                </h3>
+            </div>
+            <div class="overflow-x-auto">
+                {% if asistencias %}
+                <table class="glass-table">
+                    <thead>
+                        <tr>
+                            <th class="text-center">#</th>
+                            <th class="text-center">Fecha</th>
+                            <th class="text-center">Asistencia</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for asistencia in asistencias %}
+                        <tr>
+                            <td class="text-center text-gray-500">{{ forloop.counter }}</td>
+                            <td class="text-center">{{ asistencia.date|date:"d/m/Y" }}</td>
+                            <td class="text-center">
+                                {% if asistencia.presente %}
+                                    <span class="glass-badge glass-badge-success">✓ Presente</span>
+                                {% else %}
+                                    <span class="glass-badge glass-badge-danger">✗ Ausente</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="glass-content">
+                    <div class="glass-alert glass-alert-info">
+                        <span class="fa material-icons mr-2">info</span></i>
+                        No hay asistencias archivadas para este estudiante en este curso.
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .glass-card {
+        position: relative;
+        background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px; border: 1px solid rgba(255,255,255,0.3);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.4);
+        overflow: hidden; transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
+    }
+    .glass-header {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(37,99,235,0.1));
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+    .glass-content { padding: 2rem; }
+    .glass-button {
+        display: inline-flex; align-items: center;
+        padding: 0.625rem 1.25rem; border-radius: 10px;
+        font-weight: 500; font-size: 0.875rem;
+        backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);
+        transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+        text-decoration: none; cursor: pointer;
+    }
+    .glass-button:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+    .glass-button-secondary { background: linear-gradient(135deg, rgba(156,163,175,0.3), rgba(107,114,128,0.2)); color: #374151; }
+    .glass-button-warning { background: linear-gradient(135deg, rgba(245,158,11,0.3), rgba(217,119,6,0.2)); color: #78350f; }
+    .glass-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    .glass-table thead tr { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(37,99,235,0.1)); }
+    .glass-table th {
+        padding: 1rem; text-align: left; font-weight: 600;
+        color: #1e40af; border-bottom: 2px solid rgba(59,130,246,0.3);
+    }
+    .glass-table th.text-center { text-align: center; }
+    .glass-table tbody tr {
+        background: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
+        border-bottom: 1px solid rgba(255,255,255,0.2); transition: all 0.3s ease;
+    }
+    .glass-table tbody tr:hover {
+        background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.2));
+        transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .glass-table td { padding: 0.875rem 1rem; color: #374151; font-size: 0.875rem; }
+    .glass-table td.text-center { text-align: center; }
+    .glass-badge {
+        display: inline-block; padding: 0.375rem 0.75rem; border-radius: 16px;
+        font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+        letter-spacing: 0.5px; backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    .glass-badge-success { background: linear-gradient(135deg, rgba(34,197,94,0.3), rgba(22,163,74,0.2)); color: #14532d; }
+    .glass-badge-danger  { background: linear-gradient(135deg, rgba(239,68,68,0.3), rgba(220,38,38,0.2)); color: #7f1d1d; }
+    .glass-alert {
+        padding: 1rem 1.25rem; border-radius: 12px; backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; font-size: 0.875rem;
+    }
+    .glass-alert-info { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(37,99,235,0.1)); color: #1e3a8a; }
+</style>
+{% endblock %}

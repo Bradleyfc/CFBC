@@ -130,7 +130,7 @@
     <a href="?tab=cursos{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}" class="ca-tab {% if active_tab == 'cursos' %}ca-tab-active{% endif %}">
       <span class="material-icons ca-tab-icon">menu_book</span>
       <span>Cursos</span>
-      <span class="ca-tab-count">{{ cursos|length }}</span>
+      <span class="ca-tab-count">{{ cursos_total }}</span>
     </a>
     <a href="?tab=matriculas{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}" class="ca-tab {% if active_tab == 'matriculas' %}ca-tab-active{% endif %}">
       <span class="material-icons ca-tab-icon">how_to_reg</span>
@@ -155,7 +155,7 @@
     <div class="ca-card-header ca-header-blue">
       <span class="material-icons ca-section-icon">menu_book</span>
       <h3 class="ca-section-title">Cursos Asociados</h3>
-      <span class="ca-count-badge">{{ cursos|length }}</span>
+      <span class="ca-count-badge">{{ cursos_total }}</span>
     </div>
     <div class="ca-card-body ca-table-wrap">
       {% if cursos %}
@@ -177,6 +177,28 @@
           {% endfor %}
         </tbody>
       </table>
+      {% if cursos.has_other_pages %}
+      <div class="ca-pagination">
+        {% if cursos.has_previous %}
+          <a href="?tab=cursos&page_cur={{ cursos.previous_page_number }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_left</span></a>
+        {% else %}
+          <span class="ca-page-btn ca-page-disabled"><span class="material-icons">chevron_left</span></span>
+        {% endif %}
+        {% for num in cursos.paginator.page_range %}
+          {% if cursos.number == num %}
+            <span class="ca-page-btn ca-page-active">{{ num }}</span>
+          {% elif num > cursos.number|add:"-3" and num < cursos.number|add:"3" %}
+            <a href="?tab=cursos&page_cur={{ num }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}" class="ca-page-btn">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+        {% if cursos.has_next %}
+          <a href="?tab=cursos&page_cur={{ cursos.next_page_number }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_right</span></a>
+        {% else %}
+          <span class="ca-page-btn ca-page-disabled"><span class="material-icons">chevron_right</span></span>
+        {% endif %}
+        <span class="ca-page-info">Página {{ cursos.number }} de {{ cursos.paginator.num_pages }} &mdash; {{ cursos_total }} registros</span>
+      </div>
+      {% endif %}
       {% else %}
       <div class="ca-empty-state">
         <span class="material-icons ca-empty-icon">menu_book</span>
@@ -335,7 +357,7 @@
   <div class="ca-glass-card ca-tab-panel">
     <div class="ca-card-header ca-header-orange">
       <span class="material-icons ca-section-icon">event</span>
-      <h3 class="ca-section-title">Asistencias</h3>
+      <h3 class="ca-section-title">Asistencias por Estudiante</h3>
       <span class="ca-count-badge">{{ asistencias_total }}</span>
     </div>
     <div class="ca-card-body ca-table-wrap">
@@ -345,21 +367,25 @@
           <tr>
             <th><span class="material-icons ca-th-icon">person</span> Estudiante</th>
             <th><span class="material-icons ca-th-icon">menu_book</span> Curso</th>
-            <th><span class="material-icons ca-th-icon">calendar_today</span> Fecha</th>
-            <th><span class="material-icons ca-th-icon">check_circle</span> Presente</th>
+            <th class="text-center"><span class="material-icons ca-th-icon">visibility</span> Ver Asistencias</th>
           </tr>
         </thead>
         <tbody>
-          {% for asistencia in asistencias %}
+          {% for matricula in asistencias %}
           <tr>
-            <td>{{ asistencia.student.get_full_name|default:asistencia.student.username }}</td>
-            <td>{{ asistencia.course.name }}</td>
-            <td>{{ asistencia.date }}</td>
-            <td>
-              {% if asistencia.presente %}
-                <span class="ca-badge ca-badge-success"><span class="material-icons ca-badge-icon">check</span> Sí</span>
+            <td>{{ matricula.student.get_full_name|default:matricula.student.username }}</td>
+            <td>{{ matricula.course.name }}</td>
+            <td class="text-center">
+              {% if not es_archivado %}
+              <a href="{% url 'principal:asistencia_detalle_estudiante' student_id=matricula.student.id course_id=matricula.course.id %}"
+                 class="ca-btn ca-btn-primary" style="padding:0.3rem 0.8rem;font-size:0.8rem;">
+                <span class="material-icons" style="font-size:1rem;">visibility</span> Ver
+              </a>
               {% else %}
-                <span class="ca-badge ca-badge-danger"><span class="material-icons ca-badge-icon">close</span> No</span>
+              <a href="{% url 'principal:asistencia_detalle_archivado' student_id=matricula.student.id course_id=matricula.course.id %}"
+                 class="ca-btn ca-btn-primary" style="padding:0.3rem 0.8rem;font-size:0.8rem;">
+                <span class="material-icons" style="font-size:1rem;">visibility</span> Ver
+              </a>
               {% endif %}
             </td>
           </tr>
@@ -391,7 +417,7 @@
       {% else %}
       <div class="ca-empty-state">
         <span class="material-icons ca-empty-icon">event_busy</span>
-        <p>No hay registros de asistencia para este curso académico.</p>
+        <p>No hay estudiantes con asistencias registradas para este curso académico.</p>
       </div>
       {% endif %}
     </div>
