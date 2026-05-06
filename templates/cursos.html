@@ -375,7 +375,7 @@
   {% if is_paginated %}
   <div class="flex justify-center items-center gap-2 mt-8 flex-wrap">
     {% if page_obj.has_previous %}
-    <a href="?page={{ page_obj.previous_page_number }}"
+    <a href="?{% if area_seleccionada %}area={{ area_seleccionada }}&{% endif %}{% if tipo_seleccionado %}tipo={{ tipo_seleccionado }}&{% endif %}page={{ page_obj.previous_page_number }}"
        class="pag-btn">‹</a>
     {% else %}
     <button class="pag-btn" disabled>‹</button>
@@ -387,12 +387,12 @@
       {% if page_obj.number == i %}
         <span class="pag-btn pag-btn-active">{{ i }}</span>
       {% elif i == 1 or i == page_obj.paginator.num_pages or i >= page_obj.number|add:"-2" and i <= page_obj.number|add:"2" %}
-        <a href="?page={{ i }}" class="pag-btn">{{ i }}</a>
+        <a href="?{% if area_seleccionada %}area={{ area_seleccionada }}&{% endif %}{% if tipo_seleccionado %}tipo={{ tipo_seleccionado }}&{% endif %}page={{ i }}" class="pag-btn">{{ i }}</a>
       {% endif %}
     {% endfor %}
 
     {% if page_obj.has_next %}
-    <a href="?page={{ page_obj.next_page_number }}"
+    <a href="?{% if area_seleccionada %}area={{ area_seleccionada }}&{% endif %}{% if tipo_seleccionado %}tipo={{ tipo_seleccionado }}&{% endif %}page={{ page_obj.next_page_number }}"
        class="pag-btn">›</a>
     {% else %}
     <button class="pag-btn" disabled>›</button>

@@ -2452,6 +2452,15 @@ class CoursesView(BaseContextMixin, TemplateView):
             courses = Curso.objects.filter(curso_academico=curso_academico_activo)
         else:
             courses = Curso.objects.none()
+
+        # Filtrar por área y tipo si vienen como parámetros GET
+        area = self.request.GET.get('area')
+        tipo = self.request.GET.get('tipo')
+        if area:
+            courses = courses.filter(area=area)
+        if tipo:
+            courses = courses.filter(tipo=tipo)
+
         student = self.request.user if self.request.user.is_authenticated else None
 
         # Obtener solicitudes pendientes y rechazadas del estudiante de una sola vez
@@ -2493,9 +2502,12 @@ class CoursesView(BaseContextMixin, TemplateView):
         page_number = self.request.GET.get('page', 1)
         page_obj    = paginator.get_page(page_number)
 
-        context['courses']   = page_obj          # ahora es el objeto de página
-        context['page_obj']  = page_obj
+        context['courses']      = page_obj
+        context['page_obj']     = page_obj
         context['is_paginated'] = paginator.num_pages > 1
+        context['area_seleccionada'] = area or ''
+        context['tipo_seleccionado'] = tipo or ''
+        context['filtro_servidor'] = True
 
         user = self.request.user
         if user.is_authenticated:
