@@ -97,13 +97,13 @@
           <label for="filtroArea" class="block text-sm font-medium text-gray-900 mb-2">Área</label>
           <select id="filtroArea" onchange="filtrarCursos()" 
                   class="w-full px-3 py-2 bg-white/90 backdrop-blur-md border border-white/30 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 text-gray-800">
-            <option value="" class="bg-white text-gray-800">Todas las Áreas</option>
-            <option value="idiomas" class="bg-white text-gray-800">Idiomas</option>
-            <option value="humanidades" class="bg-white text-gray-800">Humanidades</option>
-            <option value="computacion" class="bg-white text-gray-800">Computación</option>
-            <option value="diseno" class="bg-white text-gray-800">Diseño</option>
-            <option value="adolescentes" class="bg-white text-gray-800">Adolescentes</option>
-            <option value="teologia" class="bg-white text-gray-800">Teología</option>
+            <option value="" class="bg-white text-gray-800" {% if not area_seleccionada %}selected{% endif %}>Todas las Áreas</option>
+            <option value="idiomas" class="bg-white text-gray-800" {% if area_seleccionada == 'idiomas' %}selected{% endif %}>Idiomas</option>
+            <option value="humanidades" class="bg-white text-gray-800" {% if area_seleccionada == 'humanidades' %}selected{% endif %}>Humanidades</option>
+            <option value="computacion" class="bg-white text-gray-800" {% if area_seleccionada == 'computacion' %}selected{% endif %}>Computación</option>
+            <option value="diseno" class="bg-white text-gray-800" {% if area_seleccionada == 'diseno' %}selected{% endif %}>Diseño</option>
+            <option value="adolescentes" class="bg-white text-gray-800" {% if area_seleccionada == 'adolescentes' %}selected{% endif %}>Adolescentes</option>
+            <option value="teologia" class="bg-white text-gray-800" {% if area_seleccionada == 'teologia' %}selected{% endif %}>Teología</option>
           </select>
         </div>
         <div class="min-w-0 flex-1">
@@ -2607,6 +2607,25 @@
   function filtrarCursos() {
     const filtroArea = document.getElementById('filtroArea').value;
     const filtroTipo = document.getElementById('filtroTipo').value;
+
+    {% if filtro_servidor %}
+    // Modo servidor: recargar página con nuevos parámetros
+    const params = new URLSearchParams(window.location.search);
+    if (filtroArea) {
+      params.set('area', filtroArea);
+    } else {
+      params.delete('area');
+    }
+    if (filtroTipo) {
+      params.set('tipo', filtroTipo);
+    } else {
+      params.delete('tipo');
+    }
+    params.delete('page');
+    window.location.search = params.toString();
+    return;
+    {% endif %}
+
     const cards = document.querySelectorAll('#cursosContainer .course-card');
 
     cards.forEach(card => {
@@ -2615,12 +2634,10 @@
 
       let mostrar = true;
 
-      // Filtrar por área
       if (filtroArea && filtroArea !== areaCard) {
         mostrar = false;
       }
 
-      // Filtrar por tipo
       if (filtroTipo && filtroTipo !== tipoCard) {
         mostrar = false;
       }

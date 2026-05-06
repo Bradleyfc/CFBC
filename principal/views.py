@@ -1158,84 +1158,82 @@ class HomeView(DocumentsCourseMixin, BaseContextMixin, TemplateView):
 
 
 
-class ListadoCursosView(DocumentsCourseMixin, BaseContextMixin, ListView):
-    model = Curso
+class ListadoCursosView(BaseContextMixin, TemplateView):
     template_name = 'cursos.html'
-    context_object_name = 'courses'
 
-    @method_decorator(login_required)
-    def dispatch(self, *args, **kwargs):
-        return super().dispatch(*args, **kwargs)
-
-    def get_queryset(self):
-        # Obtener el CursoAcademico activo
-        curso_academico_activo = CursoAcademico.objects.filter(activo=True).first()
-        if curso_academico_activo:
-            # Filtrar los cursos por el CursoAcademico activo
-            return Curso.objects.filter(curso_academico=curso_academico_activo)
-        return Curso.objects.none() # No mostrar cursos si no hay un CursoAcademico activo
-        
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        curso_academico_activo = CursoAcademico.objects.filter(activo=True).first()
+        if curso_academico_activo:
+            courses = Curso.objects.filter(curso_academico=curso_academico_activo)
+        else:
+            courses = Curso.objects.none()
+
+        # Filtrar por área si viene el parámetro GET
+        area = self.request.GET.get('area')
+        if area:
+            courses = courses.filter(area=area)
+
         student = self.request.user if self.request.user.is_authenticated else None
-        
-        # Crear conjuntos de IDs de cursos con solicitudes pendientes y rechazadas
+
         cursos_con_solicitudes_pendientes = set()
         cursos_con_solicitudes_rechazadas = set()
-        
-        if student:
-            # Obtener todos los IDs de cursos con solicitudes pendientes
+        if student and student.is_authenticated:
             cursos_con_solicitudes_pendientes = set(
                 SolicitudInscripcion.objects.filter(
-                    estudiante=student,
-                    estado='pendiente'
+                    estudiante=student, estado='pendiente'
                 ).values_list('curso_id', flat=True)
             )
-            
-            # Obtener todos los IDs de cursos con solicitudes rechazadas
             cursos_con_solicitudes_rechazadas = set(
                 SolicitudInscripcion.objects.filter(
-                    estudiante=student,
-                    estado='rechazada'
+                    estudiante=student, estado='rechazada'
                 ).values_list('curso_id', flat=True)
             )
-        
-        # Obtener todos los formularios de aplicación existentes
+
         formularios = FormularioAplicacion.objects.all()
         formularios_por_curso = {f.curso_id: f for f in formularios}
-        
-        # Procesar cada curso
-        for course in context['courses']:
-            if student:
-                # Verificar si el estudiante está matriculado
-                course.is_enrolled = Matriculas.objects.filter(
-                    course=course, 
-                    student=student
-                ).exists()
-                
-                # Verificar si el estudiante tiene una solicitud pendiente para este curso
-                course.tiene_solicitud_pendiente = course.id in cursos_con_solicitudes_pendientes
-                
-                # Verificar si el estudiante tiene una solicitud rechazada para este curso
-                course.tiene_solicitud_rechazada = course.id in cursos_con_solicitudes_rechazadas
+
+        courses_list = list(courses)
+        for item in courses_list:
+            if student and student.is_authenticated:
+                item.is_enrolled = Matriculas.objects.filter(
+                    course=item, student=student).exists()
+                item.tiene_solicitud_pendiente = item.id in cursos_con_solicitudes_pendientes
+                item.tiene_solicitud_rechazada = item.id in cursos_con_solicitudes_rechazadas
             else:
-                course.is_enrolled = False
-                course.tiene_solicitud_pendiente = False
-                course.tiene_solicitud_rechazada = False
-            
-            # Calcular el conteo de inscripciones
-            enrollment_count = Matriculas.objects.filter(course=course).count()
-            course.enrollment_count = enrollment_count
-            
-            # Asignar el formulario de aplicación si existe
-            if course.id in formularios_por_curso:
-                course.formulario_aplicacion = formularios_por_curso[course.id]
-            else:
-                course.formulario_aplicacion = None
-        
+                item.is_enrolled = False
+                item.tiene_solicitud_pendiente = False
+                item.tiene_solicitud_rechazada = False
+
+            item.enrollment_count = Matriculas.objects.filter(course=item).count()
+            item.formulario_aplicacion = formularios_por_curso.get(item.id)
+
+        # Paginación: 8 tarjetas por página
+        paginator = Paginator(courses_list, 8)
+        page_number = self.request.GET.get('page', 1)
+        page_obj = paginator.get_page(page_number)
+
+        context['courses'] = page_obj
+        context['page_obj'] = page_obj
+        context['is_paginated'] = paginator.num_pages > 1
+        context['area_seleccionada'] = area or ''
+        context['filtro_servidor'] = True  # indica que el filtrado lo hace el servidor
+
+        user = self.request.user
+        if user.is_authenticated:
+            group = Group.objects.filter(user=user).first()
+            context['group_name'] = group.name if group else None
+            # Agregar info de documentos a cada curso (equivalente a DocumentsCourseMixin)
+            for course in page_obj:
+                from course_documents.mixins import DocumentsCourseMixin as _DCM
+                _dcm = _DCM()
+                _dcm.request = self.request
+                _dcm._add_course_document_info(course, user)
+        else:
+            context['group_name'] = None
+
         return context
-            
-        return context
+
 
 # para cerrar sesion
 
