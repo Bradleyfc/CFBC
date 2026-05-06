@@ -164,26 +164,30 @@
     <div class="glass-footer-content max-w-7xl mx-auto px-4">
         <div class="flex flex-col md:flex-row gap-4">
             <div class="glass-section w-full md:w-[40%]">
-                <h5 class="text-white text-lg font-bold mb-3 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Centro Fray Bartolomé de las Casas</h5>
-                <p class="text-gray-200 leading-relaxed text-sm">Formación integral y educación de calidad para el desarrollo personal y
-                    profesional.</p>
+                <h5 class="text-white text-lg font-bold mb-3 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Orden de Predicadores</h5>
+                <ul class="space-y-2">
+                    <li><a href="https://www.op.org/?lang=es" target="_blank" rel="noopener noreferrer" class="glass-link text-gray-200 hover:text-white no-underline text-sm">Dominicos Internacional</a></li>
+                    <li><a href="https://www.dominicoshispania.org/" target="_blank" rel="noopener noreferrer" class="glass-link text-gray-200 hover:text-white no-underline text-sm">Dominicos Provincia Hispania</a></li>
+                    <li><a href="https://jovenes.dominicos.org/" target="_blank" rel="noopener noreferrer" class="glass-link text-gray-200 hover:text-white no-underline text-sm">Jóvenes Dominic@s</a></li>
+                    <li><a href="https://www.dominicos.org/" target="_blank" rel="noopener noreferrer" class="glass-link text-gray-200 hover:text-white no-underline text-sm">Portal en Español</a></li>
+                    <li><a href="https://ser.dominicos.org/" target="_blank" rel="noopener noreferrer" class="glass-link text-gray-200 hover:text-white no-underline text-sm">Ser Dominico</a></li>
+                </ul>
             </div>
             <div class="glass-section w-full md:w-[20%]">
-                <h6 class="text-white text-base font-bold mb-3 bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">Enlaces Rápidos</h6>
+                <h6 class="text-white text-base font-bold mb-3 bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">Enlaces Útiles</h6>
                 <ul class="space-y-2">
-                    <li><a href="{% url 'principal:home' %}" class="glass-link text-gray-200 hover:text-white no-underline text-sm">Inicio</a></li>
-                    <li><a href="{% url 'principal:cursos' %}" class="glass-link text-gray-200 hover:text-white no-underline text-sm">Cursos</a></li>
-                    <li><a href="#" class="glass-link text-gray-200 hover:text-white no-underline text-sm">Nosotros</a></li>
-                    <li><a href="#" class="glass-link text-gray-200 hover:text-white no-underline text-sm">Contacto</a></li>
+                    <li><a href="https://www.facultadsanesteban.es/" target="_blank" rel="noopener noreferrer" class="glass-link text-gray-200 hover:text-white no-underline text-sm">Facultad de Teología San Esteban de Salamanca</a></li>
+                    <li><a href="https://www.vatican.va/content/vatican/es.html" target="_blank" rel="noopener noreferrer" class="glass-link text-gray-200 hover:text-white no-underline text-sm">Santa Sede</a></li>
+                    <li><a href="https://www.unsta.edu.ar/" target="_blank" rel="noopener noreferrer" class="glass-link text-gray-200 hover:text-white no-underline text-sm">Univ. del Norte Santo Tomás de Aquino - UNSTA</a></li>
                 </ul>
             </div>
             <div class="glass-section w-full md:w-[40%]">
-                <h6 class="text-white text-base font-bold mb-3 bg-gradient-to-r from-red-400 to-pink-400 bg-clip-text text-transparent">Contacto</h6>
+                <h6 class="text-white text-base font-bold mb-3 bg-gradient-to-r from-red-400 to-pink-400 bg-clip-text text-transparent">Centro Fray Bartolomé de las Casas - Contacto</h6>
                 <div class="space-y-2">
                     <div class="contact-item">
                         <p class="text-gray-200 flex items-start text-sm">
                             <span class="fa material-icons mr-2 mt-0.5 text-blue-400 material-icons">help</span></i>
-                            <span class="leading-snug text-xs">
+                            <span class="leading-snug text-sm">
                                 Calle 19 No 258 e/ J e I<br>
                                 Vedado, Plaza de la Revolución<br>
                                 La Habana
@@ -193,13 +197,13 @@
                     <div class="contact-item">
                         <p class="text-gray-200 flex items-center text-sm">
                             <span class="fa material-icons mr-2 text-green-400 material-icons">help</span></i>
-                            <span class="text-xs">+53 59518075</span>
+                            <span class="text-sm"><strong>Teléfono:</strong> +53 59518075</span>
                         </p>
                     </div>
                     <div class="contact-item">
                         <p class="text-gray-200 flex items-center text-sm">
                             <span class="fa material-icons mr-2 text-red-400 material-icons flex-shrink-0">help</span></i>
-                            <span class="text-xs break-all">centrofraybartolomedelascasas@gmail.com</span>
+                            <span class="text-sm break-all"><strong>Email:</strong> centrofbc@bartolo.org</span>
                         </p>
                     </div>
                 </div>
@@ -212,17 +216,18 @@
                     reservados.</p>
             </div>
             <div class="flex space-x-3">
-                <a href="#" class="glass-social text-gray-200 hover:text-blue-400 no-underline">
-                    <span class="fa material-icons">facebook</span></i>
+                <a href="https://www.facebook.com/bartoloOP" target="_blank" rel="noopener noreferrer" class="glass-social text-gray-200 hover:text-blue-400 no-underline">
+                    <span class="fa material-icons">facebook</span>
                 </a>
-                <a href="#" class="glass-social text-gray-200 hover:text-blue-400 no-underline">
-                    <span class="fa material-icons">twitter</span></i>
+                <a href="https://x.com/bartoloOP" target="_blank" rel="noopener noreferrer" class="glass-social text-gray-200 hover:text-white no-underline">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
                 </a>
-                <a href="#" class="glass-social text-gray-200 hover:text-pink-400 no-underline">
-                    <span class="fa material-icons">instagram</span></i>
-                </a>
-                <a href="#" class="glass-social text-gray-200 hover:text-blue-600 no-underline">
-                    <span class="fa material-icons">linkedin</span></i>
+                <a href="https://www.youtube.com/@centrofraybartolomedelasca7833" target="_blank" rel="noopener noreferrer" class="glass-social text-gray-200 hover:text-red-500 no-underline">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                    </svg>
                 </a>
             </div>
         </div>
