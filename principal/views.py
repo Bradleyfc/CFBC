@@ -1174,6 +1174,11 @@ class ListadoCursosView(BaseContextMixin, TemplateView):
         if area:
             courses = courses.filter(area=area)
 
+        # Filtrar por tipo si viene el parámetro GET
+        tipo = self.request.GET.get('tipo')
+        if tipo:
+            courses = courses.filter(tipo=tipo)
+
         student = self.request.user if self.request.user.is_authenticated else None
 
         cursos_con_solicitudes_pendientes = set()
@@ -1217,6 +1222,7 @@ class ListadoCursosView(BaseContextMixin, TemplateView):
         context['page_obj'] = page_obj
         context['is_paginated'] = paginator.num_pages > 1
         context['area_seleccionada'] = area or ''
+        context['tipo_seleccionado'] = tipo or ''
         context['filtro_servidor'] = True  # indica que el filtrado lo hace el servidor
 
         user = self.request.user

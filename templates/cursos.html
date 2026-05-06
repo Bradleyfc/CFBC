@@ -110,11 +110,11 @@
           <label for="filtroTipo" class="block text-sm font-medium text-gray-900 mb-2">Tipo</label>
           <select id="filtroTipo" onchange="filtrarCursos()"
                   class="w-full px-3 py-2 bg-white/90 backdrop-blur-md border border-white/30 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 text-gray-800">
-            <option value="" class="bg-white text-gray-800">Todos los Tipos</option>
-            <option value="curso" class="bg-white text-gray-800">Curso</option>
-            <option value="diplomado" class="bg-white text-gray-800">Diplomado</option>
-            <option value="grado" class="bg-white text-gray-800">Grado</option>
-            <option value="taller" class="bg-white text-gray-800">Taller</option>
+            <option value="" class="bg-white text-gray-800" {% if not tipo_seleccionado %}selected{% endif %}>Todos los Tipos</option>
+            <option value="curso" class="bg-white text-gray-800" {% if tipo_seleccionado == 'curso' %}selected{% endif %}>Curso</option>
+            <option value="diplomado" class="bg-white text-gray-800" {% if tipo_seleccionado == 'diplomado' %}selected{% endif %}>Diplomado</option>
+            <option value="grado" class="bg-white text-gray-800" {% if tipo_seleccionado == 'grado' %}selected{% endif %}>Grado</option>
+            <option value="taller" class="bg-white text-gray-800" {% if tipo_seleccionado == 'taller' %}selected{% endif %}>Taller</option>
           </select>
         </div>
       </div>
