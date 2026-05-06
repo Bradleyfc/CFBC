@@ -128,8 +128,17 @@ def construir_html_completo(titulo: str, cuerpo_html: str, css_font: str) -> str
     /* ── Estilos base ── */
     *, *::before, *::after {{ box-sizing: border-box; }}
     body {{ margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; background: #f1f5f9; }}
-    a {{ color: inherit; }}
     img {{ max-width: 100%; }}
+    /* Footer: forzar colores correctos en versión estática */
+    .glass-footer, .glass-footer * {{ color: #e5e7eb !important; }}
+    .glass-footer a {{ color: #e5e7eb !important; text-decoration: none; }}
+    .glass-footer a:hover {{ color: #ffffff !important; }}
+    .glass-footer h5, .glass-footer h6 {{ color: #ffffff !important; }}
+    .glass-footer p, .glass-footer span {{ color: #e5e7eb !important; }}
+    .glass-footer strong {{ color: #ffffff !important; }}
+    .glass-footer .text-gray-200 {{ color: #e5e7eb !important; }}
+    .glass-footer .text-white {{ color: #ffffff !important; }}
+    .glass-footer .text-xs {{ color: #e5e7eb !important; }}
   </style>
 </head>
 <body>
@@ -312,8 +321,17 @@ def inyectar_assets_en_html_completo(html: str, css_font: str) -> str:
   <style>
     *, *::before, *::after {{ box-sizing: border-box; }}
     body {{ margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; background: #f1f5f9; }}
-    a {{ color: inherit; }}
     img {{ max-width: 100%; }}
+    /* Footer: forzar colores correctos en versión estática */
+    .glass-footer, .glass-footer * {{ color: #e5e7eb !important; }}
+    .glass-footer a {{ color: #e5e7eb !important; text-decoration: none; }}
+    .glass-footer a:hover {{ color: #ffffff !important; }}
+    .glass-footer h5, .glass-footer h6 {{ color: #ffffff !important; }}
+    .glass-footer p, .glass-footer span {{ color: #e5e7eb !important; }}
+    .glass-footer strong {{ color: #ffffff !important; }}
+    .glass-footer .text-gray-200 {{ color: #e5e7eb !important; }}
+    .glass-footer .text-white {{ color: #ffffff !important; }}
+    .glass-footer .text-xs {{ color: #e5e7eb !important; }}
   </style>"""
 
     # Inyectar justo antes de </head>
