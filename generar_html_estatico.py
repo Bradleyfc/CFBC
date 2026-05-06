@@ -130,15 +130,19 @@ def construir_html_completo(titulo: str, cuerpo_html: str, css_font: str) -> str
     body {{ margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; background: #f1f5f9; }}
     img {{ max-width: 100%; }}
     /* Footer: forzar colores correctos en versión estática */
-    .glass-footer, .glass-footer * {{ color: #e5e7eb !important; }}
+    .glass-footer {{ color: #e5e7eb !important; }}
     .glass-footer a {{ color: #e5e7eb !important; text-decoration: none; }}
     .glass-footer a:hover {{ color: #ffffff !important; }}
     .glass-footer h5, .glass-footer h6 {{ color: #ffffff !important; }}
-    .glass-footer p, .glass-footer span {{ color: #e5e7eb !important; }}
+    .glass-footer p {{ color: #e5e7eb !important; }}
     .glass-footer strong {{ color: #ffffff !important; }}
     .glass-footer .text-gray-200 {{ color: #e5e7eb !important; }}
     .glass-footer .text-white {{ color: #ffffff !important; }}
     .glass-footer .text-xs {{ color: #e5e7eb !important; }}
+    /* Preservar colores de iconos de contacto */
+    .glass-footer .text-blue-400 {{ color: #60a5fa !important; }}
+    .glass-footer .text-green-400 {{ color: #4ade80 !important; }}
+    .glass-footer .text-red-400 {{ color: #f87171 !important; }}
   </style>
 </head>
 <body>
@@ -184,17 +188,47 @@ def obtener_contexto_home():
 
 def obtener_contexto_cursos():
     """Obtiene datos reales para la página de cursos."""
+    from django.core.paginator import Paginator
+    from principal.models import CursoAcademico
+
     ctx = {
         "user": type("User", (), {"first_name": "", "username": "Visitante", "is_authenticated": False})(),
         "group_name": "",
         "courses": [],
+        "page_obj": None,
+        "is_paginated": False,
+        "area_seleccionada": "",
+        "tipo_seleccionado": "",
+        "filtro_servidor": True,
     }
 
     if Course:
         try:
-            cursos = list(Course.objects.all().order_by("name"))
-            ctx["courses"] = cursos
-            print(f"  ✓ {len(cursos)} cursos cargados")
+            # Usar el curso académico activo igual que CoursesView
+            curso_academico_activo = CursoAcademico.objects.filter(activo=True).first()
+            if curso_academico_activo:
+                cursos = list(Course.objects.filter(
+                    curso_academico=curso_academico_activo
+                ).order_by("name"))
+            else:
+                cursos = list(Course.objects.all().order_by("name"))
+
+            # Añadir atributos que el template espera en cada curso
+            for curso in cursos:
+                curso.is_enrolled = False
+                curso.tiene_solicitud_pendiente = False
+                curso.tiene_solicitud_rechazada = False
+                curso.enrollment_count = 0
+                curso.formulario_aplicacion = None
+
+            # Paginación: 8 por página igual que CoursesView
+            paginator = Paginator(cursos, 8)
+            page_obj = paginator.get_page(1)
+
+            ctx["courses"] = page_obj
+            ctx["page_obj"] = page_obj
+            ctx["is_paginated"] = paginator.num_pages > 1
+            print(f"  ✓ {len(cursos)} cursos cargados ({paginator.num_pages} página(s))")
         except Exception as e:
             print(f"  ⚠ Error cargando cursos: {e}")
 
@@ -323,15 +357,19 @@ def inyectar_assets_en_html_completo(html: str, css_font: str) -> str:
     body {{ margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; background: #f1f5f9; }}
     img {{ max-width: 100%; }}
     /* Footer: forzar colores correctos en versión estática */
-    .glass-footer, .glass-footer * {{ color: #e5e7eb !important; }}
+    .glass-footer {{ color: #e5e7eb !important; }}
     .glass-footer a {{ color: #e5e7eb !important; text-decoration: none; }}
     .glass-footer a:hover {{ color: #ffffff !important; }}
     .glass-footer h5, .glass-footer h6 {{ color: #ffffff !important; }}
-    .glass-footer p, .glass-footer span {{ color: #e5e7eb !important; }}
+    .glass-footer p {{ color: #e5e7eb !important; }}
     .glass-footer strong {{ color: #ffffff !important; }}
     .glass-footer .text-gray-200 {{ color: #e5e7eb !important; }}
     .glass-footer .text-white {{ color: #ffffff !important; }}
     .glass-footer .text-xs {{ color: #e5e7eb !important; }}
+    /* Preservar colores de iconos de contacto */
+    .glass-footer .text-blue-400 {{ color: #60a5fa !important; }}
+    .glass-footer .text-green-400 {{ color: #4ade80 !important; }}
+    .glass-footer .text-red-400 {{ color: #f87171 !important; }}
   </style>"""
 
     # Inyectar justo antes de </head>
