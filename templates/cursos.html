@@ -9,8 +9,9 @@
   overflow: hidden;
   background-color: #1e3a5f;
 ">
-  <!-- Gradiente animado azul oscuro -->
-  <div style="
+
+ <!-- Gradiente animado azul oscuro -->
+  <!--<div style="
     position: absolute;
     inset: 0;
     background: linear-gradient(135deg,
@@ -24,7 +25,12 @@
     );
     background-size: 400% 400%;
     animation: heroShimmer 8s ease infinite;
-  "></div>
+  "></div>-->
+
+  
+  <!-- Foto de fondo -->
+  <img src="/media/default/fondo.jpg" alt="Foto de portada"
+       style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center;">
 
   <!-- Patrón de puntos decorativo -->
   <div style="
@@ -2625,28 +2631,32 @@
   }
 </style>
 
+<div id="cursos-config" data-filtro-servidor="{{ filtro_servidor|yesno:'true,false' }}" style="display:none;"></div>
+
 <script>
+  window.FILTRO_SERVIDOR = document.getElementById('cursos-config').dataset.filtroServidor === 'true';
+
   function filtrarCursos() {
     const filtroArea = document.getElementById('filtroArea').value;
     const filtroTipo = document.getElementById('filtroTipo').value;
 
-    {% if filtro_servidor %}
-    // Modo servidor: recargar página con nuevos parámetros
-    const params = new URLSearchParams(window.location.search);
-    if (filtroArea) {
-      params.set('area', filtroArea);
-    } else {
-      params.delete('area');
+    if (window.FILTRO_SERVIDOR) {
+      // Modo servidor: recargar página con nuevos parámetros
+      const params = new URLSearchParams(window.location.search);
+      if (filtroArea) {
+        params.set('area', filtroArea);
+      } else {
+        params.delete('area');
+      }
+      if (filtroTipo) {
+        params.set('tipo', filtroTipo);
+      } else {
+        params.delete('tipo');
+      }
+      params.delete('page');
+      window.location.search = params.toString();
+      return;
     }
-    if (filtroTipo) {
-      params.set('tipo', filtroTipo);
-    } else {
-      params.delete('tipo');
-    }
-    params.delete('page');
-    window.location.search = params.toString();
-    return;
-    {% endif %}
 
     const cards = document.querySelectorAll('#cursosContainer .course-card');
 

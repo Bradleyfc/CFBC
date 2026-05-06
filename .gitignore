@@ -38,6 +38,7 @@ media/*
 media/default/*
 !media/default/plantilla.jpg
 !media/default/LOGO.png
+!media/default/fondo.jpg
 
 # Logs
 *.log
