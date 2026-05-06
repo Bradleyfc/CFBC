@@ -347,6 +347,28 @@
       </div>
     </div>
     {% endfor %}
+    {% if not courses %}
+    <div style="width: 100%; grid-column: 1 / -1;" class="flex flex-col items-center justify-center py-16 px-4 text-center">
+      <span class="material-icons text-5xl text-gray-400 mb-4">search_off</span>
+      <p class="text-gray-500 text-lg font-medium">
+        {% if tipo_seleccionado == 'curso' %}
+          No hay cursos disponibles
+        {% elif tipo_seleccionado == 'diplomado' %}
+          No hay diplomados disponibles
+        {% elif tipo_seleccionado == 'taller' %}
+          No hay talleres disponibles
+        {% elif tipo_seleccionado == 'grado' %}
+          No hay grados disponibles
+        {% else %}
+          No hay cursos disponibles
+        {% endif %}
+        {% if area_seleccionada %}
+          en el área seleccionada
+        {% endif %}
+      </p>
+      <p class="text-gray-400 text-sm mt-1">Prueba cambiando los filtros de búsqueda</p>
+    </div>
+    {% endif %}
   </div>
 
   <!-- Paginación -->
