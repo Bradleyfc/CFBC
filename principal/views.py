@@ -3733,6 +3733,40 @@ def reglamento_curso(request):
     """
     return render(request, 'formularios/reglamento_curso.html')
 
+def reglamento_general(request):
+    """
+    Vista para mostrar el reglamento general del centro.
+    """
+    context = {
+        'ano_anterior': timezone.now().year - 1,
+        'ano_actual': timezone.now().year,
+    }
+    return render(request, 'registration/reglamento_general.html', context)
+
+def exportar_reglamento_general_pdf(request):
+    """
+    Vista para exportar el reglamento general del centro en PDF.
+    Usa una plantilla específica para PDF sin CSS complejo.
+    """
+    context = {
+        'fecha_generacion': timezone.now(),
+        'ano_anterior': timezone.now().year - 1,
+        'ano_actual': timezone.now().year,
+    }
+    
+    # Generar el PDF usando la plantilla específica para PDF
+    template = get_template('registration/reglamento_general_pdf.html')
+    html = template.render(context)
+    result = BytesIO()
+    pdf = pisa.pisaDocument(BytesIO(html.encode("UTF-8")), result)
+    
+    if not pdf.err:
+        response = HttpResponse(result.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="Reglamento_General_CFBC.pdf"'
+        return response
+    
+    return HttpResponse('Error al generar el PDF', status=500)
+
 # Vistas para los profesores
 
 class SolicitudesInscripcionListView(LoginRequiredMixin, ProfesorRequiredMixin, ListView):

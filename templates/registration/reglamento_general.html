@@ -1,0 +1,341 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reglamento General del Centro - CFBC{% endblock %}
+
+{% block content %}
+<!-- Background Section with Gradient -->
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-30"
+        style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;">
+    </div>
+
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        <!-- Header -->
+        <div class="mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <a href="javascript:history.back()" class="glass-button glass-button-secondary">
+                    <span class="fa material-icons mr-2">arrow_back</span>
+                    Volver
+                </a>
+                <a href="{% url 'principal:exportar_reglamento_general_pdf' %}" class="glass-button glass-button-primary">
+                    <span class="fa material-icons mr-2">picture_as_pdf</span>
+                    Exportar PDF
+                </a>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Reglamento General del Centro</h2>
+            <p class="text-gray-600">Centro Fray Bartolomé de las Casas</p>
+        </div>
+
+        <!-- Reglamento Content -->
+        <div class="glass-card">
+            <div class="glass-content">
+                <div class="prose prose-lg max-w-none">
+                    
+                    <!-- Introducción -->
+                    <section class="mb-8">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                            <span class="fa material-icons mr-2 text-blue-600">info</span>
+                            Introducción
+                        </h3>
+                        <p class="text-gray-700 leading-relaxed mb-4">
+                            El presente reglamento tiene como objetivo establecer las normas generales que rigen el funcionamiento 
+                            del Centro Fray Bartolomé de las Casas. Todos los usuarios, estudiantes, profesores y personal administrativo 
+                            deberán conocer y cumplir con las disposiciones aquí establecidas para garantizar un ambiente de respeto, 
+                            aprendizaje y convivencia armoniosa.
+                        </p>
+                    </section>
+
+                    <!-- Artículo 1 -->
+                    <section class="mb-8">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                            <span class="fa material-icons mr-2 text-blue-600">account_circle</span>
+                            Artículo 1: Registro y Acceso al Centro
+                        </h3>
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+                            <ul class="list-disc list-inside space-y-2 text-gray-700">
+                                <li>El registro en el centro se realizará mediante el formulario de inscripción en línea.</li>
+                                <li>Los usuarios deberán proporcionar información veraz y actualizada en su registro.</li>
+                                <li>Cada usuario es responsable de mantener la confidencialidad de sus credenciales de acceso.</li>
+                                <li>El centro se reserva el derecho de verificar la información proporcionada por los usuarios.</li>
+                                <li>El acceso a las instalaciones y servicios del centro estará sujeto a las políticas establecidas.</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <!-- Artículo 2 -->
+                    <section class="mb-8">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                            <span class="fa material-icons mr-2 text-green-600">groups</span>
+                            Artículo 2: Deberes y Derechos de los Usuarios
+                        </h3>
+                        <div class="bg-green-50 border-l-4 border-green-500 p-4 mb-4">
+                            <h4 class="font-semibold text-gray-800 mb-2">Deberes:</h4>
+                            <ul class="list-disc list-inside space-y-2 text-gray-700 mb-4">
+                                <li>Ser respetuoso con la espiritualidad cristiana que fundamenta nuestro Centro.</li>
+                                <li>No exceder las ausencias permitidas en el reglamento para cada curso del Centro.</li>
+                                <li>Conversar en voz baja en todas las áreas del Centro y Convento. Usar un vocabulario respetuoso sin expresiones vulgares.</li>
+                                <li>Asistir puntualmente. No se permitirá el acceso a las aulas una vez comenzadas las clases.</li>
+                                <li>El alumno que por ausencias, impuntualidades u otras indisciplinas cause baja de un curso, quedará inhabilitado para matricular en cualquier curso del Centro por el término de un año -como mínimo- a partir del fin del curso del que causó baja.</li>
+                                <li>Mantener una conducta respetuosa, dentro y fuera de las clases con los profesores, el resto de los alumnos y demás personas en el Convento.</li>
+                                <li>No asistir a clases con niños, familiares o acompañantes. No se permite la espera de éstos en el interior del Convento.</li>
+                                <li>Contribuir a mantener la limpieza y el cuidado de las aulas y de las áreas de jardines del Centro.</li>
+                                <li>Respetar los horarios estipulados por la Secretaría para la atención al público. Cualquier información, solicitud o entrega de documentos se realizará de 11:00 a.m. a 12:00 m.</li>
+                                <li>No realizar trabajos de carácter privado en las aulas o con los medios puestos a su disposición en los diferentes cursos.</li>
+                                <li>No se permite el uso del teléfono celular durante el tiempo de clases. Agradecemos a los alumnos que apaguen o pongan su equipo en modo vibrador antes de entrar al aula.</li>
+                                <li>No se autoriza tomar fotos y grabación de las clases que se imparten. Cualquier indisciplina en este sentido será transferida a la dirección del Centro.</li>
+                                <li>Devolver los materiales de estudio que haya recibido en préstamo al finalizar el curso o en caso de abandonar el mismo.</li>
+                                <li>No dirigirse innecesariamente a otras aulas o áreas del convento, de ser necesario, debe anunciar su visita desde la Recepción del mismo.</li>
+                                <li>Responder por el cuidado y preservación de los equipos y materiales puestos a su disposición. Los daños causados deberán pagarse y podrían conllevar a la separación del curso.</li>
+                                <li>No sentarse ni hacer estancia en los muros de la entrada a las aulas, baños y oficinas del Centro.</li>
+                                <li>No consumir alimentos en estas áreas u otras del Convento como son las galerías, videoteca, biblioteca, etc. Fumar solamente en los lugares cercanos a los ceniceros, evitando derramar colillas fuera de ellos.</li>
+                                <li>No parquear bicicletas ni motocicletas dentro del Convento. No disponemos de servicio de parqueador.</li>
+                                <li>No se permite el uso de camisetas, camisas desmangadas, licras, shorts, topes, blusas o sayas cortas ni chancletas. En caso de usar bermudas, estas deberán tener un largo por debajo de la rodilla. Por favor, evite que se le llame la atención.</li>
+                            </ul>
+                            <h4 class="font-semibold text-gray-800 mb-2">Derechos:</h4>
+                            <ul class="list-disc list-inside space-y-2 text-gray-700 mb-4">
+                                 <li>Recibir clases con el rigor y la competencia suficiente que garanticen su rendimiento docente.</li>
+                                <li>Ser evaluado según sus resultados docentes.</li>
+                                <li>Recibir los materiales de estudio de los que el Centro pueda disponer, abonándolos en caso necesario.</li>
+                                <li>Ser tratado/a respetuosamente por los profesores, alumnos y el resto del personal del Centro de acuerdo a las normas de convivencias mínimas necesarias.</li>
+                                <li>Recibir el Diploma o Certificado acreditativo una vez aprobado el curso.</li>
+                                <li>Apelar al coordinador de su curso o a la dirección del Centro ante cualquier medida o decisión que considere injusta.</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <!-- Artículo 3 -->
+                    <section class="mb-8">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                            <span class="fa material-icons mr-2 text-purple-600">celebration</span>
+                            Artículo 3: Celebraciones
+                        </h3>
+                        <p class="text-gray-700 leading-relaxed">
+                                Las celebraciones y días de receso escolar en el curso tendrán lugar en las fechas siguientes:
+                            </p>
+                        <div class="bg-purple-50 border-l-4 border-purple-500 p-4 mb-4">
+                            <ul class="list-disc list-inside space-y-2 text-gray-700">
+                                <li>Inicio de la Guerra por la Independencia: viernes 10 de octubre del {% now "Y" %}</li>
+                                <li>Inmaculada Concepción: lunes 8 de diciembre del {% now "Y" %}</li>
+                                <li>Receso de Navidad: lunes 22 de diciembre de {{ ano_anterior }} al domingo 4 de enero del {% now "Y" %}</li>
+                                <li>Semana Santa: Domingo 29 de marzo al domingo 4 de abril del {% now "Y" %}</li>
+                                <li>Día Internacional de los trabajadores: viernes 1ro de mayo del {% now "Y" %}</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <!-- Artículo 3 -->
+                    <!-- <section class="mb-8">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                            <span class="fa material-icons mr-2 text-purple-600">security</span>
+                            Artículo 3: Privacidad y Protección de Datos
+                        </h3>
+                        <div class="bg-purple-50 border-l-4 border-purple-500 p-4 mb-4">
+                            <ul class="list-disc list-inside space-y-2 text-gray-700">
+                                <li>El centro se compromete a proteger la privacidad y los datos personales de todos los usuarios.</li>
+                                <li>La información personal será utilizada únicamente para fines académicos y administrativos.</li>
+                                <li>Los usuarios tienen derecho a acceder, rectificar o eliminar sus datos personales.</li>
+                                <li>El centro no compartirá información personal con terceros sin el consentimiento del usuario.</li>
+                                <li>Se implementarán medidas de seguridad para proteger la información almacenada en el sistema.</li>
+                            </ul>
+                        </div>
+                    </section> -->
+
+                    <!-- Artículo 4 -->
+                    <section class="mb-8">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                            <span class="fa material-icons mr-2 text-orange-600">gavel</span>
+                            Artículo 4: Normas de Conducta y Convivencia
+                        </h3>
+                        <div class="bg-orange-50 border-l-4 border-orange-500 p-4 mb-4">
+                            <ul class="list-disc list-inside space-y-2 text-gray-700">
+                                <li>Se prohíbe cualquier forma de discriminación, acoso o violencia dentro del centro.</li>
+                                <li>El uso de lenguaje ofensivo o comportamiento inapropiado no será tolerado.</li>
+                                <li>Está prohibido el consumo de alcohol o sustancias ilícitas en las instalaciones.</li>
+                                <li>Los usuarios deberán vestir de manera apropiada y respetuosa.</li>
+                                <li>Se prohíbe el uso de dispositivos electrónicos que interfieran con las actividades académicas.</li>
+                                <li>Las armas de cualquier tipo están estrictamente prohibidas en el centro.</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <!-- Artículo 5 -->
+                    <section class="mb-8">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                            <span class="fa material-icons mr-2 text-red-600">report_problem</span>
+                            Artículo 5: Sanciones y Procedimientos Disciplinarios
+                        </h3>
+                        <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+                            <p class="text-gray-700 leading-relaxed mb-3">
+                                El incumplimiento de las normas establecidas en este reglamento podrá resultar en las siguientes sanciones:
+                            </p>
+                            <ul class="list-disc list-inside space-y-2 text-gray-700 mb-4">
+                                <li><strong>Amonestación verbal:</strong> Para faltas leves y de primera vez.</li>
+                                <li><strong>Amonestación escrita:</strong> Para faltas repetidas o de mayor gravedad.</li>
+                                <li><strong>Suspensión temporal:</strong> Para faltas graves que afecten la convivencia o el aprendizaje.</li>
+                                <li><strong>Expulsión definitiva:</strong> Para faltas muy graves o reincidencia en conductas sancionables.</li>
+                            </ul>
+                            <!-- <p class="text-gray-700 leading-relaxed">
+                                Todos los procedimientos disciplinarios se llevarán a cabo con respeto al debido proceso y el derecho 
+                                a la defensa del usuario afectado.
+                            </p> -->
+                        </div>
+                    </section>
+
+                    <!-- Artículo 6 -->
+                    <!-- <section class="mb-8">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                            <span class="fa material-icons mr-2 text-indigo-600">computer</span>
+                            Artículo 6: Uso de Recursos Tecnológicos
+                        </h3>
+                        <div class="bg-indigo-50 border-l-4 border-indigo-500 p-4 mb-4">
+                            <ul class="list-disc list-inside space-y-2 text-gray-700">
+                                <li>Los recursos tecnológicos del centro deberán utilizarse exclusivamente para fines académicos.</li>
+                                <li>Está prohibido acceder a contenido inapropiado o ilegal desde los equipos del centro.</li>
+                                <li>Los usuarios no podrán instalar software no autorizado en los equipos del centro.</li>
+                                <li>Se prohíbe el uso de la red del centro para actividades comerciales o ilegales.</li>
+                                <li>Cualquier daño intencional a los equipos tecnológicos será sancionado y deberá ser reparado por el responsable.</li>
+                            </ul>
+                        </div>
+                    </section> -->
+
+                    <!-- Disposiciones Finales -->
+                    <section class="mb-8">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                            <span class="fa material-icons mr-2 text-gray-600">check_circle</span>
+                            Disposiciones Finales
+                        </h3>
+                        <div class="bg-gray-50 border-l-4 border-gray-500 p-4 mb-4">
+                            <p class="text-gray-700 leading-relaxed mb-3">
+                                El presente reglamento podrá ser modificado por la dirección del Centro Fray Bartolomé de las Casas 
+                                cuando se considere necesario. Los usuarios serán notificados de cualquier cambio con la debida anticipación.
+                            </p>
+                            <p class="text-gray-700 leading-relaxed mb-3">
+                                Al registrarse en el centro, el usuario acepta y se compromete a cumplir con todas las disposiciones 
+                                establecidas en este reglamento general.
+                            </p>
+                            <p class="text-gray-700 leading-relaxed font-semibold">
+                                Para cualquier consulta, aclaración o sugerencia sobre este reglamento, los usuarios pueden contactar 
+                                con la secretaría del centro o con la dirección administrativa.
+                            </p>
+                        </div>
+                    </section>
+
+                    <!-- Contacto -->
+                    <section class="mb-8">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                            <span class="fa material-icons mr-2 text-teal-600">contact_mail</span>
+                            Información de Contacto
+                        </h3>
+                        <div class="bg-teal-50 border-l-4 border-teal-500 p-4 mb-4">
+                            <p class="text-gray-700 leading-relaxed mb-2">
+                                <strong>Centro Fray Bartolomé de las Casas</strong>
+                            </p>
+                            <p class="text-gray-700 leading-relaxed mb-2">
+                                Dirección: Calle 19 No 258, Vedado, La Habana, Cuba  CP:10400
+                            </p>
+                            <p class="text-gray-700 leading-relaxed mb-2">
+                                Teléfono: 78327329
+                            </p>
+                            <p class="text-gray-700 leading-relaxed">
+                                Correo electrónico: centrofbc@bartolo.org
+                            </p>
+                        </div>
+                    </section>
+
+                    <!-- Nota importante -->
+                   <!--  <div class="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-6 mt-8">
+                        <div class="flex items-start">
+                            <span class="fa material-icons text-yellow-600 mr-3 mt-1">warning</span>
+                            <div>
+                                <h4 class="text-lg font-bold text-yellow-800 mb-2">Nota Importante</h4>
+                                <p class="text-yellow-700">
+                                    Este es un documento de prueba. El reglamento general oficial será publicado próximamente 
+                                    con todas las normativas actualizadas del Centro Fray Bartolomé de las Casas.
+                                </p>
+                            </div>
+                        </div>
+                    </div> -->
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-6">
+            <p class="text-gray-500 text-sm">Centro Fray Bartolomé de las Casas © 1998-{% now "Y" %}</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Glass Card */
+    .glass-card {
+        position: relative;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            0 4px 16px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-content {
+        padding: 2rem;
+    }
+
+    /* Glass Button */
+    .glass-button {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.625rem 1.25rem;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .glass-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .glass-button-secondary {
+        background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
+        color: #374151;
+    }
+
+    .glass-button-primary {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        color: #1e40af;
+    }
+
+    /* Prose styling */
+    .prose h3 {
+        margin-top: 0;
+    }
+
+    .prose ul {
+        margin-top: 0;
+    }
+
+    /* Texto justificado para párrafos y listas */
+    .text-gray-700.leading-relaxed,
+    .list-disc.list-inside li {
+        text-align: justify;
+    }
+</style>
+
+{% endblock %}

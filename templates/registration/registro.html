@@ -733,6 +733,14 @@
 
       {{ form | crispy }}
       
+      <!-- Terms Section -->
+      <div class="text-center mt-4 mb-4">
+        <p class="text-gray-600 text-sm">
+          Al seleccionar Registrarse a continuación, acepto el
+          <a href="{% url 'principal:reglamento_general' %}" target="_blank" class="text-blue-600 hover:text-blue-800 font-medium">Reglamento General del Centro</a>.
+        </p>
+      </div>
+      
       <div class="form-links">
         <div class="link-row">
           <button class="glass-register-btn text-white font-medium py-2 px-4 rounded-md transition duration-200 inline-flex items-center" type="submit">

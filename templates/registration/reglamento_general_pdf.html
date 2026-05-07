@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reglamento General del Centro - CFBC</title>
+    <style>
+        @page {
+            size: letter;
+            margin: 2cm;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #003366;
+            padding-bottom: 15px;
+        }
+        
+        .header h1 {
+            color: #003366;
+            font-size: 20pt;
+            margin: 0 0 5px 0;
+        }
+        
+        .header p {
+            color: #666;
+            margin: 5px 0;
+            font-size: 10pt;
+        }
+        
+        .section {
+            margin-bottom: 25px;
+            page-break-inside: avoid;
+        }
+        
+        .section h2 {
+            color: #003366;
+            font-size: 14pt;
+            margin-bottom: 10px;
+            border-left: 4px solid #003366;
+            padding-left: 10px;
+        }
+        
+        .intro-section h2 {
+            border-left-color: #2563eb;
+        }
+        
+        .article-1 h2 {
+            border-left-color: #2563eb;
+        }
+        
+        .article-2 h2 {
+            border-left-color: #16a34a;
+        }
+        
+        .article-3 h2 {
+            border-left-color: #9333ea;
+        }
+        
+        .article-4 h2 {
+            border-left-color: #ea580c;
+        }
+        
+        .article-5 h2 {
+            border-left-color: #dc2626;
+        }
+        
+        .disposiciones h2 {
+            border-left-color: #6b7280;
+        }
+        
+        .contacto h2 {
+            border-left-color: #14b8a6;
+        }
+        
+        .content-box {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+        
+        p {
+            text-align: justify;
+            margin: 10px 0;
+        }
+        
+        ul {
+            margin: 10px 0;
+            padding-left: 25px;
+        }
+        
+        ul li {
+            text-align: justify;
+            margin-bottom: 8px;
+        }
+        
+        h3 {
+            font-size: 12pt;
+            font-weight: bold;
+            margin: 15px 0 8px 0;
+            color: #1f2937;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 9pt;
+            color: #6b7280;
+        }
+        
+        strong {
+            font-weight: bold;
+            color: #1f2937;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>Reglamento General del Centro</h1>
+        <p>Centro Fray Bartolomé de las Casas</p>
+        <p>Generado el: {{ fecha_generacion|date:"d/m/Y H:i" }}</p>
+    </div>
+
+    <!-- Introducción -->
+    <div class="section intro-section">
+        <h2>Introducción</h2>
+        <div class="content-box">
+            <p>
+                El presente reglamento tiene como objetivo establecer las normas generales que rigen el funcionamiento 
+                del Centro Fray Bartolomé de las Casas. Todos los usuarios, estudiantes, profesores y personal administrativo 
+                deberán conocer y cumplir con las disposiciones aquí establecidas para garantizar un ambiente de respeto, 
+                aprendizaje y convivencia armoniosa.
+            </p>
+        </div>
+    </div>
+
+    <!-- Artículo 1 -->
+    <div class="section article-1">
+        <h2>Artículo 1: Registro y Acceso al Centro</h2>
+        <div class="content-box">
+            <ul>
+                <li>El registro en el centro se realizará mediante el formulario de inscripción en línea.</li>
+                <li>Los usuarios deberán proporcionar información veraz y actualizada en su registro.</li>
+                <li>Cada usuario es responsable de mantener la confidencialidad de sus credenciales de acceso.</li>
+                <li>El centro se reserva el derecho de verificar la información proporcionada por los usuarios.</li>
+                <li>El acceso a las instalaciones y servicios del centro estará sujeto a las políticas establecidas.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Artículo 2 -->
+    <div class="section article-2">
+        <h2>Artículo 2: Deberes y Derechos de los Usuarios</h2>
+        <div class="content-box">
+            <h3>Deberes:</h3>
+            <ul>
+                <li>Ser respetuoso con la espiritualidad cristiana que fundamenta nuestro Centro.</li>
+                <li>No exceder las ausencias permitidas en el reglamento para cada curso del Centro.</li>
+                <li>Conversar en voz baja en todas las áreas del Centro y Convento. Usar un vocabulario respetuoso sin expresiones vulgares.</li>
+                <li>Asistir puntualmente. No se permitirá el acceso a las aulas una vez comenzadas las clases.</li>
+                <li>El alumno que por ausencias, impuntualidades u otras indisciplinas cause baja de un curso, quedará inhabilitado para matricular en cualquier curso del Centro por el término de un año -como mínimo- a partir del fin del curso del que causó baja.</li>
+                <li>Mantener una conducta respetuosa, dentro y fuera de las clases con los profesores, el resto de los alumnos y demás personas en el Convento.</li>
+                <li>No asistir a clases con niños, familiares o acompañantes. No se permite la espera de éstos en el interior del Convento.</li>
+                <li>Contribuir a mantener la limpieza y el cuidado de las aulas y de las áreas de jardines del Centro.</li>
+                <li>Respetar los horarios estipulados por la Secretaría para la atención al público. Cualquier información, solicitud o entrega de documentos se realizará de 11:00 a.m. a 12:00 m.</li>
+                <li>No realizar trabajos de carácter privado en las aulas o con los medios puestos a su disposición en los diferentes cursos.</li>
+                <li>No se permite el uso del teléfono celular durante el tiempo de clases. Agradecemos a los alumnos que apaguen o pongan su equipo en modo vibrador antes de entrar al aula.</li>
+                <li>No se autoriza tomar fotos y grabación de las clases que se imparten. Cualquier indisciplina en este sentido será transferida a la dirección del Centro.</li>
+                <li>Devolver los materiales de estudio que haya recibido en préstamo al finalizar el curso o en caso de abandonar el mismo.</li>
+                <li>No dirigirse innecesariamente a otras aulas o áreas del convento, de ser necesario, debe anunciar su visita desde la Recepción del mismo.</li>
+                <li>Responder por el cuidado y preservación de los equipos y materiales puestos a su disposición. Los daños causados deberán pagarse y podrían conllevar a la separación del curso.</li>
+                <li>No sentarse ni hacer estancia en los muros de la entrada a las aulas, baños y oficinas del Centro.</li>
+                <li>No consumir alimentos en estas áreas u otras del Convento como son las galerías, videoteca, biblioteca, etc. Fumar solamente en los lugares cercanos a los ceniceros, evitando derramar colillas fuera de ellos.</li>
+                <li>No parquear bicicletas ni motocicletas dentro del Convento. No disponemos de servicio de parqueador.</li>
+                <li>No se permite el uso de camisetas, camisas desmangadas, licras, shorts, topes, blusas o sayas cortas ni chancletas. En caso de usar bermudas, estas deberán tener un largo por debajo de la rodilla. Por favor, evite que se le llame la atención.</li>
+            </ul>
+            
+            <h3>Derechos:</h3>
+            <ul>
+                <li>Recibir clases con el rigor y la competencia suficiente que garanticen su rendimiento docente.</li>
+                <li>Ser evaluado según sus resultados docentes.</li>
+                <li>Recibir los materiales de estudio de los que el Centro pueda disponer, abonándolos en caso necesario.</li>
+                <li>Ser tratado/a respetuosamente por los profesores, alumnos y el resto del personal del Centro de acuerdo a las normas de convivencias mínimas necesarias.</li>
+                <li>Recibir el Diploma o Certificado acreditativo una vez aprobado el curso.</li>
+                <li>Apelar al coordinador de su curso o a la dirección del Centro ante cualquier medida o decisión que considere injusta.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Artículo 3 -->
+    <div class="section article-3">
+        <h2>Artículo 3: Celebraciones</h2>
+        <div class="content-box">
+            <p>Las celebraciones y días de receso escolar en el curso tendrán lugar en las fechas siguientes:</p>
+            <ul>
+                <li>Inicio de la Guerra por la Independencia: viernes 10 de octubre del {{ ano_actual }}</li>
+                <li>Inmaculada Concepción: lunes 8 de diciembre del {{ ano_actual }}</li>
+                <li>Receso de Navidad: lunes 22 de diciembre de {{ ano_anterior }} al domingo 4 de enero del {{ ano_actual }}</li>
+                <li>Semana Santa: Domingo 29 de marzo al domingo 4 de abril del {{ ano_actual }}</li>
+                <li>Día Internacional de los trabajadores: viernes 1ro de mayo del {{ ano_actual }}</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Artículo 4 -->
+    <div class="section article-4">
+        <h2>Artículo 4: Normas de Conducta y Convivencia</h2>
+        <div class="content-box">
+            <ul>
+                <li>Se prohíbe cualquier forma de discriminación, acoso o violencia dentro del centro.</li>
+                <li>El uso de lenguaje ofensivo o comportamiento inapropiado no será tolerado.</li>
+                <li>Está prohibido el consumo de alcohol o sustancias ilícitas en las instalaciones.</li>
+                <li>Los usuarios deberán vestir de manera apropiada y respetuosa.</li>
+                <li>Se prohíbe el uso de dispositivos electrónicos que interfieran con las actividades académicas.</li>
+                <li>Las armas de cualquier tipo están estrictamente prohibidas en el centro.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Artículo 5 -->
+    <div class="section article-5">
+        <h2>Artículo 5: Sanciones y Procedimientos Disciplinarios</h2>
+        <div class="content-box">
+            <p>El incumplimiento de las normas establecidas en este reglamento podrá resultar en las siguientes sanciones:</p>
+            <ul>
+                <li><strong>Amonestación verbal:</strong> Para faltas leves y de primera vez.</li>
+                <li><strong>Amonestación escrita:</strong> Para faltas repetidas o de mayor gravedad.</li>
+                <li><strong>Suspensión temporal:</strong> Para faltas graves que afecten la convivencia o el aprendizaje.</li>
+                <li><strong>Expulsión definitiva:</strong> Para faltas muy graves o reincidencia en conductas sancionables.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Disposiciones Finales -->
+    <div class="section disposiciones">
+        <h2>Disposiciones Finales</h2>
+        <div class="content-box">
+            <p>
+                El presente reglamento podrá ser modificado por la dirección del Centro Fray Bartolomé de las Casas 
+                cuando se considere necesario. Los usuarios serán notificados de cualquier cambio con la debida anticipación.
+            </p>
+            <p>
+                Al registrarse en el centro, el usuario acepta y se compromete a cumplir con todas las disposiciones 
+                establecidas en este reglamento general.
+            </p>
+            <p>
+                Para cualquier consulta, aclaración o sugerencia sobre este reglamento, los usuarios pueden contactar 
+                con la secretaría del centro o con la dirección administrativa.
+            </p>
+        </div>
+    </div>
+
+    <!-- Contacto -->
+    <div class="section contacto">
+        <h2>Información de Contacto</h2>
+        <div class="content-box">
+            <p><strong>Centro Fray Bartolomé de las Casas</strong></p>
+            <p>Dirección: Calle 19 No 258, Vedado, La Habana, Cuba  CP:10400</p>
+            <p>Teléfono: 78327329</p>
+            <p>Correo electrónico: centrofbc@bartolo.org</p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>Centro Fray Bartolomé de las Casas © 1998-{{ ano_actual }}</p>
+    </div>
+</body>
+</html>

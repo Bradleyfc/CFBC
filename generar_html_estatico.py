@@ -281,6 +281,19 @@ def obtener_contexto_noticias():
     return ctx
 
 
+def obtener_contexto_reglamento():
+    """Obtiene el contexto para la página del reglamento general."""
+    from django.utils import timezone
+    
+    ctx = {
+        "ano_anterior": timezone.now().year - 1,
+        "ano_actual": timezone.now().year,
+    }
+    
+    print(f"  ✓ Contexto del reglamento preparado (año: {ctx['ano_actual']})")
+    return ctx
+
+
 def renderizar_template_seguro(template_name: str, context: dict) -> str:
     """
     Renderiza un template Django con manejo de errores.
@@ -454,7 +467,7 @@ def main():
         sys.exit(1)
 
     # Página de inicio
-    print("\n[1/3] Página de Inicio")
+    print("\n[1/4] Página de Inicio")
     ctx_home = obtener_contexto_home()
     generar_pagina(
         titulo   = "Centro Fray Bartolomé de las Casas — Inicio",
@@ -465,7 +478,7 @@ def main():
     )
 
     # Página de cursos
-    print("\n[2/3] Página de Cursos")
+    print("\n[2/4] Página de Cursos")
     ctx_cursos = obtener_contexto_cursos()
     generar_pagina(
         titulo   = "Centro Fray Bartolomé de las Casas — Cursos",
@@ -476,7 +489,7 @@ def main():
     )
 
     # Página de noticias
-    print("\n[3/3] Página de Noticias")
+    print("\n[3/4] Página de Noticias")
     ctx_noticias = obtener_contexto_noticias()
     generar_pagina(
         titulo   = "Centro Fray Bartolomé de las Casas — Noticias",
@@ -486,12 +499,24 @@ def main():
         css_font = css_font,
     )
 
+    # Página de reglamento general
+    print("\n[4/4] Página de Reglamento General")
+    ctx_reglamento = obtener_contexto_reglamento()
+    generar_pagina(
+        titulo   = "Centro Fray Bartolomé de las Casas — Reglamento General",
+        template = "registration/reglamento_general.html",
+        contexto = ctx_reglamento,
+        salida   = "pagina_reglamento_general_offline.html",
+        css_font = css_font,
+    )
+
     print("\n" + "=" * 55)
     print("  Archivos generados:")
     for f in [
         "pagina_inicio_offline.html",
         "pagina_cursos_offline.html",
         "pagina_noticias_offline.html",
+        "pagina_reglamento_general_offline.html",
     ]:
         if os.path.exists(f):
             print(f"    • {f}  ({os.path.getsize(f)//1024} KB)")
