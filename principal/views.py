@@ -3726,6 +3726,13 @@ def solicitud_enviada(request, curso_id):
     
     return render(request, 'formularios/solicitud_enviada.html', {'curso': curso})
 
+# Vista para mostrar el reglamento del curso
+def reglamento_curso(request):
+    """
+    Vista para mostrar el reglamento del curso.
+    """
+    return render(request, 'formularios/reglamento_curso.html')
+
 # Vistas para los profesores
 
 class SolicitudesInscripcionListView(LoginRequiredMixin, ProfesorRequiredMixin, ListView):

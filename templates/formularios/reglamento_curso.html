@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reglamento del Curso - CFBC{% endblock %}
+
+{% block content %}
+<!-- Background Section with Gradient -->
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-30"
+        style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;">
+    </div>
+
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        <!-- Header -->
+        <div class="mb-6">
+            <div class="flex items-center mb-4">
+                <a href="javascript:history.back()" class="glass-button glass-button-secondary mr-4">
+                    <span class="fa material-icons mr-2">arrow_back</span>
+                    Volver
+                </a>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Reglamento del Curso</h2>
+            <p class="text-gray-600">Centro Fray Bartolomé de las Casas</p>
+        </div>
+
+        <!-- Reglamento Content -->
+        <div class="glass-card">
+            <div class="glass-content">
+                <div class="prose prose-lg max-w-none">
+                    
+                    <!-- Introducción -->
+                    <section class="mb-8">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                            <span class="fa material-icons mr-2 text-blue-600">info</span>
+                            Introducción
+                        </h3>
+                        <p class="text-gray-700 leading-relaxed mb-4">
+                            El presente reglamento tiene como objetivo establecer las normas y procedimientos que rigen el funcionamiento 
+                            de los cursos impartidos en el Centro Fray Bartolomé de las Casas. Todos los estudiantes que se inscriban 
+                            en nuestros programas académicos deberán conocer y cumplir con las disposiciones aquí establecidas.
+                        </p>
+                    </section>
+
+                    <!-- Artículo 1 -->
+                    <section class="mb-8">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                            <span class="fa material-icons mr-2 text-blue-600">school</span>
+                            Artículo 1: Inscripción y Matrícula
+                        </h3>
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+                            <ul class="list-disc list-inside space-y-2 text-gray-700">
+                                <li>La inscripción se realizará mediante el formulario de aplicación en línea.</li>
+                                <li>Los estudiantes deberán completar todos los datos requeridos de manera veraz y precisa.</li>
+                                <li>La aceptación de la solicitud estará sujeta a la aprobación del profesor responsable del curso.</li>
+                                <li>Una vez aprobada la solicitud, el estudiante recibirá una notificación por correo electrónico.</li>
+                                <li>El plazo de inscripción será establecido para cada curso y deberá respetarse estrictamente.</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <!-- Artículo 2 -->
+                    <section class="mb-8">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                            <span class="fa material-icons mr-2 text-green-600">event_available</span>
+                            Artículo 2: Asistencia
+                        </h3>
+                        <div class="bg-green-50 border-l-4 border-green-500 p-4 mb-4">
+                            <ul class="list-disc list-inside space-y-2 text-gray-700">
+                                <li>La asistencia a las clases es obligatoria y será registrada por el profesor.</li>
+                                <li>Se requiere un mínimo del 80% de asistencia para aprobar el curso.</li>
+                                <li>Las ausencias justificadas deberán ser comunicadas al profesor con la debida anticipación.</li>
+                                <li>Las ausencias injustificadas podrán afectar la calificación final del estudiante.</li>
+                                <li>En caso de enfermedad, se deberá presentar certificado médico.</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <!-- Artículo 3 -->
+                    <section class="mb-8">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                            <span class="fa material-icons mr-2 text-purple-600">assignment</span>
+                            Artículo 3: Evaluación y Calificaciones
+                        </h3>
+                        <div class="bg-purple-50 border-l-4 border-purple-500 p-4 mb-4">
+                            <ul class="list-disc list-inside space-y-2 text-gray-700">
+                                <li>La evaluación del curso se realizará mediante trabajos, exámenes y participación en clase.</li>
+                                <li>La calificación mínima para aprobar el curso es de 60 puntos sobre 100.</li>
+                                <li>Los estudiantes tendrán acceso a sus calificaciones a través de la plataforma en línea.</li>
+                                <li>Las reclamaciones sobre calificaciones deberán presentarse dentro de los 5 días hábiles posteriores a su publicación.</li>
+                                <li>El profesor establecerá los criterios de evaluación al inicio del curso.</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <!-- Artículo 4 -->
+                    <section class="mb-8">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                            <span class="fa material-icons mr-2 text-orange-600">gavel</span>
+                            Artículo 4: Normas de Conducta
+                        </h3>
+                        <div class="bg-orange-50 border-l-4 border-orange-500 p-4 mb-4">
+                            <ul class="list-disc list-inside space-y-2 text-gray-700">
+                                <li>Los estudiantes deberán mantener un comportamiento respetuoso hacia profesores y compañeros.</li>
+                                <li>Está prohibido el uso de dispositivos móviles durante las clases sin autorización del profesor.</li>
+                                <li>Se prohíbe estrictamente el plagio o cualquier forma de deshonestidad académica.</li>
+                                <li>Los estudiantes deberán cuidar las instalaciones y materiales del centro.</li>
+                                <li>El incumplimiento de estas normas podrá resultar en sanciones académicas o expulsión del curso.</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <!-- Artículo 5 -->
+                    <section class="mb-8">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                            <span class="fa material-icons mr-2 text-red-600">description</span>
+                            Artículo 5: Certificación
+                        </h3>
+                        <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+                            <ul class="list-disc list-inside space-y-2 text-gray-700">
+                                <li>Los estudiantes que cumplan con todos los requisitos recibirán un certificado de finalización.</li>
+                                <li>El certificado será emitido por el Centro Fray Bartolomé de las Casas.</li>
+                                <li>Para obtener el certificado se requiere haber aprobado el curso y cumplido con la asistencia mínima.</li>
+                                <li>Los certificados estarán disponibles 30 días después de la finalización del curso.</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <!-- Disposiciones Finales -->
+                    <section class="mb-8">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                            <span class="fa material-icons mr-2 text-gray-600">check_circle</span>
+                            Disposiciones Finales
+                        </h3>
+                        <div class="bg-gray-50 border-l-4 border-gray-500 p-4 mb-4">
+                            <p class="text-gray-700 leading-relaxed mb-3">
+                                El presente reglamento podrá ser modificado por la dirección del Centro Fray Bartolomé de las Casas 
+                                cuando se considere necesario. Los estudiantes serán notificados de cualquier cambio con la debida anticipación.
+                            </p>
+                            <p class="text-gray-700 leading-relaxed mb-3">
+                                Al inscribirse en cualquier curso del centro, el estudiante acepta y se compromete a cumplir con todas 
+                                las disposiciones establecidas en este reglamento.
+                            </p>
+                            <p class="text-gray-700 leading-relaxed font-semibold">
+                                Para cualquier consulta o aclaración sobre este reglamento, los estudiantes pueden contactar con la 
+                                secretaría del centro o con el profesor responsable del curso.
+                            </p>
+                        </div>
+                    </section>
+
+                    <!-- Nota importante -->
+                    <div class="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-6 mt-8">
+                        <div class="flex items-start">
+                            <span class="fa material-icons text-yellow-600 mr-3 mt-1">warning</span>
+                            <div>
+                                <h4 class="text-lg font-bold text-yellow-800 mb-2">Nota Importante</h4>
+                                <p class="text-yellow-700">
+                                    Este es un documento de prueba. El reglamento oficial será publicado próximamente 
+                                    con todas las normativas actualizadas del Centro Fray Bartolomé de las Casas.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-6">
+            <p class="text-gray-500 text-sm">Centro Fray Bartolomé de las Casas © 1998-{% now "Y" %}</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Glass Card */
+    .glass-card {
+        position: relative;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            0 4px 16px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-content {
+        padding: 2rem;
+    }
+
+    /* Glass Button */
+    .glass-button {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.625rem 1.25rem;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .glass-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .glass-button-secondary {
+        background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
+        color: #374151;
+    }
+
+    /* Prose styling */
+    .prose h3 {
+        margin-top: 0;
+    }
+
+    .prose ul {
+        margin-top: 0;
+    }
+</style>
+{% endblock %}

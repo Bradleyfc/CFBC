@@ -68,6 +68,7 @@ urlpatterns = [
     # Rutas para estudiantes
     path('cursos/aplicar/<int:curso_id>/', views.aplicar_curso, name='aplicar_curso'),
     path('cursos/solicitud-enviada/<int:curso_id>/', views.solicitud_enviada, name='solicitud_enviada'),
+    path('reglamento-curso/', views.reglamento_curso, name='reglamento_curso'),
     
     # Rutas para profesores
     path('solicitudes/', views.SolicitudesInscripcionListView.as_view(), name='solicitudes_list'),
