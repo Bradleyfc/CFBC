@@ -45,6 +45,8 @@ class Curso(models.Model):
     curso_academico = models.ForeignKey('CursoAcademico', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Curso Académico')
     enrollment_deadline = models.DateField(verbose_name='Fecha límite de inscripción', null=True, blank=True)
     start_date = models.DateField(verbose_name='Fecha de inicio del curso', null=True, blank=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de creación')
+    fecha_actualizacion = models.DateTimeField(auto_now=True, verbose_name='Última actualización')
 
     def get_dynamic_status(self):
         """
@@ -97,6 +99,7 @@ class Curso(models.Model):
     class Meta:
         verbose_name = 'Curso'
         verbose_name_plural = 'Cursos'
+        ordering = ['-fecha_actualizacion', '-fecha_creacion']  # Más recientes primero
 
         
 # Curso y cambio de curso escolar
