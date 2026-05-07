@@ -78,6 +78,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'course_documents.mixins.documents_context',
+                'principal.context_processors.group_name',
             ],
         },
     },
