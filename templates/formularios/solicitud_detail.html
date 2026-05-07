@@ -37,7 +37,13 @@
                     <h2 class="text-3xl font-bold text-gray-800 mb-2">Detalle de Solicitud</h2>
                     <p class="text-gray-600">{{ solicitud.estudiante.get_full_name|default:solicitud.estudiante.username }} - {{ solicitud.curso.name }}</p>
                 </div>
-                <div>
+                <div class="flex gap-3">
+                    {% if siguiente_solicitud %}
+                    <a href="{% url 'principal:solicitud_detail' siguiente_solicitud.id %}" class="glass-button glass-button-primary">
+                        <span class="fa material-icons mr-2">arrow_forward</span></i>
+                        Siguiente Solicitud
+                    </a>
+                    {% endif %}
                     <a href="#" onclick="checkRespuestasBeforeExport('solicitud', '{{ solicitud.pk }}')" class="glass-button glass-button-success">
                         <span class="fa material-icons mr-2">table_chart</span></i>
                         Exportar Excel
@@ -140,6 +146,16 @@
                             <a href="{% url 'principal:aprobar_solicitud' solicitud.id %}" class="glass-button glass-button-success w-full justify-center">
                                 <span class="fa material-icons mr-2">check_circle</span></i>
                                 Aceptar Solicitud
+                            </a>
+                        {% elif solicitud.estado == 'aprobada' %}
+                            <a href="{% url 'principal:deshacer_aprobacion_solicitud' solicitud.id %}" class="glass-button glass-button-warning w-full justify-center">
+                                <span class="fa material-icons mr-2">undo</span></i>
+                                Deshacer Aprobación
+                            </a>
+                        {% elif solicitud.estado == 'rechazada' %}
+                            <a href="{% url 'principal:deshacer_rechazo_solicitud' solicitud.id %}" class="glass-button glass-button-warning w-full justify-center">
+                                <span class="fa material-icons mr-2">undo</span></i>
+                                Deshacer Denegación
                             </a>
                         {% endif %}
                     </div>
@@ -324,6 +340,11 @@
     .glass-button-danger {
         background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.2));
         color: #7f1d1d;
+    }
+
+    .glass-button-warning {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(217, 119, 6, 0.2));
+        color: #78350f;
     }
 
     /* Glass Badge */

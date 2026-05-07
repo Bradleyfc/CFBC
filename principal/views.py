@@ -1534,11 +1534,13 @@ class ProfileView(DocumentsProfileMixin, BaseContextMixin, TemplateView):
                 assigned_courses = Curso.objects.none()
             context['assigned_courses'] = assigned_courses
             
-            # Obtener las solicitudes de inscripción pendientes para los cursos del profesor
+            # Obtener las solicitudes de inscripción pendientes para los cursos del profesor con paginación
+            # Solo mostrar solicitudes de cursos en etapa de inscripción (I o IT)
             pending_solicitudes = SolicitudInscripcion.objects.filter(
                 curso__teacher=user,
-                estado='pendiente'
-            ).order_by('-fecha_solicitud')
+                estado='pendiente',
+                curso__status__in=['I', 'IT']  # Solo cursos en inscripción
+            ).order_by('-fecha_solicitud')[:5]  # Limitar a 5 solicitudes
             context['pending_solicitudes'] = pending_solicitudes
         elif group_name == 'Estudiantes':
             # Obtener los cursos en los que el estudiante está inscrito y que pertenecen al curso académico activo
@@ -3733,13 +3735,48 @@ class SolicitudesInscripcionListView(LoginRequiredMixin, ProfesorRequiredMixin, 
     model = SolicitudInscripcion
     template_name = 'formularios/solicitudes_list.html'
     context_object_name = 'solicitudes'
+    paginate_by = 10  # Mostrar 10 solicitudes por página
     
     def get_queryset(self):
-        # Obtener solo las solicitudes de los cursos que imparte el profesor
+        # Obtener el filtro de estado desde los parámetros GET
+        estado_filtro = self.request.GET.get('estado', 'pendiente')
+        
+        # Obtener las solicitudes de los cursos que imparte el profesor filtradas por estado
+        # Solo mostrar solicitudes de cursos en etapa de inscripción (I o IT)
         return SolicitudInscripcion.objects.filter(
             curso__teacher=self.request.user,
-            estado='pendiente'
+            estado=estado_filtro,
+            curso__status__in=['I', 'IT']  # Solo cursos en inscripción
         ).order_by('-fecha_solicitud')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Obtener el estado actual del filtro
+        estado_filtro = self.request.GET.get('estado', 'pendiente')
+        context['estado_filtro'] = estado_filtro
+        
+        # Agregar estadísticas de solicitudes (contadores)
+        # Solo contar solicitudes de cursos en etapa de inscripción (I o IT)
+        context['total_pendientes'] = SolicitudInscripcion.objects.filter(
+            curso__teacher=self.request.user,
+            estado='pendiente',
+            curso__status__in=['I', 'IT']
+        ).count()
+        
+        context['total_aprobadas'] = SolicitudInscripcion.objects.filter(
+            curso__teacher=self.request.user,
+            estado='aprobada',
+            curso__status__in=['I', 'IT']
+        ).count()
+        
+        context['total_rechazadas'] = SolicitudInscripcion.objects.filter(
+            curso__teacher=self.request.user,
+            estado='rechazada',
+            curso__status__in=['I', 'IT']
+        ).count()
+        
+        return context
 
 class SolicitudInscripcionDetailView(LoginRequiredMixin, ProfesorRequiredMixin, DetailView):
     """
@@ -3760,6 +3797,22 @@ class SolicitudInscripcionDetailView(LoginRequiredMixin, ProfesorRequiredMixin, 
         # Obtener las respuestas del estudiante
         respuestas = solicitud.respuestas.all().select_related('pregunta').prefetch_related('opciones_seleccionadas')
         context['respuestas'] = respuestas
+        
+        # Obtener la siguiente solicitud pendiente
+        siguiente_solicitud = SolicitudInscripcion.objects.filter(
+            curso__teacher=self.request.user,
+            estado='pendiente',
+            fecha_solicitud__gt=solicitud.fecha_solicitud
+        ).order_by('fecha_solicitud').first()
+        
+        # Si no hay siguiente con fecha mayor, buscar la primera pendiente
+        if not siguiente_solicitud:
+            siguiente_solicitud = SolicitudInscripcion.objects.filter(
+                curso__teacher=self.request.user,
+                estado='pendiente'
+            ).exclude(id=solicitud.id).order_by('fecha_solicitud').first()
+        
+        context['siguiente_solicitud'] = siguiente_solicitud
         
         return context
 
@@ -3809,12 +3862,8 @@ Centro Fray Bartolomé de las Casas'''
     # Agregar un solo mensaje de éxito
     messages.success(request, f'La solicitud de {solicitud.estudiante.get_full_name() or solicitud.estudiante.username} ha sido aprobada.')
     
-    # Verificar si la solicitud viene del perfil o de la página de solicitudes
-    referer = request.META.get('HTTP_REFERER', '')
-    if 'profile' in referer:
-        return redirect('principal:profile')
-    else:
-        return redirect('principal:solicitudes_list')
+    # Redirigir a la misma página de detalle de la solicitud
+    return redirect('principal:solicitud_detail', pk=solicitud.id)
 
 @login_required
 def rechazar_solicitud(request, pk):
@@ -3862,7 +3911,168 @@ Centro Fray Bartolomé de las Casas'''
         # No interrumpimos el proceso si falla el envío del correo
     
     messages.success(request, f'La solicitud de {solicitud.estudiante.get_full_name() or solicitud.estudiante.username} ha sido rechazada.')
-    return redirect('principal:solicitudes_list')
+    
+    # Redirigir a la misma página de detalle de la solicitud
+    return redirect('principal:solicitud_detail', pk=solicitud.id)
+
+@login_required
+def deshacer_aprobacion_solicitud(request, pk):
+    """
+    Vista para que un profesor deshaga la aprobación de una solicitud de inscripción.
+    """
+    solicitud = get_object_or_404(SolicitudInscripcion, pk=pk)
+    
+    # Verificar que el profesor sea el profesor del curso
+    if solicitud.curso.teacher != request.user:
+        raise PermissionDenied
+    
+    # Verificar que la solicitud esté aprobada
+    if solicitud.estado != 'aprobada':
+        messages.error(request, 'Esta solicitud no está aprobada.')
+        return redirect('principal:solicitud_detail', pk=solicitud.id)
+    
+    # Buscar y eliminar la matrícula asociada
+    try:
+        from principal.models import Matriculas
+        matricula = Matriculas.objects.get(
+            student=solicitud.estudiante,
+            course=solicitud.curso
+        )
+        matricula.delete()
+        print(f"Matrícula eliminada para {solicitud.estudiante.username} en {solicitud.curso.name}")
+    except Matriculas.DoesNotExist:
+        print(f"No se encontró matrícula para {solicitud.estudiante.username} en {solicitud.curso.name}")
+    except Exception as e:
+        print(f"Error al eliminar matrícula: {str(e)}")
+    
+    # Cambiar el estado de la solicitud a pendiente
+    solicitud.estado = 'pendiente'
+    solicitud.fecha_revision = None
+    solicitud.revisado_por = None
+    solicitud.save()
+    
+    messages.success(request, f'Se ha deshecho la aprobación de la solicitud de {solicitud.estudiante.get_full_name() or solicitud.estudiante.username}. La solicitud vuelve a estar pendiente.')
+    
+    # Redirigir a la misma página de detalle de la solicitud
+    return redirect('principal:solicitud_detail', pk=solicitud.id)
+
+@login_required
+def deshacer_rechazo_solicitud(request, pk):
+    """
+    Vista para que un profesor deshaga el rechazo de una solicitud de inscripción.
+    """
+    solicitud = get_object_or_404(SolicitudInscripcion, pk=pk)
+    
+    # Verificar que el profesor sea el profesor del curso
+    if solicitud.curso.teacher != request.user:
+        raise PermissionDenied
+    
+    # Verificar que la solicitud esté rechazada
+    if solicitud.estado != 'rechazada':
+        messages.error(request, 'Esta solicitud no está rechazada.')
+        return redirect('principal:solicitud_detail', pk=solicitud.id)
+    
+    # Cambiar el estado de la solicitud a pendiente
+    solicitud.estado = 'pendiente'
+    solicitud.fecha_revision = None
+    solicitud.revisado_por = None
+    solicitud.save()
+    
+    messages.success(request, f'Se ha deshecho el rechazo de la solicitud de {solicitud.estudiante.get_full_name() or solicitud.estudiante.username}. La solicitud vuelve a estar pendiente.')
+    
+    # Redirigir a la misma página de detalle de la solicitud
+    return redirect('principal:solicitud_detail', pk=solicitud.id)
+
+@login_required
+def exportar_solicitudes_excel(request):
+    """
+    Vista para exportar las solicitudes de inscripción a Excel según el filtro de estado.
+    """
+    # Verificar permisos - solo profesores y secretarías pueden exportar
+    if not request.user.groups.filter(name__in=['Profesores', 'Secretaría']).exists():
+        messages.error(request, 'No tienes permisos para exportar solicitudes.')
+        return redirect('principal:solicitudes_list')
+    
+    # Obtener el filtro de estado
+    estado_filtro = request.GET.get('estado', 'pendiente')
+    
+    # Obtener las solicitudes filtradas
+    # Solo exportar solicitudes de cursos en etapa de inscripción (I o IT)
+    solicitudes = SolicitudInscripcion.objects.filter(
+        curso__teacher=request.user,
+        estado=estado_filtro,
+        curso__status__in=['I', 'IT']  # Solo cursos en inscripción
+    ).select_related('estudiante', 'curso', 'revisado_por').order_by('-fecha_solicitud')
+    
+    if not solicitudes.exists():
+        messages.warning(request, 'No hay solicitudes para exportar con el filtro seleccionado.')
+        return redirect('principal:solicitudes_list')
+    
+    # Crear el archivo Excel
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = f"Solicitudes {estado_filtro.capitalize()}"
+    
+    # Estilos
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+    border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    
+    # Encabezados
+    headers = [
+        'N°',
+        'Estudiante',
+        'Email',
+        'Curso',
+        'Estado',
+        'Fecha Solicitud',
+        'Fecha Revisión',
+        'Revisado Por'
+    ]
+    
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num)
+        cell.value = header
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.border = border
+    
+    # Datos
+    for row_num, solicitud in enumerate(solicitudes, 2):
+        ws.cell(row=row_num, column=1, value=row_num - 1).border = border
+        ws.cell(row=row_num, column=2, value=solicitud.estudiante.get_full_name() or solicitud.estudiante.username).border = border
+        ws.cell(row=row_num, column=3, value=solicitud.estudiante.email).border = border
+        ws.cell(row=row_num, column=4, value=solicitud.curso.name).border = border
+        ws.cell(row=row_num, column=5, value=solicitud.get_estado_display()).border = border
+        ws.cell(row=row_num, column=6, value=solicitud.fecha_solicitud.strftime('%d/%m/%Y %H:%M')).border = border
+        ws.cell(row=row_num, column=7, value=solicitud.fecha_revision.strftime('%d/%m/%Y %H:%M') if solicitud.fecha_revision else 'N/A').border = border
+        ws.cell(row=row_num, column=8, value=solicitud.revisado_por.get_full_name() if solicitud.revisado_por else 'N/A').border = border
+    
+    # Ajustar ancho de columnas
+    ws.column_dimensions['A'].width = 8
+    ws.column_dimensions['B'].width = 30
+    ws.column_dimensions['C'].width = 35
+    ws.column_dimensions['D'].width = 40
+    ws.column_dimensions['E'].width = 15
+    ws.column_dimensions['F'].width = 20
+    ws.column_dimensions['G'].width = 20
+    ws.column_dimensions['H'].width = 30
+    
+    # Preparar respuesta HTTP
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    filename = f'solicitudes_{estado_filtro}_{timezone.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    wb.save(response)
+    return response
 
 @login_required
 def guardar_pregunta_y_redirigir(request, formulario_id):

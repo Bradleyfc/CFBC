@@ -16,7 +16,16 @@
         <div class="mb-6">
             <div class="flex justify-between items-center">
                 <div>
-                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Solicitudes de Inscripción</h2>
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">
+                        Solicitudes de Inscripción
+                        {% if estado_filtro == 'aprobada' %}
+                            - Aprobadas
+                        {% elif estado_filtro == 'rechazada' %}
+                            - Rechazadas
+                        {% else %}
+                            - Pendientes
+                        {% endif %}
+                    </h2>
                     <p class="text-gray-600">Gestiona las solicitudes de inscripción de los estudiantes</p>
                 </div>
                 <div>
@@ -30,24 +39,24 @@
 
         <!-- Statistics Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div class="glass-card">
+            <a href="{% url 'principal:solicitudes_list' %}?estado=pendiente" class="glass-card hover:shadow-xl transition-shadow cursor-pointer {% if estado_filtro == 'pendiente' %}ring-2 ring-yellow-400{% endif %}">
                 <div class="glass-content text-center">
-                    <div class="text-3xl font-bold text-blue-600">{{ solicitudes|length }}</div>
-                    <div class="text-sm text-gray-600">Total Solicitudes</div>
-                </div>
-            </div>
-            <div class="glass-card">
-                <div class="glass-content text-center">
-                    <div class="text-3xl font-bold text-yellow-600">{{ solicitudes_pendientes|length|default:0 }}</div>
+                    <div class="text-3xl font-bold text-yellow-600">{{ total_pendientes }}</div>
                     <div class="text-sm text-gray-600">Pendientes</div>
                 </div>
-            </div>
-            <div class="glass-card">
+            </a>
+            <a href="{% url 'principal:solicitudes_list' %}?estado=aprobada" class="glass-card hover:shadow-xl transition-shadow cursor-pointer {% if estado_filtro == 'aprobada' %}ring-2 ring-green-400{% endif %}">
                 <div class="glass-content text-center">
-                    <div class="text-3xl font-bold text-green-600">{{ solicitudes_aprobadas|length|default:0 }}</div>
+                    <div class="text-3xl font-bold text-green-600">{{ total_aprobadas }}</div>
                     <div class="text-sm text-gray-600">Aprobadas</div>
                 </div>
-            </div>
+            </a>
+            <a href="{% url 'principal:solicitudes_list' %}?estado=rechazada" class="glass-card hover:shadow-xl transition-shadow cursor-pointer {% if estado_filtro == 'rechazada' %}ring-2 ring-red-400{% endif %}">
+                <div class="glass-content text-center">
+                    <div class="text-3xl font-bold text-red-600">{{ total_rechazadas }}</div>
+                    <div class="text-sm text-gray-600">Rechazadas</div>
+                </div>
+            </a>
         </div>
 
         <!-- Solicitudes Cards -->
@@ -60,7 +69,7 @@
             </div>
             <div class="glass-content">
                 {% if solicitudes %}
-                    <div class="space-y-4" id="contenedor-solicitudes">
+                    <div class="space-y-4">
                         {% for solicitud in solicitudes %}
                             <div class="solicitud-item glass-card border-l-4 {% if solicitud.estado == 'pendiente' %}border-yellow-400{% elif solicitud.estado == 'aprobada' %}border-green-400{% elif solicitud.estado == 'rechazada' %}border-red-400{% else %}border-blue-400{% endif %}">
                                 <div class="glass-content">
@@ -100,8 +109,41 @@
                             </div>
                         {% endfor %}
                     </div>
-                    <!-- Paginación solicitudes -->
-                    <div id="paginacion-solicitudes" class="flex justify-center items-center gap-2 mt-6"></div>
+                    
+                    <!-- Paginación Django -->
+                    {% if is_paginated %}
+                    <div class="flex justify-center items-center gap-2 mt-6">
+                        <div class="tabla-paginacion">
+                            <span class="pag-info">
+                                {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ paginator.count }}
+                            </span>
+                            
+                            {% if page_obj.has_previous %}
+                                <a href="?estado={{ estado_filtro }}&page=1" class="pag-btn">‹‹</a>
+                                <a href="?estado={{ estado_filtro }}&page={{ page_obj.previous_page_number }}" class="pag-btn">‹</a>
+                            {% else %}
+                                <button class="pag-btn" disabled>‹‹</button>
+                                <button class="pag-btn" disabled>‹</button>
+                            {% endif %}
+                            
+                            {% for num in paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <button class="pag-btn activo">{{ num }}</button>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <a href="?estado={{ estado_filtro }}&page={{ num }}" class="pag-btn">{{ num }}</a>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <a href="?estado={{ estado_filtro }}&page={{ page_obj.next_page_number }}" class="pag-btn">›</a>
+                                <a href="?estado={{ estado_filtro }}&page={{ paginator.num_pages }}" class="pag-btn">››</a>
+                            {% else %}
+                                <button class="pag-btn" disabled>›</button>
+                                <button class="pag-btn" disabled>››</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
                 {% else %}
                     <!-- Empty State -->
                     <div class="text-center py-12">
@@ -156,6 +198,19 @@
         -webkit-backdrop-filter: blur(20px);
         border-radius: 24px;
         border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            0 4px 16px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        display: block;
+    }
+    
+    .glass-card:hover {
+        transform: translateY(-2px);
+    }
         box-shadow:
             0 8px 32px rgba(0, 0, 0, 0.1),
             0 4px 16px rgba(0, 0, 0, 0.1),
@@ -413,78 +468,6 @@
 </style>
 
 <script>
-    // ── Paginación de solicitudes ─────────────────────────────────────────────
-    const ITEMS_POR_PAGINA = 10;
-
-    function iniciarPaginacion(selectorItems, contenedorId) {
-        const items = Array.from(document.querySelectorAll(selectorItems));
-        const total = items.length;
-
-        if (total <= ITEMS_POR_PAGINA) return;
-
-        let paginaActual = 1;
-        const totalPaginas = Math.ceil(total / ITEMS_POR_PAGINA);
-
-        function mostrarPagina(pagina) {
-            paginaActual = pagina;
-            const inicio = (pagina - 1) * ITEMS_POR_PAGINA;
-            const fin = inicio + ITEMS_POR_PAGINA;
-            items.forEach((item, i) => {
-                item.style.display = (i >= inicio && i < fin) ? '' : 'none';
-            });
-            renderPaginacion();
-        }
-
-        function renderPaginacion() {
-            const contenedor = document.getElementById(contenedorId);
-            contenedor.innerHTML = '';
-            contenedor.className = 'tabla-paginacion mt-6';
-
-            const inicio = (paginaActual - 1) * ITEMS_POR_PAGINA + 1;
-            const fin = Math.min(paginaActual * ITEMS_POR_PAGINA, total);
-            const info = document.createElement('span');
-            info.className = 'pag-info';
-            info.textContent = `${inicio}–${fin} de ${total}`;
-            contenedor.appendChild(info);
-
-            const btnPrev = document.createElement('button');
-            btnPrev.className = 'pag-btn';
-            btnPrev.innerHTML = '‹';
-            btnPrev.disabled = paginaActual === 1;
-            btnPrev.onclick = () => mostrarPagina(paginaActual - 1);
-            contenedor.appendChild(btnPrev);
-
-            const ventana = 2;
-            for (let i = 1; i <= totalPaginas; i++) {
-                if (i === 1 || i === totalPaginas || (i >= paginaActual - ventana && i <= paginaActual + ventana)) {
-                    const btn = document.createElement('button');
-                    btn.className = 'pag-btn' + (i === paginaActual ? ' activo' : '');
-                    btn.textContent = i;
-                    btn.onclick = () => mostrarPagina(i);
-                    contenedor.appendChild(btn);
-                } else if (i === paginaActual - ventana - 1 || i === paginaActual + ventana + 1) {
-                    const dots = document.createElement('span');
-                    dots.className = 'pag-info';
-                    dots.textContent = '…';
-                    contenedor.appendChild(dots);
-                }
-            }
-
-            const btnNext = document.createElement('button');
-            btnNext.className = 'pag-btn';
-            btnNext.innerHTML = '›';
-            btnNext.disabled = paginaActual === totalPaginas;
-            btnNext.onclick = () => mostrarPagina(paginaActual + 1);
-            contenedor.appendChild(btnNext);
-        }
-
-        mostrarPagina(1);
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        iniciarPaginacion('.solicitud-item', 'paginacion-solicitudes');
-    });
-
     // ── Exportar / Modal ──────────────────────────────────────────────────────
     // Verificar si hay solicitudes antes de exportar
     function checkSolicitudesBeforeExport() {
@@ -496,7 +479,7 @@
             // Si hay solicitudes, proceder con la exportación
             const exportUrl = '/exportar-solicitudes-excel/';
             
-            // Obtener los parámetros actuales de la URL
+            // Obtener los parámetros actuales de la URL (incluyendo el estado)
             const currentParams = window.location.search;
             const finalUrl = exportUrl + currentParams;
             

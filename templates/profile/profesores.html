@@ -105,6 +105,16 @@
         </div>
         {% endfor %}
       </div>
+      
+      <!-- Mostrar indicador si hay más de 5 solicitudes -->
+      {% if pending_solicitudes|length == 5 %}
+      <div class="mt-4 text-center">
+        <a href="{% url 'principal:solicitudes_list' %}" class="glass-action-button glass-action-primary inline-flex">
+          <span class="fa material-icons mr-1">list</span></i>
+          Ver todas las solicitudes
+        </a>
+      </div>
+      {% endif %}
       {% else %}
       <div class="glass-alert glass-alert-info">
         <span class="fa material-icons mr-2">info</span></i>
