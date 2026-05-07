@@ -208,7 +208,7 @@
               <div id="header-auth-desktop">
                 {% if request.user.is_authenticated %}
                   <a href="{% url 'principal:profile' %}" class="glass-nav-link">
-                    <span class="material-icons" style="font-size:1rem;">person</span>
+                    <span class="material-icons" style="font-size:1rem;">person</span>&nbsp;
                     {{ group_name }} | {{ user.username }}
                   </a>
                 {% else %}
