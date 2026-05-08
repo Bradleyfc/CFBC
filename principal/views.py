@@ -3632,6 +3632,37 @@ def aplicar_curso(request, curso_id):
     preguntas = formulario.preguntas.all().order_by('orden')
     
     if request.method == 'POST':
+        # Validar que todas las preguntas tengan respuesta
+        preguntas_sin_responder = []
+        for pregunta in preguntas:
+            if pregunta.tipo == 'seleccion_multiple':
+                if not request.POST.getlist(f'pregunta_{pregunta.id}'):
+                    preguntas_sin_responder.append(pregunta)
+            elif pregunta.tipo == 'seleccion_unica':
+                if not request.POST.get(f'pregunta_{pregunta.id}'):
+                    preguntas_sin_responder.append(pregunta)
+            elif pregunta.tipo == 'escritura_libre':
+                if not request.POST.get(f'pregunta_{pregunta.id}', '').strip():
+                    preguntas_sin_responder.append(pregunta)
+
+        if preguntas_sin_responder:
+            cantidad = len(preguntas_sin_responder)
+            if cantidad == 1:
+                msg = 'Hay 1 pregunta obligatoria sin responder. Por favor completa todas las preguntas requeridas.'
+            else:
+                msg = f'Hay {cantidad} preguntas obligatorias sin responder. Por favor completa todas las preguntas requeridas.'
+            messages.error(request, msg)
+            formularios_preguntas = []
+            for pregunta in preguntas:
+                form = RespuestaEstudianteForm(pregunta=pregunta)
+                formularios_preguntas.append((pregunta, form))
+            context = {
+                'curso': curso,
+                'formulario': formulario,
+                'formularios_preguntas': formularios_preguntas
+            }
+            return render(request, 'formularios/aplicar_curso.html', context)
+
         try:
             # Crear la solicitud de inscripción
             solicitud = SolicitudInscripcion.objects.create(

@@ -54,7 +54,7 @@
                     <!-- Questions Section -->
                     <div class="space-y-4">
                         {% for pregunta, form in formularios_preguntas %}
-                        <div class="glass-card border border-gray-200">
+                        <div class="glass-card border border-gray-200" data-pregunta-id="{{ pregunta.id }}" data-requerida="{{ pregunta.requerida|yesno:'true,false' }}" data-tipo="{{ pregunta.tipo }}">
                             <div class="glass-content-compact">
                                 <h6 class="text-base font-semibold text-gray-800 mb-3">
                                     {{ pregunta.texto }}
@@ -101,6 +101,30 @@
         <!-- Footer -->
         <div class="text-center mt-6">
             <p class="text-gray-500 text-sm">Centro Fray Bartolomé de las Casas © 1998-{% now "Y" %}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Error de Validación -->
+<div id="errorModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-icon modal-icon-error">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
+                </svg>
+            </div>
+            <h3 class="modal-title modal-title-error">Formulario Incompleto</h3>
+        </div>
+        <div class="modal-message">
+            <p id="errorModalMensaje">Hay preguntas obligatorias sin responder.</p>
+            <p class="text-sm text-gray-500 mt-2">Las preguntas marcadas con <span class="text-red-500 font-bold">*</span> son obligatorias.</p>
+        </div>
+        <div class="modal-actions" style="justify-content: center;">
+            <button type="button" class="modal-btn modal-btn-error" onclick="closeErrorModal()">
+                <span class="fa material-icons mr-2">check</span>
+                Entendido
+            </button>
         </div>
     </div>
 </div>
@@ -587,47 +611,148 @@
             width: 100%;
         }
     }
+
+    /* Modal de error */
+    .modal-icon-error {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .modal-icon-error svg {
+        color: #ef4444;
+    }
+
+    .modal-title-error {
+        color: #b91c1c;
+    }
+
+    .modal-btn-error {
+        background: linear-gradient(135deg, #ef4444, #b91c1c);
+        color: white;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        min-width: 160px;
+    }
+
+    .modal-btn-error:hover {
+        background: linear-gradient(135deg, #b91c1c, #991b1b);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+    }
 </style>
 
 <script>
+    // Valida todas las preguntas y devuelve las que están sin responder
+    function validarRespuestas() {
+        const tarjetas = document.querySelectorAll('.glass-card.border[data-pregunta-id]');
+        const sinResponder = [];
+
+        tarjetas.forEach(function(tarjeta, index) {
+            const radios     = tarjeta.querySelectorAll('input[type="radio"]');
+            const checkboxes = tarjeta.querySelectorAll('input[type="checkbox"]');
+            const textos     = tarjeta.querySelectorAll('input[type="text"], textarea');
+
+            const respondida =
+                Array.from(radios).some(r => r.checked) ||
+                Array.from(checkboxes).some(c => c.checked) ||
+                Array.from(textos).some(t => t.value.trim() !== '');
+
+            if (!respondida) {
+                sinResponder.push({ tarjeta: tarjeta, numero: index + 1 });
+            }
+        });
+
+        return sinResponder;
+    }
+
     // Función para mostrar el modal de confirmación
     function showConfirmModal() {
+        const sinResponder = validarRespuestas();
+
+        if (sinResponder.length > 0) {
+            // Construir mensaje con el número de preguntas sin responder
+            const cantidad = sinResponder.length;
+            const texto = cantidad === 1
+                ? 'Hay <strong>1 pregunta obligatoria</strong> sin responder.'
+                : 'Hay <strong>' + cantidad + ' preguntas obligatorias</strong> sin responder.';
+            document.getElementById('errorModalMensaje').innerHTML = texto;
+
+            openErrorModal();
+
+            // Resaltar en rojo las tarjetas sin responder
+            sinResponder.forEach(function(item) {
+                item.tarjeta.style.outline = '2px solid #ef4444';
+                item.tarjeta.style.outlineOffset = '2px';
+            });
+
+            // Scroll a la primera sin responder
+            setTimeout(function() {
+                sinResponder[0].tarjeta.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+
+            return;
+        }
+
         const modal = document.getElementById('confirmModal');
         modal.classList.add('show');
-        
-        // Prevenir scroll del body cuando el modal está abierto
         document.body.style.overflow = 'hidden';
     }
 
-    // Función para cerrar el modal de confirmación
-    function closeConfirmModal() {
-        const modal = document.getElementById('confirmModal');
-        modal.classList.remove('show');
-        
-        // Restaurar scroll del body
-        document.body.style.overflow = 'auto';
-    }
-
-    // Función para confirmar y enviar el formulario
-    function confirmSubmit() {
-        // Cerrar el modal
-        closeConfirmModal();
-        
-        // Enviar el formulario
-        document.querySelector('form').submit();
-    }
-
-    // Cerrar modal al hacer clic fuera de él
-    document.getElementById('confirmModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeConfirmModal();
+    // Quitar el resaltado rojo cuando el usuario empieza a responder
+    document.addEventListener('change', function(e) {
+        const tarjeta = e.target.closest('.glass-card.border[data-pregunta-id]');
+        if (tarjeta) {
+            tarjeta.style.outline = '';
+            tarjeta.style.outlineOffset = '';
+        }
+    });
+    document.addEventListener('input', function(e) {
+        const tarjeta = e.target.closest('.glass-card.border[data-pregunta-id]');
+        if (tarjeta) {
+            tarjeta.style.outline = '';
+            tarjeta.style.outlineOffset = '';
         }
     });
 
-    // Cerrar modal con la tecla Escape
+    // Modal de error
+    function openErrorModal() {
+        const modal = document.getElementById('errorModal');
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeErrorModal() {
+        const modal = document.getElementById('errorModal');
+        modal.classList.remove('show');
+        document.body.style.overflow = 'auto';
+    }
+
+    // Modal de confirmación
+    function closeConfirmModal() {
+        const modal = document.getElementById('confirmModal');
+        modal.classList.remove('show');
+        document.body.style.overflow = 'auto';
+    }
+
+    function confirmSubmit() {
+        closeConfirmModal();
+        document.querySelector('form').submit();
+    }
+
+    // Cerrar modales al hacer clic fuera de ellos
+    document.getElementById('confirmModal').addEventListener('click', function(e) {
+        if (e.target === this) closeConfirmModal();
+    });
+
+    document.getElementById('errorModal').addEventListener('click', function(e) {
+        if (e.target === this) closeErrorModal();
+    });
+
+    // Cerrar modales con la tecla Escape
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             closeConfirmModal();
+            closeErrorModal();
         }
     });
 </script>
