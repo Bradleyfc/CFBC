@@ -337,7 +337,23 @@
                 <span class="glass-text-green font-medium text-xs">Crear Formulario</span>
               </a>
               {% endif %}
-              
+
+              {% if course.reglamento_curso %}
+              <a href="{% url 'principal:reglamento_curso_editar' course.id %}" class="glass-option-link glass-option-purple glass-option-compact flex items-center gap-1.5 p-2 rounded-md transition-all duration-300">
+                <div class="glass-icon-compact-opt glass-icon-purple">
+                  <span class="fa material-icons">gavel</span></i>
+                </div>
+                <span class="glass-text-purple font-medium text-xs">Editar Reglamento</span>
+              </a>
+              {% else %}
+              <a href="{% url 'principal:reglamento_curso_crear' course.id %}" class="glass-option-link glass-option-teal glass-option-compact flex items-center gap-1.5 p-2 rounded-md transition-all duration-300">
+                <div class="glass-icon-compact-opt glass-icon-teal">
+                  <span class="fa material-icons">post_add</span></i>
+                </div>
+                <span class="glass-text-teal font-medium text-xs">Agregar Reglamento</span>
+              </a>
+              {% endif %}
+
               <hr class="glass-divider-compact">
               
               <a href="#" class="glass-option-link glass-option-red glass-option-compact flex items-center gap-1.5 p-2 rounded-md transition-all duration-300" onclick="showDeleteModal('{{course.id}}', '{{course.name|escapejs}}')">
@@ -2629,6 +2645,36 @@
     color: #6b7280;
     margin: 0 0.25rem;
   }
+
+  /* Purple Theme - Editar Reglamento */
+  .glass-option-compact.glass-option-purple {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.06) 0%, rgba(124, 58, 237, 0.04) 100%) !important;
+    border-color: rgba(139, 92, 246, 0.15);
+  }
+  .glass-option-compact.glass-option-purple:hover {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.12) 0%, rgba(124, 58, 237, 0.08) 100%) !important;
+  }
+  .glass-icon-purple {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(124, 58, 237, 0.2));
+    color: #6d28d9;
+    border-color: rgba(139, 92, 246, 0.5);
+  }
+  .glass-text-purple { color: #6d28d9; }
+
+  /* Teal Theme - Agregar Reglamento */
+  .glass-option-compact.glass-option-teal {
+    background: linear-gradient(135deg, rgba(20, 184, 166, 0.06) 0%, rgba(13, 148, 136, 0.04) 100%) !important;
+    border-color: rgba(20, 184, 166, 0.15);
+  }
+  .glass-option-compact.glass-option-teal:hover {
+    background: linear-gradient(135deg, rgba(20, 184, 166, 0.12) 0%, rgba(13, 148, 136, 0.08) 100%) !important;
+  }
+  .glass-icon-teal {
+    background: linear-gradient(135deg, rgba(20, 184, 166, 0.3), rgba(13, 148, 136, 0.2));
+    color: #0f766e;
+    border-color: rgba(20, 184, 166, 0.5);
+  }
+  .glass-text-teal { color: #0f766e; }
 </style>
 
 <div id="cursos-config" data-filtro-servidor="{{ filtro_servidor|yesno:'true,false' }}" style="display:none;"></div>

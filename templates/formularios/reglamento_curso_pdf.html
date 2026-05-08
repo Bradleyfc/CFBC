@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Reglamento del Curso - Centro Fray Bartolomé de las Casas</title>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 11pt;
+      color: #222;
+      margin: 2cm;
+      line-height: 1.6;
+    }
+    h1 {
+      font-size: 16pt;
+      font-weight: bold;
+      text-align: center;
+      color: #0f2744;
+      margin-bottom: 4pt;
+    }
+    h2 {
+      font-size: 13pt;
+      font-weight: bold;
+      text-align: center;
+      color: #1a3f6f;
+      margin-bottom: 16pt;
+    }
+    .subtitulo {
+      font-size: 11pt;
+      text-align: center;
+      color: #374151;
+      margin-bottom: 20pt;
+    }
+    .divider {
+      border: none;
+      border-top: 1px solid #d1d5db;
+      margin: 16pt 0;
+    }
+    .intro-label {
+      font-size: 12pt;
+      font-weight: bold;
+      color: #1e40af;
+      margin-bottom: 8pt;
+    }
+    .intro-text {
+      text-align: justify;
+      margin-bottom: 16pt;
+      white-space: pre-wrap;
+    }
+    .articulo-titulo {
+      font-size: 11pt;
+      font-weight: bold;
+      color: #1e40af;
+      margin-top: 14pt;
+      margin-bottom: 6pt;
+    }
+    .articulo-cuerpo {
+      text-align: justify;
+      margin-bottom: 12pt;
+      white-space: pre-wrap;
+    }
+    .footer {
+      text-align: center;
+      font-size: 9pt;
+      color: #6b7280;
+      margin-top: 30pt;
+      border-top: 1px solid #d1d5db;
+      padding-top: 8pt;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Reglamento del Curso</h1>
+  <h2>Centro Fray Bartolomé de las Casas</h2>
+  <p class="subtitulo">{{ curso.name }}</p>
+
+  <hr class="divider">
+
+  {% if reglamento.introduccion %}
+  <div class="intro-label">Introducción</div>
+  <div class="intro-text">{{ reglamento.introduccion }}</div>
+  {% endif %}
+
+  {% if articulos %}
+  {% for articulo in articulos %}
+  <div class="articulo-titulo">{{ articulo.titulo }}</div>
+  <div class="articulo-cuerpo">{{ articulo.cuerpo }}</div>
+  {% endfor %}
+  {% endif %}
+
+  <div class="footer">
+    Centro Fray Bartolomé de las Casas &copy; 1998-{{ ano_actual }}
+  </div>
+
+</body>
+</html>

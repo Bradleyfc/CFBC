@@ -71,6 +71,11 @@ urlpatterns = [
     path('reglamento-curso/', views.reglamento_curso, name='reglamento_curso'),
     path('reglamento-general/', views.reglamento_general, name='reglamento_general'),
     path('reglamento-general/exportar-pdf/', views.exportar_reglamento_general_pdf, name='exportar_reglamento_general_pdf'),
+    # Rutas para reglamento dinámico del curso
+    path('reglamento-curso/<int:curso_id>/', views.reglamento_curso_detalle, name='reglamento_curso_detalle'),
+    path('reglamento-curso/<int:curso_id>/exportar-pdf/', views.exportar_reglamento_curso_pdf, name='exportar_reglamento_curso_pdf'),
+    path('cursos/<int:curso_id>/reglamento/crear/', views.ReglamentoCursoCreateView.as_view(), name='reglamento_curso_crear'),
+    path('cursos/<int:curso_id>/reglamento/editar/', views.ReglamentoCursoUpdateView.as_view(), name='reglamento_curso_editar'),
     
     # Rutas para profesores
     path('solicitudes/', views.SolicitudesInscripcionListView.as_view(), name='solicitudes_list'),

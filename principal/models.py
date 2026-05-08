@@ -564,3 +564,80 @@ def _restaurar_datos_al_activar_curso_academico(sender, instance, **kwargs):
             exc_info=True,
         )
         instance._restaurado_error = str(e)
+
+
+# REGLAMENTO DEL CURSO
+
+class ReglamentoCurso(models.Model):
+    """
+    Modelo para almacenar el reglamento dinámico de cada curso.
+    Cada curso puede tener como máximo un reglamento (relación uno a uno).
+    """
+    curso = models.OneToOneField(
+        Curso,
+        on_delete=models.CASCADE,
+        related_name='reglamento_curso',
+        verbose_name='Curso'
+    )
+    introduccion = models.TextField(
+        blank=True,
+        default='',
+        verbose_name='Introducción'
+    )
+    fecha_creacion = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Fecha de creación'
+    )
+    fecha_modificacion = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Última modificación'
+    )
+
+    def __str__(self):
+        return f"Reglamento de {self.curso.name}"
+
+    class Meta:
+        verbose_name = '📄 Reglamento del Curso'
+        verbose_name_plural = '📄 Reglamentos de Cursos'
+
+
+class ArticuloReglamento(models.Model):
+    """
+    Modelo para almacenar los artículos individuales de un ReglamentoCurso.
+    Cada artículo tiene un título, cuerpo y campo de orden (1–999).
+    """
+    reglamento = models.ForeignKey(
+        ReglamentoCurso,
+        on_delete=models.CASCADE,
+        related_name='articulos',
+        verbose_name='Reglamento'
+    )
+    titulo = models.CharField(
+        max_length=200,
+        verbose_name='Título del artículo'
+    )
+    cuerpo = models.TextField(
+        max_length=5000,
+        verbose_name='Cuerpo del artículo'
+    )
+    orden = models.PositiveIntegerField(
+        default=1,
+        verbose_name='Orden'
+    )
+    fecha_creacion = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Fecha de creación'
+    )
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.orden < 1 or self.orden > 999:
+            raise ValidationError('El orden debe estar entre 1 y 999.')
+
+    def __str__(self):
+        return f"{self.titulo} (Orden: {self.orden})"
+
+    class Meta:
+        verbose_name = '📝 Artículo de Reglamento'
+        verbose_name_plural = '📝 Artículos de Reglamento'
+        ordering = ['orden', 'fecha_creacion']

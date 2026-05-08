@@ -15,7 +15,8 @@ from django.utils import timezone
 from .forms import (
     CustomUserCreationForm, CourseForm, CalificacionesForm, NotaIndividualFormSet, NotaIndividualFormSetCustom,
     FormularioAplicacionForm, PreguntaFormularioForm, OpcionRespuestaForm,
-    OpcionRespuestaFormSet, PreguntaFormularioFormSet, RespuestaEstudianteForm
+    OpcionRespuestaFormSet, PreguntaFormularioFormSet, RespuestaEstudianteForm,
+    ReglamentoCursoForm, ArticuloReglamentoFormSet,
 )
 from django.contrib.auth.models import Group, User
 from django.db.models import Q, Max
@@ -26,6 +27,7 @@ from django.template.loader import get_template
 from xhtml2pdf import pisa
 from io import BytesIO
 import openpyxl
+import unicodedata
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from accounts.models import Registro
 from blog.models import Noticia, Categoria
@@ -35,7 +37,8 @@ except ImportError:
     ContentIndicatorService = None
 from .models import (
     CursoAcademico, Curso, Matriculas, Calificaciones, Asistencia,
-    FormularioAplicacion, PreguntaFormulario, OpcionRespuesta, SolicitudInscripcion, RespuestaEstudiante, NotaIndividual
+    FormularioAplicacion, PreguntaFormulario, OpcionRespuesta, SolicitudInscripcion, RespuestaEstudiante, NotaIndividual,
+    ReglamentoCurso, ArticuloReglamento,
 )
 from course_documents.mixins import DocumentsProfileMixin, DocumentsCourseMixin
 
@@ -3766,6 +3769,179 @@ def exportar_reglamento_general_pdf(request):
         return response
     
     return HttpResponse('Error al generar el PDF', status=500)
+
+
+# ---------------------------------------------------------------------------
+# Vistas para el Reglamento del Curso (Requisitos 1.1–1.6, 2.x, 3.x, 4.x)
+# ---------------------------------------------------------------------------
+
+class ReglamentoCursoCreateView(LoginRequiredMixin, SecretariaRequiredMixin, CreateView):
+    """
+    Vista para crear un nuevo ReglamentoCurso para un curso específico.
+    Requisitos: 1.1, 1.2, 1.4, 1.6, 2.2, 2.5
+    """
+    template_name = 'formularios/reglamento_curso_form.html'
+    model = ReglamentoCurso
+    form_class = ReglamentoCursoForm
+
+    def get_curso(self):
+        return get_object_or_404(Curso, pk=self.kwargs['curso_id'])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        curso = self.get_curso()
+        context['curso'] = curso
+        if self.request.method == 'POST':
+            context['form'] = ReglamentoCursoForm(self.request.POST)
+            context['articulo_formset'] = ArticuloReglamentoFormSet(self.request.POST)
+        else:
+            context['form'] = ReglamentoCursoForm()
+            context['articulo_formset'] = ArticuloReglamentoFormSet()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        curso = self.get_curso()
+        form = ReglamentoCursoForm(request.POST)
+        formset = ArticuloReglamentoFormSet(request.POST)
+
+        # Informar al formset el valor de introduccion para la validación cruzada
+        formset.set_introduccion(request.POST.get('introduccion', ''))
+
+        if form.is_valid() and formset.is_valid():
+            reglamento = form.save(commit=False)
+            reglamento.curso = curso
+            reglamento.save()
+
+            formset.instance = reglamento
+            formset.save()
+
+            messages.success(request, f'Reglamento del curso "{curso.name}" creado exitosamente.')
+            return redirect(reverse('principal:cursos'))
+
+        # Re-render con errores
+        context = {
+            'curso': curso,
+            'form': form,
+            'articulo_formset': formset,
+        }
+        return render(request, self.template_name, context)
+
+
+class ReglamentoCursoUpdateView(LoginRequiredMixin, SecretariaRequiredMixin, UpdateView):
+    """
+    Vista para editar un ReglamentoCurso existente.
+    Requisitos: 1.3, 1.5, 1.6, 2.8, 2.9
+    """
+    template_name = 'formularios/reglamento_curso_form.html'
+    model = ReglamentoCurso
+    form_class = ReglamentoCursoForm
+
+    def get_reglamento(self):
+        return get_object_or_404(ReglamentoCurso, curso__pk=self.kwargs['curso_id'])
+
+    def get_object(self, queryset=None):
+        return self.get_reglamento()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        reglamento = self.get_reglamento()
+        curso = reglamento.curso
+        context['curso'] = curso
+        if self.request.method == 'POST':
+            context['form'] = ReglamentoCursoForm(self.request.POST, instance=reglamento)
+            context['articulo_formset'] = ArticuloReglamentoFormSet(self.request.POST, instance=reglamento)
+        else:
+            context['form'] = ReglamentoCursoForm(instance=reglamento)
+            context['articulo_formset'] = ArticuloReglamentoFormSet(instance=reglamento)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        reglamento = self.get_reglamento()
+        curso = reglamento.curso
+        form = ReglamentoCursoForm(request.POST, instance=reglamento)
+        formset = ArticuloReglamentoFormSet(request.POST, instance=reglamento)
+
+        # Informar al formset el valor de introduccion para la validación cruzada
+        formset.set_introduccion(request.POST.get('introduccion', ''))
+
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            formset.save()
+
+            messages.success(request, f'Reglamento del curso "{curso.name}" actualizado exitosamente.')
+            return redirect(reverse('principal:cursos'))
+
+        # Re-render con errores
+        context = {
+            'curso': curso,
+            'form': form,
+            'articulo_formset': formset,
+        }
+        return render(request, self.template_name, context)
+
+
+def reglamento_curso_detalle(request, curso_id):
+    """
+    Vista pública para que los estudiantes vean el reglamento de un curso específico.
+    Si el curso no tiene reglamento dinámico, muestra el reglamento estático de respaldo.
+    Requisitos: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 5.3
+    """
+    curso = get_object_or_404(Curso, pk=curso_id)
+    reglamento = getattr(curso, 'reglamento_curso', None)
+
+    if reglamento is not None:
+        articulos = reglamento.articulos.order_by('orden', 'fecha_creacion')
+        context = {
+            'curso': curso,
+            'reglamento': reglamento,
+            'articulos': articulos,
+            'ano_actual': timezone.now().year,
+        }
+        return render(request, 'formularios/reglamento_curso_detalle.html', context)
+
+    # Fallback: reglamento estático genérico (Req. 3.5)
+    return render(request, 'formularios/reglamento_curso.html', {'curso': curso})
+
+
+def exportar_reglamento_curso_pdf(request, curso_id):
+    """
+    Vista para exportar el reglamento de un curso específico en PDF.
+    Requisitos: 4.1, 4.2, 4.3, 4.4, 4.5
+    """
+    curso = get_object_or_404(Curso, pk=curso_id)
+    reglamento = get_object_or_404(ReglamentoCurso, curso=curso)
+    articulos = reglamento.articulos.order_by('orden', 'fecha_creacion')
+
+    context = {
+        'curso': curso,
+        'reglamento': reglamento,
+        'articulos': articulos,
+        'ano_actual': timezone.now().year,
+    }
+
+    template = get_template('formularios/reglamento_curso_pdf.html')
+    html = template.render(context)
+    result = BytesIO()
+    pdf = pisa.pisaDocument(BytesIO(html.encode('UTF-8')), result)
+
+    if not pdf.err:
+        # Sanitizar el nombre del curso para el nombre del archivo (Req. 4.4)
+        nombre_normalizado = unicodedata.normalize('NFKD', curso.name)
+        nombre_ascii = nombre_normalizado.encode('ascii', 'ignore').decode('ascii')
+        nombre_sanitizado = nombre_ascii.replace(' ', '_')
+        # Eliminar caracteres no seguros para cabeceras HTTP / nombres de archivo
+        nombre_sanitizado = ''.join(
+            c for c in nombre_sanitizado
+            if c.isalnum() or c in ('_', '-', '.')
+        )
+        nombre_archivo = f'Reglamento_{nombre_sanitizado}.pdf'
+
+        response = HttpResponse(result.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{nombre_archivo}"'
+        return response
+
+    return HttpResponse('Error al generar el PDF del reglamento', status=500)
+
 
 # Vistas para los profesores
 

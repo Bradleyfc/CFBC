@@ -2,7 +2,8 @@ from django.contrib import admin, messages
 from django import forms
 from.models import (
     Curso, Matriculas, Asistencia, Calificaciones, CursoAcademico, NotaIndividual,
-    FormularioAplicacion, PreguntaFormulario, OpcionRespuesta, SolicitudInscripcion, RespuestaEstudiante
+    FormularioAplicacion, PreguntaFormulario, OpcionRespuesta, SolicitudInscripcion, RespuestaEstudiante,
+    ReglamentoCurso, ArticuloReglamento,
 )
 # Register your models here.
 
@@ -525,6 +526,43 @@ admin.site.register(SolicitudInscripcion, SolicitudInscripcionAdmin)
 admin.site.register(RespuestaEstudiante, RespuestaEstudianteAdmin)
 
 # CONFIGURACIÓN PERSONALIZADA DEL ADMIN PARA AGRUPAR FORMULARIOS
+
+
+
+# ── Reglamento del Curso — Admin ─────────────────────────────────────────
+
+class ArticuloReglamentoInline(admin.TabularInline):
+    """Inline para gestionar artículos dentro de un reglamento de curso."""
+    model = ArticuloReglamento
+    extra = 1
+    fields = ('titulo', 'cuerpo', 'orden')
+    ordering = ['orden', 'fecha_creacion']
+
+
+class ReglamentoCursoAdmin(admin.ModelAdmin):
+    """Administración de reglamentos de curso."""
+    list_display = ('curso', 'fecha_creacion', 'fecha_modificacion', 'num_articulos')
+    list_filter = ('curso__curso_academico',)
+    search_fields = ('curso__name', 'introduccion')
+    readonly_fields = ('fecha_creacion', 'fecha_modificacion')
+    inlines = [ArticuloReglamentoInline]
+
+    fieldsets = (
+        ('Información del Reglamento', {
+            'fields': ('curso', 'introduccion')
+        }),
+        ('Fechas', {
+            'fields': ('fecha_creacion', 'fecha_modificacion'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def num_articulos(self, obj):
+        return obj.articulos.count()
+    num_articulos.short_description = 'Artículos'
+
+
+admin.site.register(ReglamentoCurso, ReglamentoCursoAdmin)
 
 def custom_get_app_list(self, request, app_label=None):
     """

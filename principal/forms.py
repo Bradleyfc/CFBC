@@ -10,7 +10,8 @@ from django.forms import inlineformset_factory, modelformset_factory
 # Importar modelos necesarios
 from .models import (
     Curso, Calificaciones, NotaIndividual, FormularioAplicacion, PreguntaFormulario,
-    OpcionRespuesta, RespuestaEstudiante, CursoAcademico
+    OpcionRespuesta, RespuestaEstudiante, CursoAcademico,
+    ReglamentoCurso, ArticuloReglamento,
 )
 from accounts.models import Registro
 
@@ -427,3 +428,112 @@ class RespuestaEstudianteForm(forms.Form):
                 required=self.pregunta.requerida,
                 label=''
             )
+
+
+# ---------------------------------------------------------------------------
+# Reglamento del Curso
+# ---------------------------------------------------------------------------
+
+class ReglamentoCursoForm(forms.ModelForm):
+    """
+    Formulario para gestionar el campo introduccion del ReglamentoCurso.
+    Requisitos: 2.2, 2.3
+    """
+
+    class Meta:
+        model = ReglamentoCurso
+        fields = ['introduccion']
+        widgets = {
+            'introduccion': forms.Textarea(attrs={
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm '
+                         'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+                'rows': 6,
+                'placeholder': 'Escriba la introducción del reglamento...',
+            }),
+        }
+        labels = {
+            'introduccion': 'Introducción',
+        }
+
+
+def _make_articulo_reglamento_formset():
+    """
+    Construye el formset base usando inlineformset_factory y le añade
+    validación personalizada a nivel de formset.
+    Requisitos: 2.4, 2.6, 2.7, 2.9, 2.11
+    """
+    _BaseFormSet = inlineformset_factory(
+        ReglamentoCurso,
+        ArticuloReglamento,
+        fields=['titulo', 'cuerpo', 'orden'],
+        can_delete=True,
+        extra=1,
+        widgets={
+            'titulo': forms.TextInput(attrs={
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm '
+                         'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+                'placeholder': 'Título del artículo (máx. 200 caracteres)',
+            }),
+            'cuerpo': forms.Textarea(attrs={
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm '
+                         'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+                'rows': 4,
+                'placeholder': 'Cuerpo del artículo (máx. 5000 caracteres)',
+            }),
+            'orden': forms.NumberInput(attrs={
+                'class': 'glass-input-compact',
+                'min': 1,
+                'max': 999,
+                'placeholder': 'Orden (1-999)',
+            }),
+        },
+    )
+
+    class ArticuloReglamentoFormSetWithValidation(_BaseFormSet):
+        """
+        Formset con validación personalizada:
+        - Rechaza si introduccion está vacía y no hay artículos válidos (Req. 2.6).
+        - Rechaza artículos con titulo o cuerpo vacíos (Req. 2.7).
+        La validación de introduccion vacía se delega a la vista, que debe
+        llamar a formset.set_introduccion() antes de is_valid().
+        """
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self._introduccion = None
+
+        def set_introduccion(self, introduccion):
+            """Permite que la vista informe al formset el valor de introduccion."""
+            self._introduccion = introduccion
+
+        def clean(self):
+            """Validación a nivel de formset."""
+            if any(self.errors):
+                # No continuar si hay errores individuales en los formularios
+                return
+
+            articulos_validos = []
+            for form in self.forms:
+                if form.cleaned_data and not form.cleaned_data.get('DELETE', False):
+                    titulo = form.cleaned_data.get('titulo', '').strip()
+                    cuerpo = form.cleaned_data.get('cuerpo', '').strip()
+
+                    # Req. 2.7: artículos con titulo o cuerpo vacíos son inválidos
+                    if not titulo or not cuerpo:
+                        raise forms.ValidationError(
+                            'Todos los artículos deben tener título y cuerpo completos.'
+                        )
+
+                    articulos_validos.append(form)
+
+            # Req. 2.6: rechazar si introduccion vacía y sin artículos válidos
+            intro_vacia = not (self._introduccion or '').strip()
+            if intro_vacia and not articulos_validos:
+                raise forms.ValidationError(
+                    'El reglamento debe tener al menos una introducción o un artículo.'
+                )
+
+    return ArticuloReglamentoFormSetWithValidation
+
+
+ArticuloReglamentoFormSet = _make_articulo_reglamento_formset()

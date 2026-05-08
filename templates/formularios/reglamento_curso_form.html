@@ -1,0 +1,399 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reglamento del Curso - CFBC{% endblock %}
+
+{% block messages %}
+{% endblock %}
+
+{% block content %}
+<style>
+  @keyframes heroShimmer {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  .main-title {
+  }
+  .glass-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.4);
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+  }
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e40af;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 2px solid rgba(59,130,246,0.2);
+    padding-bottom: 0.5rem;
+  }
+  .form-label {
+    display: block;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.4rem;
+    font-size: 0.9rem;
+  }
+  .form-control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background-color: #fff;
+    box-sizing: border-box;
+  }
+  .form-control:focus {
+    outline: none;
+    border-color: #2563eb;
+    background-color: #eff6ff;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+  }
+  textarea.form-control { resize: vertical; }
+  .articulo-row {
+    background: rgba(248,250,252,0.8);
+    border: 1px solid rgba(209,213,219,0.6);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    position: relative;
+    transition: all 0.3s ease;
+  }
+  .articulo-row:hover {
+    border-color: rgba(59,130,246,0.3);
+    box-shadow: 0 4px 12px rgba(59,130,246,0.08);
+  }
+  .articulo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  .articulo-num { font-weight: 700; color: #1e40af; font-size: 0.9rem; }
+  .btn-eliminar-articulo {
+    background: linear-gradient(135deg, rgba(239,68,68,0.1), rgba(220,38,38,0.05));
+    color: #dc2626;
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+  }
+  .btn-eliminar-articulo:hover {
+    background: linear-gradient(135deg, rgba(239,68,68,0.2), rgba(220,38,38,0.1));
+    border-color: rgba(239,68,68,0.5);
+    transform: translateY(-1px);
+  }
+  .glass-btn {
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    border: 1px solid;
+    transition: all 0.3s ease;
+    text-decoration: none;
+  }
+  .glass-btn:hover { transform: translateY(-2px); }
+  .glass-btn-save {
+    background: linear-gradient(135deg, rgba(16,185,129,0.9), rgba(5,150,105,0.7));
+    color: white;
+    border-color: rgba(52,211,153,0.6);
+    box-shadow: 0 4px 16px rgba(16,185,129,0.3);
+  }
+  .glass-btn-save:hover {
+    background: linear-gradient(135deg, rgba(5,150,105,0.9), rgba(4,120,87,0.8));
+    box-shadow: 0 8px 24px rgba(16,185,129,0.4);
+  }
+  .glass-btn-cancel {
+    background: linear-gradient(135deg, rgba(107,114,128,0.3), rgba(75,85,99,0.2));
+    color: #374151;
+    border-color: rgba(156,163,175,0.5);
+  }
+  .glass-btn-cancel:hover {
+    background: linear-gradient(135deg, rgba(156,163,175,0.4), rgba(107,114,128,0.3));
+  }
+  .glass-btn-add {
+    background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(37,99,235,0.08));
+    color: #1d4ed8;
+    border-color: rgba(59,130,246,0.3);
+  }
+  .glass-btn-add:hover {
+    background: linear-gradient(135deg, rgba(59,130,246,0.25), rgba(37,99,235,0.15));
+    border-color: rgba(59,130,246,0.5);
+  }
+  .error-list {
+    background: rgba(254,226,226,0.8);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    color: #b91c1c;
+    font-size: 0.875rem;
+  }
+  .error-list ul { margin: 0; padding-left: 1.2rem; }
+  .hidden-delete { display: none; }
+  .articulo-row.marked-delete { display: none; }
+</style>
+
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen pb-12">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <div class="mb-6">
+      <div class="flex items-center mb-4">
+        <a href="javascript:history.back()" class="glass-btn glass-btn-cancel mr-4">
+          <span class="fa material-icons" style="font-size:18px;">arrow_back</span>
+          Volver
+        </a>
+      </div>
+      <h1 class="main-title">Reglamento del Curso - Centro Fray Bartolomé de las Casas</h1>
+      <p class="text-center text-blue-700 font-semibold text-lg mt-1">{{ curso.name }}</p>
+    </div>
+
+    {% if articulo_formset.non_form_errors %}
+    <div class="error-list">
+      <strong>Errores en los artículos:</strong>
+      <ul>
+        {% for error in articulo_formset.non_form_errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {% if form.non_field_errors %}
+    <div class="error-list">
+      <ul>
+        {% for error in form.non_field_errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <form method="post" id="reglamento-form">
+      {% csrf_token %}
+
+      <div class="glass-card">
+        <div class="section-title">
+          <span class="fa material-icons" style="font-size:20px;">info</span>
+          Introducción del Reglamento
+        </div>
+        <div>
+          <label class="form-label" for="{{ form.introduccion.id_for_label }}">Introducción</label>
+          <textarea
+            name="{{ form.introduccion.html_name }}"
+            id="{{ form.introduccion.id_for_label }}"
+            class="form-control"
+            rows="6"
+            placeholder="Escriba la introducción del reglamento..."
+          >{{ form.introduccion.value|default:'' }}</textarea>
+          {% if form.introduccion.errors %}
+          <div class="error-list mt-2">
+            {% for error in form.introduccion.errors %}<p>{{ error }}</p>{% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="section-title">
+          <span class="fa material-icons" style="font-size:20px;">article</span>
+          Artículos del Reglamento
+        </div>
+
+        {{ articulo_formset.management_form }}
+
+        <div id="articulos-container">
+          {% for articulo_form in articulo_formset.forms %}
+          <div class="articulo-row" id="articulo-{{ forloop.counter0 }}">
+            <div class="articulo-header">
+              <span class="articulo-num">Artículo {{ forloop.counter }}</span>
+              <button type="button" class="btn-eliminar-articulo" onclick="eliminarArticulo(this)">
+                <span class="fa material-icons" style="font-size:16px;">delete</span>
+                Eliminar
+              </button>
+            </div>
+
+            {{ articulo_form.id }}
+            <div class="hidden-delete">{{ articulo_form.DELETE }}</div>
+
+            <div style="margin-bottom: 0.75rem;">
+              <label class="form-label">Título del artículo</label>
+              <input
+                type="text"
+                name="{{ articulo_form.titulo.html_name }}"
+                id="{{ articulo_form.titulo.id_for_label }}"
+                value="{{ articulo_form.titulo.value|default:'' }}"
+                class="form-control"
+                maxlength="200"
+                placeholder="Título del artículo (máx. 200 caracteres)"
+              >
+              {% if articulo_form.titulo.errors %}
+              <div class="error-list mt-1">
+                {% for error in articulo_form.titulo.errors %}<p>{{ error }}</p>{% endfor %}
+              </div>
+              {% endif %}
+            </div>
+
+            <div style="margin-bottom: 0.75rem;">
+              <label class="form-label">Cuerpo del artículo</label>
+              <textarea
+                name="{{ articulo_form.cuerpo.html_name }}"
+                id="{{ articulo_form.cuerpo.id_for_label }}"
+                class="form-control"
+                rows="4"
+                maxlength="5000"
+                placeholder="Cuerpo del artículo (máx. 5000 caracteres)"
+              >{{ articulo_form.cuerpo.value|default:'' }}</textarea>
+              {% if articulo_form.cuerpo.errors %}
+              <div class="error-list mt-1">
+                {% for error in articulo_form.cuerpo.errors %}<p>{{ error }}</p>{% endfor %}
+              </div>
+              {% endif %}
+            </div>
+
+            <div style="width: 120px;">
+              <label class="form-label">Orden (1-999)</label>
+              <input
+                type="number"
+                name="{{ articulo_form.orden.html_name }}"
+                id="{{ articulo_form.orden.id_for_label }}"
+                value="{{ articulo_form.orden.value|default:'1' }}"
+                class="form-control"
+                min="1"
+                max="999"
+              >
+              {% if articulo_form.orden.errors %}
+              <div class="error-list mt-1">
+                {% for error in articulo_form.orden.errors %}<p>{{ error }}</p>{% endfor %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div style="margin-top: 1rem;">
+          <button type="button" class="glass-btn glass-btn-add" id="btn-agregar-articulo">
+            <span class="fa material-icons" style="font-size:18px;">add_circle</span>
+            Agregar Artículo
+          </button>
+        </div>
+      </div>
+
+      <div class="flex justify-between items-center flex-wrap gap-3">
+        <a href="{% url 'principal:cursos' %}" class="glass-btn glass-btn-cancel">
+          <span class="fa material-icons" style="font-size:18px;">close</span>
+          Cancelar
+        </a>
+        <button type="submit" class="glass-btn glass-btn-save">
+          <span class="fa material-icons" style="font-size:18px;">save</span>
+          Guardar Reglamento
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<script>
+(function () {
+  var PREFIX = 'articulos';
+
+  function getTotalForms() {
+    return parseInt(document.getElementById('id_' + PREFIX + '-TOTAL_FORMS').value, 10);
+  }
+
+  function setTotalForms(n) {
+    document.getElementById('id_' + PREFIX + '-TOTAL_FORMS').value = n;
+  }
+
+  function renumerarArticulos() {
+    var rows = document.querySelectorAll('#articulos-container .articulo-row:not(.marked-delete)');
+    rows.forEach(function (row, idx) {
+      var header = row.querySelector('.articulo-num');
+      if (header) header.textContent = 'Artículo ' + (idx + 1);
+    });
+  }
+
+  document.getElementById('btn-agregar-articulo').addEventListener('click', function () {
+    var total = getTotalForms();
+    var container = document.getElementById('articulos-container');
+    var newRow = document.createElement('div');
+    newRow.className = 'articulo-row';
+    newRow.id = 'articulo-' + total;
+    newRow.innerHTML =
+      '<div class="articulo-header">' +
+        '<span class="articulo-num">Artículo ' + (total + 1) + '</span>' +
+        '<button type="button" class="btn-eliminar-articulo" onclick="eliminarArticulo(this)">' +
+          '<span class="fa material-icons" style="font-size:16px;">delete</span> Eliminar' +
+        '</button>' +
+      '</div>' +
+      '<div style="margin-bottom:0.75rem;">' +
+        '<label class="form-label">Título del artículo</label>' +
+        '<input type="text" name="' + PREFIX + '-' + total + '-titulo" id="id_' + PREFIX + '-' + total + '-titulo"' +
+          ' class="form-control" maxlength="200" placeholder="Título del artículo (máx. 200 caracteres)">' +
+      '</div>' +
+      '<div style="margin-bottom:0.75rem;">' +
+        '<label class="form-label">Cuerpo del artículo</label>' +
+        '<textarea name="' + PREFIX + '-' + total + '-cuerpo" id="id_' + PREFIX + '-' + total + '-cuerpo"' +
+          ' class="form-control" rows="4" maxlength="5000" placeholder="Cuerpo del artículo (máx. 5000 caracteres)"></textarea>' +
+      '</div>' +
+      '<div style="width:120px;">' +
+        '<label class="form-label">Orden (1-999)</label>' +
+        '<input type="number" name="' + PREFIX + '-' + total + '-orden" id="id_' + PREFIX + '-' + total + '-orden"' +
+          ' class="form-control" min="1" max="999" value="' + (total + 1) + '">' +
+      '</div>' +
+      '<input type="hidden" name="' + PREFIX + '-' + total + '-id" id="id_' + PREFIX + '-' + total + '-id" value="">';
+    container.appendChild(newRow);
+    setTotalForms(total + 1);
+    renumerarArticulos();
+  });
+
+  window.eliminarArticulo = function (btn) {
+    var row = btn.closest('.articulo-row');
+    var deleteInput = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+    if (deleteInput) {
+      deleteInput.checked = true;
+      row.classList.add('marked-delete');
+    } else {
+      row.remove();
+      var allRows = document.querySelectorAll('#articulos-container .articulo-row');
+      setTotalForms(allRows.length);
+      allRows.forEach(function (r, idx) {
+        r.querySelectorAll('input, textarea').forEach(function (field) {
+          if (field.name) {
+            field.name = field.name.replace(new RegExp(PREFIX + '-\d+-'), PREFIX + '-' + idx + '-');
+          }
+          if (field.id) {
+            field.id = field.id.replace(new RegExp('id_' + PREFIX + '-\d+-'), 'id_' + PREFIX + '-' + idx + '-');
+          }
+        });
+      });
+    }
+    renumerarArticulos();
+  };
+
+  renumerarArticulos();
+})();
+</script>
+{% endblock %}
