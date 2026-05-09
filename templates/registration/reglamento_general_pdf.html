@@ -134,6 +134,28 @@
     </div>
 
     <!-- Introducción -->
+    {% if dinamico %}
+    {% if reglamento.introduccion %}
+    <div class="section intro-section">
+        <h2>Introducción</h2>
+        <div class="content-box">
+            <p>{{ reglamento.introduccion|linebreaksbr }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Artículos dinámicos -->
+    {% for articulo in articulos %}
+    <div class="section article-1">
+        <h2>Artículo {{ forloop.counter }}: {{ articulo.titulo }}</h2>
+        <div class="content-box">
+            <p>{{ articulo.cuerpo|linebreaksbr }}</p>
+        </div>
+    </div>
+    {% endfor %}
+
+    {% else %}
+    <!-- Contenido estático de respaldo -->
     <div class="section intro-section">
         <h2>Introducción</h2>
         <div class="content-box">
@@ -273,9 +295,11 @@
         </div>
     </div>
 
+    {% endif %}{# fin dinamico/estatico #}
+
     <!-- Footer -->
-    <div class="footer">
-        <p>Centro Fray Bartolomé de las Casas © 1998-{{ ano_actual }}</p>
+    <div class="footer" style="text-align: center;">
+        <p style="text-align: center;">Centro Fray Bartolomé de las Casas © 1998-{{ ano_actual }}</p>
     </div>
 </body>
 </html>

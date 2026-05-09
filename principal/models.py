@@ -641,3 +641,51 @@ class ArticuloReglamento(models.Model):
         verbose_name = '📝 Artículo de Reglamento'
         verbose_name_plural = '📝 Artículos de Reglamento'
         ordering = ['orden', 'fecha_creacion']
+
+
+# ── REGLAMENTO GENERAL DEL CENTRO ────────────────────────────────────────────
+
+class ReglamentoGeneral(models.Model):
+    """
+    Singleton que almacena el reglamento general del centro.
+    Solo puede existir un registro (se garantiza en la vista).
+    """
+    introduccion = models.TextField(blank=True, default='', verbose_name='Introducción')
+    fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de creación')
+    fecha_modificacion = models.DateTimeField(auto_now=True, verbose_name='Última modificación')
+
+    def __str__(self):
+        return 'Reglamento General del Centro'
+
+    class Meta:
+        verbose_name = '📋 Reglamento General'
+        verbose_name_plural = '📋 Reglamento General'
+
+
+class ArticuloReglamentoGeneral(models.Model):
+    """
+    Artículo individual del ReglamentoGeneral.
+    """
+    reglamento = models.ForeignKey(
+        ReglamentoGeneral,
+        on_delete=models.CASCADE,
+        related_name='articulos',
+        verbose_name='Reglamento General',
+    )
+    titulo = models.CharField(max_length=200, verbose_name='Título del artículo')
+    cuerpo = models.TextField(max_length=5000, verbose_name='Cuerpo del artículo')
+    orden = models.PositiveIntegerField(default=1, verbose_name='Orden')
+    fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de creación')
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.orden < 1 or self.orden > 999:
+            raise ValidationError('El orden debe estar entre 1 y 999.')
+
+    def __str__(self):
+        return f'{self.titulo} (Orden: {self.orden})'
+
+    class Meta:
+        verbose_name = '📝 Artículo de Reglamento General'
+        verbose_name_plural = '📝 Artículos de Reglamento General'
+        ordering = ['orden', 'fecha_creacion']

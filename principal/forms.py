@@ -12,6 +12,7 @@ from .models import (
     Curso, Calificaciones, NotaIndividual, FormularioAplicacion, PreguntaFormulario,
     OpcionRespuesta, RespuestaEstudiante, CursoAcademico,
     ReglamentoCurso, ArticuloReglamento,
+    ReglamentoGeneral, ArticuloReglamentoGeneral,
 )
 from accounts.models import Registro
 
@@ -537,3 +538,85 @@ def _make_articulo_reglamento_formset():
 
 
 ArticuloReglamentoFormSet = _make_articulo_reglamento_formset()
+
+
+# ---------------------------------------------------------------------------
+# Formularios para el Reglamento General del Centro
+# ---------------------------------------------------------------------------
+
+class ReglamentoGeneralForm(forms.ModelForm):
+    """Formulario para la introducción del ReglamentoGeneral."""
+
+    class Meta:
+        model = ReglamentoGeneral
+        fields = ['introduccion']
+        widgets = {
+            'introduccion': forms.Textarea(attrs={
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm '
+                         'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+                'rows': 6,
+                'placeholder': 'Escriba la introducción del reglamento general...',
+            }),
+        }
+        labels = {'introduccion': 'Introducción'}
+
+
+def _make_articulo_reglamento_general_formset():
+    _BaseFormSet = inlineformset_factory(
+        ReglamentoGeneral,
+        ArticuloReglamentoGeneral,
+        fields=['titulo', 'cuerpo', 'orden'],
+        can_delete=True,
+        extra=1,
+        widgets={
+            'titulo': forms.TextInput(attrs={
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm '
+                         'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+                'placeholder': 'Título del artículo (máx. 200 caracteres)',
+            }),
+            'cuerpo': forms.Textarea(attrs={
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm '
+                         'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+                'rows': 4,
+                'placeholder': 'Cuerpo del artículo (máx. 5000 caracteres)',
+            }),
+            'orden': forms.NumberInput(attrs={
+                'class': 'glass-input-compact',
+                'min': 1,
+                'max': 999,
+                'placeholder': 'Orden (1-999)',
+            }),
+        },
+    )
+
+    class ArticuloReglamentoGeneralFormSetWithValidation(_BaseFormSet):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self._introduccion = None
+
+        def set_introduccion(self, introduccion):
+            self._introduccion = introduccion
+
+        def clean(self):
+            if any(self.errors):
+                return
+            articulos_validos = []
+            for form in self.forms:
+                if form.cleaned_data and not form.cleaned_data.get('DELETE', False):
+                    titulo = form.cleaned_data.get('titulo', '').strip()
+                    cuerpo = form.cleaned_data.get('cuerpo', '').strip()
+                    if not titulo or not cuerpo:
+                        raise forms.ValidationError(
+                            'Todos los artículos deben tener título y cuerpo completos.'
+                        )
+                    articulos_validos.append(form)
+            intro_vacia = not (self._introduccion or '').strip()
+            if intro_vacia and not articulos_validos:
+                raise forms.ValidationError(
+                    'El reglamento debe tener al menos una introducción o un artículo.'
+                )
+
+    return ArticuloReglamentoGeneralFormSetWithValidation
+
+
+ArticuloReglamentoGeneralFormSet = _make_articulo_reglamento_general_formset()

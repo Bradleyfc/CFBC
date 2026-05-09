@@ -1,20 +1,11 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Reglamento del Curso - CFBC{% endblock %}
-
-{% block messages %}
-{% endblock %}
+{% block title %}Reglamento General - CFBC{% endblock %}
+{% block messages %}{% endblock %}
 
 {% block content %}
 <style>
-  @keyframes heroShimmer {
-    0%   { background-position: 0% 50%; }
-    50%  { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-  .main-title {
-  }
   .glass-card {
     background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
     backdrop-filter: blur(20px);
@@ -153,6 +144,19 @@
     box-shadow: 0 8px 24px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.6);
     color: #1e40af;
   }
+  .glass-btn-info {
+    background: linear-gradient(135deg, rgba(59,130,246,0.25), rgba(37,99,235,0.12));
+    color: #1e40af;
+    border-top: 1px solid rgba(255,255,255,0.7);
+    border-left: 1px solid rgba(255,255,255,0.7);
+    border-right: 1px solid rgba(59,130,246,0.2);
+    border-bottom: 1px solid rgba(59,130,246,0.2);
+    box-shadow: 0 4px 16px rgba(59,130,246,0.15), inset 0 1px 0 rgba(255,255,255,0.4);
+  }
+  .glass-btn-info:hover {
+    background: linear-gradient(135deg, rgba(59,130,246,0.4), rgba(37,99,235,0.25));
+    box-shadow: 0 8px 28px rgba(59,130,246,0.3), inset 0 1px 0 rgba(255,255,255,0.5);
+  }
   .glass-btn-add {
     background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(37,99,235,0.08));
     color: #1d4ed8;
@@ -182,62 +186,60 @@
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
     <div class="mb-6">
-      <div class="flex items-center mb-4">
-        <a href="javascript:history.back()" class="glass-btn glass-btn-cancel mr-4">
+      <div class="flex items-center gap-3 mb-4">
+        <a href="{% url 'principal:profile' %}" class="glass-btn glass-btn-cancel">
           <span class="fa material-icons" style="font-size:18px;">arrow_back</span>
-          Volver
+          Volver al Perfil
+        </a>
+        <a href="{% url 'principal:reglamento_general' %}" class="glass-btn glass-btn-info" target="_blank">
+          <span class="fa material-icons" style="font-size:18px;">visibility</span>
+          Ver Reglamento
         </a>
       </div>
-      <h1 class="main-title">Reglamento del Curso - Centro Fray Bartolomé de las Casas</h1>
-      <p class="text-center text-blue-700 font-semibold text-lg mt-1">{{ curso.name }}</p>
+      <h1 class="text-2xl font-bold text-gray-800 text-center">Reglamento General del Centro</h1>
+      <p class="text-center text-gray-500 text-sm mt-1">
+        {% if reglamento %}Editando reglamento existente{% else %}Creando nuevo reglamento{% endif %}
+      </p>
     </div>
 
     {% if articulo_formset.non_form_errors %}
     <div class="error-list">
       <strong>Errores en los artículos:</strong>
-      <ul>
-        {% for error in articulo_formset.non_form_errors %}
-        <li>{{ error }}</li>
-        {% endfor %}
-      </ul>
+      <ul>{% for error in articulo_formset.non_form_errors %}<li>{{ error }}</li>{% endfor %}</ul>
     </div>
     {% endif %}
 
     {% if form.non_field_errors %}
     <div class="error-list">
-      <ul>
-        {% for error in form.non_field_errors %}
-        <li>{{ error }}</li>
-        {% endfor %}
-      </ul>
+      <ul>{% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}</ul>
     </div>
     {% endif %}
 
     <form method="post" id="reglamento-form">
       {% csrf_token %}
 
+      <!-- Introducción -->
       <div class="glass-card">
         <div class="section-title">
           <span class="fa material-icons" style="font-size:20px;">info</span>
           Introducción del Reglamento
         </div>
-        <div>
-          <label class="form-label" for="{{ form.introduccion.id_for_label }}">Introducción</label>
-          <textarea
-            name="{{ form.introduccion.html_name }}"
-            id="{{ form.introduccion.id_for_label }}"
-            class="form-control"
-            rows="6"
-            placeholder="Escriba la introducción del reglamento..."
-          >{{ form.introduccion.value|default:'' }}</textarea>
-          {% if form.introduccion.errors %}
-          <div class="error-list mt-2">
-            {% for error in form.introduccion.errors %}<p>{{ error }}</p>{% endfor %}
-          </div>
-          {% endif %}
+        <label class="form-label" for="{{ form.introduccion.id_for_label }}">Introducción</label>
+        <textarea
+          name="{{ form.introduccion.html_name }}"
+          id="{{ form.introduccion.id_for_label }}"
+          class="form-control"
+          rows="6"
+          placeholder="Escriba la introducción del reglamento general..."
+        >{{ form.introduccion.value|default:'' }}</textarea>
+        {% if form.introduccion.errors %}
+        <div class="error-list mt-2">
+          {% for error in form.introduccion.errors %}<p>{{ error }}</p>{% endfor %}
         </div>
+        {% endif %}
       </div>
 
+      <!-- Artículos -->
       <div class="glass-card">
         <div class="section-title">
           <span class="fa material-icons" style="font-size:20px;">article</span>
@@ -256,67 +258,49 @@
                 Eliminar
               </button>
             </div>
-
             {{ articulo_form.id }}
             <div class="hidden-delete">{{ articulo_form.DELETE }}</div>
 
-            <div style="margin-bottom: 0.75rem;">
+            <div style="margin-bottom:0.75rem;">
               <label class="form-label">Título del artículo</label>
-              <input
-                type="text"
+              <input type="text"
                 name="{{ articulo_form.titulo.html_name }}"
                 id="{{ articulo_form.titulo.id_for_label }}"
                 value="{{ articulo_form.titulo.value|default:'' }}"
-                class="form-control"
-                maxlength="200"
-                placeholder="Título del artículo (máx. 200 caracteres)"
-              >
+                class="form-control" maxlength="200"
+                placeholder="Título del artículo (máx. 200 caracteres)">
               {% if articulo_form.titulo.errors %}
-              <div class="error-list mt-1">
-                {% for error in articulo_form.titulo.errors %}<p>{{ error }}</p>{% endfor %}
-              </div>
+              <div class="error-list mt-1">{% for e in articulo_form.titulo.errors %}<p>{{ e }}</p>{% endfor %}</div>
               {% endif %}
             </div>
 
-            <div style="margin-bottom: 0.75rem;">
+            <div style="margin-bottom:0.75rem;">
               <label class="form-label">Cuerpo del artículo</label>
-              <textarea
-                name="{{ articulo_form.cuerpo.html_name }}"
+              <textarea name="{{ articulo_form.cuerpo.html_name }}"
                 id="{{ articulo_form.cuerpo.id_for_label }}"
-                class="form-control"
-                rows="4"
-                maxlength="5000"
-                placeholder="Cuerpo del artículo (máx. 5000 caracteres)"
-              >{{ articulo_form.cuerpo.value|default:'' }}</textarea>
+                class="form-control" rows="4" maxlength="5000"
+                placeholder="Cuerpo del artículo (máx. 5000 caracteres)">{{ articulo_form.cuerpo.value|default:'' }}</textarea>
               {% if articulo_form.cuerpo.errors %}
-              <div class="error-list mt-1">
-                {% for error in articulo_form.cuerpo.errors %}<p>{{ error }}</p>{% endfor %}
-              </div>
+              <div class="error-list mt-1">{% for e in articulo_form.cuerpo.errors %}<p>{{ e }}</p>{% endfor %}</div>
               {% endif %}
             </div>
 
-            <div style="width: 120px;">
+            <div style="width:120px;">
               <label class="form-label">Orden (1-999)</label>
-              <input
-                type="number"
+              <input type="number"
                 name="{{ articulo_form.orden.html_name }}"
                 id="{{ articulo_form.orden.id_for_label }}"
                 value="{{ articulo_form.orden.value|default:'1' }}"
-                class="form-control"
-                min="1"
-                max="999"
-              >
+                class="form-control" min="1" max="999">
               {% if articulo_form.orden.errors %}
-              <div class="error-list mt-1">
-                {% for error in articulo_form.orden.errors %}<p>{{ error }}</p>{% endfor %}
-              </div>
+              <div class="error-list mt-1">{% for e in articulo_form.orden.errors %}<p>{{ e }}</p>{% endfor %}</div>
               {% endif %}
             </div>
           </div>
           {% endfor %}
         </div>
 
-        <div style="margin-top: 1rem;">
+        <div style="margin-top:1rem;">
           <button type="button" class="glass-btn glass-btn-add" id="btn-agregar-articulo">
             <span class="fa material-icons" style="font-size:18px;">add_circle</span>
             Agregar Artículo
@@ -325,7 +309,7 @@
       </div>
 
       <div class="flex justify-between items-center flex-wrap gap-3">
-        <a href="{% url 'principal:cursos' %}" class="glass-btn glass-btn-cancel">
+        <a href="{% url 'principal:profile' %}" class="glass-btn glass-btn-cancel">
           <span class="fa material-icons" style="font-size:18px;">close</span>
           Cancelar
         </a>
@@ -335,7 +319,6 @@
         </button>
       </div>
     </form>
-
   </div>
 </div>
 
@@ -346,11 +329,9 @@
   function getTotalForms() {
     return parseInt(document.getElementById('id_' + PREFIX + '-TOTAL_FORMS').value, 10);
   }
-
   function setTotalForms(n) {
     document.getElementById('id_' + PREFIX + '-TOTAL_FORMS').value = n;
   }
-
   function renumerarArticulos() {
     var rows = document.querySelectorAll('#articulos-container .articulo-row:not(.marked-delete)');
     rows.forEach(function (row, idx) {
@@ -405,12 +386,8 @@
       setTotalForms(allRows.length);
       allRows.forEach(function (r, idx) {
         r.querySelectorAll('input, textarea').forEach(function (field) {
-          if (field.name) {
-            field.name = field.name.replace(new RegExp(PREFIX + '-\d+-'), PREFIX + '-' + idx + '-');
-          }
-          if (field.id) {
-            field.id = field.id.replace(new RegExp('id_' + PREFIX + '-\d+-'), 'id_' + PREFIX + '-' + idx + '-');
-          }
+          if (field.name) field.name = field.name.replace(new RegExp(PREFIX + '-\\d+-'), PREFIX + '-' + idx + '-');
+          if (field.id)   field.id   = field.id.replace(new RegExp('id_' + PREFIX + '-\\d+-'), 'id_' + PREFIX + '-' + idx + '-');
         });
       });
     }

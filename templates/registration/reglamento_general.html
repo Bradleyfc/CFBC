@@ -32,8 +32,33 @@
         <div class="glass-card">
             <div class="glass-content">
                 <div class="prose prose-lg max-w-none">
-                    
-                    <!-- Introducción -->
+
+                    {% if dinamico %}
+                    <!-- Contenido dinámico creado por la Secretaría -->
+                    {% if reglamento.introduccion %}
+                    <section class="mb-8">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                            <span class="fa material-icons mr-2 text-blue-600">info</span>
+                            Introducción
+                        </h3>
+                        <p class="text-gray-700 leading-relaxed" style="white-space: pre-line; text-align: justify;">{{ reglamento.introduccion }}</p>
+                    </section>
+                    {% endif %}
+
+                    {% for articulo in articulos %}
+                    <section class="mb-8">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                            <span class="fa material-icons mr-2 text-blue-600">article</span>
+                            Artículo {{ forloop.counter }}: {{ articulo.titulo }}
+                        </h3>
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+                            <p class="text-gray-700 leading-relaxed" style="white-space: pre-line; text-align: justify;">{{ articulo.cuerpo }}</p>
+                        </div>
+                    </section>
+                    {% endfor %}
+
+                    {% else %}
+                    <!-- Contenido estático de respaldo -->
                     <section class="mb-8">
                         <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
                             <span class="fa material-icons mr-2 text-blue-600">info</span>
@@ -257,6 +282,8 @@
                             </div>
                         </div>
                     </div> -->
+
+                    {% endif %}{# fin del bloque dinamico/estatico #}
 
                 </div>
             </div>

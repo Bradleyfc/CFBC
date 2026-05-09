@@ -17,6 +17,7 @@ from .forms import (
     FormularioAplicacionForm, PreguntaFormularioForm, OpcionRespuestaForm,
     OpcionRespuestaFormSet, PreguntaFormularioFormSet, RespuestaEstudianteForm,
     ReglamentoCursoForm, ArticuloReglamentoFormSet,
+    ReglamentoGeneralForm, ArticuloReglamentoGeneralFormSet,
 )
 from django.contrib.auth.models import Group, User
 from django.db.models import Q, Max
@@ -39,6 +40,7 @@ from .models import (
     CursoAcademico, Curso, Matriculas, Calificaciones, Asistencia,
     FormularioAplicacion, PreguntaFormulario, OpcionRespuesta, SolicitudInscripcion, RespuestaEstudiante, NotaIndividual,
     ReglamentoCurso, ArticuloReglamento,
+    ReglamentoGeneral, ArticuloReglamentoGeneral,
 )
 from course_documents.mixins import DocumentsProfileMixin, DocumentsCourseMixin
 
@@ -3770,22 +3772,43 @@ def reglamento_curso(request):
 def reglamento_general(request):
     """
     Vista para mostrar el reglamento general del centro.
+    Si existe un ReglamentoGeneral dinámico lo muestra; si no, muestra el estático.
     """
-    context = {
-        'ano_anterior': timezone.now().year - 1,
-        'ano_actual': timezone.now().year,
-    }
+    reglamento = ReglamentoGeneral.objects.prefetch_related('articulos').first()
+    if reglamento and (reglamento.introduccion.strip() or reglamento.articulos.exists()):
+        articulos = reglamento.articulos.order_by('orden', 'fecha_creacion')
+        context = {
+            'reglamento': reglamento,
+            'articulos': articulos,
+            'ano_anterior': timezone.now().year - 1,
+            'ano_actual': timezone.now().year,
+            'dinamico': True,
+        }
+    else:
+        context = {
+            'reglamento': None,
+            'articulos': [],
+            'ano_anterior': timezone.now().year - 1,
+            'ano_actual': timezone.now().year,
+            'dinamico': False,
+        }
     return render(request, 'registration/reglamento_general.html', context)
 
 def exportar_reglamento_general_pdf(request):
     """
     Vista para exportar el reglamento general del centro en PDF.
-    Usa una plantilla específica para PDF sin CSS complejo.
+    Si existe un ReglamentoGeneral dinámico lo usa; si no, usa el contenido estático.
     """
+    reglamento = ReglamentoGeneral.objects.prefetch_related('articulos').first()
+    dinamico = reglamento and (reglamento.introduccion.strip() or reglamento.articulos.exists())
+
     context = {
         'fecha_generacion': timezone.now(),
         'ano_anterior': timezone.now().year - 1,
         'ano_actual': timezone.now().year,
+        'reglamento': reglamento if dinamico else None,
+        'articulos': reglamento.articulos.order_by('orden', 'fecha_creacion') if dinamico else [],
+        'dinamico': bool(dinamico),
     }
     
     # Generar el PDF usando la plantilla específica para PDF
@@ -5851,3 +5874,47 @@ def api_hay_curso_activo(request):
     if curso_activo:
         return JsonResponse({'hay_activo': True, 'nombre': curso_activo.nombre})
     return JsonResponse({'hay_activo': False, 'nombre': None})
+
+
+# ---------------------------------------------------------------------------
+# Vistas para el Reglamento General del Centro (gestionado por Secretaría)
+# ---------------------------------------------------------------------------
+
+class ReglamentoGeneralEditView(LoginRequiredMixin, SecretariaRequiredMixin, View):
+    """
+    Vista única para crear o editar el ReglamentoGeneral (singleton).
+    Si ya existe lo edita; si no, lo crea.
+    """
+    template_name = 'registration/reglamento_general_form.html'
+
+    def _get_or_none(self):
+        return ReglamentoGeneral.objects.first()
+
+    def get(self, request, *args, **kwargs):
+        reglamento = self._get_or_none()
+        form = ReglamentoGeneralForm(instance=reglamento)
+        formset = ArticuloReglamentoGeneralFormSet(instance=reglamento)
+        return render(request, self.template_name, {
+            'form': form,
+            'articulo_formset': formset,
+            'reglamento': reglamento,
+        })
+
+    def post(self, request, *args, **kwargs):
+        reglamento = self._get_or_none()
+        form = ReglamentoGeneralForm(request.POST, instance=reglamento)
+        formset = ArticuloReglamentoGeneralFormSet(request.POST, instance=reglamento)
+        formset.set_introduccion(request.POST.get('introduccion', ''))
+
+        if form.is_valid() and formset.is_valid():
+            reglamento = form.save()
+            formset.instance = reglamento
+            formset.save()
+            messages.success(request, 'Reglamento General guardado exitosamente.')
+            return redirect(reverse('principal:reglamento_general'))
+
+        return render(request, self.template_name, {
+            'form': form,
+            'articulo_formset': formset,
+            'reglamento': reglamento,
+        })
