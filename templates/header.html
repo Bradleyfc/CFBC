@@ -1,18 +1,12 @@
 {% if user.is_authenticated %}
 {% if group_name == 'Estudiantes' %}
-<div>
-  {% elif group_name == 'Profesores' %}
-  <div>
-    {% elif group_name == 'Administración' %}
-    <div>
-      {% elif group_name == 'Secretaría' %}
-      <div>
-        {% else %}
-        <div>
-          {% endif %}
-          {% else %}
-          <div>
-            {% endif %}
+{% elif group_name == 'Profesores' %}
+{% elif group_name == 'Administración' %}
+{% elif group_name == 'Secretaría' %}
+{% else %}
+{% endif %}
+{% else %}
+{% endif %}
 
             <style>
               .glass-header-container {
@@ -181,6 +175,14 @@
               }
 
               html, body { overflow-x: hidden; max-width: 100vw; }
+
+              /* Contenedor raíz del header — nunca supera el viewport */
+              #header-root {
+                width: 100%;
+                max-width: 100vw;
+                box-sizing: border-box;
+                overflow: hidden;
+              }
             </style>
 
             <header class="glass-header-container">
@@ -288,5 +290,3 @@
                 }
               });
             </script>
-
-          </div>

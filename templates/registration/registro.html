@@ -83,8 +83,8 @@
     margin-bottom: 1.5rem !important;
   }
 
-  /* Hacer los labels más elegantes */
-  label {
+  /* Hacer los labels más elegantes — solo dentro del formulario de registro */
+  .registro-page label {
     font-weight: 600 !important;
     color: #374151 !important;
     margin-bottom: 0.5rem !important;
@@ -154,8 +154,8 @@
     color: #374151 !important;
   }
 
-  /* Select personalizado más bonito */
-  select {
+  /* Select personalizado — solo dentro del formulario de registro */
+  .registro-page select {
     appearance: none !important;
     -webkit-appearance: none !important;
     -moz-appearance: none !important;
@@ -175,13 +175,13 @@
     background-size: 16px !important;
   }
 
-  select:hover {
+  .registro-page select:hover {
     border-color: #3b82f6 !important;
     background-color: #f9fafb !important;
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%233b82f6' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
   }
 
-  select:focus {
+  .registro-page select:focus {
     outline: none !important;
     border-color: #2563eb !important;
     background-color: #eff6ff !important;
@@ -190,20 +190,20 @@
   }
 
   /* Mejorar el contenedor de los selects */
-  .form-group select {
+  .registro-page .form-group select {
     width: 100% !important;
   }
 
   /* Hacer el select más limpio y simple */
-  select {
+  .registro-page select {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
   }
 
-  select:hover {
+  .registro-page select:hover {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
   }
 
-  select:focus {
+  .registro-page select:focus {
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), 0 4px 6px rgba(0, 0, 0, 0.1) !important;
   }
 
@@ -608,7 +608,7 @@
   }
 
   /* Logo con efectos sutiles manteniendo forma original */
-  .glass-logo {
+  .registro-page .glass-logo-img {
     max-width: 20% !important;
     height: auto !important;
     margin: 0 auto 1.5rem auto !important;
@@ -622,7 +622,7 @@
     padding-top: 5% !important;
   }
 
-  .glass-logo:hover {
+  .registro-page .glass-logo-img:hover {
     transform: translateY(-2px) scale(1.05) !important;
     box-shadow: 
       0 8px 24px rgba(59, 130, 246, 0.3),
@@ -708,6 +708,7 @@
     filter: brightness(1.05) contrast(1.02) !important;
   }
 </style>
+<div class="registro-page">
 <div class="container mx-auto px-4" style="margin-bottom: 1.5rem;">
   <h1 class="main-title">REGISTRO DE USUARIO</h1>
 </div>
@@ -1320,5 +1321,7 @@ document.addEventListener('keydown', function(e) {
   }
 });
 </script>
+
+</div>{# /registro-page #}
 
 {% endblock %}
