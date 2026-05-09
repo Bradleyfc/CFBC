@@ -1503,11 +1503,20 @@ class LoginRedirectView(LoginRequiredMixin, TemplateView):
                 if 'usuario_creado_desde' in request.session:
                     del request.session['usuario_creado_desde']
             
-            # Redirección normal según el grupo del usuario
-            if user.groups.filter(name='Profesores').exists() or user.groups.filter(name='Administración').exists() or user.groups.filter(name='Secretaría').exists():
-                return redirect('principal:profile')  # Redirige a la página de perfil del profesor o el admin
-            else:
-                return redirect('principal:cursos')  # Redirige a la página de cursos para otros usuarios
+            # Redirección según el grupo del usuario
+            if user.groups.filter(name='Editor').exists():
+                return redirect('blog:panel_editores')
+
+            if user.groups.filter(name__in=['Profesores', 'Administración', 'Secretaría']).exists():
+                return redirect('principal:profile')
+
+            if user.groups.filter(name='Estudiantes').exists():
+                # Ir al perfil solo si tiene al menos una matrícula aprobada
+                tiene_matricula = Matriculas.objects.filter(student=user).exists()
+                if tiene_matricula:
+                    return redirect('principal:profile')
+
+            return redirect('principal:cursos')
         return redirect('principal:home') # Redirige a home si no está autenticado (aunque LoginRequiredMixin ya lo manejaría)
 
 
