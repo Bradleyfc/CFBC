@@ -333,6 +333,56 @@ class DatoArchivadoDinamico(models.Model):
             models.Index(fields=['tipo_registro']),
         ]
 
+class ReglamentoCursoArchivado(models.Model):
+    """
+    Almacena el reglamento de un curso archivado.
+    Se crea durante el archivado del CursoAcademico, antes de eliminar el Curso original.
+    """
+    id_original = models.IntegerField(verbose_name='ID Original del ReglamentoCurso')
+    curso = models.OneToOneField(
+        CursoArchivado,
+        on_delete=models.CASCADE,
+        related_name='reglamento_archivado',
+        verbose_name='Curso Archivado',
+    )
+    introduccion = models.TextField(blank=True, default='', verbose_name='Introducción')
+    fecha_creacion = models.DateTimeField(verbose_name='Fecha de creación original')
+    fecha_migracion = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de migración')
+
+    def __str__(self):
+        return f"Reglamento archivado de {self.curso.name} (ID Original: {self.id_original})"
+
+    class Meta:
+        verbose_name = 'Reglamento de Curso Archivado'
+        verbose_name_plural = 'Reglamentos de Cursos Archivados'
+
+
+class ArticuloReglamentoArchivado(models.Model):
+    """
+    Almacena cada artículo del reglamento de un curso archivado.
+    """
+    id_original = models.IntegerField(verbose_name='ID Original del ArticuloReglamento')
+    reglamento = models.ForeignKey(
+        ReglamentoCursoArchivado,
+        on_delete=models.CASCADE,
+        related_name='articulos',
+        verbose_name='Reglamento Archivado',
+    )
+    titulo = models.CharField(max_length=200, verbose_name='Título del artículo')
+    cuerpo = models.TextField(max_length=5000, verbose_name='Cuerpo del artículo')
+    orden = models.PositiveIntegerField(default=1, verbose_name='Orden')
+    fecha_creacion = models.DateTimeField(verbose_name='Fecha de creación original')
+    fecha_migracion = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de migración')
+
+    def __str__(self):
+        return f"{self.titulo} (Orden: {self.orden}) — {self.reglamento.curso.name}"
+
+    class Meta:
+        verbose_name = 'Artículo de Reglamento Archivado'
+        verbose_name_plural = 'Artículos de Reglamentos Archivados'
+        ordering = ['orden', 'fecha_creacion']
+
+
 class CodigoVerificacionReclamacion(models.Model):
     """
     Modelo para almacenar códigos de verificación para reclamación de usuarios archivados

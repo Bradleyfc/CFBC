@@ -63,11 +63,14 @@ def archivar_datos_curso_academico(curso_academico):
         CalificacionArchivada,
         NotaIndividualArchivada,
         AsistenciaArchivada,
+        ReglamentoCursoArchivado,
+        ArticuloReglamentoArchivado,
     )
     from principal.models import (
         Curso, Matriculas, Asistencia, Calificaciones, NotaIndividual,
         SolicitudInscripcion, RespuestaEstudiante,
         FormularioAplicacion, PreguntaFormulario, OpcionRespuesta,
+        ReglamentoCurso, ArticuloReglamento,
     )
 
     # Evitar duplicar si ya fue archivado antes
@@ -85,6 +88,8 @@ def archivar_datos_curso_academico(curso_academico):
         'calificaciones': 0,
         'notas': 0,
         'asistencias': 0,
+        'reglamentos': 0,
+        'articulos_reglamento': 0,
     }
 
     try:
@@ -174,7 +179,33 @@ def archivar_datos_curso_academico(curso_academico):
                 cursos_archivados_map[curso.pk] = ca
                 contadores['cursos'] += 1
 
-            # ── 3. Archivar Matrículas ────────────────────────────────────────
+            # ── 3. Archivar Reglamentos de Cursos ────────────────────────────
+            for curso_pk, curso_archivado in cursos_archivados_map.items():
+                try:
+                    reglamento = ReglamentoCurso.objects.get(curso__pk=curso_pk)
+                except ReglamentoCurso.DoesNotExist:
+                    continue  # el curso no tiene reglamento, se omite
+
+                reglamento_archivado = ReglamentoCursoArchivado.objects.create(
+                    id_original=reglamento.pk,
+                    curso=curso_archivado,
+                    introduccion=reglamento.introduccion,
+                    fecha_creacion=reglamento.fecha_creacion,
+                )
+                contadores['reglamentos'] += 1
+
+                for articulo in reglamento.articulos.all().order_by('orden'):
+                    ArticuloReglamentoArchivado.objects.create(
+                        id_original=articulo.pk,
+                        reglamento=reglamento_archivado,
+                        titulo=articulo.titulo,
+                        cuerpo=articulo.cuerpo,
+                        orden=articulo.orden,
+                        fecha_creacion=articulo.fecha_creacion,
+                    )
+                    contadores['articulos_reglamento'] += 1
+
+            # ── 4. Archivar Matrículas ────────────────────────────────────────
             matriculas_qs = Matriculas.objects.filter(
                 curso_academico=curso_academico
             ).select_related('student', 'course')
@@ -223,7 +254,7 @@ def archivar_datos_curso_academico(curso_academico):
                 matriculas_archivadas_map[matricula.pk] = ma
                 contadores['matriculas'] += 1
 
-            # ── 4. Archivar Calificaciones y Notas Individuales ───────────────
+            # ── 5. Archivar Calificaciones y Notas Individuales ───────────────
             calificaciones_qs = Calificaciones.objects.filter(
                 curso_academico=curso_academico
             ).select_related('student', 'course', 'matricula').prefetch_related('notas')
@@ -282,7 +313,7 @@ def archivar_datos_curso_academico(curso_academico):
                     )
                     contadores['notas'] += 1
 
-            # ── 5. Archivar Asistencias ───────────────────────────────────────
+            # ── 6. Archivar Asistencias ───────────────────────────────────────
             cursos_ids = list(cursos_archivados_map.keys())
 
             # Ampliar cursos_ids para incluir TODOS los cursos del CA,
@@ -320,6 +351,7 @@ def archivar_datos_curso_academico(curso_academico):
             logger.info(
                 f"Archivado completado para '{curso_academico.nombre}': "
                 f"{contadores['cursos']} cursos, "
+                f"{contadores['reglamentos']} reglamentos ({contadores['articulos_reglamento']} artículos), "
                 f"{contadores['usuarios']} usuarios, "
                 f"{contadores['matriculas']} matrículas, "
                 f"{contadores['calificaciones']} calificaciones, "
@@ -327,26 +359,26 @@ def archivar_datos_curso_academico(curso_academico):
                 f"{contadores['asistencias']} asistencias."
             )
 
-            # ── 6. Limpiar datos de principal (dentro de la misma transacción) ─
+            # ── 7. Limpiar datos de principal (dentro de la misma transacción) ─
             # El orden importa: primero los hijos, luego los padres.
             # Esta fase SOLO se ejecuta si todo el archivado anterior fue exitoso.
 
-            # 6a. Notas individuales
+            # 7a. Notas individuales
             NotaIndividual.objects.filter(
                 calificacion__curso_academico=curso_academico
             ).delete()
 
-            # 6b. Calificaciones
+            # 7b. Calificaciones
             Calificaciones.objects.filter(
                 curso_academico=curso_academico
             ).delete()
 
-            # 6c. Asistencias
+            # 7c. Asistencias
             Asistencia.objects.filter(
                 course__pk__in=cursos_ids
             ).delete()
 
-            # 6d. Respuestas de estudiantes y solicitudes de inscripción
+            # 7d. Respuestas de estudiantes y solicitudes de inscripción
             solicitudes_qs = SolicitudInscripcion.objects.filter(
                 curso__pk__in=cursos_ids
             )
@@ -354,12 +386,12 @@ def archivar_datos_curso_academico(curso_academico):
                 RespuestaEstudiante.objects.filter(solicitud=solicitud).delete()
             solicitudes_qs.delete()
 
-            # 6e. Matrículas
+            # 7e. Matrículas
             Matriculas.objects.filter(
                 curso_academico=curso_academico
             ).delete()
 
-            # 6f. Opciones, preguntas y formularios de aplicación
+            # 7f. Opciones, preguntas y formularios de aplicación
             formularios_qs = FormularioAplicacion.objects.filter(
                 curso__pk__in=cursos_ids
             )
@@ -369,7 +401,7 @@ def archivar_datos_curso_academico(curso_academico):
                 PreguntaFormulario.objects.filter(formulario=formulario).delete()
             formularios_qs.delete()
 
-            # ── 6g. Cursos (al final, después de eliminar todos sus dependientes)
+            # ── 7g. Cursos (al final, después de eliminar todos sus dependientes)
             # IMPORTANTE: antes de eliminar los Curso, desvinculamos las carpetas
             # de documentos para que no se eliminen en cascada. Las carpetas
             # conservan su curso_academico y sus archivos físicos intactos.

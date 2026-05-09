@@ -5,6 +5,7 @@ from .models import (
     CursoAcademicoArchivado, UsuarioArchivado, CursoArchivado,
     MatriculaArchivada, CalificacionArchivada, NotaIndividualArchivada,
     AsistenciaArchivada, MigracionLog, DatoArchivadoDinamico,
+    ReglamentoCursoArchivado, ArticuloReglamentoArchivado,
 )
 
 
@@ -24,6 +25,18 @@ def link_curso_academico(obj_curso_academico):
 # ─────────────────────────────────────────────────────────────────────────────
 # Inlines: permiten ver los datos relacionados dentro del CursoAcademicoArchivado
 # ─────────────────────────────────────────────────────────────────────────────
+
+class ArticuloReglamentoArchivadoInline(admin.TabularInline):
+    model = ArticuloReglamentoArchivado
+    extra = 0
+    fields = ('orden', 'titulo', 'cuerpo')
+    readonly_fields = fields
+    ordering = ['orden']
+    can_delete = False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 class CursoArchivadoInline(admin.TabularInline):
     model = CursoArchivado
@@ -567,6 +580,53 @@ class DatoArchivadoDinamicoAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).order_by('-fecha_migracion')
+
+    def has_add_permission(self, request):
+        return False
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ReglamentoCursoArchivado / ArticuloReglamentoArchivado
+# ─────────────────────────────────────────────────────────────────────────────
+
+@admin.register(ReglamentoCursoArchivado)
+class ReglamentoCursoArchivadoAdmin(admin.ModelAdmin):
+    list_display = [
+        'get_curso', 'curso_academico_link', 'total_articulos', 'fecha_creacion', 'fecha_migracion',
+    ]
+    list_filter = ['curso__curso_academico', 'fecha_migracion']
+    search_fields = ['curso__name', 'curso__curso_academico__nombre', 'introduccion']
+    readonly_fields = ['fecha_migracion', 'curso_academico_link', 'total_articulos']
+    inlines = [ArticuloReglamentoArchivadoInline]
+
+    fieldsets = (
+        ('Curso', {
+            'fields': ('curso', 'curso_academico_link'),
+        }),
+        ('Reglamento', {
+            'fields': ('id_original', 'introduccion', 'fecha_creacion'),
+        }),
+        ('Estadísticas', {
+            'fields': ('total_articulos',),
+        }),
+        ('Registro', {
+            'fields': ('fecha_migracion',),
+        }),
+    )
+
+    def get_curso(self, obj):
+        url = reverse('admin:datos_archivados_cursoarchivado_change', args=[obj.curso.pk])
+        return format_html('<a href="{}">{}</a>', url, obj.curso.name)
+    get_curso.short_description = 'Curso'
+    get_curso.admin_order_field = 'curso__name'
+
+    def curso_academico_link(self, obj):
+        return link_curso_academico(obj.curso.curso_academico)
+    curso_academico_link.short_description = 'Curso Académico'
+
+    def total_articulos(self, obj):
+        return f'{obj.articulos.count()} artículo(s)'
+    total_articulos.short_description = 'Artículos'
 
     def has_add_permission(self, request):
         return False
