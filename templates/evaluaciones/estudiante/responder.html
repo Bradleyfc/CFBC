@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+
+  <!-- Encabezado -->
+  <div class="glass-card mb-6">
+    <div class="glass-content">
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+            <span class="fa material-icons mr-2">edit_note</span>
+            {{ evaluacion.titulo }}
+          </h1>
+          <p class="text-gray-500 text-sm mt-1">{{ curso.name }}</p>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+          {% if evaluacion.tipo == "momentanea" %}
+          <span class="glass-badge-status glass-badge-blue">Momentanea</span>
+          {% else %}
+          <span class="glass-badge-status glass-badge-yellow">Libre</span>
+          {% endif %}
+          {% if evaluacion.fecha_limite %}
+          <span class="glass-badge-status glass-badge-red">
+            <span class="fa material-icons text-xs mr-1">schedule</span>
+            Limite: {{ evaluacion.fecha_limite|date:"d/m/Y H:i" }}
+          </span>
+          {% endif %}
+        </div>
+      </div>
+      {% if evaluacion.descripcion %}
+      <p class="text-gray-600 text-sm mt-3">{{ evaluacion.descripcion }}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Mensajes -->
+  {% if messages %}
+  <div class="mb-4">
+    {% for message in messages %}
+    <div class="{% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %} rounded-lg p-4 mb-2">
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Formulario -->
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <div class="space-y-4">
+      {% for field in form %}
+      <div class="glass-card">
+        <div class="glass-content">
+          <label class="block font-semibold text-gray-800 mb-2">
+            {{ field.label }}
+            {% if field.field.required %}
+            <span class="text-red-500 ml-1">*</span>
+            {% endif %}
+          </label>
+
+          {% if field.errors %}
+          <div class="text-red-600 text-sm mb-2">
+            {% for error in field.errors %}
+            <p>{{ error }}</p>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          {{ field }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if form.non_field_errors %}
+    <div class="glass-alert glass-alert-error mt-4">
+      {% for error in form.non_field_errors %}
+      <p>{{ error }}</p>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="flex gap-3 mt-6">
+      <button type="submit"
+              class="glass-action-button glass-action-primary">
+        <span class="fa material-icons mr-1">send</span>
+        Enviar evaluacion
+      </button>
+      <a href="{% url 'evaluaciones:mis_evaluaciones' curso_id=curso.pk %}"
+         class="glass-action-button">
+        <span class="fa material-icons mr-1">arrow_back</span>
+        Cancelar
+      </a>
+    </div>
+  </form>
+
+</div>
+{% endblock %}

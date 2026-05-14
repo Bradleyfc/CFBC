@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+
+  <- El patrón de  para preguntas dinámicas sigue el modelo existente de  /  en la app Encabezado -->
+  <div class="glass-card mb-6">
+    <div class="glass-content">
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+            <span class="fa material-icons mr-2">quiz</span>
+            Mis Evaluaciones
+          </h1>
+          <p class="text-gray-500 text-sm mt-1">{{ curso.name }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if messages %}
+  <div class="mb-4">
+    {% for message in messages %}
+    <div class="{% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %} rounded-lg p-4 mb-2">
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if evaluaciones_info %}
+  <div class="space-y-3">
+    {% for item in evaluaciones_info %}
+    {% with ev=item.evaluacion %}
+    <div class="glass-card">
+      <div class="glass-content">
+        <div class="flex items-start justify-between flex-wrap gap-3">
+          <div class="flex-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="font-semibold text-gray-800">{{ ev.titulo }}</h3>
+              {% if ev.tipo == "momentanea" %}
+              <span class="glass-badge-status glass-badge-blue">Momentanea</span>
+              {% else %}
+              <span class="glass-badge-status glass-badge-yellow">Libre</span>
+              {% endif %}
+              {% if item.estado_intento == "calificado" %}
+              <span class="glass-badge-status glass-badge-green">Calificado</span>
+              {% elif item.estado_intento == "enviado" %}
+              <span class="glass-badge-status glass-badge-yellow">Enviado</span>
+              {% else %}
+              <span class="glass-badge-status glass-badge-red">Pendiente</span>
+              {% endif %}
+              {% if item.cerrada %}
+              <span class="glass-badge-status" style="background:rgba(107,114,128,0.2);color:#374151;border-color:rgba(156,163,175,0.4);">Cerrada</span>
+              {% endif %}
+            </div>
+            {% if ev.descripcion %}
+            <p class="text-gray-500 text-sm mt-1">{{ ev.descripcion|truncatechars:120 }}</p>
+            {% endif %}
+            <div class="flex items-center gap-4 mt-2 text-xs text-gray-400">
+              <span>
+                <span class="fa material-icons text-xs mr-1">help_outline</span>
+                {{ ev.preguntas.count }} pregunta{{ ev.preguntas.count|pluralize }}
+              </span>
+              {% if ev.fecha_limite %}
+              <span>
+                <span class="fa material-icons text-xs mr-1">schedule</span>
+                Limite: {{ ev.fecha_limite|date:"d/m/Y H:i" }}
+              </span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="flex gap-2 flex-wrap">
+            {% if item.intento %}
+              <a href="{% url 'evaluaciones:resultado' pk=item.intento.pk %}"
+                 class="glass-action-button glass-action-primary">
+                <span class="fa material-icons mr-1">visibility</span>
+                Ver resultado
+              </a>
+            {% elif item.cerrada %}
+              <span class="glass-action-button" style="opacity:0.5;cursor:not-allowed;">
+                <span class="fa material-icons mr-1">lock</span>
+                Cerrada
+              </span>
+            {% else %}
+              <a href="{% url 'evaluaciones:responder' pk=ev.pk %}"
+                 class="glass-action-button glass-action-primary">
+                <span class="fa material-icons mr-1">edit</span>
+                Responder
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="glass-alert glass-alert-primary">
+    <span class="fa material-icons mr-2">info</span>
+    No hay evaluaciones publicadas para este curso todavia.
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

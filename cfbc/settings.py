@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'datos_archivados.apps.DatosArchivadosConfig',
     'course_documents.apps.CourseDocumentsConfig',
     'historial.apps.HistorialConfig',
+    'evaluaciones.apps.EvaluacionesConfig',
     
     
 ]

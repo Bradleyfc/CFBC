@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+
+  <!-- Encabezado -->
+  <div class="glass-card mb-6">
+    <div class="glass-content">
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+            <span class="fa material-icons mr-2">people</span>
+            Intentos — {{ evaluacion.titulo }}
+          </h1>
+          <p class="text-gray-500 text-sm mt-1">{{ curso.name }}</p>
+        </div>
+        <div class="flex gap-2 flex-wrap items-center">
+          {% if pendientes > 0 %}
+          <span class="glass-badge-status glass-badge-yellow">
+            {{ pendientes }} pendiente{{ pendientes|pluralize }}
+          </span>
+          {% endif %}
+          <a href="{% url 'evaluaciones:secretaria_lista' %}"
+             class="glass-action-button glass-action-warning">
+            <span class="fa material-icons mr-1">arrow_back</span>
+            Volver
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensajes -->
+  {% if messages %}
+  <div class="mb-4">
+    {% for message in messages %}
+    <div class="{% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %} rounded-lg p-4 mb-2">
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Tabla de intentos -->
+  {% if intentos %}
+  <div class="glass-card">
+    <div class="glass-content overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-200">
+            <th class="text-left py-3 px-4 font-semibold text-gray-600">Estudiante</th>
+            <th class="text-left py-3 px-4 font-semibold text-gray-600">Fecha de envio</th>
+            <th class="text-left py-3 px-4 font-semibold text-gray-600">Estado</th>
+            <th class="text-left py-3 px-4 font-semibold text-gray-600">Puntaje</th>
+            {% if evaluacion.tipo == "libre" %}
+            <th class="text-left py-3 px-4 font-semibold text-gray-600">Acciones</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for intento in intentos %}
+          <tr class="border-b border-gray-100 hover:bg-gray-50">
+            <td class="py-3 px-4">
+              <div class="font-medium text-gray-800">
+                {{ intento.estudiante.get_full_name|default:intento.estudiante.username }}
+              </div>
+              <div class="text-xs text-gray-400">{{ intento.estudiante.username }}</div>
+            </td>
+            <td class="py-3 px-4 text-gray-600">
+              {{ intento.fecha_envio|date:"d/m/Y H:i" }}
+            </td>
+            <td class="py-3 px-4">
+              {% if intento.estado == "calificado" %}
+              <span class="glass-badge-status glass-badge-green">Calificado</span>
+              {% else %}
+              <span class="glass-badge-status glass-badge-yellow">Enviado</span>
+              {% endif %}
+            </td>
+            <td class="py-3 px-4">
+              {% if intento.calificacion %}
+              <span class="font-semibold text-gray-800">{{ intento.calificacion.puntaje }}</span>
+              {% else %}
+              <span class="text-gray-400">—</span>
+              {% endif %}
+            </td>
+            {% if evaluacion.tipo == "libre" %}
+            <td class="py-3 px-4">
+              <a href="{% url 'evaluaciones:secretaria_calificar_intento' pk=intento.id %}"
+                 class="glass-action-button glass-action-primary">
+                <span class="fa material-icons mr-1">grading</span>
+                {% if intento.estado == "calificado" %}Ver / Editar{% else %}Calificar{% endif %}
+              </a>
+            </td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="glass-alert glass-alert-primary">
+    <span class="fa material-icons mr-2">info</span>
+    Ningun estudiante ha enviado un intento para esta evaluacion todavia.
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

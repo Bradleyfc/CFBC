@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+
+  <!-- Encabezado -->
+  <div class="glass-card mb-6">
+    <div class="glass-content">
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+            <span class="fa material-icons mr-2">quiz</span>
+            Evaluaciones
+          </h1>
+          <p class="text-gray-500 text-sm mt-1">{{ curso.name }}</p>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+          {% if total_pendientes > 0 %}
+          <span class="glass-badge-status glass-badge-yellow">
+            {{ total_pendientes }} pendiente{{ total_pendientes|pluralize }}
+          </span>
+          {% endif %}
+          <a href="{% url 'evaluaciones:crear' curso_id=curso.id %}"
+             class="glass-action-button glass-action-primary">
+            <span class="fa material-icons mr-1">add</span>
+            Nueva Evaluacion
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensajes -->
+  {% if messages %}
+  <div class="mb-4">
+    {% for message in messages %}
+    <div class="{% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %} rounded-lg p-4 mb-2">
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Lista de evaluaciones -->
+  {% if evaluaciones %}
+  <div class="space-y-3">
+    {% for ev in evaluaciones %}
+    <div class="glass-card">
+      <div class="glass-content">
+        <div class="flex items-start justify-between flex-wrap gap-3">
+          <div class="flex-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="font-semibold text-gray-800">{{ ev.titulo }}</h3>
+              {% if ev.tipo == "momentanea" %}
+              <span class="glass-badge-status glass-badge-blue">Momentanea</span>
+              {% else %}
+              <span class="glass-badge-status glass-badge-yellow">Libre</span>
+              {% endif %}
+              {% if ev.estado == "publicada" %}
+              <span class="glass-badge-status glass-badge-green">Publicada</span>
+              {% else %}
+              <span class="glass-badge-status glass-badge-red">Borrador</span>
+              {% endif %}
+            </div>
+            {% if ev.descripcion %}
+            <p class="text-gray-500 text-sm mt-1">{{ ev.descripcion|truncatechars:120 }}</p>
+            {% endif %}
+            <div class="flex items-center gap-4 mt-2 text-xs text-gray-400">
+              <span>
+                <span class="fa material-icons text-xs mr-1">help_outline</span>
+                {{ ev.preguntas.count }} pregunta{{ ev.preguntas.count|pluralize }}
+              </span>
+              {% if ev.fecha_limite %}
+              <span>
+                <span class="fa material-icons text-xs mr-1">schedule</span>
+                Limite: {{ ev.fecha_limite|date:"d/m/Y H:i" }}
+              </span>
+              {% endif %}
+            </div>
+          </div>
+          <!-- Acciones -->
+          <div class="flex gap-2 flex-wrap">
+            <a href="{% url 'evaluaciones:intentos_lista' pk=ev.id %}"
+               class="glass-action-button glass-action-warning">
+              <span class="fa material-icons mr-1">people</span>
+              Intentos
+            </a>
+            <a href="{% url 'evaluaciones:editar' pk=ev.id %}"
+               class="glass-action-button glass-action-primary">
+              <span class="fa material-icons mr-1">edit</span>
+              Editar
+            </a>
+            <a href="{% url 'evaluaciones:eliminar' pk=ev.id %}"
+               class="glass-action-button"
+               style="background:rgba(239,68,68,0.8);color:white;border-color:rgba(248,113,113,0.6);">
+              <span class="fa material-icons mr-1">delete</span>
+              Eliminar
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="glass-alert glass-alert-primary">
+    <span class="fa material-icons mr-2">info</span>
+    No hay evaluaciones creadas para este curso todavia.
+    <a href="{% url 'evaluaciones:crear' curso_id=curso.id %}" class="font-semibold underline ml-1">Crear la primera</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
