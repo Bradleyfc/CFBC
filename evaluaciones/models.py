@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 class Evaluacion(models.Model):
     TIPO_CHOICES = [
         ('momentanea', 'Calificación Momentánea'),
-        ('libre', 'Pensamiento Libre'),
+        ('libre', 'Calificación Normal'),
     ]
     ESTADO_CHOICES = [
         ('borrador', 'Borrador'),
@@ -56,6 +56,7 @@ class PreguntaEvaluacion(models.Model):
     orden = models.PositiveIntegerField(default=0, verbose_name='Orden')
     valor = models.DecimalField(
         max_digits=4, decimal_places=2, default=0,
+        blank=True,
         verbose_name='Valor (puntos)',
         help_text='Puntos que vale esta pregunta (solo para evaluaciones momentáneas)'
     )

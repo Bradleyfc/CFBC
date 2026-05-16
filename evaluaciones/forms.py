@@ -253,6 +253,17 @@ class PreguntaEvaluacionForm(forms.ModelForm):
             'valor': 'Valor (puntos)',
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['valor'].required = False
+        self.fields['valor'].initial = 0
+
+    def clean_valor(self):
+        valor = self.cleaned_data.get('valor')
+        if valor is None:
+            return 0
+        return valor
+
 
 class OpcionEvaluacionForm(forms.ModelForm):
     """

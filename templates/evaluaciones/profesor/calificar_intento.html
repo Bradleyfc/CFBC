@@ -93,13 +93,15 @@
                 <ul class="space-y-2">
                   {% for af in item.vf_detalle %}
                   <li class="flex items-center gap-3 text-sm py-1">
-                    <span class="vf-resp-badge {% if af.es_correcta %}vf-resp-ok{% else %}vf-resp-mal{% endif %}">
+                    <span class="vf-resp-badge {% if evaluacion.tipo == 'momentanea' %}{% if af.es_correcta %}vf-resp-ok{% else %}vf-resp-mal{% endif %}{% else %}vf-resp-neutral{% endif %}">
                       {{ af.respondio|default:"—" }}
                     </span>
                     <span class="text-gray-700 flex-1">{{ af.texto }}</span>
+                    {% if evaluacion.tipo == 'momentanea' %}
                     <span class="text-xs {% if af.es_correcta %}text-green-600{% else %}text-red-500{% endif %} font-semibold whitespace-nowrap">
                       {% if af.es_correcta %}✓ Correcto{% else %}✗ Incorrecto (era {{ af.correcta_esperada }}){% endif %}
                     </span>
+                    {% endif %}
                   </li>
                   {% endfor %}
                 </ul>
@@ -112,12 +114,17 @@
                 <ul class="space-y-1">
                   {% for opcion in respuesta.opciones_seleccionadas.all %}
                   <li class="flex items-center gap-2 text-sm">
+                    {% if evaluacion.tipo == 'momentanea' %}
                     <span class="fa material-icons text-sm {% if opcion.es_correcta %}text-green-500{% else %}text-red-400{% endif %}">
                       {% if opcion.es_correcta %}check_circle{% else %}cancel{% endif %}
                     </span>
                     <span class="{% if opcion.es_correcta %}text-green-700 font-medium{% else %}text-red-600{% endif %}">
                       {{ opcion.texto }}
                     </span>
+                    {% else %}
+                    <span class="fa material-icons text-sm text-blue-400">radio_button_checked</span>
+                    <span class="text-gray-700">{{ opcion.texto }}</span>
+                    {% endif %}
                   </li>
                   {% endfor %}
                 </ul>
@@ -242,7 +249,8 @@
     font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
     border: 2px solid transparent;
   }
-  .vf-resp-ok  { background: rgba(34,197,94,0.2);  color: #14532d; border-color: rgba(34,197,94,0.5); }
-  .vf-resp-mal { background: rgba(239,68,68,0.2);  color: #7f1d1d; border-color: rgba(239,68,68,0.5); }
+  .vf-resp-ok      { background: rgba(34,197,94,0.2);  color: #14532d; border-color: rgba(34,197,94,0.5); }
+  .vf-resp-mal     { background: rgba(239,68,68,0.2);  color: #7f1d1d; border-color: rgba(239,68,68,0.5); }
+  .vf-resp-neutral { background: rgba(59,130,246,0.15); color: #1e40af; border-color: rgba(59,130,246,0.35); }
 </style>
 {% endblock %}
