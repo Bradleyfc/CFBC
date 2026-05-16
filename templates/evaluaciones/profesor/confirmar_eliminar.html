@@ -72,7 +72,17 @@
           </a>
           <form method="post">
             {% csrf_token %}
-            <button type="submit" class="glass-button glass-button-danger" style="font-size:1rem; padding:0.65rem 1.5rem;">
+            <!-- Checkbox eliminar notas -->
+            <label class="flex items-center gap-3 mb-4 cursor-pointer select-none px-4 py-3 rounded-xl"
+                   style="background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.2);">
+              <input type="checkbox" name="eliminar_notas" id="eliminar_notas" value="1"
+                     class="w-4 h-4 rounded accent-red-600 cursor-pointer flex-shrink-0">
+              <span class="text-sm text-gray-700">
+                <strong class="text-red-700">Eliminar calificaciones correspondientes</strong>
+                <span class="block text-xs text-gray-500 mt-0.5">Borra también las notas registradas en el historial de calificaciones de los estudiantes.</span>
+              </span>
+            </label>
+            <button type="submit" class="glass-button glass-button-danger w-full justify-center" style="font-size:1rem; padding:0.65rem 1.5rem;">
               <span class="fa material-icons mr-2">delete_forever</span>
               {% if num_intentos > 0 %}
                 Eliminar de todas formas

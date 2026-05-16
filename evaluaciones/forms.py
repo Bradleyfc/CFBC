@@ -77,7 +77,7 @@ class ResponderEvaluacionForm(forms.Form):
                     }),
                 )
 
-            elif pregunta.tipo in ('seleccion_unica', 'verdadero_falso'):
+            elif pregunta.tipo == 'seleccion_unica':
                 self.fields[field_name] = forms.ChoiceField(
                     label=pregunta.texto,
                     choices=[('', '— Selecciona una opción —')] + opciones,
@@ -86,6 +86,17 @@ class ResponderEvaluacionForm(forms.Form):
                         'class': 'accent-blue-600',
                     }),
                 )
+
+            elif pregunta.tipo == 'verdadero_falso':
+                # Un campo por cada afirmación: pregunta_{id}_vf_{opcion_id}
+                for op in pregunta.opciones.all():
+                    vf_field_name = f'pregunta_{pregunta.id}_vf_{op.id}'
+                    self.fields[vf_field_name] = forms.ChoiceField(
+                        label=op.texto,
+                        choices=[('V', 'Verdadero'), ('F', 'Falso')],
+                        required=pregunta.requerida,
+                        widget=forms.RadioSelect(attrs={'class': 'vf-radio-input'}),
+                    )
 
             elif pregunta.tipo == 'escritura_libre':
                 self.fields[field_name] = forms.CharField(
@@ -109,15 +120,18 @@ class ResponderEvaluacionForm(forms.Form):
             if not pregunta.requerida:
                 continue
 
-            field_name = f'pregunta_{pregunta.id}'
-            value = cleaned_data.get(field_name)
-
-            # MultipleChoiceField returns a list; ChoiceField/CharField return str
-            if value is None or value == '' or value == [] or value == ['']:
-                self.add_error(
-                    field_name,
-                    'Esta pregunta es requerida.',
-                )
+            if pregunta.tipo == 'verdadero_falso':
+                # Verificar que todas las afirmaciones tengan respuesta
+                for op in pregunta.opciones.all():
+                    vf_field_name = f'pregunta_{pregunta.id}_vf_{op.id}'
+                    value = cleaned_data.get(vf_field_name)
+                    if not value:
+                        self.add_error(vf_field_name, 'Debes seleccionar V o F.')
+            else:
+                field_name = f'pregunta_{pregunta.id}'
+                value = cleaned_data.get(field_name)
+                if value is None or value == '' or value == [] or value == ['']:
+                    self.add_error(field_name, 'Esta pregunta es requerida.')
 
         return cleaned_data
 
@@ -202,7 +216,7 @@ class PreguntaEvaluacionForm(forms.ModelForm):
     class Meta:
         from evaluaciones.models import PreguntaEvaluacion  # importación local
         model = PreguntaEvaluacion
-        fields = ['texto', 'tipo', 'requerida', 'orden']
+        fields = ['texto', 'tipo', 'requerida', 'orden', 'valor']
         widgets = {
             'texto': forms.TextInput(attrs={
                 'class': TAILWIND_INPUT,
@@ -223,12 +237,20 @@ class PreguntaEvaluacionForm(forms.ModelForm):
                 'min': 0,
                 'placeholder': 'Orden',
             }),
+            'valor': forms.NumberInput(attrs={
+                'class': TAILWIND_INPUT,
+                'min': '0',
+                'max': '10',
+                'step': '0.01',
+                'placeholder': '0.00',
+            }),
         }
         labels = {
             'texto': 'Texto de la pregunta',
             'tipo': 'Tipo',
             'requerida': 'Requerida',
             'orden': 'Orden',
+            'valor': 'Valor (puntos)',
         }
 
 

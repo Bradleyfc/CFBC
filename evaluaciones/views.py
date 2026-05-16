@@ -106,10 +106,11 @@ def _guardar_opciones_desde_post(request, evaluacion):
             )
 
 
-def _registrar_nota_en_calificaciones(estudiante, curso, puntaje):
+def _registrar_nota_en_calificaciones(estudiante, curso, puntaje, evaluacion=None):
     """
     Crea una NotaIndividual en el registro de Calificaciones del estudiante
     para el curso dado. Si no existe el registro de Calificaciones, lo crea.
+    Guarda la referencia a la evaluación para poder eliminarla si se borra la evaluación.
     """
     from principal.models import Calificaciones, NotaIndividual, CursoAcademico
     from decimal import Decimal
@@ -125,6 +126,7 @@ def _registrar_nota_en_calificaciones(estudiante, curso, puntaje):
     NotaIndividual.objects.create(
         calificacion=calificacion_obj,
         valor=Decimal(str(puntaje)),
+        evaluacion=evaluacion,
     )
 
 
@@ -185,6 +187,23 @@ def evaluacion_create(request, curso_id):
             ]
             if not preguntas_validas:
                 messages.error(request, 'Debes agregar al menos una pregunta a la evaluacion.')
+            elif form.cleaned_data.get('tipo') == 'momentanea':
+                from decimal import Decimal
+                suma_valores = sum(
+                    f.cleaned_data.get('valor') or Decimal('0')
+                    for f in preguntas_validas
+                )
+                if suma_valores > Decimal('10'):
+                    messages.error(request, f'La suma de los valores de las preguntas ({suma_valores}) supera el máximo permitido de 10 puntos.')
+                else:
+                    evaluacion = form.save(commit=False)
+                    evaluacion.curso = curso
+                    evaluacion.save()
+                    formset.instance = evaluacion
+                    formset.save()
+                    _guardar_opciones_desde_post(request, evaluacion)
+                    messages.success(request, f'Evaluacion "{evaluacion.titulo}" creada correctamente.')
+                    return redirect('evaluaciones:lista_curso', curso_id=curso.pk)
             else:
                 evaluacion = form.save(commit=False)
                 evaluacion.curso = curso
@@ -233,6 +252,20 @@ def evaluacion_update(request, pk):
             ]
             if not preguntas_validas:
                 messages.error(request, 'Debes mantener al menos una pregunta en la evaluacion.')
+            elif form.cleaned_data.get('tipo') == 'momentanea':
+                from decimal import Decimal
+                suma_valores = sum(
+                    f.cleaned_data.get('valor') or Decimal('0')
+                    for f in preguntas_validas
+                )
+                if suma_valores > Decimal('10'):
+                    messages.error(request, f'La suma de los valores de las preguntas ({suma_valores}) supera el máximo permitido de 10 puntos.')
+                else:
+                    form.save()
+                    formset.save()
+                    _guardar_opciones_desde_post(request, evaluacion)
+                    messages.success(request, f'Evaluacion "{evaluacion.titulo}" actualizada correctamente.')
+                    return redirect('evaluaciones:lista_curso', curso_id=curso.pk)
             else:
                 form.save()
                 formset.save()
@@ -274,6 +307,12 @@ class EvaluacionDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         self.object = self.get_object()
         titulo = self.object.titulo
         curso_id = self.object.curso.pk
+
+        # Eliminar notas solo si el profesor marcó el checkbox
+        if request.POST.get('eliminar_notas'):
+            from principal.models import NotaIndividual
+            NotaIndividual.objects.filter(evaluacion=self.object).delete()
+
         self.object.delete()
         messages.success(request, f'Evaluación "{titulo}" eliminada correctamente.')
         return redirect('evaluaciones:lista_curso', curso_id=curso_id)
@@ -338,12 +377,34 @@ def calificar_intento(request, pk):
 
     calificacion_existente = getattr(intento, 'calificacion', None)
 
-    respuestas = (
+    respuestas_qs = (
         intento.respuestas
         .select_related('pregunta')
-        .prefetch_related('opciones_seleccionadas')
+        .prefetch_related('opciones_seleccionadas', 'pregunta__opciones')
         .order_by('pregunta__orden')
     )
+
+    # Pre-procesar respuestas VF para el template
+    import json
+    respuestas_con_vf = []
+    for resp in respuestas_qs:
+        vf_detalle = None
+        if resp.pregunta.tipo == 'verdadero_falso' and resp.texto_respuesta:
+            try:
+                vf_data = json.loads(resp.texto_respuesta)
+                vf_detalle = []
+                for opcion in resp.pregunta.opciones.all():
+                    respondio = vf_data.get(str(opcion.id), '')
+                    correcta_esperada = 'V' if opcion.es_correcta else 'F'
+                    vf_detalle.append({
+                        'texto': opcion.texto,
+                        'respondio': respondio,
+                        'correcta_esperada': correcta_esperada,
+                        'es_correcta': respondio == correcta_esperada,
+                    })
+            except (ValueError, TypeError):
+                vf_detalle = None
+        respuestas_con_vf.append({'respuesta': resp, 'vf_detalle': vf_detalle})
 
     if request.method == 'POST':
         form = CalificarIntentoForm(request.POST, instance=calificacion_existente)
@@ -357,7 +418,7 @@ def calificar_intento(request, pk):
             intento.save(update_fields=['estado'])
 
             # Guardar también como NotaIndividual en el sistema de calificaciones existente
-            _registrar_nota_en_calificaciones(intento.estudiante, curso, calificacion.puntaje)
+            _registrar_nota_en_calificaciones(intento.estudiante, curso, calificacion.puntaje, evaluacion=evaluacion)
 
             nombre = intento.estudiante.get_full_name() or intento.estudiante.username
             messages.success(request, f'Respuesta de {nombre} calificada y nota registrada en calificaciones.')
@@ -369,7 +430,7 @@ def calificar_intento(request, pk):
         'intento': intento,
         'evaluacion': evaluacion,
         'curso': curso,
-        'respuestas': respuestas,
+        'respuestas_con_vf': respuestas_con_vf,
         'form': form,
         'calificacion_existente': calificacion_existente,
     })
@@ -494,7 +555,7 @@ def responder_evaluacion(request, pk):
                         )
                         respuesta.opciones_seleccionadas.set(opciones)
                 else:
-                    # seleccion_unica / verdadero_falso: valor es un string con el id
+                    # seleccion_unica: valor es un string con el id
                     if valor:
                         from .models import OpcionEvaluacion
                         try:
@@ -503,9 +564,35 @@ def responder_evaluacion(request, pk):
                         except (OpcionEvaluacion.DoesNotExist, ValueError):
                             pass
 
+                if pregunta.tipo == 'verdadero_falso':
+                    # Cada afirmación tiene su propio campo pregunta_{id}_vf_{opcion_id}
+                    opciones_respondidas = []
+                    for opcion in pregunta.opciones.all():
+                        vf_field = f'pregunta_{pregunta.id}_vf_{opcion.id}'
+                        respuesta_vf = form.cleaned_data.get(vf_field)
+                        # es_correcta=True significa que V es la respuesta correcta
+                        # El estudiante seleccionó V → coincide si es_correcta=True
+                        if respuesta_vf == 'V' and opcion.es_correcta:
+                            opciones_respondidas.append(opcion)
+                        elif respuesta_vf == 'F' and not opcion.es_correcta:
+                            opciones_respondidas.append(opcion)
+                    # Guardamos las opciones donde el estudiante acertó
+                    # Pero también necesitamos guardar TODAS las respuestas del estudiante
+                    # Usamos texto_respuesta para guardar el JSON de respuestas VF
+                    import json
+                    vf_respuestas = {}
+                    for opcion in pregunta.opciones.all():
+                        vf_field = f'pregunta_{pregunta.id}_vf_{opcion.id}'
+                        vf_respuestas[str(opcion.id)] = form.cleaned_data.get(vf_field, '')
+                    respuesta.texto_respuesta = json.dumps(vf_respuestas)
+                    respuesta.save(update_fields=['texto_respuesta'])
+
             # 3. Calificar o dejar en revisión
             if evaluacion.tipo == 'momentanea':
-                CalificacionService.calcular_calificacion_momentanea(intento)
+                calificacion = CalificacionService.calcular_calificacion_momentanea(intento)
+                intento.estado = 'calificado'
+                intento.save(update_fields=['estado'])
+                _registrar_nota_en_calificaciones(intento.estudiante, evaluacion.curso, calificacion.puntaje, evaluacion=evaluacion)
             # Para 'libre': intento queda con estado 'enviado' (default)
 
             return redirect('evaluaciones:resultado', pk=intento.pk)
@@ -528,13 +615,13 @@ def responder_evaluacion(request, pk):
 @login_required
 def resultado_evaluacion(request, pk):
     from .services import CalificacionService
+    import json
 
     intento = get_object_or_404(
         IntentoEvaluacion.objects.select_related('evaluacion__curso', 'estudiante'),
         pk=pk,
     )
 
-    # Solo el estudiante dueño puede ver su resultado
     if intento.estudiante != request.user:
         from django.core.exceptions import PermissionDenied
         raise PermissionDenied
@@ -542,20 +629,45 @@ def resultado_evaluacion(request, pk):
     evaluacion = intento.evaluacion
     calificacion = getattr(intento, 'calificacion', None)
 
+    respuestas = (
+        intento.respuestas
+        .select_related('pregunta')
+        .prefetch_related('opciones_seleccionadas', 'pregunta__opciones')
+        .order_by('pregunta__orden')
+    )
+
     respuestas_detalle = []
-    if evaluacion.tipo == 'momentanea':
-        respuestas = (
-            intento.respuestas
-            .select_related('pregunta')
-            .prefetch_related('opciones_seleccionadas')
-            .order_by('pregunta__orden')
-        )
-        for resp in respuestas:
-            es_correcta = CalificacionService.es_respuesta_correcta(resp)
-            respuestas_detalle.append({
-                'respuesta': resp,
-                'es_correcta': es_correcta,
-            })
+    for resp in respuestas:
+        pregunta = resp.pregunta
+        es_correcta = CalificacionService.es_respuesta_correcta(resp)
+
+        # Opciones correctas definidas por el profesor
+        opciones_correctas = list(pregunta.opciones.filter(es_correcta=True))
+
+        # Detalle VF: lo que respondió vs lo correcto
+        vf_detalle = None
+        if pregunta.tipo == 'verdadero_falso' and resp.texto_respuesta:
+            try:
+                vf_data = json.loads(resp.texto_respuesta)
+                vf_detalle = []
+                for opcion in pregunta.opciones.all():
+                    respondio = vf_data.get(str(opcion.id), '')
+                    correcta_esperada = 'V' if opcion.es_correcta else 'F'
+                    vf_detalle.append({
+                        'texto': opcion.texto,
+                        'respondio': respondio or '—',
+                        'correcta_esperada': correcta_esperada,
+                        'es_correcta': respondio == correcta_esperada,
+                    })
+            except (ValueError, TypeError):
+                vf_detalle = None
+
+        respuestas_detalle.append({
+            'respuesta': resp,
+            'es_correcta': es_correcta,
+            'opciones_correctas': opciones_correctas,
+            'vf_detalle': vf_detalle,
+        })
 
     return render(request, 'evaluaciones/estudiante/resultado.html', {
         'intento': intento,

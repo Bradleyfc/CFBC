@@ -66,9 +66,10 @@
         </h2>
       </div>
       <div class="glass-content">
-        {% if respuestas %}
+        {% if respuestas_con_vf %}
         <div class="space-y-4">
-          {% for respuesta in respuestas %}
+          {% for item in respuestas_con_vf %}
+          {% with respuesta=item.respuesta %}
           <div class="glass-respuesta-card">
             <div class="flex items-start gap-2 mb-2">
               <span class="text-xs font-bold text-blue-600 mt-1 min-w-[1.25rem]">{{ forloop.counter }}.</span>
@@ -86,6 +87,26 @@
                 {% else %}
                 <p class="text-gray-400 text-sm italic">Sin respuesta</p>
                 {% endif %}
+
+              {% elif respuesta.pregunta.tipo == "verdadero_falso" %}
+                {% if item.vf_detalle %}
+                <ul class="space-y-2">
+                  {% for af in item.vf_detalle %}
+                  <li class="flex items-center gap-3 text-sm py-1">
+                    <span class="vf-resp-badge {% if af.es_correcta %}vf-resp-ok{% else %}vf-resp-mal{% endif %}">
+                      {{ af.respondio|default:"—" }}
+                    </span>
+                    <span class="text-gray-700 flex-1">{{ af.texto }}</span>
+                    <span class="text-xs {% if af.es_correcta %}text-green-600{% else %}text-red-500{% endif %} font-semibold whitespace-nowrap">
+                      {% if af.es_correcta %}✓ Correcto{% else %}✗ Incorrecto (era {{ af.correcta_esperada }}){% endif %}
+                    </span>
+                  </li>
+                  {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-gray-400 text-sm italic">Sin respuesta</p>
+                {% endif %}
+
               {% else %}
                 {% if respuesta.opciones_seleccionadas.exists %}
                 <ul class="space-y-1">
@@ -106,6 +127,7 @@
               {% endif %}
             </div>
           </div>
+          {% endwith %}
           {% endfor %}
         </div>
         {% else %}
@@ -212,5 +234,15 @@
   }
   .glass-badge-success { background: linear-gradient(135deg, rgba(34,197,94,0.25), rgba(22,163,74,0.15)); color: #14532d; }
   .glass-badge-warning { background: linear-gradient(135deg, rgba(245,158,11,0.25), rgba(217,119,6,0.15)); color: #78350f; }
+
+  /* Badge de respuesta V/F */
+  .vf-resp-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 1.75rem; height: 1.75rem; border-radius: 6px;
+    font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
+    border: 2px solid transparent;
+  }
+  .vf-resp-ok  { background: rgba(34,197,94,0.2);  color: #14532d; border-color: rgba(34,197,94,0.5); }
+  .vf-resp-mal { background: rgba(239,68,68,0.2);  color: #7f1d1d; border-color: rgba(239,68,68,0.5); }
 </style>
 {% endblock %}

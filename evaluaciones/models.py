@@ -54,6 +54,11 @@ class PreguntaEvaluacion(models.Model):
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, verbose_name='Tipo')
     requerida = models.BooleanField(default=True, verbose_name='Requerida')
     orden = models.PositiveIntegerField(default=0, verbose_name='Orden')
+    valor = models.DecimalField(
+        max_digits=4, decimal_places=2, default=0,
+        verbose_name='Valor (puntos)',
+        help_text='Puntos que vale esta pregunta (solo para evaluaciones momentáneas)'
+    )
 
     class Meta:
         verbose_name = 'Pregunta de Evaluación'

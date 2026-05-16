@@ -270,6 +270,11 @@ class NotaIndividual(models.Model):
     calificacion = models.ForeignKey(Calificaciones, on_delete=models.CASCADE, related_name='notas', verbose_name='Calificación')
     valor = models.DecimalField(max_digits=5, decimal_places=2, verbose_name='Valor de la Nota')
     fecha_creacion = models.DateField(auto_now_add=True, verbose_name='Fecha de Creación')
+    evaluacion = models.ForeignKey(
+        'evaluaciones.Evaluacion', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='notas_individuales',
+        verbose_name='Evaluación origen'
+    )
 
     def clean(self):
         from django.core.exceptions import ValidationError

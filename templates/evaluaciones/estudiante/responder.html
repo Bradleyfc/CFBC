@@ -168,29 +168,36 @@
 
             <!-- ── Verdadero / Falso ── -->
             {% elif pregunta.tipo == 'verdadero_falso' %}
-            <div class="flex gap-3 flex-wrap">
+            <p class="text-xs text-gray-500 mb-3 flex items-center gap-1">
+              <span class="fa material-icons text-xs">info</span>
+              Selecciona Verdadero (V) o Falso (F) para cada afirmación
+            </p>
+            <div class="space-y-3">
               {% for opcion in pregunta.opciones.all %}
-              <label class="vf-label">
-                <input type="radio"
-                       name="pregunta_{{ pregunta.id }}"
-                       value="{{ opcion.id }}"
-                       class="opcion-input-radio sr-only">
-                <span class="vf-btn
-                  {% with texto_lower=opcion.texto|lower %}
-                  {% if 'verdadero' in texto_lower or 'true' in texto_lower or 'sí' in texto_lower or 'si' in texto_lower %}vf-verdadero{% else %}vf-falso{% endif %}
-                  {% endwith %}">
-                  {% with texto_lower=opcion.texto|lower %}
-                  {% if 'verdadero' in texto_lower or 'true' in texto_lower or 'sí' in texto_lower or 'si' in texto_lower %}
-                  <span class="fa material-icons mr-1">check_circle</span>
-                  {% else %}
-                  <span class="fa material-icons mr-1">cancel</span>
-                  {% endif %}
-                  {% endwith %}
-                  {{ opcion.texto }}
-                </span>
-              </label>
+              <div class="vf-afirmacion-row">
+                <span class="vf-afirmacion-texto">{{ opcion.texto }}</span>
+                <div class="vf-selector-group">
+                  <label class="vf-opcion-label">
+                    <input type="radio"
+                           name="pregunta_{{ pregunta.id }}_vf_{{ opcion.id }}"
+                           value="V"
+                           class="vf-radio-input sr-only">
+                    <span class="vf-opcion-btn vf-btn-v">V</span>
+                  </label>
+                  <label class="vf-opcion-label">
+                    <input type="radio"
+                           name="pregunta_{{ pregunta.id }}_vf_{{ opcion.id }}"
+                           value="F"
+                           class="vf-radio-input sr-only">
+                    <span class="vf-opcion-btn vf-btn-f">F</span>
+                  </label>
+                </div>
+              </div>
+              {% for field in form %}{% if field.html_name == "pregunta_"|add:pregunta.id|stringformat:"s"|add:"_vf_"|add:opcion.id|stringformat:"s" %}{% if field.errors %}
+              <p class="text-red-500 text-xs ml-1">{% for e in field.errors %}{{ e }}{% endfor %}</p>
+              {% endif %}{% endif %}{% endfor %}
               {% empty %}
-              <p class="text-gray-400 text-sm italic">Sin opciones definidas.</p>
+              <p class="text-gray-400 text-sm italic">Sin afirmaciones definidas.</p>
               {% endfor %}
             </div>
 
@@ -338,22 +345,45 @@
   .opcion-input-radio:checked + .opcion-radio-circle .opcion-radio-dot { opacity: 1; }
   .opcion-texto { font-size: 0.9rem; color: #374151; transition: color 0.2s; }
 
-  /* Verdadero / Falso */
-  .vf-label { cursor: pointer; }
-  .vf-btn {
-    display: inline-flex; align-items: center;
-    padding: 0.75rem 1.5rem; border-radius: 12px;
-    font-weight: 600; font-size: 0.9rem;
-    border: 2px solid transparent; transition: all 0.25s ease; user-select: none;
+  /* Verdadero / Falso — fila por afirmación */
+  @keyframes vf-pulse-v {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
+    50%       { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
   }
-  .vf-verdadero { background: rgba(34,197,94,0.12); color: #14532d; border-color: rgba(34,197,94,0.3); }
-  .vf-verdadero:hover { background: rgba(34,197,94,0.22); border-color: rgba(34,197,94,0.6); transform: translateY(-2px); }
-  .vf-falso { background: rgba(239,68,68,0.12); color: #7f1d1d; border-color: rgba(239,68,68,0.3); }
-  .vf-falso:hover { background: rgba(239,68,68,0.22); border-color: rgba(239,68,68,0.6); transform: translateY(-2px); }
-
-  /* Estado seleccionado V/F — manejado por JS */
-  .vf-verdadero.selected { background: rgba(34,197,94,0.3); border-color: #22c55e; box-shadow: 0 4px 14px rgba(34,197,94,0.3); }
-  .vf-falso.selected     { background: rgba(239,68,68,0.3);  border-color: #ef4444; box-shadow: 0 4px 14px rgba(239,68,68,0.3); }
+  @keyframes vf-pulse-f {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.5); }
+    50%       { box-shadow: 0 0 0 6px rgba(239,68,68,0); }
+  }
+  .vf-afirmacion-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; padding: 0.75rem 1rem; border-radius: 12px;
+    border: 1.5px solid rgba(226,232,240,0.8);
+    background: rgba(255,255,255,0.5);
+    transition: all 0.2s ease;
+  }
+  .vf-afirmacion-row:hover { background: rgba(255,255,255,0.85); border-color: rgba(245,158,11,0.3); }
+  .vf-afirmacion-texto { font-size: 0.9rem; color: #374151; flex: 1; }
+  .vf-selector-group { display: flex; gap: 0.5rem; flex-shrink: 0; }
+  .vf-opcion-label { cursor: pointer; }
+  .vf-opcion-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 2.5rem; height: 2.5rem; border-radius: 8px;
+    font-weight: 700; font-size: 0.95rem;
+    border: 2px solid transparent; transition: all 0.2s ease; user-select: none;
+  }
+  .vf-btn-v { background: rgba(34,197,94,0.12); color: #14532d; border-color: rgba(34,197,94,0.3); }
+  .vf-btn-f { background: rgba(239,68,68,0.12); color: #7f1d1d; border-color: rgba(239,68,68,0.3); }
+  .vf-btn-v:hover { background: rgba(34,197,94,0.25); border-color: rgba(34,197,94,0.6); }
+  .vf-btn-f:hover { background: rgba(239,68,68,0.25); border-color: rgba(239,68,68,0.6); }
+  .vf-radio-input:checked + .vf-btn-v {
+    background: #16a34a; color: #ffffff; border-color: #16a34a;
+    animation: vf-pulse-v 1.4s ease-in-out infinite;
+  }
+  .vf-radio-input:checked + .vf-btn-f {
+    background: #dc2626; color: #ffffff; border-color: #dc2626;
+    animation: vf-pulse-f 1.4s ease-in-out infinite;
+  }
+  .vf-afirmacion-row:has(.vf-radio-input:checked) { border-color: rgba(245,158,11,0.5); background: rgba(255,255,255,0.9); }
 
   /* Estado seleccionado checkbox/radio — manejado por JS */
   .opcion-label.selected-check { background: rgba(59,130,246,0.08); border-color: rgba(59,130,246,0.5); }
@@ -391,20 +421,8 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // ── Verdadero / Falso ──
-  document.querySelectorAll('.vf-label input[type="radio"]').forEach(function (input) {
-    input.addEventListener('change', function () {
-      var name = this.name;
-      // Quitar selección de todos los del grupo
-      document.querySelectorAll('input[name="' + name + '"]').forEach(function (r) {
-        var btn = r.closest('.vf-label').querySelector('.vf-btn');
-        if (btn) btn.classList.remove('selected');
-      });
-      // Marcar el seleccionado
-      var btn = this.closest('.vf-label').querySelector('.vf-btn');
-      if (btn) btn.classList.add('selected');
-    });
-  });
+  // ── Verdadero / Falso — el estado seleccionado lo maneja CSS con :checked ──
+  // No se necesita JS adicional para VF
 
   // ── Confirmación al enviar ──
   document.querySelector('form').addEventListener('submit', function () {
