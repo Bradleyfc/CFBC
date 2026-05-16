@@ -306,50 +306,12 @@ def _make_pregunta_evaluacion_formset():
 
     class PreguntaEvaluacionFormSetWithValidation(_BaseFormSet):
         """
-        Formset con validación personalizada:
-        - Preguntas de tipo opción_multiple o seleccion_unica deben tener
-          al menos una opción definida (Req. 2.9).
-        - Preguntas de tipo opción_multiple o seleccion_unica deben tener
-          al menos una opción marcada como correcta (Req. 2.9).
-        La validación de opciones se realiza consultando las opciones ya
-        guardadas en la base de datos (para edición) o se delega a la vista
-        que debe gestionar los OpcionEvaluacionFormSet anidados.
+        Formset para preguntas de evaluación.
+        La validación de opciones se delega a _guardar_opciones_desde_post
+        en la vista, ya que las opciones llegan como campos hidden del JS
+        y no están disponibles en el ciclo de validación del formset.
         """
-
-        def clean(self):
-            """Validación a nivel de formset."""
-            if any(self.errors):
-                # No continuar si hay errores individuales en los formularios
-                return
-
-            tipos_con_opciones = {'opcion_multiple', 'seleccion_unica'}
-
-            for form in self.forms:
-                if not form.cleaned_data:
-                    continue
-                if form.cleaned_data.get('DELETE', False):
-                    continue
-
-                tipo = form.cleaned_data.get('tipo', '')
-                if tipo not in tipos_con_opciones:
-                    continue
-
-                # Si la pregunta ya existe en la BD, verificar sus opciones
-                instance = form.instance
-                if instance and instance.pk:
-                    opciones = instance.opciones.all()
-                    if not opciones.exists():
-                        raise forms.ValidationError(
-                            f'La pregunta "{instance.texto[:60]}" de tipo '
-                            f'"{form.fields["tipo"].choices}" debe tener al '
-                            f'menos una opción de respuesta.'
-                        )
-                    if not opciones.filter(es_correcta=True).exists():
-                        raise forms.ValidationError(
-                            f'La pregunta "{instance.texto[:60]}" de tipo '
-                            f'"{tipo}" debe tener al menos una opción '
-                            f'marcada como correcta.'
-                        )
+        pass
 
     return PreguntaEvaluacionFormSetWithValidation
 

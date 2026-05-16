@@ -2,271 +2,709 @@
 {% load static %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-6 max-w-4xl">
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12">
+  <div class="absolute inset-0 opacity-30"
+    style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;"></div>
 
-  <!-- Encabezado -->
-  <div class="glass-card mb-6">
-    <div class="glass-content">
-      <div class="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-800 flex items-center">
-            <span class="fa material-icons mr-2">quiz</span>
-            {{ titulo }}
-          </h1>
-          <p class="text-gray-500 text-sm mt-1">{{ curso.name }}</p>
-        </div>
-        <a href="{% url 'evaluaciones:lista_curso' curso_id=curso.id %}"
-           class="glass-action-button glass-action-warning">
-          <span class="fa material-icons mr-1">arrow_back</span>
-          Volver
-        </a>
-      </div>
-    </div>
-  </div>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
 
-  <!-- Mensajes -->
-  {% if messages %}
-  <div class="mb-4">
-    {% for message in messages %}
-    <div class="{% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %} rounded-lg p-4 mb-2">
-      {{ message }}
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
-
-  <form method="post" id="evaluacion-form">
-    {% csrf_token %}
-
-    <!-- Datos de la evaluacion -->
-    <div class="glass-card mb-6">
-      <div class="glass-content">
-        <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
-          <span class="fa material-icons mr-2">info</span>
-          Datos de la Evaluacion
-        </h2>
-
-        {% if form.non_field_errors %}
-        <div class="alert-error rounded-lg p-3 mb-4">
-          {% for error in form.non_field_errors %}
-          <p>{{ error }}</p>
-          {% endfor %}
-        </div>
-        {% endif %}
-
-        <div class="space-y-4">
-          {% for field in form %}
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ field.id_for_label }}">
-              {{ field.label }}{% if field.field.required %} <span class="text-red-500">*</span>{% endif %}
-            </label>
-            {{ field }}
-            {% if field.errors %}
-            <p class="text-red-500 text-xs mt-1">{{ field.errors|join:", " }}</p>
-            {% endif %}
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-
-    <!-- Preguntas -->
-    <div class="glass-card mb-6">
-      <div class="glass-content">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-semibold text-gray-700 flex items-center">
-            <span class="fa material-icons mr-2">help_outline</span>
-            Preguntas
-          </h2>
-          <button type="button" id="agregar-pregunta"
-                  class="glass-action-button glass-action-primary">
-            <span class="fa material-icons mr-1">add</span>
-            Agregar pregunta
-          </button>
-        </div>
-
-        {{ formset.management_form }}
-
-        {% if formset.non_form_errors %}
-        <div class="alert-error rounded-lg p-3 mb-4">
-          {% for error in formset.non_form_errors %}
-          <p>{{ error }}</p>
-          {% endfor %}
-        </div>
-        {% endif %}
-
-        <div id="preguntas-container" class="space-y-4">
-          {% for pform in formset %}
-          <div class="pregunta-item border border-gray-200 rounded-lg p-4 bg-gray-50 relative">
-            {{ pform.id }}
-            {% if pform.DELETE %}
-            {{ pform.DELETE }}
-            {% endif %}
-            <div class="flex items-center justify-between mb-3">
-              <span class="font-medium text-gray-600 text-sm">Pregunta {{ forloop.counter }}</span>
-              <button type="button" class="eliminar-pregunta text-red-500 hover:text-red-700 flex items-center text-sm">
-                <span class="fa material-icons mr-1 text-sm">delete</span>
-                Eliminar
-              </button>
-            </div>
-            {% if pform.non_field_errors %}
-            <div class="alert-error rounded-lg p-2 mb-3 text-sm">
-              {% for error in pform.non_field_errors %}
-              <p>{{ error }}</p>
-              {% endfor %}
-            </div>
-            {% endif %}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div class="md:col-span-2">
-                <label class="block text-xs font-medium text-gray-600 mb-1">{{ pform.texto.label }}</label>
-                {{ pform.texto }}
-                {% if pform.texto.errors %}<p class="text-red-500 text-xs mt-1">{{ pform.texto.errors|join:", " }}</p>{% endif %}
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">{{ pform.tipo.label }}</label>
-                {{ pform.tipo }}
-                {% if pform.tipo.errors %}<p class="text-red-500 text-xs mt-1">{{ pform.tipo.errors|join:", " }}</p>{% endif %}
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">{{ pform.orden.label }}</label>
-                {{ pform.orden }}
-                {% if pform.orden.errors %}<p class="text-red-500 text-xs mt-1">{{ pform.orden.errors|join:", " }}</p>{% endif %}
-              </div>
-              <div class="flex items-center gap-2">
-                {{ pform.requerida }}
-                <label class="text-xs font-medium text-gray-600">{{ pform.requerida.label }}</label>
-              </div>
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-
-        <p class="text-xs text-gray-400 mt-3">
-          <span class="fa material-icons text-xs mr-1">info</span>
-          Debes agregar al menos una pregunta para guardar la evaluacion.
-        </p>
-      </div>
-    </div>
-
-    <!-- Botones -->
-    <div class="flex gap-3 flex-wrap justify-between">
-      <a href="{% url 'evaluaciones:lista_curso' curso_id=curso.id %}"
-         class="glass-btn glass-btn-cancel">
-        <span class="fa material-icons mr-1">close</span>
-        Cancelar
+    <!-- Volver -->
+    <div class="mb-4">
+      <a href="{% url 'evaluaciones:lista_curso' curso_id=curso.id %}" class="glass-button glass-button-secondary">
+        <span class="fa material-icons mr-2">arrow_back</span>
+        Volver a Evaluaciones
       </a>
-      <button type="submit" class="glass-btn glass-btn-save">
-        <span class="fa material-icons mr-1">save</span>
-        {{ accion }} Evaluacion
-      </button>
     </div>
 
-  </form>
+    <!-- Encabezado -->
+    <div class="glass-card mb-6">
+      <div class="glass-header">
+        <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+          <span class="fa material-icons mr-2">quiz</span>
+          {{ titulo }}
+        </h1>
+        <p class="text-gray-600 text-sm mt-1">{{ curso.name }}</p>
+      </div>
+    </div>
+
+    <form method="post" id="evaluacion-form">
+      {% csrf_token %}
+
+      <!-- Datos de la evaluación -->
+      <div class="glass-card mb-6">
+        <div class="glass-header">
+          <h2 class="text-lg font-semibold text-gray-800 flex items-center">
+            <span class="fa material-icons mr-2">info</span>
+            Datos de la Evaluación
+          </h2>
+        </div>
+        <div class="glass-content">
+          {% if form.non_field_errors %}
+          <div class="alert-error rounded-lg p-3 mb-4">
+            {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+          </div>
+          {% endif %}
+          <div class="space-y-4">
+            {% for field in form %}
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1" for="{{ field.id_for_label }}">
+                {{ field.label }}{% if field.field.required %} <span class="text-red-500">*</span>{% endif %}
+              </label>
+              {{ field }}
+              {% if field.errors %}
+              <p class="text-red-500 text-xs mt-1">{{ field.errors|join:", " }}</p>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Preguntas -->
+      <div class="glass-card mb-6">
+        <div class="glass-header">
+          <div class="flex items-center justify-between flex-wrap gap-3">
+            <h2 class="text-lg font-semibold text-gray-800 flex items-center">
+              <span class="fa material-icons mr-2">help_outline</span>
+              Preguntas
+            </h2>
+          </div>
+        </div>
+        <div class="glass-content">
+          {{ formset.management_form }}
+
+          {% if formset.non_form_errors %}
+          <div class="alert-error rounded-lg p-3 mb-4">
+            {% for error in formset.non_form_errors %}<p>{{ error }}</p>{% endfor %}
+          </div>
+          {% endif %}
+
+          <div id="preguntas-container" class="space-y-4">
+            {% for pform in formset %}
+            <div class="pregunta-item glass-pregunta-card relative"
+                 data-pregunta-id="{{ pform.instance.pk|default:'' }}"
+                 data-tipo="{{ pform.instance.tipo|default:'' }}">
+              {{ pform.id }}
+              {% if pform.DELETE %}<div style="display:none;">{{ pform.DELETE }}</div>{% endif %}
+
+              <div class="flex items-center justify-between mb-3">
+                <span class="font-semibold text-blue-700 text-sm flex items-center">
+                  <span class="fa material-icons text-sm mr-1">help_outline</span>
+                  Pregunta {{ forloop.counter }}
+                </span>
+                <button type="button" class="eliminar-pregunta glass-button glass-button-danger" style="padding:0.3rem 0.75rem;font-size:0.8rem;">
+                  <span class="fa material-icons mr-1" style="font-size:0.9rem;">delete</span>
+                  Eliminar
+                </button>
+              </div>
+
+              {% if pform.non_field_errors %}
+              <div class="alert-error rounded-lg p-2 mb-3 text-sm">
+                {% for error in pform.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+              </div>
+              {% endif %}
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="md:col-span-2">
+                  <label class="block text-xs font-semibold text-gray-600 mb-1">{{ pform.texto.label }}</label>
+                  {{ pform.texto }}
+                  {% if pform.texto.errors %}<p class="text-red-500 text-xs mt-1">{{ pform.texto.errors|join:", " }}</p>{% endif %}
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-gray-600 mb-1">{{ pform.tipo.label }}</label>
+                  {{ pform.tipo }}
+                  {% if pform.tipo.errors %}<p class="text-red-500 text-xs mt-1">{{ pform.tipo.errors|join:", " }}</p>{% endif %}
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-gray-600 mb-1">{{ pform.orden.label }}</label>
+                  {{ pform.orden }}
+                  {% if pform.orden.errors %}<p class="text-red-500 text-xs mt-1">{{ pform.orden.errors|join:", " }}</p>{% endif %}
+                </div>
+                <div class="flex items-center gap-2 md:col-span-2">
+                  {{ pform.requerida }}
+                  <label class="text-xs font-semibold text-gray-600">{{ pform.requerida.label }}</label>
+                </div>
+              </div>
+
+              <!-- Sección de opciones de respuesta (visible para tipos con opciones) -->
+              <div class="opciones-section mt-4" style="display:none;">
+                <div class="border-t border-gray-200 pt-4">
+                  <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold text-purple-700 flex items-center">
+                      <span class="fa material-icons text-sm mr-1">checklist</span>
+                      Opciones de respuesta
+                    </span>
+                    <button type="button" class="btn-agregar-opcion glass-button glass-button-info" style="padding:0.25rem 0.7rem;font-size:0.78rem;" title="Agregar opción">
+                      <span class="fa material-icons mr-1" style="font-size:0.85rem;">add</span>
+                      Agregar opción
+                    </button>
+                  </div>
+                  <div class="opciones-lista space-y-2">
+                    <!-- Las opciones se renderizan aquí dinámicamente -->
+                  </div>
+                  <p class="text-xs text-gray-400 mt-2 flex items-center">
+                    <span class="fa material-icons text-xs mr-1">info</span>
+                    <span class="correcta-hint">Marca la casilla <strong class="mx-1">✓ Correcta</strong> en la(s) opción(es) correcta(s).</span>
+                    <span class="libre-hint" style="display:none;">Escribe las opciones que el estudiante podrá seleccionar.</span>
+                  </p>
+                </div>
+              </div>
+
+              <!-- Sección verdadero/falso — agregar afirmaciones con respuesta correcta V o F -->
+              <div class="vf-section mt-4" style="display:none;">
+                <div class="border-t border-gray-200 pt-4">
+                  <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold text-purple-700 flex items-center">
+                      <span class="fa material-icons text-sm mr-1">rule</span>
+                      Afirmaciones (el estudiante marcará V o F en cada una)
+                    </span>
+                    <button type="button" class="btn-agregar-vf glass-button glass-button-info" style="padding:0.25rem 0.7rem;font-size:0.78rem;">
+                      <span class="fa material-icons mr-1" style="font-size:0.85rem;">add</span>
+                      Agregar afirmación
+                    </button>
+                  </div>
+                  <div class="vf-lista space-y-2">
+                    <!-- Las afirmaciones se renderizan aquí dinámicamente -->
+                  </div>
+                  <p class="text-xs text-gray-400 mt-2 flex items-center">
+                    <span class="fa material-icons text-xs mr-1">info</span>
+                    <span class="vf-hint-momentanea">Escribe cada afirmación y selecciona si la respuesta correcta es <strong class="mx-1">V</strong> o <strong class="mx-1">F</strong>.</span>
+                    <span class="vf-hint-libre" style="display:none;">Escribe las afirmaciones que el estudiante responderá con V o F.</span>
+                  </p>
+                </div>
+              </div>
+
+            </div>
+            {% endfor %}
+          </div>
+
+          <div class="flex justify-center mt-4">
+            <button type="button" id="agregar-pregunta" class="glass-button glass-button-success">
+              <span class="fa material-icons mr-2">add_circle</span>
+              Agregar Pregunta
+            </button>
+          </div>
+
+          <p class="text-xs text-gray-400 mt-3 flex items-center">
+            <span class="fa material-icons text-xs mr-1">info</span>
+            Debes agregar al menos una pregunta para guardar la evaluación.
+          </p>
+        </div>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="flex gap-3 flex-wrap justify-between">
+        <a href="{% url 'evaluaciones:lista_curso' curso_id=curso.id %}" class="glass-button glass-button-secondary">
+          <span class="fa material-icons mr-2">close</span>
+          Cancelar
+        </a>
+        <button type="submit" class="glass-button glass-button-primary" style="font-size:1rem;padding:0.65rem 1.75rem;">
+          <span class="fa material-icons mr-2">save</span>
+          {{ accion }} Evaluación
+        </button>
+      </div>
+
+    </form>
+  </div>
 </div>
 
+<!-- Datos de opciones existentes para preguntas ya guardadas -->
+<script id="opciones-existentes" type="application/json">{{ opciones_json|safe }}</script>
+
 <style>
-  .glass-btn {
-    padding: 10px 20px;
-    border-radius: 10px;
-    font-weight: 600;
-    text-decoration: none;
+  .glass-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.4);
+    overflow: hidden;
+  }
+  .glass-header {
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(37,99,235,0.08));
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+  }
+  .glass-content { padding: 1.5rem; }
+  .glass-pregunta-card {
+    padding: 1.25rem;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,255,255,0.35));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.4);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    transition: all 0.3s ease;
+  }
+  .glass-pregunta-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+  .glass-button {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
+    padding: 0.5rem 1.1rem;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    text-decoration: none;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.25);
     transition: all 0.3s ease;
-    border: 1px solid;
     cursor: pointer;
-    font-size: 14px;
+    white-space: nowrap;
   }
-  .glass-btn-cancel {
-    background: rgba(107,114,128,0.8);
-    color: white;
-    border-color: rgba(156,163,175,0.6);
-  }
-  .glass-btn-cancel:hover { background: rgba(156,163,175,0.9); color: #374151; text-decoration: none; }
-  .glass-btn-save {
-    background: rgba(16,185,129,0.8);
-    color: white;
-    border-color: rgba(52,211,153,0.6);
-  }
-  .glass-btn-save:hover { background: rgba(167,243,208,0.9); color: #047857; }
+  .glass-button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); text-decoration: none; }
+  .glass-button-primary  { background: linear-gradient(135deg, rgba(59,130,246,0.35), rgba(37,99,235,0.25)); color: #1e40af; }
+  .glass-button-secondary{ background: linear-gradient(135deg, rgba(156,163,175,0.3), rgba(107,114,128,0.2)); color: #374151; }
+  .glass-button-success  { background: linear-gradient(135deg, rgba(34,197,94,0.3), rgba(22,163,74,0.2)); color: #14532d; }
+  .glass-button-danger   { background: linear-gradient(135deg, rgba(239,68,68,0.3), rgba(220,38,38,0.2)); color: #7f1d1d; }
+  .glass-button-info     { background: linear-gradient(135deg, rgba(139,92,246,0.3), rgba(109,40,217,0.2)); color: #4c1d95; }
   .pregunta-item.deleted { display: none; }
+  .opcion-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.7), rgba(255,255,255,0.4));
+    border: 1px solid rgba(255,255,255,0.5);
+  }
+  .opcion-row input[type="text"] {
+    flex: 1;
+    border: 1px solid rgba(209,213,219,0.8);
+    border-radius: 8px;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.85rem;
+    background: rgba(255,255,255,0.9);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .opcion-row input[type="text"]:focus { border-color: rgba(139,92,246,0.6); box-shadow: 0 0 0 2px rgba(139,92,246,0.1); }
+  .opcion-row .btn-eliminar-opcion {
+    background: linear-gradient(135deg, rgba(239,68,68,0.2), rgba(220,38,38,0.1));
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 7px;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    color: #7f1d1d;
+    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.2s;
+  }
+  .opcion-row .btn-eliminar-opcion:hover { background: rgba(239,68,68,0.3); transform: scale(1.05); }
+  .opcion-row .correcta-label {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #14532d;
+    white-space: nowrap;
+  }
+  .opcion-row input[type="checkbox"].correcta-check { accent-color: #16a34a; width: 1rem; height: 1rem; cursor: pointer; }
+  /* Fila de afirmación V/F */
+  .vf-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.7), rgba(255,255,255,0.4));
+    border: 1px solid rgba(255,255,255,0.5);
+  }
+  .vf-row input[type="text"] {
+    flex: 1;
+    border: 1px solid rgba(209,213,219,0.8);
+    border-radius: 8px;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.85rem;
+    background: rgba(255,255,255,0.9);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .vf-row input[type="text"]:focus { border-color: rgba(139,92,246,0.6); box-shadow: 0 0 0 2px rgba(139,92,246,0.1); }
+  .vf-row .vf-selector {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    white-space: nowrap;
+  }
+  .vf-row .vf-selector label {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+  }
+  .vf-row .vf-selector label.v-label { color: #14532d; background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.3); }
+  .vf-row .vf-selector label.f-label { color: #7f1d1d; background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.3); }
+  .vf-row .vf-selector input[type="radio"] { accent-color: #16a34a; width: 0.9rem; height: 0.9rem; cursor: pointer; }
+  .vf-row .btn-eliminar-vf {
+    background: linear-gradient(135deg, rgba(239,68,68,0.2), rgba(220,38,38,0.1));
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 7px;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    color: #7f1d1d;
+    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.2s;
+  }
+  .vf-row .btn-eliminar-vf:hover { background: rgba(239,68,68,0.3); transform: scale(1.05); }
 </style>
 
 <script>
 (function() {
   var totalForms = document.getElementById('id_preguntas-TOTAL_FORMS');
-  var container = document.getElementById('preguntas-container');
+  var container  = document.getElementById('preguntas-container');
+  var TIPOS_CON_OPCIONES = ['opcion_multiple', 'seleccion_unica'];
+  var TIPO_VF = 'verdadero_falso';
 
-  // Eliminar pregunta (marcar DELETE o remover si es nueva)
-  function bindEliminar(item) {
-    var btn = item.querySelector('.eliminar-pregunta');
-    if (!btn) return;
-    btn.addEventListener('click', function() {
-      var deleteInput = item.querySelector('input[name$="-DELETE"]');
-      if (deleteInput) {
-        deleteInput.checked = true;
-        item.classList.add('deleted');
-      } else {
-        item.remove();
-        renumberPreguntas();
+  // ── Cargar opciones existentes desde el JSON embebido ──────────────────────
+  var opcionesExistentes = {};
+  try {
+    var raw = document.getElementById('opciones-existentes');
+    if (raw) opcionesExistentes = JSON.parse(raw.textContent || '{}');
+  } catch(e) {}
+
+  // ── Crear fila de opción (selección única / múltiple) ──────────────────────
+  function crearFilaOpcion(texto, esCorrecta) {
+    var row = document.createElement('div');
+    row.className = 'opcion-row';
+
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Texto de la opción…';
+    input.value = texto || '';
+    input.className = 'opcion-texto';
+
+    var label = document.createElement('label');
+    label.className = 'correcta-label';
+    // Ocultar el selector "Correcta" si la evaluación es de pensamiento libre
+    if (getTipoEvaluacion() === 'libre') label.style.display = 'none';
+    var chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.className = 'correcta-check';
+    chk.checked = !!esCorrecta;
+    label.appendChild(chk);
+    label.appendChild(document.createTextNode(' Correcta'));
+
+    var btnDel = document.createElement('button');
+    btnDel.type = 'button';
+    btnDel.className = 'btn-eliminar-opcion';
+    btnDel.innerHTML = '<span class="fa material-icons" style="font-size:0.9rem;">delete</span>';
+    btnDel.title = 'Eliminar opción';
+    btnDel.addEventListener('click', function() { row.remove(); });
+
+    row.appendChild(input);
+    row.appendChild(label);
+    row.appendChild(btnDel);
+    return row;
+  }
+
+  // ── Crear fila de afirmación V/F ───────────────────────────────────────────
+  var vfCounter = 0;
+  function crearFilaVF(texto, correcta) {
+    var id = 'vf_radio_' + (++vfCounter);
+    var row = document.createElement('div');
+    row.className = 'vf-row';
+
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Escribe la afirmación…';
+    input.value = texto || '';
+    input.className = 'vf-texto';
+
+    var selector = document.createElement('div');
+    selector.className = 'vf-selector';
+    // Ocultar selector si la evaluación es de pensamiento libre
+    if (getTipoEvaluacion() === 'libre') selector.style.display = 'none';
+
+    var radioV = document.createElement('input');
+    radioV.type = 'radio'; radioV.name = id; radioV.value = 'V'; radioV.className = 'vf-radio';
+    radioV.checked = (correcta !== 'F');
+    var labelV = document.createElement('label');
+    labelV.className = 'v-label';
+    labelV.appendChild(radioV); labelV.appendChild(document.createTextNode(' V'));
+
+    var radioF = document.createElement('input');
+    radioF.type = 'radio'; radioF.name = id; radioF.value = 'F'; radioF.className = 'vf-radio';
+    radioF.checked = (correcta === 'F');
+    var labelF = document.createElement('label');
+    labelF.className = 'f-label';
+    labelF.appendChild(radioF); labelF.appendChild(document.createTextNode(' F'));
+
+    selector.appendChild(labelV);
+    selector.appendChild(labelF);
+
+    var btnDel = document.createElement('button');
+    btnDel.type = 'button'; btnDel.className = 'btn-eliminar-vf';
+    btnDel.innerHTML = '<span class="fa material-icons" style="font-size:0.9rem;">delete</span>';
+    btnDel.title = 'Eliminar afirmación';
+    btnDel.addEventListener('click', function() { row.remove(); });
+
+    row.appendChild(input);
+    row.appendChild(selector);
+    row.appendChild(btnDel);
+    return row;
+  }
+
+  // ── Mostrar/ocultar sección según tipo de pregunta Y tipo de evaluación ──────
+  function getTipoEvaluacion() {
+    var sel = document.getElementById('id_tipo');
+    return sel ? sel.value : '';
+  }
+
+  function actualizarSeccionOpciones(item, tipoPregunta) {
+    var opcionesSection = item.querySelector('.opciones-section');
+    var vfSection       = item.querySelector('.vf-section');
+    var tipoEval        = getTipoEvaluacion();
+    var preguntaId      = item.getAttribute('data-pregunta-id');
+    var tieneExistentes = preguntaId && opcionesExistentes[preguntaId] && opcionesExistentes[preguntaId].length > 0;
+
+    if (TIPOS_CON_OPCIONES.indexOf(tipoPregunta) !== -1) {
+      opcionesSection.style.display = '';
+      vfSection.style.display = 'none';
+      var lista = opcionesSection.querySelector('.opciones-lista');
+      // Solo agregar filas vacías si no hay opciones existentes ni filas ya cargadas
+      if (lista.children.length === 0 && !tieneExistentes) {
+        lista.appendChild(crearFilaOpcion('', false));
+        lista.appendChild(crearFilaOpcion('', false));
       }
+      actualizarVisibilidadCorrectaOpciones(item, tipoEval);
+    } else if (tipoPregunta === TIPO_VF) {
+      opcionesSection.style.display = 'none';
+      vfSection.style.display = '';
+      var vfLista = vfSection.querySelector('.vf-lista');
+      // Solo agregar fila vacía si no hay opciones existentes ni filas ya cargadas
+      if (vfLista.children.length === 0 && !tieneExistentes) {
+        vfLista.appendChild(crearFilaVF('', 'V'));
+      }
+      actualizarVisibilidadSelectoresVF(item, tipoEval);
+    } else {
+      opcionesSection.style.display = 'none';
+      vfSection.style.display = 'none';
+    }
+  }
+
+  function actualizarVisibilidadSelectoresVF(item, tipoEval) {
+    var filas = item.querySelectorAll('.vf-lista .vf-row');
+    filas.forEach(function(fila) {
+      var selector = fila.querySelector('.vf-selector');
+      if (selector) selector.style.display = (tipoEval === 'libre') ? 'none' : '';
     });
+    var hintMomentanea = item.querySelector('.vf-hint-momentanea');
+    var hintLibre      = item.querySelector('.vf-hint-libre');
+    if (hintMomentanea) hintMomentanea.style.display = (tipoEval === 'libre') ? 'none' : '';
+    if (hintLibre)      hintLibre.style.display      = (tipoEval === 'libre') ? '' : 'none';
+  }
+
+  function actualizarVisibilidadCorrectaOpciones(item, tipoEval) {
+    var filas = item.querySelectorAll('.opciones-lista .opcion-row');
+    filas.forEach(function(fila) {
+      var label = fila.querySelector('.correcta-label');
+      if (label) label.style.display = (tipoEval === 'libre') ? 'none' : '';
+    });
+    // Alternar texto de ayuda
+    var correctaHint = item.querySelector('.correcta-hint');
+    var libreHint    = item.querySelector('.libre-hint');
+    if (correctaHint) correctaHint.style.display = (tipoEval === 'libre') ? 'none' : '';
+    if (libreHint)    libreHint.style.display    = (tipoEval === 'libre') ? '' : 'none';
+  }
+
+  // Cuando cambia el tipo de evaluación, actualizar todas las preguntas
+  var selectTipoEval = document.getElementById('id_tipo');
+  if (selectTipoEval) {
+    selectTipoEval.addEventListener('change', function() {
+      container.querySelectorAll('.pregunta-item:not(.deleted)').forEach(function(item) {
+        var tipoPregunta = item.querySelector('select[name$="-tipo"]');
+        if (!tipoPregunta) return;
+        if (tipoPregunta.value === TIPO_VF) {
+          actualizarVisibilidadSelectoresVF(item, selectTipoEval.value);
+        } else if (TIPOS_CON_OPCIONES.indexOf(tipoPregunta.value) !== -1) {
+          actualizarVisibilidadCorrectaOpciones(item, selectTipoEval.value);
+        }
+      });
+    });
+  }
+
+  // ── Cargar opciones existentes ─────────────────────────────────────────────
+  function cargarOpcionesExistentes(item) {
+    var preguntaId = item.getAttribute('data-pregunta-id');
+    var tipo       = item.getAttribute('data-tipo');
+    if (!preguntaId || !opcionesExistentes[preguntaId]) return;
+
+    var opciones = opcionesExistentes[preguntaId];
+    if (!opciones.length) return;
+
+    if (tipo === TIPO_VF) {
+      var vfLista = item.querySelector('.vf-lista');
+      vfLista.innerHTML = '';
+      opciones.forEach(function(op) {
+        // es_correcta=true → respuesta correcta es V (texto es la afirmación)
+        // Para VF guardamos: texto=afirmación, es_correcta=true si V es correcto
+        vfLista.appendChild(crearFilaVF(op.texto, op.es_correcta ? 'V' : 'F'));
+      });
+    } else if (TIPOS_CON_OPCIONES.indexOf(tipo) !== -1) {
+      var lista = item.querySelector('.opciones-lista');
+      lista.innerHTML = '';
+      opciones.forEach(function(op) {
+        lista.appendChild(crearFilaOpcion(op.texto, op.es_correcta));
+      });
+      // Aplicar visibilidad del selector "Correcta"
+      actualizarVisibilidadCorrectaOpciones(item, getTipoEvaluacion());
+    }
+  }
+
+  // ── Serializar opciones antes de enviar ────────────────────────────────────
+  function serializarOpciones(item) {
+    var selectTipo = item.querySelector('select[name$="-tipo"]');
+    if (!selectTipo) return;
+    var tipo = selectTipo.value;
+    var textoInput = item.querySelector('input[name$="-texto"]');
+    if (!textoInput) return;
+    var prefix = textoInput.name.replace('-texto', '');
+
+    // Limpiar campos hidden previos
+    item.querySelectorAll('input[name^="opcion_"]').forEach(function(el) { el.remove(); });
+
+    if (TIPOS_CON_OPCIONES.indexOf(tipo) !== -1) {
+      var filas = item.querySelectorAll('.opciones-lista .opcion-row');
+      filas.forEach(function(fila, idx) {
+        var texto = fila.querySelector('.opcion-texto').value.trim();
+        var correcta = fila.querySelector('.correcta-check').checked;
+        if (!texto) return;
+        _addHidden(item, 'opcion_' + prefix + '_' + idx + '_texto', texto);
+        _addHidden(item, 'opcion_' + prefix + '_' + idx + '_correcta', correcta ? '1' : '0');
+      });
+    } else if (tipo === TIPO_VF) {
+      var filas = item.querySelectorAll('.vf-lista .vf-row');
+      filas.forEach(function(fila, idx) {
+        var texto = fila.querySelector('.vf-texto').value.trim();
+        if (!texto) return;
+        var radioSeleccionado = fila.querySelector('.vf-radio:checked');
+        var correctaVF = radioSeleccionado ? radioSeleccionado.value : 'V';
+        // Guardamos la afirmación como texto y es_correcta=1 si V es correcto
+        _addHidden(item, 'opcion_' + prefix + '_' + idx + '_texto', texto);
+        _addHidden(item, 'opcion_' + prefix + '_' + idx + '_correcta', correctaVF === 'V' ? '1' : '0');
+      });
+    }
+  }
+
+  function _addHidden(parent, name, value) {
+    var h = document.createElement('input');
+    h.type = 'hidden';
+    h.name = name;
+    h.value = value;
+    parent.appendChild(h);
+  }
+
+  // ── Bind de eventos en un item de pregunta ─────────────────────────────────
+  function bindPregunta(item) {
+    var btnEliminar = item.querySelector('.eliminar-pregunta');
+    if (btnEliminar) {
+      btnEliminar.addEventListener('click', function() {
+        var deleteInput = item.querySelector('input[name$="-DELETE"]');
+        if (deleteInput) {
+          deleteInput.checked = true;
+          item.classList.add('deleted');
+        } else {
+          item.remove();
+          renumberPreguntas();
+        }
+      });
+    }
+
+    var selectTipo = item.querySelector('select[name$="-tipo"]');
+    if (selectTipo) {
+      selectTipo.addEventListener('change', function() {
+        item.setAttribute('data-tipo', this.value);
+        actualizarSeccionOpciones(item, this.value);
+      });
+      actualizarSeccionOpciones(item, selectTipo.value);
+      cargarOpcionesExistentes(item);
+    }
+
+    // Botón agregar opción (selección única/múltiple)
+    var btnAgregarOpcion = item.querySelector('.btn-agregar-opcion');
+    if (btnAgregarOpcion) {
+      btnAgregarOpcion.addEventListener('click', function() {
+        var lista = item.querySelector('.opciones-lista');
+        lista.appendChild(crearFilaOpcion('', false));
+      });
+    }
+
+    // Botón agregar afirmación (verdadero/falso)
+    var btnAgregarVF = item.querySelector('.btn-agregar-vf');
+    if (btnAgregarVF) {
+      btnAgregarVF.addEventListener('click', function() {
+        var lista = item.querySelector('.vf-lista');
+        lista.appendChild(crearFilaVF('', 'V'));
+      });
+    }
   }
 
   function renumberPreguntas() {
     var items = container.querySelectorAll('.pregunta-item:not(.deleted)');
     items.forEach(function(item, idx) {
-      var label = item.querySelector('.font-medium.text-gray-600.text-sm');
-      if (label) label.textContent = 'Pregunta ' + (idx + 1);
+      var label = item.querySelector('.font-semibold.text-blue-700');
+      if (label) label.innerHTML = '<span class="fa material-icons text-sm mr-1">help_outline</span>Pregunta ' + (idx + 1);
     });
   }
 
-  // Bind existing
-  container.querySelectorAll('.pregunta-item').forEach(bindEliminar);
+  // ── Inicializar preguntas existentes ───────────────────────────────────────
+  container.querySelectorAll('.pregunta-item').forEach(bindPregunta);
 
-  // Agregar nueva pregunta
+  // ── Agregar nueva pregunta ─────────────────────────────────────────────────
   document.getElementById('agregar-pregunta').addEventListener('click', function() {
-    var total = parseInt(totalForms.value);
+    var total  = parseInt(totalForms.value);
     var prefix = 'preguntas';
-
-    // Clonar el primer formulario como plantilla
     var template = container.querySelector('.pregunta-item');
     if (!template) return;
 
     var newItem = template.cloneNode(true);
     newItem.classList.remove('deleted');
+    newItem.removeAttribute('data-pregunta-id');
+    newItem.setAttribute('data-tipo', '');
 
-    // Actualizar indices
     newItem.innerHTML = newItem.innerHTML.replace(
       new RegExp(prefix + '-(\\d+)-', 'g'),
       prefix + '-' + total + '-'
     );
 
-    // Limpiar valores
-    newItem.querySelectorAll('input[type="text"], input[type="number"], textarea').forEach(function(el) {
-      el.value = '';
-    });
-    newItem.querySelectorAll('input[type="checkbox"]').forEach(function(el) {
-      el.checked = el.name.endsWith('-requerida');
-    });
-    newItem.querySelectorAll('input[type="hidden"]').forEach(function(el) {
-      if (!el.name.endsWith('-id')) el.value = '';
-      else el.value = '';
-    });
+    newItem.querySelectorAll('input[type="text"], input[type="number"], textarea').forEach(function(el) { el.value = ''; });
+    newItem.querySelectorAll('input[type="checkbox"]').forEach(function(el) { el.checked = el.name.endsWith('-requerida'); });
+    newItem.querySelectorAll('input[type="hidden"]').forEach(function(el) { el.value = ''; });
+    newItem.querySelectorAll('input[name^="opcion_"]').forEach(function(el) { el.remove(); });
 
-    // Actualizar numero de pregunta
-    var label = newItem.querySelector('.font-medium.text-gray-600.text-sm');
-    if (label) {
-      var visible = container.querySelectorAll('.pregunta-item:not(.deleted)').length;
-      label.textContent = 'Pregunta ' + (visible + 1);
-    }
+    var lista = newItem.querySelector('.opciones-lista');
+    if (lista) lista.innerHTML = '';
+    var vfLista = newItem.querySelector('.vf-lista');
+    if (vfLista) vfLista.innerHTML = '';
+    newItem.querySelector('.opciones-section').style.display = 'none';
+    newItem.querySelector('.vf-section').style.display = 'none';
+
+    var visible = container.querySelectorAll('.pregunta-item:not(.deleted)').length;
+    var label = newItem.querySelector('.font-semibold.text-blue-700');
+    if (label) label.innerHTML = '<span class="fa material-icons text-sm mr-1">help_outline</span>Pregunta ' + (visible + 1);
 
     container.appendChild(newItem);
     totalForms.value = total + 1;
-    bindEliminar(newItem);
+    bindPregunta(newItem);
   });
+
+  // ── Serializar antes de enviar ─────────────────────────────────────────────
+  document.getElementById('evaluacion-form').addEventListener('submit', function() {
+    container.querySelectorAll('.pregunta-item:not(.deleted)').forEach(function(item) {
+      serializarOpciones(item);
+    });
+  });
+
 })();
 </script>
-
 {% endblock %}

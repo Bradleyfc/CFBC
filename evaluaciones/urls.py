@@ -11,6 +11,8 @@ urlpatterns = [
     path("<int:pk>/eliminar/", views.EvaluacionDeleteView.as_view(), name="eliminar"),
     path("<int:pk>/intentos/", views.IntentoListView.as_view(), name="intentos_lista"),
     path("intento/<int:pk>/calificar/", views.calificar_intento, name="calificar_intento"),
+    # Gestión de opciones de respuesta (AJAX)
+    path("pregunta/<int:pregunta_id>/opciones/", views.opciones_pregunta, name="opciones_pregunta"),
     # Vistas del Estudiante
     path('mis-evaluaciones/<int:curso_id>/', views.EvaluacionEstudianteListView.as_view(), name='mis_evaluaciones'),
     path('<int:pk>/responder/', views.responder_evaluacion, name='responder'),

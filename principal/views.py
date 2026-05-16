@@ -1597,6 +1597,38 @@ class ProfileView(DocumentsProfileMixin, BaseContextMixin, TemplateView):
                 
                 context['enrolled_courses'] = approved_courses
                 context['pending_courses'] = pending_courses
+
+                # IDs de cursos que tienen al menos una evaluación publicada
+                # y conteo de evaluaciones pendientes (sin intento) por curso
+                from evaluaciones.models import Evaluacion as EvaluacionModel, IntentoEvaluacion
+                from django.utils import timezone as tz_now
+
+                evaluaciones_publicadas = EvaluacionModel.objects.filter(
+                    curso__in=[c.id for c in approved_courses],
+                    estado='publicada',
+                ).select_related('curso')
+
+                cursos_con_evaluaciones = set()
+                evaluaciones_pendientes_por_curso = {}  # {curso_id: count}
+
+                ahora = tz_now.now()
+                intentos_del_estudiante = set(
+                    IntentoEvaluacion.objects.filter(
+                        estudiante=user,
+                        evaluacion__in=evaluaciones_publicadas,
+                    ).values_list('evaluacion_id', flat=True)
+                )
+
+                for ev in evaluaciones_publicadas:
+                    cursos_con_evaluaciones.add(ev.curso_id)
+                    cerrada = ev.fecha_limite is not None and ahora > ev.fecha_limite
+                    if not cerrada and ev.pk not in intentos_del_estudiante:
+                        evaluaciones_pendientes_por_curso[ev.curso_id] = (
+                            evaluaciones_pendientes_por_curso.get(ev.curso_id, 0) + 1
+                        )
+
+                context['cursos_con_evaluaciones'] = cursos_con_evaluaciones
+                context['evaluaciones_pendientes_por_curso'] = evaluaciones_pendientes_por_curso
             else:
                 context['enrolled_courses'] = Curso.objects.none()
                 context['pending_courses'] = Curso.objects.none()

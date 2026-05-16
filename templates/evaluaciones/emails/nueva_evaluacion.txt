@@ -1,0 +1,19 @@
+Hola {{ student_name }},
+
+Se ha publicado una nueva evaluación en el curso "{{ curso.name }}".
+
+Detalles de la evaluación:
+- Título: {{ evaluacion.titulo }}
+- Tipo: {{ evaluacion.get_tipo_display }}
+{% if evaluacion.descripcion %}- Descripción: {{ evaluacion.descripcion }}
+{% endif %}{% if evaluacion.fecha_limite %}- Fecha límite: {{ evaluacion.fecha_limite|date:"d/m/Y H:i" }}
+{% endif %}- Profesor: {{ teacher_name }}
+
+Puedes acceder a tus evaluaciones desde aquí:
+{{ evaluacion_url }}
+
+Saludos,
+{{ site_name }}
+
+---
+Este es un mensaje automático, por favor no responder a este email.

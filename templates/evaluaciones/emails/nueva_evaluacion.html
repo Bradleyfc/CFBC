@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva evaluación disponible</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            padding: 28px 24px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: bold;
+        }
+        .header p {
+            margin: 6px 0 0;
+            opacity: 0.85;
+            font-size: 14px;
+        }
+        .content {
+            padding: 28px 24px;
+        }
+        .eval-info {
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            border-radius: 0 8px 8px 0;
+            padding: 16px 20px;
+            margin: 20px 0;
+        }
+        .eval-info h3 {
+            margin: 0 0 12px;
+            color: #1e40af;
+            font-size: 15px;
+        }
+        .eval-info ul {
+            margin: 0;
+            padding-left: 18px;
+            color: #374151;
+            font-size: 14px;
+        }
+        .eval-info ul li {
+            margin-bottom: 6px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-momentanea { background-color: #dbeafe; color: #1e40af; }
+        .badge-libre      { background-color: #fef3c7; color: #78350f; }
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            padding: 13px 28px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            margin: 20px 0;
+        }
+        .footer {
+            background-color: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+            color: #6b7280;
+            padding: 16px 24px;
+            text-align: center;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 Nueva Evaluación Disponible</h1>
+            <p>{{ curso.name }}</p>
+        </div>
+
+        <div class="content">
+            <p>Hola <strong>{{ student_name }}</strong>,</p>
+            <p>Tu profesor ha publicado una nueva evaluación en el curso <strong>"{{ curso.name }}"</strong>. Ya puedes acceder a ella desde la plataforma.</p>
+
+            <div class="eval-info">
+                <h3>📋 Detalles de la evaluación:</h3>
+                <ul>
+                    <li><strong>Título:</strong> {{ evaluacion.titulo }}</li>
+                    <li>
+                        <strong>Tipo:</strong>
+                        {% if evaluacion.tipo == 'momentanea' %}
+                        <span class="badge badge-momentanea">Calificación Momentánea</span>
+                        {% else %}
+                        <span class="badge badge-libre">Pensamiento Libre</span>
+                        {% endif %}
+                    </li>
+                    {% if evaluacion.descripcion %}
+                    <li><strong>Descripción:</strong> {{ evaluacion.descripcion }}</li>
+                    {% endif %}
+                    {% if evaluacion.fecha_limite %}
+                    <li><strong>Fecha límite:</strong> {{ evaluacion.fecha_limite|date:"d/m/Y H:i" }}</li>
+                    {% endif %}
+                    <li><strong>Profesor:</strong> {{ teacher_name }}</li>
+                </ul>
+            </div>
+
+            <p>Ingresa a la plataforma para responder la evaluación antes de la fecha límite:</p>
+
+            <div style="text-align: center;">
+                <a href="{{ evaluacion_url }}" class="button">📚 Ver Mis Evaluaciones</a>
+            </div>
+
+            <p style="color: #6b7280; font-size: 13px; margin-top: 24px;">
+                Si tienes alguna duda sobre la evaluación, comunícate directamente con tu profesor.
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>Este es un mensaje automático de <strong>{{ site_name }}</strong>, por favor no responder a este email.</p>
+        </div>
+    </div>
+</body>
+</html>

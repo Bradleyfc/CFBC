@@ -18,7 +18,7 @@ class Evaluacion(models.Model):
     )
     titulo = models.CharField(max_length=200, verbose_name='Título')
     descripcion = models.TextField(blank=True, null=True, verbose_name='Descripción')
-    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, verbose_name='Tipo')
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='libre', verbose_name='Tipo')
     estado = models.CharField(
         max_length=10, choices=ESTADO_CHOICES,
         default='borrador', verbose_name='Estado'

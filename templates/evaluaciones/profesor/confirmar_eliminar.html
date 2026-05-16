@@ -1,97 +1,126 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-6 max-w-2xl">
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12">
+  <div class="absolute inset-0 opacity-30"
+    style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;"></div>
 
-  <!-- Mensajes -->
-  {% if messages %}
-  <div class="mb-4">
-    {% for message in messages %}
-    <div class="{% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %} rounded-lg p-4 mb-2">
-      {{ message }}
+  <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+
+    <!-- Volver -->
+    <div class="mb-4">
+      <a href="{% url 'evaluaciones:lista_curso' curso_id=curso.id %}" class="glass-button glass-button-secondary">
+        <span class="fa material-icons mr-2">arrow_back</span>
+        Volver a Evaluaciones
+      </a>
     </div>
-    {% endfor %}
-  </div>
-  {% endif %}
 
-  <div class="glass-card">
-    <div class="glass-content">
-      <div class="flex items-center mb-6">
-        <div class="w-12 h-12 rounded-xl flex items-center justify-center mr-4"
-             style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);">
-          <span class="fa material-icons text-red-600">warning</span>
-        </div>
-        <div>
-          <h1 class="text-xl font-bold text-gray-800">Confirmar eliminacion</h1>
-          <p class="text-gray-500 text-sm">{{ curso.name }}</p>
+    <div class="glass-card">
+      <!-- Cabecera roja -->
+      <div class="glass-header" style="background: linear-gradient(135deg, rgba(239,68,68,0.18), rgba(220,38,38,0.10));">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+               style="background: linear-gradient(135deg, rgba(239,68,68,0.25), rgba(220,38,38,0.15)); border: 1px solid rgba(239,68,68,0.35);">
+            <span class="fa material-icons text-red-600 text-2xl">delete_forever</span>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-gray-800">Confirmar eliminación</h1>
+            <p class="text-gray-500 text-sm">{{ curso.name }}</p>
+          </div>
         </div>
       </div>
 
-      <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-        <p class="text-gray-700">
-          Estas a punto de eliminar la evaluacion
-          <strong>"{{ object.titulo }}"</strong>.
-        </p>
-        <p class="text-gray-600 text-sm mt-2">
-          Esta accion eliminara tambien todas las preguntas y opciones asociadas.
-          <strong class="text-red-600">Esta accion no se puede deshacer.</strong>
-        </p>
-        {% if object.intentos.exists %}
-        <div class="mt-3 p-3 bg-red-100 border border-red-300 rounded-lg">
-          <p class="text-red-700 font-medium text-sm">
-            <span class="fa material-icons text-sm mr-1">block</span>
-            Esta evaluacion tiene {{ object.intentos.count }} intento{{ object.intentos.count|pluralize }} registrado{{ object.intentos.count|pluralize }}.
-            No puede ser eliminada.
+      <div class="glass-content space-y-4">
+
+        <!-- Nombre de la evaluación -->
+        <div class="rounded-xl p-4"
+             style="background: linear-gradient(135deg, rgba(254,226,226,0.6), rgba(252,165,165,0.25)); border: 1px solid rgba(239,68,68,0.25);">
+          <p class="text-gray-700 font-medium">
+            Estás a punto de eliminar la evaluación
+            <strong class="text-red-700">"{{ object.titulo }}"</strong>.
+          </p>
+          <p class="text-gray-600 text-sm mt-1">
+            Se eliminarán también todas las preguntas, opciones y respuestas asociadas.
+            <strong class="text-red-600">Esta acción no se puede deshacer.</strong>
           </p>
         </div>
-        {% endif %}
-      </div>
 
-      <div class="flex gap-3 justify-between flex-wrap">
-        <a href="{% url 'evaluaciones:lista_curso' curso_id=curso.id %}"
-           class="glass-btn glass-btn-cancel">
-          <span class="fa material-icons mr-1">arrow_back</span>
-          Cancelar
-        </a>
-        {% if not object.intentos.exists %}
-        <form method="post">
-          {% csrf_token %}
-          <button type="submit" class="glass-btn glass-btn-delete">
-            <span class="fa material-icons mr-1">delete_forever</span>
-            Eliminar definitivamente
-          </button>
-        </form>
+        <!-- Advertencia de respuestas registradas -->
+        {% if num_intentos > 0 %}
+        <div class="rounded-xl p-4 flex items-start gap-3"
+             style="background: linear-gradient(135deg, rgba(251,191,36,0.2), rgba(245,158,11,0.12)); border: 1px solid rgba(245,158,11,0.45);">
+          <span class="fa material-icons text-yellow-600 mt-0.5 flex-shrink-0">warning</span>
+          <div>
+            <p class="text-yellow-800 font-bold text-sm">
+              ¡Atención! Esta evaluación tiene
+              <span class="underline">{{ num_intentos }} respuesta{{ num_intentos|pluralize }} registrada{{ num_intentos|pluralize }}</span>
+              de estudiantes.
+            </p>
+            <p class="text-yellow-700 text-sm mt-1">
+              Al eliminarla se borrarán permanentemente todas las respuestas y calificaciones de los estudiantes.
+              Puedes continuar de todas formas si estás seguro.
+            </p>
+          </div>
+        </div>
         {% endif %}
+
+        <!-- Botones -->
+        <div class="flex gap-3 justify-between flex-wrap pt-2">
+          <a href="{% url 'evaluaciones:lista_curso' curso_id=curso.id %}" class="glass-button glass-button-secondary">
+            <span class="fa material-icons mr-2">close</span>
+            Cancelar
+          </a>
+          <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="glass-button glass-button-danger" style="font-size:1rem; padding:0.65rem 1.5rem;">
+              <span class="fa material-icons mr-2">delete_forever</span>
+              {% if num_intentos > 0 %}
+                Eliminar de todas formas
+              {% else %}
+                Eliminar definitivamente
+              {% endif %}
+            </button>
+          </form>
+        </div>
+
       </div>
     </div>
+
   </div>
 </div>
 
 <style>
-  .glass-btn {
-    padding: 10px 20px;
-    border-radius: 10px;
-    font-weight: 600;
-    text-decoration: none;
+  .glass-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.4);
+    overflow: hidden;
+  }
+  .glass-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+  }
+  .glass-content { padding: 1.5rem; }
+  .glass-button {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
+    padding: 0.5rem 1.1rem;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    text-decoration: none;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.25);
     transition: all 0.3s ease;
-    border: 1px solid;
     cursor: pointer;
-    font-size: 14px;
+    white-space: nowrap;
   }
-  .glass-btn-cancel {
-    background: rgba(107,114,128,0.8);
-    color: white;
-    border-color: rgba(156,163,175,0.6);
-  }
-  .glass-btn-cancel:hover { background: rgba(156,163,175,0.9); color: #374151; text-decoration: none; }
-  .glass-btn-delete {
-    background: rgba(239,68,68,0.8);
-    color: white;
-    border-color: rgba(248,113,113,0.6);
-  }
-  .glass-btn-delete:hover { background: rgba(248,113,113,0.9); color: #7f1d1d; }
+  .glass-button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); text-decoration: none; }
+  .glass-button-secondary { background: linear-gradient(135deg, rgba(156,163,175,0.3), rgba(107,114,128,0.2)); color: #374151; }
+  .glass-button-danger    { background: linear-gradient(135deg, rgba(239,68,68,0.35), rgba(220,38,38,0.25)); color: #7f1d1d; }
+  .glass-button-danger:hover { background: linear-gradient(135deg, rgba(239,68,68,0.5), rgba(220,38,38,0.4)); }
 </style>
 {% endblock %}

@@ -6,7 +6,7 @@ from django.views.generic import ListView, DeleteView
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
 
-from .models import Evaluacion, IntentoEvaluacion, CalificacionEvaluacion
+from .models import Evaluacion, IntentoEvaluacion, CalificacionEvaluacion, PreguntaEvaluacion, OpcionEvaluacion
 from .forms import EvaluacionForm, PreguntaEvaluacionFormSet, CalificarIntentoForm, ResponderEvaluacionForm
 
 
@@ -19,10 +19,117 @@ def _get_curso_or_404(curso_id):
     return get_object_or_404(Curso, pk=curso_id)
 
 
+def _build_opciones_json(evaluacion):
+    """
+    Devuelve un dict {pregunta_pk: [{"id":..,"texto":..,"es_correcta":..,"orden":..}]}
+    serializado como JSON string, listo para embeber en el template.
+    """
+    import json
+    data = {}
+    for pregunta in evaluacion.preguntas.prefetch_related('opciones').all():
+        data[str(pregunta.pk)] = [
+            {
+                'id': op.id,
+                'texto': op.texto,
+                'es_correcta': op.es_correcta,
+                'orden': op.orden,
+            }
+            for op in pregunta.opciones.all()
+        ]
+    return json.dumps(data, ensure_ascii=False)
+
+
+def _guardar_opciones_desde_post(request, evaluacion):
+    """
+    Procesa los campos hidden opcion_preguntas-N-M_texto / _correcta
+    enviados por el template crear_editar.html y crea las OpcionEvaluacion
+    correspondientes para cada pregunta guardada.
+
+    Maneja dos casos:
+    - Pregunta existente: preguntas-N-id tiene el PK en el POST
+    - Pregunta nueva: preguntas-N-id está vacío, se busca la pregunta
+      por su texto (que también viene en preguntas-N-texto)
+    """
+    import re
+
+    patron = re.compile(r'^opcion_(preguntas-\d+)_(\d+)_texto$')
+    grupos = {}
+    for key, val in request.POST.items():
+        m = patron.match(key)
+        if m:
+            prefix = m.group(1)
+            idx = int(m.group(2))
+            if prefix not in grupos:
+                grupos[prefix] = {}
+            grupos[prefix][idx] = {
+                'texto': val.strip(),
+                'correcta': request.POST.get(f'opcion_{prefix}_{idx}_correcta', '0') == '1',
+            }
+
+    for prefix, opciones_dict in grupos.items():
+        # Intentar obtener la pregunta por PK (preguntas existentes)
+        pk_val = request.POST.get(f'{prefix}-id', '').strip()
+        pregunta = None
+
+        if pk_val:
+            try:
+                pregunta = PreguntaEvaluacion.objects.get(pk=int(pk_val), evaluacion=evaluacion)
+            except (PreguntaEvaluacion.DoesNotExist, ValueError):
+                pregunta = None
+
+        if pregunta is None:
+            # Pregunta nueva: buscar por texto dentro de esta evaluación
+            texto_pregunta = request.POST.get(f'{prefix}-texto', '').strip()
+            if texto_pregunta:
+                pregunta = (
+                    PreguntaEvaluacion.objects
+                    .filter(evaluacion=evaluacion, texto=texto_pregunta)
+                    .first()
+                )
+
+        if pregunta is None:
+            continue
+
+        if pregunta.tipo not in ('opcion_multiple', 'seleccion_unica', 'verdadero_falso'):
+            continue
+
+        pregunta.opciones.all().delete()
+        for idx in sorted(opciones_dict.keys()):
+            datos = opciones_dict[idx]
+            if not datos['texto']:
+                continue
+            OpcionEvaluacion.objects.create(
+                pregunta=pregunta,
+                texto=datos['texto'],
+                es_correcta=datos['correcta'],
+                orden=idx,
+            )
+
+
+def _registrar_nota_en_calificaciones(estudiante, curso, puntaje):
+    """
+    Crea una NotaIndividual en el registro de Calificaciones del estudiante
+    para el curso dado. Si no existe el registro de Calificaciones, lo crea.
+    """
+    from principal.models import Calificaciones, NotaIndividual, CursoAcademico
+    from decimal import Decimal
+
+    curso_academico = curso.curso_academico or CursoAcademico.objects.filter(activo=True).first()
+
+    calificacion_obj, _ = Calificaciones.objects.get_or_create(
+        course=curso,
+        student=estudiante,
+        curso_academico=curso_academico,
+    )
+
+    NotaIndividual.objects.create(
+        calificacion=calificacion_obj,
+        valor=Decimal(str(puntaje)),
+    )
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # 6.1  EvaluacionListView
-# Requirements: 1.1, 1.2, 1.3, 1.4
-# ─────────────────────────────────────────────────────────────────────────────
 
 class EvaluacionListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = Evaluacion
@@ -84,6 +191,7 @@ def evaluacion_create(request, curso_id):
                 evaluacion.save()
                 formset.instance = evaluacion
                 formset.save()
+                _guardar_opciones_desde_post(request, evaluacion)
                 messages.success(request, f'Evaluacion "{evaluacion.titulo}" creada correctamente.')
                 return redirect('evaluaciones:lista_curso', curso_id=curso.pk)
     else:
@@ -96,6 +204,7 @@ def evaluacion_create(request, curso_id):
         'curso': curso,
         'accion': 'Crear',
         'titulo': 'Nueva Evaluacion',
+        'opciones_json': '{}',
     })
 
 
@@ -127,6 +236,7 @@ def evaluacion_update(request, pk):
             else:
                 form.save()
                 formset.save()
+                _guardar_opciones_desde_post(request, evaluacion)
                 messages.success(request, f'Evaluacion "{evaluacion.titulo}" actualizada correctamente.')
                 return redirect('evaluaciones:lista_curso', curso_id=curso.pk)
     else:
@@ -140,6 +250,7 @@ def evaluacion_update(request, pk):
         'evaluacion': evaluacion,
         'accion': 'Editar',
         'titulo': f'Editar: {evaluacion.titulo}',
+        'opciones_json': _build_opciones_json(evaluacion),
     })
 
 
@@ -161,24 +272,16 @@ class EvaluacionDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
-
-        if self.object.intentos.exists():
-            messages.error(
-                request,
-                f'No se puede eliminar la evaluacion "{self.object.titulo}" '
-                'porque ya tiene intentos de estudiantes registrados.'
-            )
-            return redirect('evaluaciones:lista_curso', curso_id=self.object.curso.pk)
-
         titulo = self.object.titulo
         curso_id = self.object.curso.pk
         self.object.delete()
-        messages.success(request, f'Evaluacion "{titulo}" eliminada correctamente.')
+        messages.success(request, f'Evaluación "{titulo}" eliminada correctamente.')
         return redirect('evaluaciones:lista_curso', curso_id=curso_id)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['curso'] = self.object.curso
+        context['num_intentos'] = self.object.intentos.count()
         return context
 
 
@@ -253,8 +356,11 @@ def calificar_intento(request, pk):
             intento.estado = 'calificado'
             intento.save(update_fields=['estado'])
 
+            # Guardar también como NotaIndividual en el sistema de calificaciones existente
+            _registrar_nota_en_calificaciones(intento.estudiante, curso, calificacion.puntaje)
+
             nombre = intento.estudiante.get_full_name() or intento.estudiante.username
-            messages.success(request, f'Intento de {nombre} calificado correctamente.')
+            messages.success(request, f'Respuesta de {nombre} calificada y nota registrada en calificaciones.')
             return redirect('evaluaciones:intentos_lista', pk=evaluacion.pk)
     else:
         form = CalificarIntentoForm(instance=calificacion_existente)
@@ -410,6 +516,7 @@ def responder_evaluacion(request, pk):
         'form': form,
         'evaluacion': evaluacion,
         'curso': curso,
+        'preguntas': evaluacion.preguntas.prefetch_related('opciones').all(),
     })
 
 
@@ -534,6 +641,7 @@ def secretaria_evaluacion_create(request):
                 formset.instance = evaluacion
                 formset.save()
                 messages.success(request, f'Evaluacion "{evaluacion.titulo}" creada correctamente.')
+                _guardar_opciones_desde_post(request, evaluacion)
                 return redirect('evaluaciones:secretaria_lista')
     else:
         form = EvaluacionForm()
@@ -622,8 +730,11 @@ def secretaria_calificar_intento(request, pk):
             intento.estado = 'calificado'
             intento.save(update_fields=['estado'])
 
+            # Guardar también como NotaIndividual en el sistema de calificaciones existente
+            _registrar_nota_en_calificaciones(intento.estudiante, curso, calificacion.puntaje)
+
             nombre = intento.estudiante.get_full_name() or intento.estudiante.username
-            messages.success(request, f'Intento de {nombre} calificado correctamente.')
+            messages.success(request, f'Respuesta de {nombre} calificada y nota registrada en calificaciones.')
             return redirect('evaluaciones:secretaria_intentos_lista', eval_id=evaluacion.pk)
     else:
         form = CalificarIntentoForm(instance=calificacion_existente)
@@ -713,6 +824,7 @@ def secretaria_evaluacion_create(request):
                 formset.instance = evaluacion
                 formset.save()
                 messages.success(request, f'Evaluacion "{evaluacion.titulo}" creada correctamente.')
+                _guardar_opciones_desde_post(request, evaluacion)
                 return redirect('evaluaciones:secretaria_lista')
     else:
         form = EvaluacionForm()
@@ -801,8 +913,11 @@ def secretaria_calificar_intento(request, pk):
             intento.estado = 'calificado'
             intento.save(update_fields=['estado'])
 
+            # Guardar también como NotaIndividual en el sistema de calificaciones existente
+            _registrar_nota_en_calificaciones(intento.estudiante, curso, calificacion.puntaje)
+
             nombre = intento.estudiante.get_full_name() or intento.estudiante.username
-            messages.success(request, f'Intento de {nombre} calificado correctamente.')
+            messages.success(request, f'Respuesta de {nombre} calificada y nota registrada en calificaciones.')
             return redirect('evaluaciones:secretaria_intentos_lista', eval_id=evaluacion.pk)
     else:
         form = CalificarIntentoForm(instance=calificacion_existente)
@@ -815,3 +930,57 @@ def secretaria_calificar_intento(request, pk):
         'form': form,
         'calificacion_existente': calificacion_existente,
     })
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Gestión de opciones de respuesta para preguntas (AJAX)
+# ─────────────────────────────────────────────────────────────────────────────
+
+@login_required
+def opciones_pregunta(request, pregunta_id):
+    """
+    GET  → devuelve las opciones actuales de la pregunta como JSON
+    POST → crea/actualiza opciones enviadas como JSON
+    """
+    import json
+    from django.http import JsonResponse
+
+    pregunta = get_object_or_404(PreguntaEvaluacion, pk=pregunta_id)
+    evaluacion = pregunta.evaluacion
+
+    # Solo el profesor del curso puede gestionar opciones
+    if request.user != evaluacion.curso.teacher:
+        return JsonResponse({'error': 'Sin permiso'}, status=403)
+
+    if request.method == 'GET':
+        opciones = list(pregunta.opciones.values('id', 'texto', 'es_correcta', 'orden'))
+        return JsonResponse({'opciones': opciones})
+
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+        except (json.JSONDecodeError, ValueError):
+            return JsonResponse({'error': 'JSON inválido'}, status=400)
+
+        opciones_data = data.get('opciones', [])
+
+        # Eliminar opciones existentes y recrear (más simple que diff)
+        pregunta.opciones.all().delete()
+
+        creadas = []
+        for i, op in enumerate(opciones_data):
+            texto = str(op.get('texto', '')).strip()
+            if not texto:
+                continue
+            nueva = OpcionEvaluacion.objects.create(
+                pregunta=pregunta,
+                texto=texto,
+                es_correcta=bool(op.get('es_correcta', False)),
+                orden=i,
+            )
+            creadas.append({'id': nueva.id, 'texto': nueva.texto,
+                            'es_correcta': nueva.es_correcta, 'orden': nueva.orden})
+
+        return JsonResponse({'opciones': creadas})
+
+    return JsonResponse({'error': 'Método no permitido'}, status=405)

@@ -10,7 +10,7 @@
         <div>
           <h1 class="text-2xl font-bold text-gray-800 flex items-center">
             <span class="fa material-icons mr-2">grading</span>
-            Calificar Intento
+            Calificar Respuesta
           </h1>
           <p class="text-gray-500 text-sm mt-1">
             {{ evaluacion.titulo }} — {{ curso.name }}
@@ -155,8 +155,8 @@
         <div class="flex gap-3 justify-between flex-wrap mt-6">
           <a href="{% url 'evaluaciones:secretaria_intentos_lista' eval_id=evaluacion.id %}"
              class="glass-btn glass-btn-cancel">
-            <span class="fa material-icons mr-1">close</span>
-            Cancelar
+            <span class="fa material-icons mr-1">arrow_back</span>
+            Volver a Respuestas
           </a>
           <button type="submit" class="glass-btn glass-btn-save">
             <span class="fa material-icons mr-1">save</span>

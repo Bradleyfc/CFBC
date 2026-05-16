@@ -106,7 +106,7 @@
               </span>
               <span>
                 <span class="fa material-icons text-xs mr-1">people</span>
-                {{ ev.intentos.count }} intento{{ ev.intentos.count|pluralize }}
+                {{ ev.intentos.count }} respuesta{{ ev.intentos.count|pluralize }}
               </span>
               {% if ev.fecha_limite %}
               <span>
@@ -126,7 +126,7 @@
             <a href="{% url 'evaluaciones:secretaria_intentos_lista' eval_id=ev.id %}"
                class="glass-action-button glass-action-warning">
               <span class="fa material-icons mr-1">people</span>
-              Intentos
+              Respuestas
               {% if pendientes_por_eval and pendientes_por_eval|length > 0 %}
                 {% with p=ev.pk %}{% endwith %}
               {% endif %}

@@ -89,11 +89,16 @@
                             Ver Notas
                         </a>
 
+                        {% if course.id in cursos_con_evaluaciones %}
                         <a href="{% url 'evaluaciones:mis_evaluaciones' curso_id=course.id %}"
-                            class="glass-action-button glass-action-purple flex-1">
-                            <span class="fa material-icons mr-1">quiz</span></i>
+                            class="glass-action-button glass-action-purple flex-1 {% if course.id in evaluaciones_pendientes_por_curso %}glass-action-purple-alert{% endif %}">
+                            <span class="fa material-icons mr-1">quiz</span>
                             Evaluaciones
+                            {% if course.id in evaluaciones_pendientes_por_curso %}
+                            <span class="glass-badge-eval-pending">!</span>
+                            {% endif %}
                         </a>
+                        {% endif %}
                         {% endif %}
                     </div>
                 </div>
@@ -306,6 +311,35 @@
     .glass-action-purple {
         background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(109, 40, 217, 0.2));
         color: #4c1d95;
+    }
+
+    .glass-action-purple-alert {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.45), rgba(109, 40, 217, 0.35));
+        color: #3b0764;
+        box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3);
+        animation: pulse-purple 2.5s infinite;
+    }
+
+    @keyframes pulse-purple {
+        0%, 100% { box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3); }
+        50%       { box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15); }
+    }
+
+    /* Glass Badge Evaluaciones Pendientes */
+    .glass-badge-eval-pending {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.25rem;
+        height: 1.25rem;
+        margin-left: 0.5rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.9), rgba(109, 40, 217, 0.8));
+        color: white;
+        font-size: 0.7rem;
+        font-weight: 700;
+        animation: pulse 2s infinite;
+        box-shadow: 0 2px 8px rgba(139, 92, 246, 0.5);
     }
 
     /* Glass Badge New */

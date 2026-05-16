@@ -1,109 +1,182 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-6">
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12">
+  <div class="absolute inset-0 opacity-30"
+    style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;"></div>
 
-  <!-- Encabezado -->
-  <div class="glass-card mb-6">
-    <div class="glass-content">
-      <div class="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-800 flex items-center">
-            <span class="fa material-icons mr-2">people</span>
-            Intentos — {{ evaluacion.titulo }}
-          </h1>
-          <p class="text-gray-500 text-sm mt-1">{{ curso.name }}</p>
-        </div>
-        <div class="flex gap-2 flex-wrap items-center">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+
+    <!-- Volver -->
+    <div class="mb-4">
+      <a href="{% url 'evaluaciones:lista_curso' curso_id=curso.id %}" class="glass-button glass-button-secondary">
+        <span class="fa material-icons mr-2">arrow_back</span>
+        Volver a Evaluaciones
+      </a>
+    </div>
+
+    <!-- Encabezado -->
+    <div class="glass-card mb-6">
+      <div class="glass-header">
+        <div class="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+              <span class="fa material-icons mr-2">people</span>
+              Respuestas — {{ evaluacion.titulo }}
+            </h1>
+            <p class="text-gray-600 text-sm mt-1">{{ curso.name }}</p>
+          </div>
           {% if pendientes > 0 %}
-          <span class="glass-badge-status glass-badge-yellow">
-            {{ pendientes }} pendiente{{ pendientes|pluralize }}
+          <span class="glass-badge glass-badge-warning">
+            {{ pendientes }} pendiente{{ pendientes|pluralize }} de revisión
           </span>
           {% endif %}
-          <a href="{% url 'evaluaciones:lista_curso' curso_id=curso.id %}"
-             class="glass-action-button glass-action-warning">
-            <span class="fa material-icons mr-1">arrow_back</span>
-            Volver
-          </a>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Mensajes -->
-  {% if messages %}
-  <div class="mb-4">
-    {% for message in messages %}
-    <div class="{% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %} rounded-lg p-4 mb-2">
-      {{ message }}
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
-
-  <!-- Tabla de intentos -->
-  {% if intentos %}
-  <div class="glass-card">
-    <div class="glass-content overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="border-b border-gray-200">
-            <th class="text-left py-3 px-4 font-semibold text-gray-600">Estudiante</th>
-            <th class="text-left py-3 px-4 font-semibold text-gray-600">Fecha de envio</th>
-            <th class="text-left py-3 px-4 font-semibold text-gray-600">Estado</th>
-            <th class="text-left py-3 px-4 font-semibold text-gray-600">Puntaje</th>
-            {% if evaluacion.tipo == "libre" %}
-            <th class="text-left py-3 px-4 font-semibold text-gray-600">Acciones</th>
-            {% endif %}
-          </tr>
-        </thead>
-        <tbody>
-          {% for intento in intentos %}
-          <tr class="border-b border-gray-100 hover:bg-gray-50">
-            <td class="py-3 px-4">
-              <div class="font-medium text-gray-800">
-                {{ intento.estudiante.get_full_name|default:intento.estudiante.username }}
-              </div>
-              <div class="text-xs text-gray-400">{{ intento.estudiante.username }}</div>
-            </td>
-            <td class="py-3 px-4 text-gray-600">
-              {{ intento.fecha_envio|date:"d/m/Y H:i" }}
-            </td>
-            <td class="py-3 px-4">
-              {% if intento.estado == "calificado" %}
-              <span class="glass-badge-status glass-badge-green">Calificado</span>
-              {% else %}
-              <span class="glass-badge-status glass-badge-yellow">Enviado</span>
+    <!-- Tabla de respuestas -->
+    {% if intentos %}
+    <div class="glass-card">
+      <div class="glass-content overflow-x-auto" style="padding:0;">
+        <table class="glass-table">
+          <thead>
+            <tr>
+              <th>Estudiante</th>
+              <th>Fecha de envío</th>
+              <th>Estado</th>
+              <th>Puntaje</th>
+              {% if evaluacion.tipo == "libre" %}
+              <th>Acciones</th>
               {% endif %}
-            </td>
-            <td class="py-3 px-4">
-              {% if intento.calificacion %}
-              <span class="font-semibold text-gray-800">{{ intento.calificacion.puntaje }}</span>
-              {% else %}
-              <span class="text-gray-400">—</span>
+            </tr>
+          </thead>
+          <tbody>
+            {% for intento in intentos %}
+            <tr>
+              <td>
+                <div class="font-semibold text-gray-800">
+                  {{ intento.estudiante.get_full_name|default:intento.estudiante.username }}
+                </div>
+                <div class="text-xs text-gray-400">{{ intento.estudiante.username }}</div>
+              </td>
+              <td class="text-gray-600">{{ intento.fecha_envio|date:"d/m/Y H:i" }}</td>
+              <td>
+                {% if intento.estado == "calificado" %}
+                <span class="glass-badge glass-badge-success">Calificado</span>
+                {% else %}
+                <span class="glass-badge glass-badge-warning">Enviado</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if intento.calificacion %}
+                <span class="font-bold text-gray-800">{{ intento.calificacion.puntaje }}</span>
+                <span class="text-xs text-gray-400 ml-1">/ 10</span>
+                {% else %}
+                <span class="text-gray-400">—</span>
+                {% endif %}
+              </td>
+              {% if evaluacion.tipo == "libre" %}
+              <td>
+                <a href="{% url 'evaluaciones:calificar_intento' pk=intento.id %}" class="glass-button glass-button-primary">
+                  <span class="fa material-icons mr-1">grading</span>
+                  {% if intento.estado == "calificado" %}Ver / Editar{% else %}Calificar{% endif %}
+                </a>
+              </td>
               {% endif %}
-            </td>
-            {% if evaluacion.tipo == "libre" %}
-            <td class="py-3 px-4">
-              <a href="{% url 'evaluaciones:calificar_intento' pk=intento.id %}"
-                 class="glass-action-button glass-action-primary">
-                <span class="fa material-icons mr-1">grading</span>
-                {% if intento.estado == "calificado" %}Ver / Editar{% else %}Calificar{% endif %}
-              </a>
-            </td>
-            {% endif %}
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
-  {% else %}
-  <div class="glass-alert glass-alert-primary">
-    <span class="fa material-icons mr-2">info</span>
-    Ningun estudiante ha enviado un intento para esta evaluacion todavia.
-  </div>
-  {% endif %}
+    {% else %}
+    <div class="glass-alert glass-alert-info">
+      <span class="fa material-icons mr-2">info</span>
+      Ningún estudiante ha enviado respuestas para esta evaluación todavía.
+    </div>
+    {% endif %}
 
+  </div>
 </div>
+
+<style>
+  .glass-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.4);
+    overflow: hidden;
+  }
+  .glass-header {
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(37,99,235,0.08));
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+  }
+  .glass-content { padding: 1.5rem; }
+  .glass-button {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.45rem 1rem;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    text-decoration: none;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.25);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .glass-button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); text-decoration: none; }
+  .glass-button-primary  { background: linear-gradient(135deg, rgba(59,130,246,0.3), rgba(37,99,235,0.2)); color: #1e40af; }
+  .glass-button-secondary{ background: linear-gradient(135deg, rgba(156,163,175,0.3), rgba(107,114,128,0.2)); color: #374151; }
+  .glass-badge {
+    display: inline-block;
+    padding: 0.25rem 0.65rem;
+    border-radius: 14px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .glass-badge-success { background: linear-gradient(135deg, rgba(34,197,94,0.25), rgba(22,163,74,0.15)); color: #14532d; }
+  .glass-badge-warning { background: linear-gradient(135deg, rgba(245,158,11,0.25), rgba(217,119,6,0.15)); color: #78350f; }
+  .glass-alert {
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem;
+  }
+  .glass-alert-info { background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(37,99,235,0.08)); color: #1e3a8a; }
+  /* Table */
+  .glass-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+  .glass-table thead tr {
+    background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(37,99,235,0.08));
+  }
+  .glass-table th {
+    padding: 0.875rem 1.25rem;
+    text-align: left;
+    font-weight: 600;
+    color: #1e40af;
+    border-bottom: 2px solid rgba(59,130,246,0.2);
+    font-size: 0.85rem;
+  }
+  .glass-table tbody tr {
+    background: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    transition: all 0.2s ease;
+  }
+  .glass-table tbody tr:hover {
+    background: linear-gradient(135deg, rgba(255,255,255,0.5), rgba(255,255,255,0.3));
+    transform: translateY(-1px);
+  }
+  .glass-table td { padding: 0.875rem 1.25rem; color: #374151; font-size: 0.875rem; vertical-align: middle; }
+</style>
 {% endblock %}
