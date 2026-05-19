@@ -584,9 +584,12 @@
   var selectTipoEval = document.getElementById('id_tipo');
   if (selectTipoEval) {
     selectTipoEval.addEventListener('change', function() {
+      var esMomentanea = selectTipoEval.value === 'momentanea';
       container.querySelectorAll('.pregunta-item:not(.deleted)').forEach(function(item) {
         var tipoPregunta = item.querySelector('select[name$="-tipo"]');
         if (!tipoPregunta) return;
+        // Filtrar escritura_libre si es momentánea
+        filtrarEscrituraLibre(tipoPregunta, esMomentanea);
         if (tipoPregunta.value === TIPO_VF) {
           actualizarVisibilidadSelectoresVF(item, selectTipoEval.value);
         } else if (TIPOS_CON_OPCIONES.indexOf(tipoPregunta.value) !== -1) {
@@ -597,6 +600,24 @@
     });
     // Inicializar al cargar
     actualizarCamposValor();
+  }
+
+  // ── Ocultar/mostrar escritura_libre según tipo de evaluación ───────────────
+  function filtrarEscrituraLibre(selectTipo, esMomentanea) {
+    var opt = selectTipo.querySelector('option[value="escritura_libre"]');
+    if (!opt) return;
+    if (esMomentanea) {
+      opt.disabled = true;
+      opt.style.display = 'none';
+      // Si estaba seleccionada, cambiar al primer tipo disponible
+      if (selectTipo.value === 'escritura_libre') {
+        selectTipo.value = 'seleccion_unica';
+        selectTipo.dispatchEvent(new Event('change'));
+      }
+    } else {
+      opt.disabled = false;
+      opt.style.display = '';
+    }
   }
 
   // ── Cargar opciones existentes ─────────────────────────────────────────────
@@ -688,6 +709,8 @@
 
     var selectTipo = item.querySelector('select[name$="-tipo"]');
     if (selectTipo) {
+      // Aplicar filtro de escritura_libre según tipo de evaluación actual
+      filtrarEscrituraLibre(selectTipo, getTipoEvaluacion() === 'momentanea');
       selectTipo.addEventListener('change', function() {
         item.setAttribute('data-tipo', this.value);
         actualizarSeccionOpciones(item, this.value);

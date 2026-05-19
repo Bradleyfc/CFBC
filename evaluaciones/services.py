@@ -105,24 +105,35 @@ class CalificacionService:
         if tipo == "opcion_multiple":
             todas_opciones = list(respuesta.pregunta.opciones.all())
             num_total = len(todas_opciones)
+            if num_total == 0:
+                return Decimal('0.00')
+
             ids_correctos = {op.id for op in todas_opciones if op.es_correcta}
             num_correctas = len(ids_correctos)
             if num_correctas == 0:
                 return Decimal('0.00')
-            # Premio por cada correcta marcada: valor / num_correctas
-            valor_por_correcta = (valor / Decimal(num_correctas)).quantize(
-                Decimal('0.0001'), rounding=ROUND_HALF_UP
-            )
-            # Penalización por cada incorrecta marcada: valor / total_opciones
-            valor_por_incorrecta = (valor / Decimal(num_total)).quantize(
-                Decimal('0.0001'), rounding=ROUND_HALF_UP
-            ) if num_total > 0 else Decimal('0.00')
+
             ids_seleccionados = set(
                 respuesta.opciones_seleccionadas.values_list("id", flat=True)
             )
+
+            # Si no marcó ninguna correcta → 0 directo
             acertadas = len(ids_correctos & ids_seleccionados)
-            incorrectas = len(ids_seleccionados - ids_correctos)
-            puntaje = (valor_por_correcta * acertadas) - (valor_por_incorrecta * incorrectas)
+            if acertadas == 0:
+                return Decimal('0.00')
+
+            # Cada opción vale: valor_total / total_opciones
+            # Puntaje = valor − (errores × valor_por_opcion)
+            # Errores: correctas omitidas + incorrectas marcadas
+            valor_por_opcion = (valor / Decimal(num_total)).quantize(
+                Decimal('0.0001'), rounding=ROUND_HALF_UP
+            )
+
+            correctas_omitidas   = len(ids_correctos - ids_seleccionados)
+            incorrectas_marcadas = len(ids_seleccionados - ids_correctos)
+            total_errores        = correctas_omitidas + incorrectas_marcadas
+
+            puntaje = valor - (valor_por_opcion * total_errores)
             return max(puntaje, Decimal('0.00')).quantize(
                 Decimal('0.01'), rounding=ROUND_HALF_UP
             )
