@@ -216,7 +216,7 @@ class PreguntaEvaluacionForm(forms.ModelForm):
     class Meta:
         from evaluaciones.models import PreguntaEvaluacion  # importación local
         model = PreguntaEvaluacion
-        fields = ['texto', 'tipo', 'requerida', 'orden', 'valor']
+        fields = ['texto', 'tipo', 'requerida', 'orden', 'valor', 'todo_o_nada']
         widgets = {
             'texto': forms.TextInput(attrs={
                 'class': TAILWIND_INPUT,
@@ -244,6 +244,13 @@ class PreguntaEvaluacionForm(forms.ModelForm):
                 'step': '0.01',
                 'placeholder': '0.00',
             }),
+            'todo_o_nada': forms.CheckboxInput(attrs={
+                'class': (
+                    'rounded border-gray-300 text-blue-600 shadow-sm '
+                    'focus:border-blue-300 focus:ring focus:ring-blue-200 '
+                    'focus:ring-opacity-50'
+                ),
+            }),
         }
         labels = {
             'texto': 'Texto de la pregunta',
@@ -251,6 +258,7 @@ class PreguntaEvaluacionForm(forms.ModelForm):
             'requerida': 'Requerida',
             'orden': 'Orden',
             'valor': 'Valor (puntos)',
+            'todo_o_nada': 'Todo o nada',
         }
 
     def __init__(self, *args, **kwargs):

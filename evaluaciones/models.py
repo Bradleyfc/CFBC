@@ -60,6 +60,12 @@ class PreguntaEvaluacion(models.Model):
         verbose_name='Valor (puntos)',
         help_text='Puntos que vale esta pregunta (solo para evaluaciones momentáneas)'
     )
+    todo_o_nada = models.BooleanField(
+        default=False,
+        verbose_name='Todo o nada',
+        help_text='Si está activo, cualquier error en la pregunta da 0 puntos. '
+                  'Si está inactivo, se descuentan puntos por cada error.'
+    )
 
     class Meta:
         verbose_name = 'Pregunta de Evaluación'

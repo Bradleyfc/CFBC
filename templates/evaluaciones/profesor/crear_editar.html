@@ -129,6 +129,24 @@
                   {{ pform.valor }}
                   {% if pform.valor.errors %}<p class="text-red-500 text-xs mt-1">{{ pform.valor.errors|join:", " }}</p>{% endif %}
                 </div>
+                <!-- Campo todo_o_nada: solo visible en evaluaciones momentáneas -->
+                <div class="campo-todo-o-nada" style="display:none;">
+                  <label class="block text-xs font-semibold text-gray-600 mb-2">Modo de calificación</label>
+                  <!-- Checkbox real oculto — controlado por los botones de abajo -->
+                  <div style="display:none;">{{ pform.todo_o_nada }}</div>
+                  <div class="flex gap-2">
+                    <button type="button" class="modo-btn modo-parcial flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-lg border-2 text-xs font-semibold transition-all duration-200">
+                      <span class="fa material-icons text-xs">percent</span>
+                      Por errores
+                    </button>
+                    <button type="button" class="modo-btn modo-todo flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-lg border-2 text-xs font-semibold transition-all duration-200">
+                      <span class="fa material-icons text-xs">rule</span>
+                      Todo o nada
+                    </button>
+                  </div>
+                  <p class="text-xs text-gray-400 mt-1 campo-todo-hint-parcial">Se descuentan puntos por cada error en opciones o afirmaciones.</p>
+                  <p class="text-xs text-gray-400 mt-1 campo-todo-hint-todo" style="display:none;">Cualquier error da 0 puntos en esta pregunta.</p>
+                </div>
                 <div class="flex items-center gap-2 md:col-span-2">
                   {{ pform.requerida }}
                   <label class="text-xs font-semibold text-gray-600">{{ pform.requerida.label }}</label>
@@ -370,6 +388,31 @@
     transition: all 0.2s;
   }
   .vf-row .btn-eliminar-vf:hover { background: rgba(239,68,68,0.3); transform: scale(1.05); }
+
+  /* Botones modo calificación */
+  .modo-btn {
+    border-color: rgba(209,213,219,0.6);
+    background: rgba(243,244,246,0.5);
+    color: #9ca3af;
+    cursor: pointer;
+  }
+  .modo-btn:hover {
+    border-color: rgba(156,163,175,0.8);
+    background: rgba(243,244,246,0.9);
+    color: #6b7280;
+  }
+  .modo-parcial.activo {
+    border-color: #3b82f6;
+    background: rgba(59,130,246,0.12);
+    color: #1e40af;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+  }
+  .modo-todo.activo {
+    border-color: #f59e0b;
+    background: rgba(245,158,11,0.12);
+    color: #78350f;
+    box-shadow: 0 0 0 3px rgba(245,158,11,0.15);
+  }
 </style>
 
 <script>
@@ -552,6 +595,8 @@
     container.querySelectorAll('.pregunta-item:not(.deleted)').forEach(function(item) {
       var campoValor = item.querySelector('.campo-valor');
       if (campoValor) campoValor.style.display = esMomentanea ? '' : 'none';
+      var campoTodo = item.querySelector('.campo-todo-o-nada');
+      if (campoTodo) campoTodo.style.display = esMomentanea ? '' : 'none';
     });
     var indicator = document.getElementById('valor-total-indicator');
     if (indicator) indicator.classList.toggle('hidden', !esMomentanea);
@@ -734,6 +779,48 @@
       btnAgregarVF.addEventListener('click', function() {
         var lista = item.querySelector('.vf-lista');
         lista.appendChild(crearFilaVF('', 'V'));
+      });
+    }
+
+    // Modo calificación (todo o nada / por errores)
+    bindModoCalificacion(item);
+  }
+
+  // ── Lógica de los botones Todo o nada / Por errores ───────────────────────
+  function bindModoCalificacion(item) {
+    var checkboxTodoONada = item.querySelector('input[name$="-todo_o_nada"]');
+    if (!checkboxTodoONada) return;
+
+    var btnParcial  = item.querySelector('.modo-parcial');
+    var btnTodo     = item.querySelector('.modo-todo');
+    var hintParcial = item.querySelector('.campo-todo-hint-parcial');
+    var hintTodo    = item.querySelector('.campo-todo-hint-todo');
+
+    function actualizarBotones() {
+      var esTodo = checkboxTodoONada.checked;
+      if (btnParcial) {
+        btnParcial.classList.toggle('activo', !esTodo);
+      }
+      if (btnTodo) {
+        btnTodo.classList.toggle('activo', esTodo);
+      }
+      if (hintParcial) hintParcial.style.display = esTodo ? 'none' : '';
+      if (hintTodo)    hintTodo.style.display    = esTodo ? '' : 'none';
+    }
+
+    // Inicializar estado visual
+    actualizarBotones();
+
+    if (btnParcial) {
+      btnParcial.addEventListener('click', function() {
+        checkboxTodoONada.checked = false;
+        actualizarBotones();
+      });
+    }
+    if (btnTodo) {
+      btnTodo.addEventListener('click', function() {
+        checkboxTodoONada.checked = true;
+        actualizarBotones();
       });
     }
   }
