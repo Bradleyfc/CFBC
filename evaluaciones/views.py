@@ -689,7 +689,7 @@ class SecretariaEvaluacionListView(LoginRequiredMixin, UserPassesTestMixin, List
     context_object_name = 'evaluaciones'
 
     def test_func(self):
-        return self.request.user.groups.filter(name='Secretaria').exists()
+        return self.request.user.groups.filter(name='Secretaría').exists()
 
     def get_queryset(self):
         from principal.models import Curso
@@ -726,7 +726,7 @@ def secretaria_evaluacion_create(request):
     from principal.models import Curso
     from django.core.exceptions import PermissionDenied
 
-    if not request.user.groups.filter(name='Secretaria').exists():
+    if not request.user.groups.filter(name='Secretaría').exists():
         raise PermissionDenied
 
     cursos = Curso.objects.all().order_by('name')
@@ -785,7 +785,7 @@ class SecretariaIntentoListView(LoginRequiredMixin, UserPassesTestMixin, ListVie
         self.evaluacion = get_object_or_404(Evaluacion, pk=kwargs['eval_id'])
 
     def test_func(self):
-        return self.request.user.groups.filter(name='Secretaria').exists()
+        return self.request.user.groups.filter(name='Secretaría').exists()
 
     def get_queryset(self):
         return (
@@ -812,7 +812,7 @@ class SecretariaIntentoListView(LoginRequiredMixin, UserPassesTestMixin, ListVie
 def secretaria_calificar_intento(request, pk):
     from django.core.exceptions import PermissionDenied
 
-    if not request.user.groups.filter(name='Secretaria').exists():
+    if not request.user.groups.filter(name='Secretaría').exists():
         raise PermissionDenied
 
     intento = get_object_or_404(
@@ -872,7 +872,7 @@ class SecretariaEvaluacionListView(LoginRequiredMixin, UserPassesTestMixin, List
     context_object_name = 'evaluaciones'
 
     def test_func(self):
-        return self.request.user.groups.filter(name='Secretaria').exists()
+        return self.request.user.groups.filter(name='Secretaría').exists()
 
     def get_queryset(self):
         from principal.models import Curso
@@ -909,7 +909,7 @@ def secretaria_evaluacion_create(request):
     from principal.models import Curso
     from django.core.exceptions import PermissionDenied
 
-    if not request.user.groups.filter(name='Secretaria').exists():
+    if not request.user.groups.filter(name='Secretaría').exists():
         raise PermissionDenied
 
     cursos = Curso.objects.all().order_by('name')
@@ -968,7 +968,7 @@ class SecretariaIntentoListView(LoginRequiredMixin, UserPassesTestMixin, ListVie
         self.evaluacion = get_object_or_404(Evaluacion, pk=kwargs['eval_id'])
 
     def test_func(self):
-        return self.request.user.groups.filter(name='Secretaria').exists()
+        return self.request.user.groups.filter(name='Secretaría').exists()
 
     def get_queryset(self):
         return (
@@ -995,7 +995,7 @@ class SecretariaIntentoListView(LoginRequiredMixin, UserPassesTestMixin, ListVie
 def secretaria_calificar_intento(request, pk):
     from django.core.exceptions import PermissionDenied
 
-    if not request.user.groups.filter(name='Secretaria').exists():
+    if not request.user.groups.filter(name='Secretaría').exists():
         raise PermissionDenied
 
     intento = get_object_or_404(
@@ -1096,3 +1096,85 @@ def opciones_pregunta(request, pregunta_id):
         return JsonResponse({'opciones': creadas})
 
     return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# 9.3  SecretariaReporteEvaluaciones
+# Vista de reporte: todas las evaluaciones con respuestas y notas,
+# filtrable por curso y estudiante.
+# ────────────────────────────────────────────────────────────────────────────
+
+@login_required
+def secretaria_reporte_evaluaciones(request):
+    from django.core.exceptions import PermissionDenied
+    from principal.models import Curso, Matriculas
+    from django.contrib.auth.models import User
+
+    if not request.user.groups.filter(name='Secretaría').exists():
+        raise PermissionDenied
+
+    # Parámetros de filtro
+    curso_id     = request.GET.get('curso_id', '').strip()
+    estudiante_id = request.GET.get('estudiante_id', '').strip()
+
+    # Cursos disponibles (para el select de filtro)
+    cursos = Curso.objects.order_by('name')
+
+    # Estudiantes disponibles según el curso seleccionado
+    estudiantes = User.objects.none()
+    curso_sel = None
+    if curso_id:
+        try:
+            curso_sel = Curso.objects.get(pk=int(curso_id))
+            estudiantes = User.objects.filter(
+                matriculas__course=curso_sel,
+                matriculas__activo=True,
+            ).distinct().order_by('first_name', 'last_name')
+        except (Curso.DoesNotExist, ValueError):
+            curso_sel = None
+
+    # Construir queryset de intentos
+    intentos_qs = (
+        IntentoEvaluacion.objects
+        .select_related('evaluacion__curso', 'estudiante')
+        .prefetch_related('respuestas__pregunta', 'respuestas__opciones_seleccionadas')
+        .order_by('evaluacion__curso__name', 'evaluacion__titulo', 'estudiante__first_name')
+    )
+
+    if curso_id:
+        intentos_qs = intentos_qs.filter(evaluacion__curso_id=int(curso_id))
+    if estudiante_id:
+        intentos_qs = intentos_qs.filter(estudiante_id=int(estudiante_id))
+
+    # Enriquecer con calificación
+    filas = []
+    calificados = 0
+    pendientes = 0
+    for intento in intentos_qs:
+        calificacion = getattr(intento, 'calificacion', None)
+        filas.append({
+            'intento': intento,
+            'evaluacion': intento.evaluacion,
+            'curso': intento.evaluacion.curso,
+            'estudiante': intento.estudiante,
+            'estado': intento.estado,
+            'fecha_envio': intento.fecha_envio,
+            'puntaje': calificacion.puntaje if calificacion else None,
+            'comentario': calificacion.comentario if calificacion else '',
+        })
+        if intento.estado == 'calificado':
+            calificados += 1
+        else:
+            pendientes += 1
+
+    return render(request, 'evaluaciones/secretaria/reporte_evaluaciones.html', {
+        'filas': filas,
+        'cursos': cursos,
+        'curso_sel': curso_sel,
+        'estudiantes': estudiantes,
+        'curso_id': curso_id,
+        'estudiante_id': estudiante_id,
+        'total': len(filas),
+        'calificados': calificados,
+        'pendientes': pendientes,
+    })

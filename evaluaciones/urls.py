@@ -22,4 +22,5 @@ urlpatterns = [
     path('secretaria/crear/', views.secretaria_evaluacion_create, name='secretaria_crear'),
     path('secretaria/<int:eval_id>/intentos/', views.SecretariaIntentoListView.as_view(), name='secretaria_intentos_lista'),
     path('secretaria/intento/<int:pk>/calificar/', views.secretaria_calificar_intento, name='secretaria_calificar_intento'),
+    path('secretaria/reporte/', views.secretaria_reporte_evaluaciones, name='secretaria_reporte'),
 ]
