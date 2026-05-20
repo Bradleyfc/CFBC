@@ -51,14 +51,13 @@
             </select>
           </div>
 
-          <!-- Filtro por estudiante (solo si hay curso seleccionado) -->
+          <!-- Filtro por estudiante -->
           <div class="flex-1 min-w-48">
             <label class="block text-xs font-semibold text-gray-600 mb-1">
               <span class="fa material-icons text-xs mr-1">person</span>Estudiante
             </label>
             <select name="estudiante_id" id="select-estudiante"
-                    class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white/80 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"
-                    {% if not curso_id %}disabled{% endif %}>
+                    class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white/80 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all">
               <option value="">— Todos los estudiantes —</option>
               {% for est in estudiantes %}
               <option value="{{ est.pk }}" {% if estudiante_id == est.pk|stringformat:"s" %}selected{% endif %}>
@@ -261,24 +260,16 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  // Al cambiar el curso, recargar la página para actualizar el select de estudiantes
+  // Al cambiar el curso, enviar el formulario automáticamente
+  // para actualizar la lista de estudiantes del select
   var selectCurso = document.getElementById('select-curso');
-  var selectEst   = document.getElementById('select-estudiante');
-
   if (selectCurso) {
     selectCurso.addEventListener('change', function () {
-      if (this.value) {
-        // Recargar con el nuevo curso para obtener los estudiantes
-        window.location.href = '{% url "evaluaciones:secretaria_reporte" %}?curso_id=' + this.value;
-      } else {
-        window.location.href = '{% url "evaluaciones:secretaria_reporte" %}';
-      }
+      // Limpiar el estudiante seleccionado y enviar
+      var selectEst = document.getElementById('select-estudiante');
+      if (selectEst) selectEst.value = '';
+      this.closest('form').submit();
     });
-  }
-
-  // Habilitar/deshabilitar select de estudiante
-  if (selectEst) {
-    selectEst.disabled = !selectCurso || !selectCurso.value;
   }
 });
 </script>

@@ -1120,8 +1120,8 @@ def secretaria_reporte_evaluaciones(request):
     # Cursos disponibles (para el select de filtro)
     cursos = Curso.objects.order_by('name')
 
-    # Estudiantes disponibles según el curso seleccionado
-    estudiantes = User.objects.none()
+    # Estudiantes: si hay curso seleccionado → solo los de ese curso
+    # Si no hay curso → todos los que tienen al menos un intento registrado
     curso_sel = None
     if curso_id:
         try:
@@ -1132,6 +1132,14 @@ def secretaria_reporte_evaluaciones(request):
             ).distinct().order_by('first_name', 'last_name')
         except (Curso.DoesNotExist, ValueError):
             curso_sel = None
+            estudiantes = User.objects.filter(
+                intentos_evaluacion__isnull=False,
+            ).distinct().order_by('first_name', 'last_name')
+    else:
+        # Todos los estudiantes que tienen al menos un intento
+        estudiantes = User.objects.filter(
+            intentos_evaluacion__isnull=False,
+        ).distinct().order_by('first_name', 'last_name')
 
     # Construir queryset de intentos
     intentos_qs = (

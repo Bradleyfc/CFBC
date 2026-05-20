@@ -1,149 +1,219 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-6">
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12">
+  <div class="absolute inset-0 opacity-30"
+    style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;"></div>
 
-  <!-- Encabezado -->
-  <div class="glass-card mb-6">
-    <div class="glass-content">
-      <div class="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-800 flex items-center">
-            <span class="fa material-icons mr-2">quiz</span>
-            Evaluaciones — Secretaria
-          </h1>
-          <p class="text-gray-500 text-sm mt-1">Todas las evaluaciones del sistema</p>
-        </div>
-        <div class="flex gap-2 flex-wrap items-center">
-          {% if total_pendientes > 0 %}
-          <span class="glass-badge-status glass-badge-yellow">
-            {{ total_pendientes }} pendiente{{ total_pendientes|pluralize }}
-          </span>
-          {% endif %}
-          <a href="{% url 'evaluaciones:secretaria_crear' %}"
-             class="glass-action-button glass-action-primary">
-            <span class="fa material-icons mr-1">add</span>
-            Nueva Evaluacion
-          </a>
-        </div>
-      </div>
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+
+    <!-- Volver -->
+    <div class="mb-4">
+      <a href="{% url 'principal:profile' %}" class="glass-button glass-button-secondary">
+        <span class="fa material-icons mr-2">arrow_back</span>
+        Volver al perfil
+      </a>
     </div>
-  </div>
 
-  <!-- Filtro por curso -->
-  <div class="glass-card mb-6">
-    <div class="glass-content">
-      <form method="get" class="flex items-end gap-3 flex-wrap">
-        <div class="flex-1 min-w-48">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Filtrar por curso</label>
-          <select name="curso_id"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="">— Todos los cursos —</option>
-            {% for c in cursos %}
-            <option value="{{ c.id }}" {% if curso_id_filtro == c.id|stringformat:"s" %}selected{% endif %}>
-              {{ c.name }}
-            </option>
-            {% endfor %}
-          </select>
-        </div>
-        <button type="submit" class="glass-action-button glass-action-primary">
-          <span class="fa material-icons mr-1">filter_list</span>
-          Filtrar
-        </button>
-        {% if curso_id_filtro %}
-        <a href="{% url 'evaluaciones:secretaria_lista' %}" class="glass-action-button glass-action-warning">
-          <span class="fa material-icons mr-1">clear</span>
-          Limpiar
-        </a>
-        {% endif %}
-      </form>
-    </div>
-  </div>
-
-  <!-- Mensajes -->
-  {% if messages %}
-  <div class="mb-4">
-    {% for message in messages %}
-    <div class="{% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %} rounded-lg p-4 mb-2">
-      {{ message }}
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
-
-  <!-- Lista de evaluaciones -->
-  {% if evaluaciones %}
-  <div class="space-y-3">
-    {% for ev in evaluaciones %}
-    <div class="glass-card">
-      <div class="glass-content">
-        <div class="flex items-start justify-between flex-wrap gap-3">
-          <div class="flex-1">
-            <div class="flex items-center gap-2 flex-wrap">
-              <h3 class="font-semibold text-gray-800">{{ ev.titulo }}</h3>
-              {% if ev.tipo == "momentanea" %}
-              <span class="glass-badge-status glass-badge-blue">Momentanea</span>
-              {% else %}
-              <span class="glass-badge-status glass-badge-yellow">Normal</span>
-              {% endif %}
-              {% if ev.estado == "publicada" %}
-              <span class="glass-badge-status glass-badge-green">Publicada</span>
-              {% else %}
-              <span class="glass-badge-status glass-badge-red">Borrador</span>
-              {% endif %}
-            </div>
-            <p class="text-gray-500 text-xs mt-1">
-              <span class="fa material-icons text-xs mr-1">school</span>
-              {{ ev.curso.name }}
-            </p>
-            {% if ev.descripcion %}
-            <p class="text-gray-500 text-sm mt-1">{{ ev.descripcion|truncatechars:120 }}</p>
-            {% endif %}
-            <div class="flex items-center gap-4 mt-2 text-xs text-gray-400">
-              <span>
-                <span class="fa material-icons text-xs mr-1">help_outline</span>
-                {{ ev.preguntas.count }} pregunta{{ ev.preguntas.count|pluralize }}
-              </span>
-              <span>
-                <span class="fa material-icons text-xs mr-1">people</span>
-                {{ ev.intentos.count }} respuesta{{ ev.intentos.count|pluralize }}
-              </span>
-              {% if ev.fecha_limite %}
-              <span>
-                <span class="fa material-icons text-xs mr-1">schedule</span>
-                Limite: {{ ev.fecha_limite|date:"d/m/Y H:i" }}
-              </span>
-              {% endif %}
-              {% with pend=pendientes_por_eval|default_if_none:0 %}
-              {% if pendientes_por_eval %}
-                {% with p=pendientes_por_eval|dictsort:"0" %}{% endwith %}
-              {% endif %}
-              {% endwith %}
-            </div>
+    <!-- Encabezado -->
+    <div class="glass-card mb-6">
+      <div class="glass-header">
+        <div class="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+              <span class="fa material-icons text-purple-600">quiz</span>
+              Evaluaciones
+            </h1>
+            <p class="text-gray-500 text-sm mt-1">Todas las evaluaciones del sistema</p>
           </div>
-          <!-- Acciones -->
-          <div class="flex gap-2 flex-wrap">
-            <a href="{% url 'evaluaciones:secretaria_intentos_lista' eval_id=ev.id %}"
-               class="glass-action-button glass-action-warning">
-              <span class="fa material-icons mr-1">people</span>
-              Respuestas
-              {% if pendientes_por_eval and pendientes_por_eval|length > 0 %}
-                {% with p=ev.pk %}{% endwith %}
-              {% endif %}
+          <div class="flex gap-2 flex-wrap items-center">
+            {% if total_pendientes > 0 %}
+            <span class="glass-badge glass-badge-warning">
+              {{ total_pendientes }} pendiente{{ total_pendientes|pluralize }}
+            </span>
+            {% endif %}
+            <a href="{% url 'evaluaciones:secretaria_reporte' %}" class="glass-button glass-button-purple">
+              <span class="fa material-icons mr-2">assessment</span>
+              Reporte de Evaluaciones
             </a>
           </div>
         </div>
       </div>
-    </div>
-    {% endfor %}
-  </div>
-  {% else %}
-  <div class="glass-alert glass-alert-primary">
-    <span class="fa material-icons mr-2">info</span>
-    No hay evaluaciones en el sistema{% if curso_id_filtro %} para el curso seleccionado{% endif %}.
-    <a href="{% url 'evaluaciones:secretaria_crear' %}" class="font-semibold underline ml-1">Crear la primera</a>
-  </div>
-  {% endif %}
 
+      <!-- Filtro por curso -->
+      <div class="glass-content border-t border-white/20">
+        <form method="get" class="flex items-end gap-3 flex-wrap">
+          <div class="flex-1 min-w-48">
+            <label class="block text-xs font-semibold text-gray-600 mb-1">
+              <span class="fa material-icons text-xs mr-1">school</span>Filtrar por curso
+            </label>
+            <select name="curso_id"
+                    class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white/80 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all">
+              <option value="">— Todos los cursos —</option>
+              {% for c in cursos %}
+              <option value="{{ c.id }}" {% if curso_id_filtro == c.id|stringformat:"s" %}selected{% endif %}>
+                {{ c.name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="glass-button glass-button-purple">
+            <span class="fa material-icons mr-1">filter_list</span>
+            Filtrar
+          </button>
+          {% if curso_id_filtro %}
+          <a href="{% url 'evaluaciones:secretaria_lista' %}" class="glass-button glass-button-secondary">
+            <span class="fa material-icons mr-1">clear</span>
+            Limpiar
+          </a>
+          {% endif %}
+        </form>
+      </div>
+    </div>
+
+    <!-- Mensajes -->
+    {% if messages %}
+    <div class="mb-4 space-y-2">
+      {% for message in messages %}
+      <div class="glass-alert {% if message.tags == 'error' %}glass-alert-danger{% else %}glass-alert-success{% endif %}">
+        <span class="fa material-icons mr-2">{% if message.tags == 'error' %}error_outline{% else %}check_circle{% endif %}</span>
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Lista de evaluaciones -->
+    {% if evaluaciones %}
+    <div class="space-y-4">
+      {% for ev in evaluaciones %}
+      <div class="glass-card">
+        <div class="glass-content">
+          <div class="flex items-start justify-between flex-wrap gap-3">
+            <div class="flex-1">
+              <!-- Título y badges -->
+              <div class="flex items-center gap-2 flex-wrap mb-1">
+                <h3 class="font-bold text-gray-800 text-lg">{{ ev.titulo }}</h3>
+                {% if ev.tipo == "momentanea" %}
+                <span class="glass-badge glass-badge-info">Momentánea</span>
+                {% else %}
+                <span class="glass-badge glass-badge-warning">Normal</span>
+                {% endif %}
+                {% if ev.estado == "publicada" %}
+                <span class="glass-badge glass-badge-success">Publicada</span>
+                {% else %}
+                <span class="glass-badge glass-badge-secondary">Borrador</span>
+                {% endif %}
+              </div>
+              <!-- Curso -->
+              <p class="text-gray-500 text-sm mb-2 flex items-center gap-1">
+                <span class="fa material-icons text-sm text-purple-500">school</span>
+                {{ ev.curso.name }}
+              </p>
+              {% if ev.descripcion %}
+              <p class="text-gray-500 text-sm mb-2">{{ ev.descripcion|truncatechars:120 }}</p>
+              {% endif %}
+              <!-- Estadísticas -->
+              <div class="flex items-center gap-4 text-xs text-gray-400">
+                <span class="flex items-center gap-1">
+                  <span class="fa material-icons text-xs">help_outline</span>
+                  {{ ev.preguntas.count }} pregunta{{ ev.preguntas.count|pluralize }}
+                </span>
+                <span class="flex items-center gap-1">
+                  <span class="fa material-icons text-xs">people</span>
+                  {{ ev.intentos.count }} respuesta{{ ev.intentos.count|pluralize }}
+                </span>
+                {% if pendientes_por_eval %}
+                  {% with p=pendientes_por_eval|dictsort:"0" %}
+                  {% endwith %}
+                {% endif %}
+                {% if ev.fecha_limite %}
+                <span class="flex items-center gap-1">
+                  <span class="fa material-icons text-xs">schedule</span>
+                  Límite: {{ ev.fecha_limite|date:"d/m/Y H:i" }}
+                </span>
+                {% endif %}
+              </div>
+            </div>
+            <!-- Acciones -->
+            <div class="flex gap-2 flex-wrap items-start">
+              <a href="{% url 'evaluaciones:secretaria_intentos_lista' eval_id=ev.id %}"
+                 class="glass-button glass-button-warning">
+                <span class="fa material-icons mr-1">people</span>
+                Ver respuestas
+                {% if pendientes_por_eval and pendientes_por_eval|length > 0 %}
+                  {% with p=ev.pk %}{% endwith %}
+                {% endif %}
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="glass-card">
+      <div class="glass-content text-center py-14">
+        <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-purple-100/80 flex items-center justify-center">
+          <span class="fa material-icons text-4xl text-purple-400">quiz</span>
+        </div>
+        <h3 class="text-xl font-bold text-gray-700 mb-2">Sin evaluaciones</h3>
+        <p class="text-gray-500 text-sm">
+          No hay evaluaciones registradas{% if curso_id_filtro %} para el curso seleccionado{% endif %}.
+        </p>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
 </div>
+
+<style>
+  .glass-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px; border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.4);
+    overflow: hidden; transition: all 0.3s ease;
+  }
+  .glass-card:hover { box-shadow: 0 12px 40px rgba(0,0,0,0.12); }
+  .glass-header {
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, rgba(139,92,246,0.12), rgba(109,40,217,0.06));
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+  }
+  .glass-content { padding: 1.25rem 1.5rem; }
+
+  .glass-button {
+    display: inline-flex; align-items: center;
+    padding: 0.5rem 1.1rem; border-radius: 10px;
+    font-weight: 500; font-size: 0.875rem; text-decoration: none;
+    backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.25);
+    transition: all 0.3s ease; cursor: pointer; white-space: nowrap;
+  }
+  .glass-button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); text-decoration: none; }
+  .glass-button-secondary { background: linear-gradient(135deg, rgba(156,163,175,0.3), rgba(107,114,128,0.2)); color: #374151; }
+  .glass-button-purple    { background: linear-gradient(135deg, rgba(139,92,246,0.3), rgba(109,40,217,0.2)); color: #4c1d95; }
+  .glass-button-warning   { background: linear-gradient(135deg, rgba(245,158,11,0.3), rgba(217,119,6,0.2)); color: #78350f; }
+
+  .glass-badge {
+    display: inline-flex; align-items: center;
+    padding: 0.25rem 0.65rem; border-radius: 14px;
+    font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .glass-badge-info      { background: linear-gradient(135deg, rgba(59,130,246,0.25), rgba(37,99,235,0.15)); color: #1e40af; }
+  .glass-badge-warning   { background: linear-gradient(135deg, rgba(245,158,11,0.25), rgba(217,119,6,0.15)); color: #78350f; }
+  .glass-badge-success   { background: linear-gradient(135deg, rgba(34,197,94,0.25), rgba(22,163,74,0.15)); color: #14532d; }
+  .glass-badge-secondary { background: linear-gradient(135deg, rgba(156,163,175,0.25), rgba(107,114,128,0.15)); color: #374151; }
+
+  .glass-alert {
+    padding: 0.875rem 1.1rem; border-radius: 12px;
+    backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);
+    display: flex; align-items: center; font-size: 0.875rem;
+  }
+  .glass-alert-danger  { background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(220,38,38,0.08)); color: #7f1d1d; }
+  .glass-alert-success { background: linear-gradient(135deg, rgba(34,197,94,0.15), rgba(22,163,74,0.08)); color: #14532d; }
+</style>
 {% endblock %}

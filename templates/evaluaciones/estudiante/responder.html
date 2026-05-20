@@ -424,14 +424,83 @@ document.addEventListener('DOMContentLoaded', function () {
   // ── Verdadero / Falso — el estado seleccionado lo maneja CSS con :checked ──
   // No se necesita JS adicional para VF
 
-  // ── Confirmación al enviar ──
-  document.querySelector('form').addEventListener('submit', function () {
+  // ── Validación y envío ──
+  document.querySelector('form').addEventListener('submit', function (e) {
+
+    // Buscar afirmaciones V/F sin responder
+    var faltantes = [];
+    document.querySelectorAll('.vf-afirmacion-row').forEach(function (row) {
+      var radios = row.querySelectorAll('.vf-radio-input');
+      var marcado = Array.from(radios).some(function (r) { return r.checked; });
+      if (!marcado) {
+        var texto = row.querySelector('.vf-afirmacion-texto');
+        faltantes.push(texto ? texto.textContent.trim() : '(afirmación sin texto)');
+      }
+    });
+
+    if (faltantes.length > 0) {
+      e.preventDefault();
+      // Construir lista de afirmaciones faltantes
+      var lista = faltantes.map(function (t) {
+        return '<li class="flex items-start gap-2"><span class="fa material-icons text-yellow-500 text-sm mt-0.5">warning</span><span>' + t + '</span></li>';
+      }).join('');
+      document.getElementById('modal-vf-lista').innerHTML = lista;
+      document.getElementById('modal-vf').classList.remove('hidden');
+      return;
+    }
+
+    // Sin errores: deshabilitar botón y mostrar spinner
     var btn = document.getElementById('btn-enviar');
     btn.innerHTML = '<span class="fa material-icons mr-2" style="animation:spin 1s linear infinite">autorenew</span>Enviando…';
     btn.disabled = true;
     btn.style.opacity = '0.75';
     btn.style.cursor = 'not-allowed';
   });
+
+  // Cerrar modal
+  document.getElementById('modal-vf-cerrar').addEventListener('click', function () {
+    document.getElementById('modal-vf').classList.add('hidden');
+  });
+  document.getElementById('modal-vf-overlay').addEventListener('click', function () {
+    document.getElementById('modal-vf').classList.add('hidden');
+  });
 });
 </script>
+<!-- Modal: afirmaciones V/F sin responder -->
+<div id="modal-vf" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <!-- Overlay -->
+  <div id="modal-vf-overlay" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+  <!-- Contenido -->
+  <div class="relative w-full max-w-md rounded-2xl overflow-hidden shadow-2xl"
+       style="background: linear-gradient(135deg, rgba(255,255,255,0.97), rgba(255,255,255,0.92)); border: 1px solid rgba(255,255,255,0.4);">
+    <!-- Cabecera -->
+    <div class="px-6 py-5 flex items-center gap-3"
+         style="background: linear-gradient(135deg, rgba(245,158,11,0.18), rgba(217,119,6,0.10)); border-bottom: 1px solid rgba(245,158,11,0.2);">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+           style="background: rgba(245,158,11,0.2); border: 1px solid rgba(245,158,11,0.35);">
+        <span class="fa material-icons text-yellow-600">warning</span>
+      </div>
+      <div>
+        <h3 class="font-bold text-gray-800 text-base">Respuestas incompletas</h3>
+        <p class="text-gray-500 text-xs mt-0.5">Completa todas las afirmaciones antes de enviar</p>
+      </div>
+    </div>
+    <!-- Cuerpo -->
+    <div class="px-6 py-5">
+      <p class="text-sm text-gray-600 mb-3">Las siguientes afirmaciones de <strong>Verdadero / Falso</strong> no tienen respuesta:</p>
+      <ul id="modal-vf-lista" class="space-y-2 text-sm text-gray-700 max-h-48 overflow-y-auto"></ul>
+    </div>
+    <!-- Pie -->
+    <div class="px-6 py-4 flex justify-end"
+         style="background: rgba(249,250,251,0.8); border-top: 1px solid rgba(229,231,235,0.5);">
+      <button id="modal-vf-cerrar" type="button"
+              class="inline-flex items-center gap-2 px-5 py-2 rounded-xl font-semibold text-sm transition-all duration-200 hover:scale-105 hover:shadow-md"
+              style="background: linear-gradient(135deg, rgba(245,158,11,0.3), rgba(217,119,6,0.2)); color: #78350f; border: 1px solid rgba(245,158,11,0.3);">
+        <span class="fa material-icons text-sm">edit</span>
+        Completar respuestas
+      </button>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
