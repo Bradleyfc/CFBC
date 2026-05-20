@@ -64,10 +64,6 @@ def notificar_nueva_evaluacion(sender, instance, created, **kwargs):
             'student_name': student.get_full_name() or student.username,
             'curso': instance.curso,
             'evaluacion': instance,
-            'teacher_name': (
-                instance.curso.teacher.get_full_name()
-                or instance.curso.teacher.username
-            ),
             'site_name': site_name,
             'evaluacion_url': f"{site_url}/evaluaciones/mis-evaluaciones/{instance.curso.pk}/",
         }

@@ -2,12 +2,10 @@ Hola {{ student_name }},
 
 Se ha publicado una nueva evaluación en el curso "{{ curso.name }}".
 
-Detalles de la evaluación:
-- Título: {{ evaluacion.titulo }}
-- Tipo: {{ evaluacion.get_tipo_display }}
-{% if evaluacion.descripcion %}- Descripción: {{ evaluacion.descripcion }}
-{% endif %}{% if evaluacion.fecha_limite %}- Fecha límite: {{ evaluacion.fecha_limite|date:"d/m/Y H:i" }}
-{% endif %}- Profesor: {{ teacher_name }}
+Título: {{ evaluacion.titulo }}
+Tipo: {{ evaluacion.get_tipo_display }}{% if evaluacion.fecha_limite %}
+Fecha límite: {{ evaluacion.fecha_limite|date:"d/m/Y H:i" }}{% endif %}{% if evaluacion.descripcion %}
+Descripción: {{ evaluacion.descripcion }}{% endif %}
 
 Puedes acceder a tus evaluaciones desde aquí:
 {{ evaluacion_url }}
