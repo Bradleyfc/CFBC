@@ -1,199 +1,235 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-6 max-w-4xl">
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12">
+  <div class="absolute inset-0 opacity-30"
+    style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;"></div>
 
-  <!-- Encabezado -->
-  <div class="glass-card mb-6">
-    <div class="glass-content">
-      <div class="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-800 flex items-center">
-            <span class="fa material-icons mr-2">grading</span>
-            Calificar Respuesta
-          </h1>
-          <p class="text-gray-500 text-sm mt-1">
-            {{ evaluacion.titulo }} — {{ curso.name }}
-          </p>
-        </div>
-        <a href="{% url 'evaluaciones:secretaria_intentos_lista' eval_id=evaluacion.id %}"
-           class="glass-action-button glass-action-warning">
-          <span class="fa material-icons mr-1">arrow_back</span>
-          Volver
-        </a>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+
+    <!-- Volver -->
+    <div class="mb-4">
+      <a href="{% url 'evaluaciones:secretaria_intentos_lista' eval_id=evaluacion.id %}" class="glass-button glass-button-secondary">
+        <span class="fa material-icons mr-2">arrow_back</span>
+        Volver a Respuestas
+      </a>
+    </div>
+
+    <!-- Encabezado -->
+    <div class="glass-card mb-6">
+      <div class="glass-header">
+        <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <span class="fa material-icons text-purple-600">grading</span>
+          Calificar Respuesta
+        </h1>
+        <p class="text-gray-600 text-sm mt-1">{{ evaluacion.titulo }} — {{ curso.name }}</p>
       </div>
     </div>
-  </div>
 
-  <!-- Mensajes -->
-  {% if messages %}
-  <div class="mb-4">
-    {% for message in messages %}
-    <div class="{% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %} rounded-lg p-4 mb-2">
-      {{ message }}
+    <!-- Mensajes -->
+    {% if messages %}
+    <div class="mb-4 space-y-2">
+      {% for message in messages %}
+      <div class="glass-alert {% if message.tags == 'error' %}glass-alert-danger{% else %}glass-alert-success{% endif %}">
+        <span class="fa material-icons mr-2">{% if message.tags == 'error' %}error_outline{% else %}check_circle{% endif %}</span>
+        {{ message }}
+      </div>
+      {% endfor %}
     </div>
-    {% endfor %}
-  </div>
-  {% endif %}
+    {% endif %}
 
-  <!-- Info del estudiante -->
-  <div class="glass-card mb-6">
-    <div class="glass-content">
-      <div class="flex items-center gap-4 flex-wrap">
-        <div class="flex items-center gap-3">
-          <span class="fa material-icons text-gray-400 text-3xl">account_circle</span>
-          <div>
-            <p class="font-semibold text-gray-800">
+    <!-- Info del estudiante -->
+    <div class="glass-card mb-6">
+      <div class="glass-content">
+        <div class="flex items-center gap-4 flex-wrap">
+          <div class="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
+               style="background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(109,40,217,0.1)); border: 1px solid rgba(139,92,246,0.3);">
+            <span class="fa material-icons text-purple-600">account_circle</span>
+          </div>
+          <div class="flex-1">
+            <p class="font-bold text-gray-800 text-lg">
               {{ intento.estudiante.get_full_name|default:intento.estudiante.username }}
             </p>
             <p class="text-xs text-gray-400">{{ intento.estudiante.username }}</p>
           </div>
-        </div>
-        <div class="flex gap-3 flex-wrap text-sm text-gray-500">
-          <span>
-            <span class="fa material-icons text-xs mr-1">schedule</span>
-            Enviado: {{ intento.fecha_envio|date:"d/m/Y H:i" }}
-          </span>
-          {% if intento.estado == "calificado" %}
-          <span class="glass-badge-status glass-badge-green">Calificado</span>
-          {% else %}
-          <span class="glass-badge-status glass-badge-yellow">Pendiente</span>
-          {% endif %}
+          <div class="flex gap-3 flex-wrap items-center text-sm text-gray-500">
+            <span class="flex items-center gap-1">
+              <span class="fa material-icons text-xs">schedule</span>
+              Enviado: {{ intento.fecha_envio|date:"d/m/Y H:i" }}
+            </span>
+            {% if intento.estado == "calificado" %}
+            <span class="glass-badge glass-badge-success">Calificado</span>
+            {% else %}
+            <span class="glass-badge glass-badge-warning">Pendiente de revisión</span>
+            {% endif %}
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Respuestas del estudiante -->
-  <div class="glass-card mb-6">
-    <div class="glass-content">
-      <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
-        <span class="fa material-icons mr-2">question_answer</span>
-        Respuestas del estudiante
-      </h2>
-
-      {% if respuestas %}
-      <div class="space-y-4">
-        {% for respuesta in respuestas %}
-        <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
-          <div class="flex items-start gap-2 mb-2">
-            <span class="text-xs font-bold text-gray-400 mt-1">{{ forloop.counter }}.</span>
-            <div class="flex-1">
-              <p class="font-medium text-gray-800">{{ respuesta.pregunta.texto }}</p>
-              <span class="text-xs text-gray-400">{{ respuesta.pregunta.get_tipo_display }}</span>
+    <!-- Respuestas del estudiante -->
+    <div class="glass-card mb-6">
+      <div class="glass-header">
+        <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+          <span class="fa material-icons text-purple-600">question_answer</span>
+          Respuestas del estudiante
+        </h2>
+      </div>
+      <div class="glass-content">
+        {% if respuestas %}
+        <div class="space-y-4">
+          {% for respuesta in respuestas %}
+          <div class="glass-respuesta-card">
+            <div class="flex items-start gap-3 mb-3">
+              <div class="pregunta-num">{{ forloop.counter }}</div>
+              <div class="flex-1">
+                <p class="font-semibold text-gray-800">{{ respuesta.pregunta.texto }}</p>
+                <span class="text-xs text-gray-400">{{ respuesta.pregunta.get_tipo_display }}</span>
+              </div>
+            </div>
+            <div class="ml-10">
+              {% if respuesta.pregunta.tipo == "escritura_libre" %}
+                {% if respuesta.texto_respuesta %}
+                <div class="respuesta-texto">{{ respuesta.texto_respuesta }}</div>
+                {% else %}
+                <p class="text-gray-400 text-sm italic">Sin respuesta</p>
+                {% endif %}
+              {% else %}
+                {% if respuesta.opciones_seleccionadas.exists %}
+                <ul class="space-y-1">
+                  {% for opcion in respuesta.opciones_seleccionadas.all %}
+                  <li class="flex items-center gap-2 text-sm">
+                    <span class="fa material-icons text-sm {% if opcion.es_correcta %}text-green-500{% else %}text-red-400{% endif %}">
+                      {% if opcion.es_correcta %}check_circle{% else %}cancel{% endif %}
+                    </span>
+                    <span class="{% if opcion.es_correcta %}text-green-700 font-medium{% else %}text-red-600{% endif %}">
+                      {{ opcion.texto }}
+                    </span>
+                  </li>
+                  {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-gray-400 text-sm italic">Sin respuesta</p>
+                {% endif %}
+              {% endif %}
             </div>
           </div>
-
-          <div class="ml-5 mt-2">
-            {% if respuesta.pregunta.tipo == "escritura_libre" %}
-              {% if respuesta.texto_respuesta %}
-              <div class="bg-white border border-gray-200 rounded p-3 text-gray-700 text-sm">
-                {{ respuesta.texto_respuesta }}
-              </div>
-              {% else %}
-              <p class="text-gray-400 text-sm italic">Sin respuesta</p>
-              {% endif %}
-            {% else %}
-              {% if respuesta.opciones_seleccionadas.exists %}
-              <ul class="space-y-1">
-                {% for opcion in respuesta.opciones_seleccionadas.all %}
-                <li class="flex items-center gap-2 text-sm">
-                  <span class="fa material-icons text-sm {% if opcion.es_correcta %}text-green-500{% else %}text-red-400{% endif %}">
-                    {% if opcion.es_correcta %}check_circle{% else %}cancel{% endif %}
-                  </span>
-                  {{ opcion.texto }}
-                </li>
-                {% endfor %}
-              </ul>
-              {% else %}
-              <p class="text-gray-400 text-sm italic">Sin respuesta</p>
-              {% endif %}
-            {% endif %}
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-      {% else %}
-      <p class="text-gray-400 text-sm">No hay respuestas registradas.</p>
-      {% endif %}
-    </div>
-  </div>
-
-  <!-- Formulario de calificacion -->
-  <div class="glass-card">
-    <div class="glass-content">
-      <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
-        <span class="fa material-icons mr-2">star</span>
-        {% if calificacion_existente %}Editar calificacion{% else %}Asignar calificacion{% endif %}
-      </h2>
-
-      <form method="post">
-        {% csrf_token %}
-
-        {% if form.non_field_errors %}
-        <div class="alert-error rounded-lg p-3 mb-4">
-          {% for error in form.non_field_errors %}
-          <p>{{ error }}</p>
           {% endfor %}
         </div>
+        {% else %}
+        <p class="text-gray-400 text-sm text-center py-6">No hay respuestas registradas.</p>
         {% endif %}
-
-        <div class="space-y-4">
-          {% for field in form %}
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ field.id_for_label }}">
-              {{ field.label }}{% if field.field.required %} <span class="text-red-500">*</span>{% endif %}
-            </label>
-            {{ field }}
-            {% if field.errors %}
-            <p class="text-red-500 text-xs mt-1">{{ field.errors|join:", " }}</p>
-            {% endif %}
-          </div>
-          {% endfor %}
-        </div>
-
-        <div class="flex gap-3 justify-between flex-wrap mt-6">
-          <a href="{% url 'evaluaciones:secretaria_intentos_lista' eval_id=evaluacion.id %}"
-             class="glass-btn glass-btn-cancel">
-            <span class="fa material-icons mr-1">arrow_back</span>
-            Volver a Respuestas
-          </a>
-          <button type="submit" class="glass-btn glass-btn-save">
-            <span class="fa material-icons mr-1">save</span>
-            Guardar calificacion
-          </button>
-        </div>
-      </form>
+      </div>
     </div>
-  </div>
 
+    <!-- Formulario de calificación -->
+    <div class="glass-card">
+      <div class="glass-header">
+        <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+          <span class="fa material-icons text-yellow-500">star</span>
+          {% if calificacion_existente %}Editar calificación{% else %}Asignar calificación{% endif %}
+        </h2>
+      </div>
+      <div class="glass-content">
+        <form method="post">
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+          <div class="glass-alert glass-alert-danger mb-4">
+            <span class="fa material-icons mr-2">error_outline</span>
+            {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+          </div>
+          {% endif %}
+          <div class="space-y-4">
+            {% for field in form %}
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1" for="{{ field.id_for_label }}">
+                {{ field.label }}{% if field.field.required %} <span class="text-red-500">*</span>{% endif %}
+              </label>
+              {{ field }}
+              {% if field.errors %}
+              <p class="text-red-500 text-xs mt-1">{{ field.errors|join:", " }}</p>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+          <div class="flex gap-3 justify-between flex-wrap mt-6">
+            <a href="{% url 'evaluaciones:secretaria_intentos_lista' eval_id=evaluacion.id %}"
+               class="glass-button glass-button-secondary">
+              <span class="fa material-icons mr-2">arrow_back</span>
+              Volver
+            </a>
+            <button type="submit" class="glass-button glass-button-success" style="font-size:1rem;padding:0.65rem 1.75rem;">
+              <span class="fa material-icons mr-2">save</span>
+              Guardar calificación
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
 </div>
 
 <style>
-  .glass-btn {
-    padding: 10px 20px;
-    border-radius: 10px;
-    font-weight: 600;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    border: 1px solid;
-    cursor: pointer;
-    font-size: 14px;
+  .glass-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px; border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.4);
+    overflow: hidden; transition: all 0.3s ease;
   }
-  .glass-btn-cancel {
-    background: rgba(107,114,128,0.8);
-    color: white;
-    border-color: rgba(156,163,175,0.6);
+  .glass-header {
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, rgba(139,92,246,0.12), rgba(109,40,217,0.06));
+    border-bottom: 1px solid rgba(255,255,255,0.2);
   }
-  .glass-btn-cancel:hover { background: rgba(156,163,175,0.9); color: #374151; text-decoration: none; }
-  .glass-btn-save {
-    background: rgba(16,185,129,0.8);
-    color: white;
-    border-color: rgba(52,211,153,0.6);
+  .glass-content { padding: 1.5rem; }
+  .glass-button {
+    display: inline-flex; align-items: center;
+    padding: 0.5rem 1.1rem; border-radius: 10px;
+    font-weight: 500; font-size: 0.875rem; text-decoration: none;
+    backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.25);
+    transition: all 0.3s ease; cursor: pointer; white-space: nowrap;
   }
-  .glass-btn-save:hover { background: rgba(167,243,208,0.9); color: #047857; }
+  .glass-button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); text-decoration: none; }
+  .glass-button-secondary { background: linear-gradient(135deg, rgba(156,163,175,0.3), rgba(107,114,128,0.2)); color: #374151; }
+  .glass-button-success   { background: linear-gradient(135deg, rgba(34,197,94,0.35), rgba(22,163,74,0.25)); color: #14532d; }
+  .glass-badge {
+    display: inline-flex; align-items: center;
+    padding: 0.25rem 0.65rem; border-radius: 14px;
+    font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .glass-badge-success { background: linear-gradient(135deg, rgba(34,197,94,0.25), rgba(22,163,74,0.15)); color: #14532d; }
+  .glass-badge-warning { background: linear-gradient(135deg, rgba(245,158,11,0.25), rgba(217,119,6,0.15)); color: #78350f; }
+  .glass-alert {
+    padding: 0.875rem 1.1rem; border-radius: 12px;
+    backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);
+    display: flex; align-items: center; font-size: 0.875rem;
+  }
+  .glass-alert-danger  { background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(220,38,38,0.08)); color: #7f1d1d; }
+  .glass-alert-success { background: linear-gradient(135deg, rgba(34,197,94,0.15), rgba(22,163,74,0.08)); color: #14532d; }
+  /* Tarjeta de respuesta */
+  .glass-respuesta-card {
+    padding: 1rem 1.25rem; border-radius: 14px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,255,255,0.35));
+    border: 1px solid rgba(255,255,255,0.5);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: all 0.2s ease;
+  }
+  .glass-respuesta-card:hover { background: rgba(255,255,255,0.8); box-shadow: 0 4px 14px rgba(0,0,0,0.08); }
+  .pregunta-num {
+    min-width: 1.75rem; height: 1.75rem; flex-shrink: 0;
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    color: white; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 700;
+    box-shadow: 0 2px 6px rgba(139,92,246,0.4);
+  }
+  .respuesta-texto {
+    background: rgba(255,255,255,0.8); border: 1px solid rgba(226,232,240,0.8);
+    border-radius: 10px; padding: 0.75rem 1rem;
+    color: #374151; font-size: 0.875rem; line-height: 1.6;
+  }
 </style>
 {% endblock %}

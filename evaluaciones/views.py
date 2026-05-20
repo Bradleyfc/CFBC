@@ -678,42 +678,7 @@ def resultado_evaluacion(request, pk):
     })
 
 
-# ────────────────────────────────────────────────────────────────────────────
-# 9.1  SecretariaEvaluacionListView
-# Requirements: 9.1, 9.2, 9.3, 9.4
-# ────────────────────────────────────────────────────────────────────────────
 
-class SecretariaEvaluacionListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
-    model = Evaluacion
-    template_name = 'evaluaciones/secretaria/lista.html'
-    context_object_name = 'evaluaciones'
-
-    def test_func(self):
-        return self.request.user.groups.filter(name='Secretaría').exists()
-
-    def get_queryset(self):
-        from principal.models import Curso
-        qs = Evaluacion.objects.select_related('curso').order_by('-fecha_creacion')
-        curso_id = self.request.GET.get('curso_id')
-        if curso_id:
-            qs = qs.filter(curso_id=curso_id)
-        return qs
-
-    def get_context_data(self, **kwargs):
-        from principal.models import Curso
-        context = super().get_context_data(**kwargs)
-        evaluaciones = context['evaluaciones']
-        pendientes_por_eval = {}
-        for ev in evaluaciones:
-            if ev.tipo == 'libre':
-                pendientes_por_eval[ev.pk] = ev.intentos.filter(estado='enviado').count()
-            else:
-                pendientes_por_eval[ev.pk] = 0
-        context['pendientes_por_eval'] = pendientes_por_eval
-        context['total_pendientes'] = sum(pendientes_por_eval.values())
-        context['cursos'] = Curso.objects.all().order_by('name')
-        context['curso_id_filtro'] = self.request.GET.get('curso_id', '')
-        return context
 
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -877,9 +842,18 @@ class SecretariaEvaluacionListView(LoginRequiredMixin, UserPassesTestMixin, List
     def get_queryset(self):
         from principal.models import Curso
         qs = Evaluacion.objects.select_related('curso').order_by('-fecha_creacion')
-        curso_id = self.request.GET.get('curso_id')
+        curso_id    = self.request.GET.get('curso_id', '').strip()
+        titulo      = self.request.GET.get('titulo', '').strip()
+        fecha_desde = self.request.GET.get('fecha_desde', '').strip()
+        fecha_hasta = self.request.GET.get('fecha_hasta', '').strip()
         if curso_id:
             qs = qs.filter(curso_id=curso_id)
+        if titulo:
+            qs = qs.filter(titulo__icontains=titulo)
+        if fecha_desde:
+            qs = qs.filter(fecha_creacion__date__gte=fecha_desde)
+        if fecha_hasta:
+            qs = qs.filter(fecha_creacion__date__lte=fecha_hasta)
         return qs
 
     def get_context_data(self, **kwargs):
@@ -896,6 +870,13 @@ class SecretariaEvaluacionListView(LoginRequiredMixin, UserPassesTestMixin, List
         context['total_pendientes'] = sum(pendientes_por_eval.values())
         context['cursos'] = Curso.objects.all().order_by('name')
         context['curso_id_filtro'] = self.request.GET.get('curso_id', '')
+        context['titulo_filtro']   = self.request.GET.get('titulo', '')
+        context['fecha_desde']     = self.request.GET.get('fecha_desde', '')
+        context['fecha_hasta']     = self.request.GET.get('fecha_hasta', '')
+        context['hay_filtros'] = any([
+            context['curso_id_filtro'], context['titulo_filtro'],
+            context['fecha_desde'],     context['fecha_hasta'],
+        ])
         return context
 
 

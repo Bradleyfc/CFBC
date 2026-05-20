@@ -55,10 +55,18 @@
             {% for intento in intentos %}
             <tr>
               <td>
-                <div class="font-semibold text-gray-800">
-                  {{ intento.estudiante.get_full_name|default:intento.estudiante.username }}
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                       style="background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(37,99,235,0.1)); border: 1px solid rgba(59,130,246,0.3);">
+                    <span class="fa material-icons text-blue-600" style="font-size:1rem;">person</span>
+                  </div>
+                  <div>
+                    <div class="font-semibold text-gray-800">
+                      {{ intento.estudiante.get_full_name|default:intento.estudiante.username }}
+                    </div>
+                    <div class="text-xs text-gray-400">{{ intento.estudiante.username }}</div>
+                  </div>
                 </div>
-                <div class="text-xs text-gray-400">{{ intento.estudiante.username }}</div>
               </td>
               <td class="text-gray-600">{{ intento.fecha_envio|date:"d/m/Y H:i" }}</td>
               <td>
@@ -70,7 +78,9 @@
               </td>
               <td>
                 {% if intento.calificacion %}
-                <span class="font-bold text-gray-800">{{ intento.calificacion.puntaje }}</span>
+                <span class="font-bold {% if intento.calificacion.puntaje >= 6 %}text-green-700{% else %}text-red-600{% endif %} text-base">
+                  {{ intento.calificacion.puntaje|floatformat:1 }}
+                </span>
                 <span class="text-xs text-gray-400 ml-1">/ 10</span>
                 {% else %}
                 <span class="text-gray-400">—</span>

@@ -40,33 +40,58 @@
         </div>
       </div>
 
-      <!-- Filtro por curso -->
+      <!-- Filtros -->
       <div class="glass-content border-t border-white/20">
-        <form method="get" class="flex items-end gap-3 flex-wrap">
-          <div class="flex-1 min-w-48">
-            <label class="block text-xs font-semibold text-gray-600 mb-1">
-              <span class="fa material-icons text-xs mr-1">school</span>Filtrar por curso
+        <form method="get" class="flex flex-wrap gap-3 items-end">
+          <!-- Curso -->
+          <div class="flex-1" style="min-width:160px;">
+            <label class="block text-xs font-semibold text-gray-500 mb-1">
+              <span class="fa material-icons" style="font-size:0.75rem;">school</span> Curso
             </label>
             <select name="curso_id"
                     class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white/80 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all">
               <option value="">— Todos los cursos —</option>
               {% for c in cursos %}
-              <option value="{{ c.id }}" {% if curso_id_filtro == c.id|stringformat:"s" %}selected{% endif %}>
-                {{ c.name }}
-              </option>
+              <option value="{{ c.id }}" {% if curso_id_filtro == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
               {% endfor %}
             </select>
           </div>
-          <button type="submit" class="glass-button glass-button-purple">
-            <span class="fa material-icons mr-1">filter_list</span>
-            Filtrar
-          </button>
-          {% if curso_id_filtro %}
-          <a href="{% url 'evaluaciones:secretaria_lista' %}" class="glass-button glass-button-secondary">
-            <span class="fa material-icons mr-1">clear</span>
-            Limpiar
-          </a>
-          {% endif %}
+          <!-- Nombre -->
+          <div class="flex-1" style="min-width:160px;">
+            <label class="block text-xs font-semibold text-gray-500 mb-1">
+              <span class="fa material-icons" style="font-size:0.75rem;">search</span> Nombre de evaluación
+            </label>
+            <input type="text" name="titulo" value="{{ titulo_filtro }}"
+                   placeholder="Buscar por nombre…"
+                   class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white/80 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all">
+          </div>
+          <!-- Desde -->
+          <div class="flex-1" style="min-width:150px;">
+            <label class="block text-xs font-semibold text-gray-500 mb-1">
+              <span class="fa material-icons" style="font-size:0.75rem;">event</span> Fecha desde
+            </label>
+            <input type="date" name="fecha_desde" value="{{ fecha_desde }}"
+                   class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white/80 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all">
+          </div>
+          <!-- Hasta -->
+          <div class="flex-1" style="min-width:150px;">
+            <label class="block text-xs font-semibold text-gray-500 mb-1">
+              <span class="fa material-icons" style="font-size:0.75rem;">event</span> Fecha hasta
+            </label>
+            <input type="date" name="fecha_hasta" value="{{ fecha_hasta }}"
+                   class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white/80 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all">
+          </div>
+          <!-- Botones -->
+          <div class="flex gap-2 items-end pb-0.5">
+            <button type="submit" class="glass-button glass-button-purple">
+              <span class="fa material-icons mr-1">filter_list</span>Filtrar
+            </button>
+            {% if hay_filtros %}
+            <a href="{% url 'evaluaciones:secretaria_lista' %}" class="glass-button glass-button-secondary">
+              <span class="fa material-icons mr-1">clear</span>Limpiar
+            </a>
+            {% endif %}
+          </div>
         </form>
       </div>
     </div>
