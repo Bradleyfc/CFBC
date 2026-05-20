@@ -46,9 +46,7 @@
               <th>Fecha de envío</th>
               <th>Estado</th>
               <th>Puntaje</th>
-              {% if evaluacion.tipo == "libre" %}
               <th>Acciones</th>
-              {% endif %}
             </tr>
           </thead>
           <tbody>
@@ -91,6 +89,13 @@
                 <a href="{% url 'evaluaciones:calificar_intento' pk=intento.id %}" class="glass-button glass-button-primary">
                   <span class="fa material-icons mr-1">grading</span>
                   {% if intento.estado == "calificado" %}Ver / Editar{% else %}Calificar{% endif %}
+                </a>
+              </td>
+              {% else %}
+              <td>
+                <a href="{% url 'evaluaciones:calificar_intento' pk=intento.id %}" class="glass-button glass-button-primary">
+                  <span class="fa material-icons mr-1">visibility</span>
+                  Ver detalle
                 </a>
               </td>
               {% endif %}

@@ -67,71 +67,90 @@
       </div>
       <div class="glass-content">
         {% if respuestas_con_vf %}
-        <div class="space-y-4">
+        <div class="space-y-5">
           {% for item in respuestas_con_vf %}
-          {% with respuesta=item.respuesta %}
+          {% with respuesta=item.respuesta pregunta=item.respuesta.pregunta %}
           <div class="glass-respuesta-card">
-            <div class="flex items-start gap-2 mb-2">
-              <span class="text-xs font-bold text-blue-600 mt-1 min-w-[1.25rem]">{{ forloop.counter }}.</span>
+
+            <!-- Cabecera de la pregunta -->
+            <div class="flex items-start gap-3 mb-3">
+              <div class="pregunta-num">{{ forloop.counter }}</div>
               <div class="flex-1">
-                <p class="font-semibold text-gray-800">{{ respuesta.pregunta.texto }}</p>
-                <span class="text-xs text-gray-400">{{ respuesta.pregunta.get_tipo_display }}</span>
-              </div>
-            </div>
-            <div class="ml-5 mt-2">
-              {% if respuesta.pregunta.tipo == "escritura_libre" %}
-                {% if respuesta.texto_respuesta %}
-                <div class="bg-white border border-gray-200 rounded-lg p-3 text-gray-700 text-sm leading-relaxed">
-                  {{ respuesta.texto_respuesta }}
+                <p class="font-semibold text-gray-800">{{ pregunta.texto }}</p>
+                <div class="flex flex-wrap gap-2 mt-1">
+                  <span class="meta-badge meta-tipo">{{ pregunta.get_tipo_display }}</span>
+                  {% if evaluacion.tipo == 'momentanea' %}
+                  <span class="meta-badge meta-valor">
+                    <span class="fa material-icons" style="font-size:0.7rem;">star</span>
+                    {{ pregunta.valor|floatformat:2 }} pts
+                  </span>
+                  {% if pregunta.tipo != 'escritura_libre' %}
+                  <span class="meta-badge {% if pregunta.todo_o_nada %}meta-todo{% else %}meta-parcial{% endif %}">
+                    <span class="fa material-icons" style="font-size:0.7rem;">{% if pregunta.todo_o_nada %}rule{% else %}percent{% endif %}</span>
+                    {% if pregunta.todo_o_nada %}Todo o nada{% else %}Por errores{% endif %}
+                  </span>
+                  {% endif %}
+                  {% endif %}
                 </div>
+              </div>
+              {% if evaluacion.tipo == 'momentanea' and item.puntaje_obtenido is not None %}
+              <div class="puntaje-pregunta {% if item.puntaje_obtenido >= pregunta.valor %}puntaje-full{% elif item.puntaje_obtenido > 0 %}puntaje-parcial-val{% else %}puntaje-zero{% endif %}">
+                {{ item.puntaje_obtenido|floatformat:2 }}
+                <span style="font-size:0.65rem;opacity:0.7;">/ {{ pregunta.valor|floatformat:2 }}</span>
+              </div>
+              {% endif %}
+            </div>
+
+            <!-- Respuesta -->
+            <div class="ml-10">
+
+              {% if pregunta.tipo == 'escritura_libre' %}
+                {% if respuesta.texto_respuesta %}
+                <div class="respuesta-texto">{{ respuesta.texto_respuesta }}</div>
                 {% else %}
                 <p class="text-gray-400 text-sm italic">Sin respuesta</p>
                 {% endif %}
 
-              {% elif respuesta.pregunta.tipo == "verdadero_falso" %}
+              {% elif pregunta.tipo == 'verdadero_falso' %}
                 {% if item.vf_detalle %}
-                <ul class="space-y-2">
+                <div class="space-y-2">
                   {% for af in item.vf_detalle %}
-                  <li class="flex items-center gap-3 text-sm py-1">
-                    <span class="vf-resp-badge {% if evaluacion.tipo == 'momentanea' %}{% if af.es_correcta %}vf-resp-ok{% else %}vf-resp-mal{% endif %}{% else %}vf-resp-neutral{% endif %}">
-                      {{ af.respondio|default:"—" }}
+                  <div class="vf-fila {% if evaluacion.tipo == 'momentanea' %}{% if af.es_correcta %}vf-ok{% else %}vf-mal{% endif %}{% endif %}">
+                    <span class="vf-resp-badge {% if evaluacion.tipo == 'momentanea' %}{% if af.es_correcta %}vf-badge-ok{% else %}vf-badge-mal{% endif %}{% else %}vf-badge-neutral{% endif %}">
+                      {{ af.respondio }}
                     </span>
-                    <span class="text-gray-700 flex-1">{{ af.texto }}</span>
+                    <span class="flex-1 text-sm text-gray-700">{{ af.texto }}</span>
                     {% if evaluacion.tipo == 'momentanea' %}
-                    <span class="text-xs {% if af.es_correcta %}text-green-600{% else %}text-red-500{% endif %} font-semibold whitespace-nowrap">
-                      {% if af.es_correcta %}✓ Correcto{% else %}✗ Incorrecto (era {{ af.correcta_esperada }}){% endif %}
+                    <span class="text-xs font-semibold whitespace-nowrap {% if af.es_correcta %}text-green-600{% else %}text-red-500{% endif %}">
+                      {% if af.es_correcta %}✓ Correcto{% else %}✗ Era {{ af.correcta_esperada }}{% endif %}
                     </span>
                     {% endif %}
-                  </li>
+                  </div>
                   {% endfor %}
-                </ul>
+                </div>
                 {% else %}
                 <p class="text-gray-400 text-sm italic">Sin respuesta</p>
                 {% endif %}
 
               {% else %}
                 {% if respuesta.opciones_seleccionadas.exists %}
-                <ul class="space-y-1">
+                <div class="space-y-1">
                   {% for opcion in respuesta.opciones_seleccionadas.all %}
-                  <li class="flex items-center gap-2 text-sm">
-                    {% if evaluacion.tipo == 'momentanea' %}
-                    <span class="fa material-icons text-sm {% if opcion.es_correcta %}text-green-500{% else %}text-red-400{% endif %}">
-                      {% if opcion.es_correcta %}check_circle{% else %}cancel{% endif %}
+                  <div class="opcion-fila {% if evaluacion.tipo == 'momentanea' %}{% if opcion.es_correcta %}opcion-ok{% else %}opcion-mal{% endif %}{% endif %}">
+                    <span class="fa material-icons text-sm {% if evaluacion.tipo == 'momentanea' %}{% if opcion.es_correcta %}text-green-500{% else %}text-red-400{% endif %}{% else %}text-blue-400{% endif %}">
+                      {% if evaluacion.tipo == 'momentanea' %}{% if opcion.es_correcta %}check_circle{% else %}cancel{% endif %}{% else %}radio_button_checked{% endif %}
                     </span>
-                    <span class="{% if opcion.es_correcta %}text-green-700 font-medium{% else %}text-red-600{% endif %}">
+                    <span class="text-sm {% if evaluacion.tipo == 'momentanea' %}{% if opcion.es_correcta %}text-green-700 font-medium{% else %}text-red-600{% endif %}{% else %}text-gray-700{% endif %}">
                       {{ opcion.texto }}
                     </span>
-                    {% else %}
-                    <span class="fa material-icons text-sm text-blue-400">radio_button_checked</span>
-                    <span class="text-gray-700">{{ opcion.texto }}</span>
-                    {% endif %}
-                  </li>
+                  </div>
                   {% endfor %}
-                </ul>
+                </div>
                 {% else %}
                 <p class="text-gray-400 text-sm italic">Sin respuesta</p>
                 {% endif %}
               {% endif %}
+
             </div>
           </div>
           {% endwith %}
@@ -143,7 +162,42 @@
       </div>
     </div>
 
-    <!-- Formulario de calificación -->
+    <!-- Puntaje total (momentánea) o Formulario de calificación (libre) -->
+    {% if evaluacion.tipo == "momentanea" %}
+    <!-- Resultado automático -->
+    <div class="glass-card mb-6 overflow-hidden">
+      <div style="background: linear-gradient(135deg, #1e40af, #3b82f6, #0ea5e9);">
+        <div class="text-center py-8 px-6">
+          <p class="text-white/80 text-sm font-medium mb-2 uppercase tracking-wider">Puntaje obtenido</p>
+          <div style="font-size:4rem;font-weight:800;color:white;line-height:1;text-shadow:0 4px 20px rgba(0,0,0,0.2);">
+            {% if intento.calificacion %}{{ intento.calificacion.puntaje|floatformat:2 }}{% else %}—{% endif %}
+          </div>
+          <p class="text-white/70 text-sm mt-1">sobre 10 puntos</p>
+          {% if intento.calificacion %}
+          <div class="mt-4">
+            {% if intento.calificacion.puntaje >= 6 %}
+            <span class="inline-flex items-center gap-1 px-4 py-2 rounded-full font-bold text-sm border-2 border-white/30" style="background:rgba(34,197,94,0.25);color:#dcfce7;">
+              <span class="fa material-icons text-sm">check_circle</span>Aprobado
+            </span>
+            {% else %}
+            <span class="inline-flex items-center gap-1 px-4 py-2 rounded-full font-bold text-sm border-2 border-white/30" style="background:rgba(239,68,68,0.25);color:#fee2e2;">
+              <span class="fa material-icons text-sm">cancel</span>Reprobado
+            </span>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="flex gap-3 mb-6">
+      <a href="{% url 'evaluaciones:intentos_lista' pk=evaluacion.id %}" class="glass-button glass-button-secondary">
+        <span class="fa material-icons mr-2">arrow_back</span>
+        Volver a Respuestas
+      </a>
+    </div>
+
+    {% else %}
+    <!-- Formulario de calificación (libre) -->
     <div class="glass-card">
       <div class="glass-header">
         <h2 class="text-lg font-semibold text-gray-800 flex items-center">
@@ -185,72 +239,10 @@
         </form>
       </div>
     </div>
+    {% endif %}
 
   </div>
 </div>
 
-<style>
-  .glass-card {
-    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: 20px;
-    border: 1px solid rgba(255,255,255,0.3);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.4);
-    overflow: hidden;
-  }
-  .glass-header {
-    padding: 1.25rem 1.5rem;
-    background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(37,99,235,0.08));
-    border-bottom: 1px solid rgba(255,255,255,0.2);
-  }
-  .glass-content { padding: 1.5rem; }
-  .glass-respuesta-card {
-    padding: 1rem 1.25rem;
-    border-radius: 12px;
-    background: linear-gradient(135deg, rgba(255,255,255,0.55), rgba(255,255,255,0.3));
-    border: 1px solid rgba(255,255,255,0.4);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  }
-  .glass-button {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.5rem 1.1rem;
-    border-radius: 10px;
-    font-weight: 500;
-    font-size: 0.875rem;
-    text-decoration: none;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.25);
-    transition: all 0.3s ease;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-  .glass-button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); text-decoration: none; }
-  .glass-button-primary  { background: linear-gradient(135deg, rgba(59,130,246,0.35), rgba(37,99,235,0.25)); color: #1e40af; }
-  .glass-button-secondary{ background: linear-gradient(135deg, rgba(156,163,175,0.3), rgba(107,114,128,0.2)); color: #374151; }
-  .glass-badge {
-    display: inline-block;
-    padding: 0.25rem 0.65rem;
-    border-radius: 14px;
-    font-size: 0.72rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    border: 1px solid rgba(255,255,255,0.2);
-  }
-  .glass-badge-success { background: linear-gradient(135deg, rgba(34,197,94,0.25), rgba(22,163,74,0.15)); color: #14532d; }
-  .glass-badge-warning { background: linear-gradient(135deg, rgba(245,158,11,0.25), rgba(217,119,6,0.15)); color: #78350f; }
-
-  /* Badge de respuesta V/F */
-  .vf-resp-badge {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 1.75rem; height: 1.75rem; border-radius: 6px;
-    font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
-    border: 2px solid transparent;
-  }
-  .vf-resp-ok      { background: rgba(34,197,94,0.2);  color: #14532d; border-color: rgba(34,197,94,0.5); }
-  .vf-resp-mal     { background: rgba(239,68,68,0.2);  color: #7f1d1d; border-color: rgba(239,68,68,0.5); }
-  .vf-resp-neutral { background: rgba(59,130,246,0.15); color: #1e40af; border-color: rgba(59,130,246,0.35); }
-</style>
+{% include 'evaluaciones/_calificar_styles.html' %}
 {% endblock %}

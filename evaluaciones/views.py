@@ -404,7 +404,11 @@ def calificar_intento(request, pk):
                     })
             except (ValueError, TypeError):
                 vf_detalle = None
-        respuestas_con_vf.append({'respuesta': resp, 'vf_detalle': vf_detalle})
+        puntaje_obtenido = None
+        if evaluacion.tipo == 'momentanea':
+            from .services import CalificacionService
+            puntaje_obtenido = CalificacionService.puntaje_parcial(resp)
+        respuestas_con_vf.append({'respuesta': resp, 'vf_detalle': vf_detalle, 'puntaje_obtenido': puntaje_obtenido})
 
     if request.method == 'POST':
         form = CalificarIntentoForm(request.POST, instance=calificacion_existente)
@@ -773,57 +777,7 @@ class SecretariaIntentoListView(LoginRequiredMixin, UserPassesTestMixin, ListVie
 # Requirements: 9.9, 9.10, 9.11
 # ────────────────────────────────────────────────────────────────────────────
 
-@login_required
-def secretaria_calificar_intento(request, pk):
-    from django.core.exceptions import PermissionDenied
 
-    if not request.user.groups.filter(name='Secretaría').exists():
-        raise PermissionDenied
-
-    intento = get_object_or_404(
-        IntentoEvaluacion.objects.select_related('evaluacion__curso', 'estudiante'),
-        pk=pk
-    )
-    evaluacion = intento.evaluacion
-    curso = evaluacion.curso
-
-    calificacion_existente = getattr(intento, 'calificacion', None)
-
-    respuestas = (
-        intento.respuestas
-        .select_related('pregunta')
-        .prefetch_related('opciones_seleccionadas')
-        .order_by('pregunta__orden')
-    )
-
-    if request.method == 'POST':
-        form = CalificarIntentoForm(request.POST, instance=calificacion_existente)
-        if form.is_valid():
-            calificacion = form.save(commit=False)
-            calificacion.intento = intento
-            calificacion.es_automatica = False
-            calificacion.save()
-
-            intento.estado = 'calificado'
-            intento.save(update_fields=['estado'])
-
-            # Guardar también como NotaIndividual en el sistema de calificaciones existente
-            _registrar_nota_en_calificaciones(intento.estudiante, curso, calificacion.puntaje)
-
-            nombre = intento.estudiante.get_full_name() or intento.estudiante.username
-            messages.success(request, f'Respuesta de {nombre} calificada y nota registrada en calificaciones.')
-            return redirect('evaluaciones:secretaria_intentos_lista', eval_id=evaluacion.pk)
-    else:
-        form = CalificarIntentoForm(instance=calificacion_existente)
-
-    return render(request, 'evaluaciones/secretaria/calificar_intento.html', {
-        'intento': intento,
-        'evaluacion': evaluacion,
-        'curso': curso,
-        'respuestas': respuestas,
-        'form': form,
-        'calificacion_existente': calificacion_existente,
-    })
 
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -988,12 +942,43 @@ def secretaria_calificar_intento(request, pk):
 
     calificacion_existente = getattr(intento, 'calificacion', None)
 
-    respuestas = (
+    respuestas_qs = (
         intento.respuestas
         .select_related('pregunta')
-        .prefetch_related('opciones_seleccionadas')
+        .prefetch_related('opciones_seleccionadas', 'pregunta__opciones')
         .order_by('pregunta__orden')
     )
+
+    import json as _json
+    from .services import CalificacionService
+    respuestas_con_vf = []
+    for resp in respuestas_qs:
+        vf_detalle = None
+        if resp.pregunta.tipo == 'verdadero_falso' and resp.texto_respuesta:
+            try:
+                vf_data = _json.loads(resp.texto_respuesta)
+                vf_detalle = []
+                for opcion in resp.pregunta.opciones.all():
+                    respondio = vf_data.get(str(opcion.id), '')
+                    correcta_esperada = 'V' if opcion.es_correcta else 'F'
+                    vf_detalle.append({
+                        'texto': opcion.texto,
+                        'respondio': respondio or '—',
+                        'correcta_esperada': correcta_esperada,
+                        'es_correcta': respondio == correcta_esperada,
+                    })
+            except (ValueError, TypeError):
+                vf_detalle = None
+
+        puntaje_obtenido = None
+        if evaluacion.tipo == 'momentanea':
+            puntaje_obtenido = CalificacionService.puntaje_parcial(resp)
+
+        respuestas_con_vf.append({
+            'respuesta': resp,
+            'vf_detalle': vf_detalle,
+            'puntaje_obtenido': puntaje_obtenido,
+        })
 
     if request.method == 'POST':
         form = CalificarIntentoForm(request.POST, instance=calificacion_existente)
@@ -1006,7 +991,6 @@ def secretaria_calificar_intento(request, pk):
             intento.estado = 'calificado'
             intento.save(update_fields=['estado'])
 
-            # Guardar también como NotaIndividual en el sistema de calificaciones existente
             _registrar_nota_en_calificaciones(intento.estudiante, curso, calificacion.puntaje)
 
             nombre = intento.estudiante.get_full_name() or intento.estudiante.username
@@ -1019,7 +1003,7 @@ def secretaria_calificar_intento(request, pk):
         'intento': intento,
         'evaluacion': evaluacion,
         'curso': curso,
-        'respuestas': respuestas,
+        'respuestas_con_vf': respuestas_con_vf,
         'form': form,
         'calificacion_existente': calificacion_existente,
     })

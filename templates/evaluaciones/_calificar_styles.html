@@ -1,0 +1,118 @@
+<style>
+  .glass-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px; border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.4);
+    overflow: hidden; transition: all 0.3s ease;
+  }
+  .glass-header {
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(37,99,235,0.06));
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+  }
+  .glass-content { padding: 1.5rem; }
+  .glass-button {
+    display: inline-flex; align-items: center;
+    padding: 0.5rem 1.1rem; border-radius: 10px;
+    font-weight: 500; font-size: 0.875rem; text-decoration: none;
+    backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.25);
+    transition: all 0.3s ease; cursor: pointer; white-space: nowrap;
+  }
+  .glass-button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); text-decoration: none; }
+  .glass-button-secondary { background: linear-gradient(135deg, rgba(156,163,175,0.3), rgba(107,114,128,0.2)); color: #374151; }
+  .glass-button-primary   { background: linear-gradient(135deg, rgba(59,130,246,0.35), rgba(37,99,235,0.25)); color: #1e40af; }
+  .glass-button-success   { background: linear-gradient(135deg, rgba(34,197,94,0.35), rgba(22,163,74,0.25)); color: #14532d; }
+  .glass-badge {
+    display: inline-flex; align-items: center;
+    padding: 0.25rem 0.65rem; border-radius: 14px;
+    font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .glass-badge-success { background: linear-gradient(135deg, rgba(34,197,94,0.25), rgba(22,163,74,0.15)); color: #14532d; }
+  .glass-badge-warning { background: linear-gradient(135deg, rgba(245,158,11,0.25), rgba(217,119,6,0.15)); color: #78350f; }
+  .glass-alert {
+    padding: 0.875rem 1.1rem; border-radius: 12px;
+    backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);
+    display: flex; align-items: center; font-size: 0.875rem;
+  }
+  .glass-alert-danger  { background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(220,38,38,0.08)); color: #7f1d1d; }
+  .glass-alert-success { background: linear-gradient(135deg, rgba(34,197,94,0.15), rgba(22,163,74,0.08)); color: #14532d; }
+
+  /* Tarjeta de respuesta */
+  .glass-respuesta-card {
+    padding: 1rem 1.25rem; border-radius: 14px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,255,255,0.35));
+    border: 1px solid rgba(255,255,255,0.5);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: all 0.2s ease;
+  }
+  .glass-respuesta-card:hover { background: rgba(255,255,255,0.8); box-shadow: 0 4px 14px rgba(0,0,0,0.08); }
+
+  /* Número de pregunta */
+  .pregunta-num {
+    min-width: 1.75rem; height: 1.75rem; flex-shrink: 0;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 700;
+    box-shadow: 0 2px 6px rgba(59,130,246,0.4);
+  }
+
+  /* Badges de metadatos de pregunta */
+  .meta-badge {
+    display: inline-flex; align-items: center; gap: 0.2rem;
+    padding: 0.15rem 0.5rem; border-radius: 8px;
+    font-size: 0.68rem; font-weight: 600;
+    border: 1px solid transparent;
+  }
+  .meta-tipo    { background: rgba(107,114,128,0.12); color: #374151; border-color: rgba(107,114,128,0.2); }
+  .meta-valor   { background: rgba(245,158,11,0.12);  color: #78350f; border-color: rgba(245,158,11,0.3); }
+  .meta-todo    { background: rgba(239,68,68,0.12);   color: #7f1d1d; border-color: rgba(239,68,68,0.3); }
+  .meta-parcial { background: rgba(59,130,246,0.12);  color: #1e40af; border-color: rgba(59,130,246,0.3); }
+
+  /* Puntaje obtenido por pregunta */
+  .puntaje-pregunta {
+    display: flex; align-items: baseline; gap: 0.2rem;
+    padding: 0.3rem 0.7rem; border-radius: 10px;
+    font-size: 1rem; font-weight: 700; flex-shrink: 0;
+    border: 2px solid transparent;
+  }
+  .puntaje-full     { background: rgba(34,197,94,0.15);  color: #14532d; border-color: rgba(34,197,94,0.4); }
+  .puntaje-parcial-val { background: rgba(245,158,11,0.15); color: #78350f; border-color: rgba(245,158,11,0.4); }
+  .puntaje-zero     { background: rgba(239,68,68,0.12);  color: #7f1d1d; border-color: rgba(239,68,68,0.35); }
+
+  /* Respuesta de texto libre */
+  .respuesta-texto {
+    background: rgba(255,255,255,0.8); border: 1px solid rgba(226,232,240,0.8);
+    border-radius: 10px; padding: 0.75rem 1rem;
+    color: #374151; font-size: 0.875rem; line-height: 1.6;
+  }
+
+  /* Filas V/F */
+  .vf-fila {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.5rem 0.75rem; border-radius: 8px;
+    border: 1px solid rgba(226,232,240,0.6);
+    background: rgba(255,255,255,0.4);
+  }
+  .vf-ok  { background: rgba(34,197,94,0.08);  border-color: rgba(34,197,94,0.25); }
+  .vf-mal { background: rgba(239,68,68,0.08);  border-color: rgba(239,68,68,0.25); }
+  .vf-resp-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 1.75rem; height: 1.75rem; border-radius: 6px;
+    font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
+    border: 2px solid transparent;
+  }
+  .vf-badge-ok      { background: rgba(34,197,94,0.2);  color: #14532d; border-color: rgba(34,197,94,0.5); }
+  .vf-badge-mal     { background: rgba(239,68,68,0.2);  color: #7f1d1d; border-color: rgba(239,68,68,0.5); }
+  .vf-badge-neutral { background: rgba(59,130,246,0.15); color: #1e40af; border-color: rgba(59,130,246,0.35); }
+
+  /* Filas de opciones */
+  .opcion-fila {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.35rem 0.5rem; border-radius: 6px;
+  }
+  .opcion-ok  { background: rgba(34,197,94,0.08); }
+  .opcion-mal { background: rgba(239,68,68,0.08); }
+</style>
