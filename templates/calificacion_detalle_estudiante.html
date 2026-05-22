@@ -21,6 +21,13 @@
                     <span class="fa material-icons mr-2">article</span></i>
                     Exportar PDF
                 </a>
+                {% if matricula %}
+                <a href="{% url 'principal:add_nota' matricula_id=matricula.id %}?next={% url 'principal:calificacion_detalle_estudiante' student_id=student.id course_id=course.id %}"
+                   class="glass-button glass-button-primary">
+                    <span class="fa material-icons mr-2">add_circle</span>
+                    Agregar/Editar
+                </a>
+                {% endif %}
             </div>
             <h2 class="text-3xl font-bold text-center text-gray-800 mb-1">Detalle de Calificaciones</h2>
             <p class="text-center text-gray-600">
@@ -148,6 +155,7 @@
     .glass-button:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
     .glass-button-secondary { background: linear-gradient(135deg, rgba(156,163,175,0.3), rgba(107,114,128,0.2)); color: #374151; }
     .glass-button-danger { background: linear-gradient(135deg, rgba(239,68,68,0.3), rgba(220,38,38,0.2)); color: #7f1d1d; }
+    .glass-button-primary { background: linear-gradient(135deg, rgba(59,130,246,0.4), rgba(37,99,235,0.3)); color: #1e3a8a; }
     .glass-table { width: 100%; border-collapse: separate; border-spacing: 0; }
     .glass-table thead tr { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(37,99,235,0.1)); }
     .glass-table th {

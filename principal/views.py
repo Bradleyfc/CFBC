@@ -1774,10 +1774,17 @@ class CalificacionDetalleEstudianteView(BaseContextMixin, TemplateView):
 
         notas = calificacion.notas.all().order_by('fecha_creacion') if calificacion else []
 
+        matricula = Matriculas.objects.filter(
+            student=student, course=course
+        ).select_related('curso_academico').order_by(
+            '-curso_academico__activo', '-curso_academico__id'
+        ).first()
+
         context['student']      = student
         context['course']       = course
         context['calificacion'] = calificacion
         context['notas']        = notas
+        context['matricula']    = matricula
         return context
 
 
@@ -2773,249 +2780,159 @@ class StudentListNotasView(BaseContextMixin, ListView):
 # Agregar Notas de los estudiantes
 
 class AddNotaView(LoginRequiredMixin, View):
-    def dispatch(self, request, *args, **kwargs):
 
-        return super().dispatch(request, *args, **kwargs)
+    def _get_calificacion(self, matricula):
+        """Obtiene o crea el objeto Calificaciones para la matrícula dada."""
+        # Primero intentar con curso_academico exacto
+        calificacion = Calificaciones.objects.filter(
+            course=matricula.course,
+            student=matricula.student,
+            curso_academico=matricula.curso_academico,
+        ).first()
+
+        if not calificacion:
+            # Fallback: buscar cualquier calificación existente para este estudiante/curso
+            calificacion = Calificaciones.objects.filter(
+                course=matricula.course,
+                student=matricula.student,
+            ).first()
+
+        if not calificacion:
+            # Crear nueva
+            calificacion = Calificaciones.objects.create(
+                course=matricula.course,
+                student=matricula.student,
+                curso_academico=matricula.curso_academico,
+                matricula=matricula,
+            )
+        else:
+            # Asegurar que la FK matricula esté enlazada
+            if calificacion.matricula_id != matricula.pk:
+                calificacion.matricula = matricula
+                calificacion.save(update_fields=['matricula'])
+
+        return calificacion
+
+    def _redirect_after_save(self, request, matricula):
+        """Redirige al origen correcto: next param, detalle secretaria, o lista profesor."""
+        next_url = request.POST.get('next') or request.GET.get('next')
+        if next_url:
+            return redirect(next_url)
+        return redirect(
+            'principal:calificacion_detalle_estudiante',
+            student_id=matricula.student.id,
+            course_id=matricula.course.id,
+        )
 
     def get(self, request, matricula_id):
         matricula = get_object_or_404(Matriculas, id=matricula_id)
-        print(f"[GET] Matricula ID: {matricula_id}")
-        print(f"[GET] Matricula Course ID: {matricula.course.id}")
-        print(f"[GET] Matricula Student ID: {matricula.student.id}")
-        print(f"[GET] Matricula Curso Academico ID: {matricula.curso_academico.id if matricula.curso_academico else 'None'}")
+        calificacion = Calificaciones.objects.filter(
+            course=matricula.course,
+            student=matricula.student,
+            curso_academico=matricula.curso_academico,
+        ).prefetch_related('notas').first()
 
-        try:
-            calificacion_existente = Calificaciones.objects.get(
+        # Fallback: buscar sin filtro de curso_academico
+        if not calificacion:
+            calificacion = Calificaciones.objects.filter(
                 course=matricula.course,
                 student=matricula.student,
-                curso_academico=matricula.curso_academico
-            )
-            print("[GET] Existing Calificacion found.")
-            
-            # Verificar las notas existentes
-            notas_existentes = calificacion_existente.notas.all()
-            print(f"[GET] Found {notas_existentes.count()} existing notas")
-            
-            form = CalificacionesForm(instance=calificacion_existente)
-            formset = NotaIndividualFormSetCustom(instance=calificacion_existente)
-            
-            print(f"[GET] Formset created with {len(formset.forms)} forms")
-                    
-        except Calificaciones.DoesNotExist:
-            print("[GET] Calificaciones.DoesNotExist raised. No existing Calificacion found.")
-            form = CalificacionesForm(initial={
-                'matricula': matricula,
-                'course': matricula.course,
-                'student': matricula.student,
-                'curso_academico': matricula.curso_academico
-            })
-            formset = NotaIndividualFormSetCustom()
-            print(f"[GET] Empty formset created with {len(formset.forms)} forms")
-        
+            ).prefetch_related('notas').first()
+
+        notas_existentes = list(calificacion.notas.order_by('id')) if calificacion else []
+
         context = {
-            'form': form,
-            'formset': formset, # Añade el formset al contexto
-            'matricula': matricula
+            'matricula': matricula,
+            'notas_existentes': notas_existentes,
+            'next': request.GET.get('next', ''),
         }
         return render(request, 'add_nota.html', context)
 
     def post(self, request, matricula_id):
         matricula = get_object_or_404(Matriculas, id=matricula_id)
-        
-        # Logging detallado
-        print("===== DEBUGGING POST DATA =====")
-        print(f"Matricula ID: {matricula_id}")
-        print("All POST data:")
-        for key, value in request.POST.items():
-            print(f"  {key}: {value}")
-        
-        # Analizar específicamente los datos de notas
-        notas_keys = [key for key in request.POST.keys() if key.startswith('notas-')]
-        print(f"Found {len(notas_keys)} notas-related keys: {notas_keys}")
-        
-        print(f"[POST] Matricula ID: {matricula_id}")
-        print(f"[POST] All POST data:")
-        for key, value in request.POST.items():
-            print(f"  {key}: {value}")
 
-        # Verificar si ya existe una calificación
-        calificacion_existente = None
-        try:
-            calificacion_existente = Calificaciones.objects.get(
+        # ── Recopilar notas enviadas ──────────────────────────────────────────
+        # El template envía: nota_id[], nota_valor[], nota_delete[]
+        ids     = request.POST.getlist('nota_id')
+        valores = request.POST.getlist('nota_valor')
+        deletes = request.POST.getlist('nota_delete')  # lista de ids a eliminar
+
+        errores = []
+        filas_validas = []
+
+        for nota_id, valor_str in zip(ids, valores):
+            nota_id = nota_id.strip()
+            valor_str = valor_str.strip()
+
+            # Si está marcada para eliminar, la procesamos aparte
+            if nota_id in deletes:
+                continue
+
+            # Fila vacía (nueva sin valor) → ignorar
+            if not nota_id and not valor_str:
+                continue
+
+            # Validar valor
+            if valor_str:
+                try:
+                    valor = float(valor_str.replace(',', '.'))
+                    if not (0 <= valor <= 10):
+                        errores.append(f'El valor {valor_str} está fuera del rango 0-10.')
+                        continue
+                except ValueError:
+                    errores.append(f'"{valor_str}" no es un número válido.')
+                    continue
+            else:
+                valor = None
+
+            filas_validas.append({'id': nota_id, 'valor': valor})
+
+        if errores:
+            calificacion = Calificaciones.objects.filter(
                 course=matricula.course,
                 student=matricula.student,
-                curso_academico=matricula.curso_academico
-            )
-            print("[POST] Existing Calificacion found.")
-        except Calificaciones.DoesNotExist:
-            print("[POST] No existing Calificacion found. Will create new one.")
+                curso_academico=matricula.curso_academico,
+            ).prefetch_related('notas').first()
+            notas_existentes = list(calificacion.notas.order_by('id')) if calificacion else []
+            for e in errores:
+                messages.error(request, e)
+            return render(request, 'add_nota.html', {
+                'matricula': matricula,
+                'notas_existentes': notas_existentes,
+                'next': request.POST.get('next', ''),
+            })
 
-        # Procesar formulario principal
-        if calificacion_existente:
-            form = CalificacionesForm(request.POST, instance=calificacion_existente)
-        else:
-            form = CalificacionesForm(request.POST)
+        # ── Obtener/crear Calificaciones ──────────────────────────────────────
+        calificacion = self._get_calificacion(matricula)
 
-        if form.is_valid():
-            # Guardar o actualizar calificación
-            calificacion = form.save(commit=False)
-            calificacion.matricula = matricula
-            calificacion.course = matricula.course
-            calificacion.student = matricula.student
-            calificacion.curso_academico = matricula.curso_academico
-            calificacion.save()
-            print(f"[POST] Calificacion saved with ID: {calificacion.id}")
+        # ── Eliminar notas marcadas ───────────────────────────────────────────
+        if deletes:
+            NotaIndividual.objects.filter(
+                calificacion=calificacion,
+                id__in=[d for d in deletes if d],
+            ).delete()
 
-            # Procesar notas manualmente desde POST data
-            try:
-                saved_count = 0
-                error_count = 0
-                
-                # Obtener el número total de formularios
-                total_forms = int(request.POST.get('notas-TOTAL_FORMS', 0))
-                print(f"[POST] Total forms to process: {total_forms}")
-                
-                # Recopilar todas las notas de los datos POST (incluyendo las marcadas para eliminar)
-                notas_data = []
-                
-                # Primero, recopilar todos los índices que tienen datos
-                indices_encontrados = set()
-                for key in request.POST.keys():
-                    if key.startswith('notas-') and '-' in key:
-                        parts = key.split('-')
-                        if len(parts) >= 3:
-                            try:
-                                index = int(parts[1])
-                                indices_encontrados.add(index)
-                            except ValueError:
-                                continue
-                
-                print(f"Found indices in POST data: {sorted(indices_encontrados)}")
-                print(f"[POST] Found indices in POST data: {sorted(indices_encontrados)}")
-                
-                # Procesar cada índice encontrado
-                for index in sorted(indices_encontrados):
-                    valor_key = f'notas-{index}-valor'
-                    id_key = f'notas-{index}-id'
-                    delete_key = f'notas-{index}-DELETE'
-                    
-                    valor = request.POST.get(valor_key, '')
-                    nota_id = request.POST.get(id_key, '')
-                    delete = request.POST.get(delete_key) == 'on'
-                    
-                    print(f"Processing index {index}: valor='{valor}', id='{nota_id}', delete={delete}")
-                    print(f"[POST] Processing index {index}: valor='{valor}', id='{nota_id}', delete={delete}")
-                    
-                    # Agregar a la lista si tiene ID (nota existente) o valor (nota nueva)
-                    if nota_id or (valor and valor.strip()):
-                        notas_data.append({
-                            'index': str(index),
-                            'valor': valor,
-                            'id': nota_id,
-                            'delete': delete
-                        })
-                
-                print(f"[POST] Found {len(notas_data)} notas to process:")
-                for nota_data in notas_data:
-                    print(f"  Index {nota_data['index']}: valor={nota_data['valor']}, id={nota_data['id']}, delete={nota_data['delete']}")
-                
-                # Procesar cada nota
-                for nota_data in notas_data:
-                    if nota_data['delete'] and nota_data['id']:
-                        # Eliminar nota existente
-                        try:
-                            nota = NotaIndividual.objects.get(id=nota_data['id'])
-                            nota.delete()
-                            print(f"[POST] Deleted nota ID: {nota_data['id']}")
-                        except NotaIndividual.DoesNotExist:
-                            print(f"[POST] Nota ID {nota_data['id']} not found for deletion")
-                    elif not nota_data['delete'] and nota_data['valor'].strip():
-                        # Crear o actualizar nota
-                        try:
-                            valor_decimal = float(nota_data['valor'])
-                            if 0 <= valor_decimal <= 10:
-                                if nota_data['id']:
-                                    # Actualizar nota existente
-                                    try:
-                                        nota = NotaIndividual.objects.get(id=nota_data['id'])
-                                        nota.valor = valor_decimal
-                                        nota.save()
-                                        print(f"[POST] Updated nota ID: {nota_data['id']} with value: {valor_decimal}")
-                                        saved_count += 1
-                                    except NotaIndividual.DoesNotExist:
-                                        print(f"[POST] Nota ID {nota_data['id']} not found for update")
-                                        error_count += 1
-                                else:
-                                    # Crear nueva nota
-                                    nota = NotaIndividual.objects.create(
-                                        calificacion=calificacion,
-                                        valor=valor_decimal
-                                    )
-                                    print(f"[POST] Created new nota ID: {nota.id} with value: {valor_decimal}")
-                                    saved_count += 1
-                            else:
-                                print(f"[POST] Invalid value range: {valor_decimal}")
-                                error_count += 1
-                        except (ValueError, TypeError) as e:
-                            print(f"[POST] Invalid value format: {nota_data['valor']} - {str(e)}")
-                            error_count += 1
-                
-                # Verificar si quedan notas después del procesamiento
-                notas_restantes = NotaIndividual.objects.filter(calificacion=calificacion).count()
-                print(f"[POST] Remaining notes after processing: {notas_restantes}")
-                
-                print(f"[POST] Final results: saved_count={saved_count}, error_count={error_count}, remaining_notes={notas_restantes}")
-                
-                # Determinar si hubo eliminaciones
-                eliminaciones_realizadas = any(nota_data['delete'] and nota_data['id'] for nota_data in notas_data)
-                
-                if saved_count > 0:
-                    # Se guardaron notas nuevas o se actualizaron existentes
-                    messages.success(request, f'Se procesaron {saved_count} notas correctamente.')
-                    return redirect('principal:student_list_notas_by_course', course_id=matricula.course.id)
-                elif eliminaciones_realizadas:
-                    # Se eliminaron notas (con o sin notas restantes)
-                    if notas_restantes > 0:
-                        messages.success(request, f'Notas eliminadas correctamente. Quedan {notas_restantes} notas.')
-                    else:
-                        messages.success(request, 'Todas las notas fueron eliminadas correctamente.')
-                    return redirect('principal:student_list_notas_by_course', course_id=matricula.course.id)
-                elif notas_restantes > 0:
-                    # No se hicieron cambios pero hay notas existentes
-                    messages.info(request, 'No se realizaron cambios en las notas.')
-                    return redirect('principal:student_list_notas_by_course', course_id=matricula.course.id)
-                elif error_count > 0:
-                    # Hubo errores en el procesamiento
-                    messages.error(request, f'Se encontraron {error_count} errores en las notas. Revise los valores ingresados.')
-                else:
-                    # No hay notas y no se agregaron nuevas - esto es válido si se eliminaron todas
-                    if any(nota_data['delete'] for nota_data in notas_data):
-                        messages.success(request, 'Todas las notas fueron eliminadas correctamente.')
-                        return redirect('principal:student_list_notas_by_course', course_id=matricula.course.id)
-                    else:
-                        messages.error(request, 'Debe ingresar al menos una nota válida.')
-                        
-            except Exception as e:
-                print(f"[POST] Exception while processing notas: {str(e)}")
-                import traceback
-                print(f"[POST] Traceback: {traceback.format_exc()}")
-                messages.error(request, f'Error al procesar las notas: {str(e)}')
-        else:
-            print(f"[POST] Form errors: {form.errors}")
-            messages.error(request, 'Error en los datos de la calificación.')
+        # ── Guardar / actualizar notas válidas ────────────────────────────────
+        for fila in filas_validas:
+            if fila['valor'] is None:
+                continue
+            if fila['id']:
+                # Actualizar existente
+                NotaIndividual.objects.filter(
+                    id=fila['id'], calificacion=calificacion
+                ).update(valor=fila['valor'])
+            else:
+                # Crear nueva
+                NotaIndividual.objects.create(
+                    calificacion=calificacion,
+                    valor=fila['valor'],
+                )
 
-        # Preparar contexto para re-renderizar
-        if calificacion_existente:
-            formset = NotaIndividualFormSetCustom(instance=calificacion_existente)
-        else:
-            formset = NotaIndividualFormSetCustom()
+        # Recalcular promedio
+        calificacion.save()
 
-        context = {
-            'form': form,
-            'formset': formset,
-            'matricula': matricula
-        }
-        return render(request, 'add_nota.html', context)
+        messages.success(request, 'Calificaciones guardadas correctamente.')
+        return self._redirect_after_save(request, matricula)
 
 #esto es de la ia
 """ def crear_cursos(request):
