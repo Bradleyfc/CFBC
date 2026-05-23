@@ -141,6 +141,39 @@ def restaurar_datos_curso_academico(curso_academico):
                 contadores['cursos'] += 1
                 logger.debug(f"Curso restaurado: '{curso.name}' (id={curso.pk})")
 
+            # ── 1b. Restaurar SemestreCurso ──────────────────────────────────
+            from datos_archivados.models import SemestreCursoArchivado
+            from principal.models import SemestreCurso
+
+            for ca in cursos_archivados:
+                curso_nuevo = cursos_map.get(ca.pk)
+                if curso_nuevo is None:
+                    continue
+                semestres_archivados = SemestreCursoArchivado.objects.filter(
+                    curso_archivado=ca
+                )
+                for sa in semestres_archivados:
+                    # Evitar duplicados usando id_original
+                    if SemestreCurso.objects.filter(pk=sa.id_original).exists():
+                        logger.debug(
+                            f"SemestreCurso id={sa.id_original} ya existe. Se omite."
+                        )
+                        continue
+                    SemestreCurso.objects.create(
+                        pk=sa.id_original,
+                        curso=curso_nuevo,
+                        numero_semestre=sa.numero_semestre,
+                        activo=sa.activo,
+                        curso_academico=curso_academico,
+                        fecha_inicio=sa.fecha_inicio,
+                        fecha_cierre=sa.fecha_cierre,
+                        fecha_creacion=sa.fecha_creacion,
+                    )
+                    logger.debug(
+                        f"SemestreCurso restaurado: semestre={sa.numero_semestre}, "
+                        f"curso='{curso_nuevo.name}'"
+                    )
+
             # ── 2. Restaurar Matrículas ───────────────────────────────────────
             # Mapa MatriculaArchivada.pk → Matriculas (nueva)
             matriculas_map = {}
@@ -354,6 +387,11 @@ def restaurar_datos_curso_academico(curso_academico):
             # 5d. Matrículas archivadas
             MatriculaArchivada.objects.filter(
                 course__pk__in=cursos_archivados_ids
+            ).delete()
+
+            # 5d-bis. SemestreCursoArchivado
+            SemestreCursoArchivado.objects.filter(
+                curso_archivado__pk__in=cursos_archivados_ids
             ).delete()
 
             # 5e. Cursos archivados

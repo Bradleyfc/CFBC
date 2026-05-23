@@ -7,6 +7,7 @@ from django.views.generic import ListView, DetailView, TemplateView, CreateView,
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.views.decorators.http import require_POST
 from django.urls import reverse_lazy, reverse
 from django.utils.decorators import method_decorator
 from django.contrib.auth import logout
@@ -5876,3 +5877,48 @@ class ReglamentoGeneralEditView(LoginRequiredMixin, SecretariaRequiredMixin, Vie
             'articulo_formset': formset,
             'reglamento': reglamento,
         })
+
+
+# ---------------------------------------------------------------------------
+# Vista AJAX: Terminar Semestre
+# ---------------------------------------------------------------------------
+
+@login_required
+@require_POST
+def terminar_semestre_view(request, curso_id):
+    """
+    Endpoint AJAX para la acción "Terminar Semestre".
+    Solo accesible para el grupo Secretaría.
+    Retorna JsonResponse con {success, message, contadores} o {success: false, error}.
+    """
+    import json
+    from django.http import JsonResponse
+    from principal.semestre_service import terminar_semestre, SemestreError
+    from principal.models import Curso
+
+    # Verificar permisos: solo Secretaría
+    if not request.user.groups.filter(name='Secretaría').exists():
+        return JsonResponse({'success': False, 'error': 'No tienes permisos para realizar esta acción.'}, status=403)
+
+    try:
+        curso = Curso.objects.get(pk=curso_id)
+    except Curso.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Curso no encontrado.'}, status=404)
+
+    try:
+        contadores = terminar_semestre(curso)
+        mensaje = (
+            f"Semestre {contadores['semestre_num']} terminado exitosamente. "
+            f"Se archivaron: {contadores['matriculas']} matrículas, "
+            f"{contadores['calificaciones']} calificaciones, "
+            f"{contadores['asistencias']} asistencias."
+        )
+        return JsonResponse({
+            'success': True,
+            'message': mensaje,
+            'contadores': contadores,
+        })
+    except SemestreError as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': f'Error inesperado: {str(e)}'}, status=500)

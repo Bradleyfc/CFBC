@@ -91,6 +91,12 @@ class Curso(models.Model):
         status_dict = dict(self.STATUS_CHOICES)
         return status_dict.get(self.get_dynamic_status(), self.get_status_display())
 
+    @property
+    def semestre_activo_numero(self) -> int:
+        """Retorna el numero_semestre del SemestreCurso activo, o 1 si no hay ninguno."""
+        semestre = self.semestres.filter(activo=True).order_by('-numero_semestre').first()
+        return semestre.numero_semestre if semestre else 1
+
     def __str__(self):
         if self.curso_academico:
             return f"{self.name} ({self.curso_academico.nombre})"
@@ -694,3 +700,54 @@ class ArticuloReglamentoGeneral(models.Model):
         verbose_name = '📝 Artículo de Reglamento General'
         verbose_name_plural = '📝 Artículos de Reglamento General'
         ordering = ['orden', 'fecha_creacion']
+
+
+# ── SEMESTRES DEL CURSO ───────────────────────────────────────────────────────
+
+class SemestreCurso(models.Model):
+    curso = models.ForeignKey(
+        'Curso',
+        on_delete=models.CASCADE,
+        related_name='semestres',
+        verbose_name='Curso',
+    )
+    numero_semestre = models.PositiveIntegerField(
+        verbose_name='Número de Semestre',
+        help_text='Valor mínimo: 1',
+    )
+    activo = models.BooleanField(default=True, verbose_name='Activo')
+    curso_academico = models.ForeignKey(
+        'CursoAcademico',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='semestres_curso',
+        verbose_name='Curso Académico',
+    )
+    fecha_inicio = models.DateField(null=True, blank=True, verbose_name='Fecha de inicio')
+    fecha_cierre = models.DateField(null=True, blank=True, verbose_name='Fecha de cierre')
+    fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de creación')
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.numero_semestre is not None and self.numero_semestre < 1:
+            raise ValidationError('El número de semestre debe ser mayor o igual a 1.')
+
+    def __str__(self):
+        return f"Semestre {self.numero_semestre} — {self.curso.name}"
+
+    class Meta:
+        verbose_name = 'Semestre del Curso'
+        verbose_name_plural = 'Semestres del Curso'
+        ordering = ['numero_semestre']
+
+
+@receiver(post_save, sender=Curso)
+def _crear_semestre_inicial(sender, instance, created, **kwargs):
+    """
+    Crea automáticamente el SemestreCurso inicial (numero_semestre=1, activo=True)
+    cuando se crea un nuevo Curso.
+    """
+    if created:
+        from principal.semestre_service import crear_semestre_inicial
+        crear_semestre_inicial(instance)

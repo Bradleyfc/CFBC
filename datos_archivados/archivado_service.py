@@ -205,6 +205,29 @@ def archivar_datos_curso_academico(curso_academico):
                     )
                     contadores['articulos_reglamento'] += 1
 
+            # ── 3b. Archivar SemestreCurso activos ──────────────────────────────
+            from principal.models import SemestreCurso
+            from datos_archivados.models import SemestreCursoArchivado
+
+            for curso_pk, curso_archivado in cursos_archivados_map.items():
+                semestres = SemestreCurso.objects.filter(curso__pk=curso_pk)
+                for semestre in semestres:
+                    if SemestreCursoArchivado.objects.filter(id_original=semestre.pk).exists():
+                        logger.info(
+                            f"SemestreCurso id={semestre.pk} ya archivado. Se omite."
+                        )
+                        continue
+                    SemestreCursoArchivado.objects.create(
+                        id_original=semestre.pk,
+                        curso_archivado=curso_archivado,
+                        numero_semestre=semestre.numero_semestre,
+                        activo=semestre.activo,
+                        curso_academico_archivado=curso_academico_archivado,
+                        fecha_inicio=semestre.fecha_inicio,
+                        fecha_cierre=semestre.fecha_cierre,
+                        fecha_creacion=semestre.fecha_creacion,
+                    )
+
             # ── 4. Archivar Matrículas ────────────────────────────────────────
             matriculas_qs = Matriculas.objects.filter(
                 curso_academico=curso_academico
@@ -390,6 +413,9 @@ def archivar_datos_curso_academico(curso_academico):
             Matriculas.objects.filter(
                 curso_academico=curso_academico
             ).delete()
+
+            # 7e-bis. SemestreCurso
+            SemestreCurso.objects.filter(curso__curso_academico=curso_academico).delete()
 
             # 7f. Opciones, preguntas y formularios de aplicación
             formularios_qs = FormularioAplicacion.objects.filter(

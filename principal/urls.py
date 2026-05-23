@@ -118,4 +118,7 @@ urlpatterns = [
 
     # Endpoint AJAX para el admin: verificar si hay curso académico activo
     path('admin/api/hay-curso-activo/', views.api_hay_curso_activo, name='api_hay_curso_activo'),
+
+    # Endpoint AJAX: Terminar Semestre
+    path('cursos/<int:curso_id>/terminar-semestre/', views.terminar_semestre_view, name='terminar_semestre'),
 ]

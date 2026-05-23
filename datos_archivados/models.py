@@ -413,3 +413,41 @@ class CodigoVerificacionReclamacion(models.Model):
         verbose_name = 'Código de Verificación para Reclamación'
         verbose_name_plural = 'Códigos de Verificación para Reclamación'
         ordering = ['-fecha_creacion']
+
+
+class SemestreCursoArchivado(models.Model):
+    id_original = models.IntegerField(
+        verbose_name='ID Original del SemestreCurso',
+        db_index=True,
+    )
+    curso_archivado = models.ForeignKey(
+        CursoArchivado,
+        on_delete=models.CASCADE,
+        related_name='semestres_archivados',
+        verbose_name='Curso Archivado',
+    )
+    numero_semestre = models.PositiveIntegerField(verbose_name='Número de Semestre')
+    activo = models.BooleanField(default=False, verbose_name='Activo al momento del archivado')
+    curso_academico_archivado = models.ForeignKey(
+        CursoAcademicoArchivado,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='semestres_archivados',
+        verbose_name='Curso Académico Archivado',
+    )
+    fecha_inicio = models.DateField(null=True, blank=True, verbose_name='Fecha de inicio')
+    fecha_cierre = models.DateField(null=True, blank=True, verbose_name='Fecha de cierre')
+    fecha_creacion = models.DateTimeField(verbose_name='Fecha de creación original')
+    fecha_migracion = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de migración')
+
+    def __str__(self):
+        return (
+            f"Semestre {self.numero_semestre} archivado — "
+            f"{self.curso_archivado.name} (ID Original: {self.id_original})"
+        )
+
+    class Meta:
+        verbose_name = 'Semestre de Curso Archivado'
+        verbose_name_plural = 'Semestres de Cursos Archivados'
+        ordering = ['numero_semestre']

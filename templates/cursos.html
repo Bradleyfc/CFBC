@@ -207,6 +207,11 @@
               <span class="glass-tag-mini glass-tag-secondary text-sm">
                 {{ course.get_tipo_display }}
               </span>
+              {% with semestre_num=course.semestre_activo_numero %}
+              <span class="glass-tag-mini glass-tag-indigo text-sm">
+                Semestre {{ semestre_num|default:1 }}
+              </span>
+              {% endwith %}
               {% if group_name == 'Estudiantes' %}
                 {% tiene_solicitud_pendiente user.id course.id as tiene_solicitud_pendiente %}
                 {% tiene_solicitud_rechazada user.id course.id as tiene_solicitud_rechazada %}
@@ -354,6 +359,15 @@
               </a>
               {% endif %}
 
+              <button type="button"
+                      class="glass-option-link glass-option-indigo glass-option-compact flex items-center gap-1.5 p-2 rounded-md transition-all duration-300 w-full text-left"
+                      onclick="showTerminarSemestreModal('{{ course.id }}', '{{ course.name|escapejs }}', {{ course.semestre_activo_numero|default:1 }})">
+                <div class="glass-icon-compact-opt glass-icon-indigo">
+                  <span class="material-icons text-sm">skip_next</span>
+                </div>
+                <span class="glass-text-indigo font-medium text-xs">Terminar Semestre</span>
+              </button>
+
               <hr class="glass-divider-compact">
               
               <a href="#" class="glass-option-link glass-option-red glass-option-compact flex items-center gap-1.5 p-2 rounded-md transition-all duration-300" onclick="showDeleteModal('{{course.id}}', '{{course.name|escapejs}}')">
@@ -485,6 +499,41 @@
       <button type="button" class="apply-modal-btn apply-modal-btn-confirm" onclick="confirmApply()">
         <span class="fa material-icons mr-2">check_circle</span></i>
         Aplicar al Curso
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Terminar Semestre -->
+<div id="terminarSemestreModal" class="delete-modal hidden">
+  <div class="delete-modal-overlay" onclick="hideTerminarSemestreModal()"></div>
+  <div class="delete-modal-content">
+    <div class="delete-modal-header">
+      <div class="delete-modal-icon">
+        <span class="material-icons text-indigo-600">skip_next</span>
+      </div>
+      <h3 class="delete-modal-title">Terminar Semestre</h3>
+    </div>
+    <div class="delete-modal-body">
+      <p class="delete-modal-message">
+        ¿Confirma que desea terminar el <strong id="semestreNumToEnd"></strong>
+        del curso <strong id="courseNameToEndSemestre"></strong>?
+      </p>
+      <p class="delete-modal-warning">
+        Los datos académicos del semestre actual se guardarán en el historial
+        y el curso se reiniciará para el siguiente semestre.
+      </p>
+      <div id="terminarSemestreError" class="hidden text-red-600 text-sm mt-2"></div>
+    </div>
+    <div class="delete-modal-footer">
+      <button type="button" class="delete-modal-btn delete-modal-btn-cancel"
+              onclick="hideTerminarSemestreModal()" id="terminarSemestreCancelBtn">
+        Cancelar
+      </button>
+      <button type="button" class="delete-modal-btn delete-modal-btn-confirm"
+              onclick="confirmTerminarSemestre()" id="terminarSemestreConfirmBtn">
+        <span id="terminarSemestreSpinner" class="hidden">⏳ </span>
+        Confirmar
       </button>
     </div>
   </div>
@@ -3058,6 +3107,7 @@
     if (event.key === 'Escape') {
       hideDeleteModal();
       hideApplyModal();
+      hideTerminarSemestreModal();
     }
   });
 
@@ -3070,6 +3120,81 @@
       });
     }
   });
+
+  // ── Terminar Semestre ─────────────────────────────────────────────────────
+  let _terminarSemestreCursoId = null;
+
+  function showTerminarSemestreModal(cursoId, cursoName, semestreNum) {
+    _terminarSemestreCursoId = cursoId;
+    document.getElementById('courseNameToEndSemestre').textContent = cursoName;
+    document.getElementById('semestreNumToEnd').textContent = 'Semestre ' + semestreNum;
+    document.getElementById('terminarSemestreError').classList.add('hidden');
+    document.getElementById('terminarSemestreError').textContent = '';
+    document.getElementById('terminarSemestreConfirmBtn').disabled = false;
+    document.getElementById('terminarSemestreCancelBtn').disabled = false;
+    document.getElementById('terminarSemestreSpinner').classList.add('hidden');
+    document.getElementById('terminarSemestreModal').classList.remove('hidden');
+  }
+
+  function hideTerminarSemestreModal() {
+    document.getElementById('terminarSemestreModal').classList.add('hidden');
+    _terminarSemestreCursoId = null;
+  }
+
+  function confirmTerminarSemestre() {
+    if (!_terminarSemestreCursoId) return;
+    const btn = document.getElementById('terminarSemestreConfirmBtn');
+    const cancelBtn = document.getElementById('terminarSemestreCancelBtn');
+    const spinner = document.getElementById('terminarSemestreSpinner');
+    btn.disabled = true;
+    cancelBtn.disabled = true;
+    spinner.classList.remove('hidden');
+
+    fetch(`/principal/cursos/${_terminarSemestreCursoId}/terminar-semestre/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+        'Content-Type': 'application/json'
+      },
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        hideTerminarSemestreModal();
+        location.reload();
+      } else {
+        const errDiv = document.getElementById('terminarSemestreError');
+        errDiv.textContent = data.error || 'Error al terminar el semestre.';
+        errDiv.classList.remove('hidden');
+        btn.disabled = false;
+        cancelBtn.disabled = false;
+        spinner.classList.add('hidden');
+      }
+    })
+    .catch(err => {
+      const errDiv = document.getElementById('terminarSemestreError');
+      errDiv.textContent = 'Error de conexión. Intente nuevamente.';
+      errDiv.classList.remove('hidden');
+      btn.disabled = false;
+      cancelBtn.disabled = false;
+      spinner.classList.add('hidden');
+    });
+  }
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
 </script>
 
 {% endblock %}
