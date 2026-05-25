@@ -34,6 +34,17 @@
                             </select>
                         </div>
                         <div class="flex-1 min-w-40">
+                            <label for="semestre" class="block text-xs font-medium text-gray-600 mb-1">Semestre:</label>
+                            <select class="glass-select-compact" id="semestre" name="semestre">
+                                <option value="">Todos (semestre actual)</option>
+                                {% for s in semestres_disponibles %}
+                                <option value="{{ s.id }}" {% if request.GET.semestre == s.id|stringformat:"s" %}selected{% endif %}>
+                                    Sem. {{ s.numero_semestre }} — {{ s.curso_archivado.name }}{% if s.fecha_cierre %} ({{ s.fecha_cierre|date:"d/m/Y" }}){% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="flex-1 min-w-40">
                             <label for="curso" class="block text-xs font-medium text-gray-600 mb-1">Curso:</label>
                             <select class="glass-select-compact" id="curso" name="curso">
                                 <option value="">Todos</option>
@@ -52,6 +63,16 @@
                             </select>
                         </div>
                     </div>
+
+                    {% if viendo_semestre_archivado and semestre_seleccionado %}
+                    <div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.9rem;background:linear-gradient(135deg,rgba(99,102,241,0.12),rgba(59,130,246,0.08));border-radius:8px;border:1px solid rgba(99,102,241,0.25);margin-bottom:0.75rem;">
+                        <span class="fa material-icons" style="color:#6366f1;font-size:1rem;">history</span>
+                        <span style="font-size:0.82rem;font-weight:600;color:#3730a3;">
+                            Viendo Semestre {{ semestre_seleccionado.numero_semestre }} — {{ semestre_seleccionado.curso_archivado.name }}
+                            {% if semestre_seleccionado.fecha_cierre %}(cerrado el {{ semestre_seleccionado.fecha_cierre|date:"d/m/Y" }}){% endif %}
+                        </span>
+                    </div>
+                    {% endif %}
 
                     <!-- Action Buttons -->
                     <div class="flex flex-wrap gap-2 justify-end">
@@ -114,11 +135,19 @@
                                 {% endif %}
                             </td>
                             <td>
+                                {% if viendo_semestre_archivado %}
+                                <a href="{% url 'principal:calificacion_detalle_archivado' student_id=calificacion.student.id course_id=calificacion.course.id %}"
+                                   class="glass-button glass-button-primary text-xs px-3 py-1">
+                                    <span class="fa material-icons mr-1">visibility</span></i>
+                                    Ver
+                                </a>
+                                {% else %}
                                 <a href="{% url 'principal:calificacion_detalle_estudiante' student_id=calificacion.student.id course_id=calificacion.course.id %}"
                                    class="glass-button glass-button-primary text-xs px-3 py-1">
                                     <span class="fa material-icons mr-1">visibility</span></i>
                                     Ver
                                 </a>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
@@ -132,7 +161,7 @@
             <ul class="glass-pagination">
                 {% if page_obj.has_previous %}
                 <li>
-                    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.curso_academico %}&curso_academico={{ request.GET.curso_academico }}{% endif %}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}"
+                    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.curso_academico %}&curso_academico={{ request.GET.curso_academico }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}"
                         class="glass-page-link">
                         Anterior
                     </a>
@@ -146,7 +175,7 @@
                 </li>
                 {% else %}
                 <li>
-                    <a href="?page={{ i }}{% if request.GET.curso_academico %}&curso_academico={{ request.GET.curso_academico }}{% endif %}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}"
+                    <a href="?page={{ i }}{% if request.GET.curso_academico %}&curso_academico={{ request.GET.curso_academico }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}"
                         class="glass-page-link">
                         {{ i }}
                     </a>
@@ -156,7 +185,7 @@
 
                 {% if page_obj.has_next %}
                 <li>
-                    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.curso_academico %}&curso_academico={{ request.GET.curso_academico }}{% endif %}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}"
+                    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.curso_academico %}&curso_academico={{ request.GET.curso_academico }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}"
                         class="glass-page-link">
                         Siguiente
                     </a>

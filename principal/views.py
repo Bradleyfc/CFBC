@@ -653,6 +653,8 @@ class _MatriculaArchivadaAdapter:
         self.estado = ma.estado
         self.student = _UsuarioArchivadoAdapter(ma.student)
         self.course = _CursoArchivadoAdapter(ma.course)
+        # Exponer curso_academico para compatibilidad con templates que lo usan
+        self.curso_academico = ma.course.curso_academico if ma.course else None
 
     def get_estado_display(self):
         return self.ESTADO_CHOICES.get(self._ma.estado, self._ma.estado)
@@ -701,6 +703,8 @@ class _CalificacionArchivadaAdapter:
         self.course = _CursoArchivadoAdapter(ca.course)
         # Exponer .notas con la misma interfaz que el manager de NotaIndividual
         self.notas = _NotasManager(ca.notas_archivadas.all())
+        # Exponer curso_academico para compatibilidad con templates
+        self.curso_academico = ca.course.curso_academico if ca.course else None
 
     def __str__(self):
         return str(self._ca)
@@ -746,6 +750,7 @@ class CursoAcademicoDetailView(DetailView):
         # Obtener los filtros de la URL
         curso_id = self.request.GET.get('curso')
         estudiante_id = self.request.GET.get('estudiante')
+        semestre_id = self.request.GET.get('semestre')  # ID del SemestreCursoArchivado
 
         # Páginas activas por sección
         page_m = self.request.GET.get('page_m', 1)
@@ -755,13 +760,12 @@ class CursoAcademicoDetailView(DetailView):
         per_page = 10
 
         # ── Determinar fuente de datos ────────────────────────────────────────
-        # Si el curso está archivado, los datos viven en datos_archivados.
-        # Si está activo (o inactivo pero no archivado), los datos están en principal.
         if curso_academico.archivado:
             context.update(
                 self._context_desde_archivados(
                     curso_academico, curso_id, estudiante_id,
                     page_m, page_c, page_a, page_cur, per_page,
+                    semestre_id=semestre_id,
                 )
             )
         else:
@@ -769,19 +773,17 @@ class CursoAcademicoDetailView(DetailView):
                 self._context_desde_principal(
                     curso_academico, curso_id, estudiante_id,
                     page_m, page_c, page_a, page_cur, per_page,
+                    semestre_id=semestre_id,
                 )
             )
 
-        # Tab activa (para mantener la pestaña al paginar)
+        # Tab activa
         context['active_tab'] = self.request.GET.get('tab', 'cursos')
-
-        # Parámetros de filtro actuales para construir URLs de paginación
         context['filter_params'] = {
             'curso': curso_id or '',
             'estudiante': estudiante_id or '',
+            'semestre': semestre_id or '',
         }
-
-        # Todos los cursos académicos para el selector de navegación
         context['todos_los_cursos_academicos'] = CursoAcademico.objects.all().order_by('-fecha_creacion')
 
         return context
@@ -790,7 +792,84 @@ class CursoAcademicoDetailView(DetailView):
     def _context_desde_principal(
         self, curso_academico, curso_id, estudiante_id,
         page_m, page_c, page_a, page_cur, per_page,
+        semestre_id=None,
     ):
+        from principal.models import SemestreCurso
+        from datos_archivados.models import SemestreCursoArchivado, MatriculaArchivada, CalificacionArchivada, AsistenciaArchivada
+
+        # ── Semestres archivados disponibles para este CA ─────────────────────
+        # Busca todos los SemestreCursoArchivado cuyos cursos pertenecen a este CA
+        semestres_archivados = SemestreCursoArchivado.objects.filter(
+            curso_archivado__id_original__in=Curso.objects.filter(
+                curso_academico=curso_academico
+            ).values_list('id', flat=True)
+        ).select_related('curso_archivado').order_by('numero_semestre')
+
+        # Si se seleccionó un semestre archivado, mostrar sus datos
+        semestre_seleccionado = None
+        if semestre_id:
+            try:
+                semestre_seleccionado = SemestreCursoArchivado.objects.get(pk=semestre_id)
+            except SemestreCursoArchivado.DoesNotExist:
+                semestre_seleccionado = None
+
+        if semestre_seleccionado:
+            # Mostrar datos del semestre archivado seleccionado
+            curso_archivado = semestre_seleccionado.curso_archivado
+
+            matriculas_qs = MatriculaArchivada.objects.filter(
+                course=curso_archivado
+            ).select_related('student', 'course')
+            if estudiante_id:
+                matriculas_qs = matriculas_qs.filter(student__id_original=estudiante_id)
+
+            calificaciones_qs = CalificacionArchivada.objects.filter(
+                course=curso_archivado
+            ).select_related('student', 'course').prefetch_related('notas_archivadas')
+            if estudiante_id:
+                calificaciones_qs = calificaciones_qs.filter(student__id_original=estudiante_id)
+
+            asistencias_matriculas_qs = MatriculaArchivada.objects.filter(
+                course=curso_archivado
+            ).select_related('student', 'course').order_by(
+                'student__first_name', 'student__last_name'
+            )
+            if estudiante_id:
+                asistencias_matriculas_qs = asistencias_matriculas_qs.filter(student__id_original=estudiante_id)
+
+            matriculas_adaptadas = [_MatriculaArchivadaAdapter(m) for m in matriculas_qs]
+            calificaciones_adaptadas = [_CalificacionArchivadaAdapter(c) for c in calificaciones_qs]
+            asistencias_adaptadas = [_MatriculaArchivadaAdapter(m) for m in asistencias_matriculas_qs]
+
+            # Cursos: solo el curso del semestre seleccionado
+            cursos_qs = Curso.objects.filter(
+                curso_academico=curso_academico,
+                id=curso_archivado.id_original,
+            )
+
+            paginator_cur = Paginator(list(cursos_qs), per_page)
+            paginator_m   = Paginator(matriculas_adaptadas, per_page)
+            paginator_c   = Paginator(calificaciones_adaptadas, per_page)
+            paginator_a   = Paginator(asistencias_adaptadas, per_page)
+
+            return {
+                'cursos': paginator_cur.get_page(page_cur),
+                'cursos_total': cursos_qs.count(),
+                'matriculas': paginator_m.get_page(page_m),
+                'matriculas_total': len(matriculas_adaptadas),
+                'calificaciones': paginator_c.get_page(page_c),
+                'calificaciones_total': len(calificaciones_adaptadas),
+                'asistencias': paginator_a.get_page(page_a),
+                'asistencias_total': len(asistencias_adaptadas),
+                'cursos_disponibles': Curso.objects.filter(curso_academico=curso_academico).distinct(),
+                'estudiantes_disponibles': User.objects.filter(matriculas__curso_academico=curso_academico).distinct(),
+                'es_archivado': False,
+                'semestres_disponibles': semestres_archivados,
+                'semestre_seleccionado': semestre_seleccionado,
+                'viendo_semestre_archivado': True,
+            }
+
+        # ── Semestre activo (datos actuales) ──────────────────────────────────
         cursos_qs = Curso.objects.filter(
             curso_academico=curso_academico
         ).distinct()
@@ -821,8 +900,6 @@ class CursoAcademicoDetailView(DetailView):
         if estudiante_id:
             asistencias_qs = asistencias_qs.filter(student_id=estudiante_id)
 
-        # Para el tab de asistencias mostramos matrículas únicas (estudiante+curso)
-        # con el total de asistencias de cada uno
         asistencias_matriculas_qs = Matriculas.objects.filter(
             curso_academico=curso_academico
         ).select_related('student', 'course').order_by(
@@ -854,12 +931,16 @@ class CursoAcademicoDetailView(DetailView):
                 matriculas__curso_academico=curso_academico
             ).distinct(),
             'es_archivado': False,
+            'semestres_disponibles': semestres_archivados,
+            'semestre_seleccionado': None,
+            'viendo_semestre_archivado': False,
         }
 
     # ── Fuente: datos archivados (curso archivado) ────────────────────────────
     def _context_desde_archivados(
         self, curso_academico, curso_id, estudiante_id,
         page_m, page_c, page_a, page_cur, per_page,
+        semestre_id=None,
     ):
         from datos_archivados.models import (
             CursoAcademicoArchivado,
@@ -950,6 +1031,12 @@ class CursoAcademicoDetailView(DetailView):
             for u in _estudiantes_de_archivado(ca_archivado)
         ]
 
+        # Semestres archivados de este CA
+        from datos_archivados.models import SemestreCursoArchivado
+        semestres_archivados = SemestreCursoArchivado.objects.filter(
+            curso_archivado__curso_academico=ca_archivado
+        ).select_related('curso_archivado').order_by('numero_semestre')
+
         paginator_cur = Paginator(cursos_adaptados, per_page)
         paginator_m = Paginator(matriculas_adaptadas, per_page)
         paginator_c = Paginator(calificaciones_adaptadas, per_page)
@@ -968,6 +1055,9 @@ class CursoAcademicoDetailView(DetailView):
             'estudiantes_disponibles': estudiantes_disponibles,
             'es_archivado': True,
             'sin_datos_archivados': False,
+            'semestres_disponibles': semestres_archivados,
+            'semestre_seleccionado': None,
+            'viendo_semestre_archivado': False,
         }
         
     def render_to_response(self, context, **response_kwargs):
@@ -1659,19 +1749,22 @@ class MatriculasListView(BaseContextMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        from datos_archivados.models import MatriculaArchivada, SemestreCursoArchivado
+        semestre_id = self.request.GET.get('semestre')
+        if semestre_id:
+            # Devolver lista vacía; los datos archivados se manejan en get_context_data
+            return Matriculas.objects.none()
 
-        # Filtering by CursoAcademico
+        queryset = Matriculas.objects.select_related('student', 'course', 'curso_academico')
+
         curso_academico_id = self.request.GET.get('curso_academico')
         if curso_academico_id:
             queryset = queryset.filter(curso_academico__id=curso_academico_id)
 
-        # Filtering by Curso
         curso_id = self.request.GET.get('curso')
         if curso_id:
             queryset = queryset.filter(course__id=curso_id)
 
-        # Filtering by Estudiante
         student_id = self.request.GET.get('student')
         if student_id:
             queryset = queryset.filter(student__id=student_id)
@@ -1679,10 +1772,55 @@ class MatriculasListView(BaseContextMixin, ListView):
         return queryset
 
     def get_context_data(self, **kwargs):
+        from datos_archivados.models import SemestreCursoArchivado, MatriculaArchivada
         context = super().get_context_data(**kwargs)
         context['cursos_academicos'] = CursoAcademico.objects.all()
         context['cursos'] = Curso.objects.all()
         context['estudiantes'] = User.objects.filter(groups__name='Estudiantes')
+
+        # Semestres archivados disponibles (de todos los CAs o del CA seleccionado)
+        curso_academico_id = self.request.GET.get('curso_academico')
+        semestres_qs = SemestreCursoArchivado.objects.select_related('curso_archivado').order_by(
+            'curso_archivado__curso_academico', 'numero_semestre'
+        )
+        if curso_academico_id:
+            semestres_qs = semestres_qs.filter(
+                curso_archivado__id_original__in=Curso.objects.filter(
+                    curso_academico__id=curso_academico_id
+                ).values_list('id', flat=True)
+            )
+        context['semestres_disponibles'] = semestres_qs
+
+        semestre_id = self.request.GET.get('semestre')
+        context['semestre_seleccionado'] = None
+        context['viendo_semestre_archivado'] = False
+
+        if semestre_id:
+            try:
+                semestre = SemestreCursoArchivado.objects.get(pk=semestre_id)
+                context['semestre_seleccionado'] = semestre
+                context['viendo_semestre_archivado'] = True
+
+                # Cargar matrículas archivadas del semestre
+                matriculas_arch_qs = MatriculaArchivada.objects.filter(
+                    course=semestre.curso_archivado
+                ).select_related('student', 'course')
+
+                student_id = self.request.GET.get('student')
+                if student_id:
+                    matriculas_arch_qs = matriculas_arch_qs.filter(student__id_original=student_id)
+
+                matriculas_adaptadas = [_MatriculaArchivadaAdapter(m) for m in matriculas_arch_qs]
+
+                # Paginar manualmente
+                paginator = Paginator(matriculas_adaptadas, self.paginate_by)
+                page_number = self.request.GET.get('page', 1)
+                context['matriculas'] = paginator.get_page(page_number)
+                context['page_obj'] = context['matriculas']
+                context['is_paginated'] = context['matriculas'].has_other_pages()
+            except SemestreCursoArchivado.DoesNotExist:
+                pass
+
         return context
 
 
@@ -1694,19 +1832,20 @@ class CalificacionesListView(BaseContextMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        queryset = super().get_queryset().select_related('student', 'course', 'curso_academico')
+        semestre_id = self.request.GET.get('semestre')
+        if semestre_id:
+            return Calificaciones.objects.none()
 
-        # Filtering by CursoAcademico
+        queryset = Calificaciones.objects.select_related('student', 'course', 'curso_academico')
+
         curso_academico_id = self.request.GET.get('curso_academico')
         if curso_academico_id:
             queryset = queryset.filter(curso_academico__id=curso_academico_id)
 
-        # Filtering by Curso
         curso_id = self.request.GET.get('curso')
         if curso_id:
             queryset = queryset.filter(course__id=curso_id)
 
-        # Filtering by Estudiante — acepta tanto 'student' como 'estudiante'
         student_id = self.request.GET.get('student') or self.request.GET.get('estudiante')
         if student_id:
             queryset = queryset.filter(student__id=student_id)
@@ -1714,10 +1853,52 @@ class CalificacionesListView(BaseContextMixin, ListView):
         return queryset
 
     def get_context_data(self, **kwargs):
+        from datos_archivados.models import SemestreCursoArchivado, CalificacionArchivada
         context = super().get_context_data(**kwargs)
         context['cursos_academicos'] = CursoAcademico.objects.all()
         context['cursos'] = Curso.objects.all()
         context['estudiantes'] = User.objects.filter(groups__name='Estudiantes')
+
+        curso_academico_id = self.request.GET.get('curso_academico')
+        semestres_qs = SemestreCursoArchivado.objects.select_related('curso_archivado').order_by(
+            'curso_archivado__curso_academico', 'numero_semestre'
+        )
+        if curso_academico_id:
+            semestres_qs = semestres_qs.filter(
+                curso_archivado__id_original__in=Curso.objects.filter(
+                    curso_academico__id=curso_academico_id
+                ).values_list('id', flat=True)
+            )
+        context['semestres_disponibles'] = semestres_qs
+
+        semestre_id = self.request.GET.get('semestre')
+        context['semestre_seleccionado'] = None
+        context['viendo_semestre_archivado'] = False
+
+        if semestre_id:
+            try:
+                semestre = SemestreCursoArchivado.objects.get(pk=semestre_id)
+                context['semestre_seleccionado'] = semestre
+                context['viendo_semestre_archivado'] = True
+
+                calificaciones_arch_qs = CalificacionArchivada.objects.filter(
+                    course=semestre.curso_archivado
+                ).select_related('student', 'course').prefetch_related('notas_archivadas')
+
+                student_id = self.request.GET.get('student') or self.request.GET.get('estudiante')
+                if student_id:
+                    calificaciones_arch_qs = calificaciones_arch_qs.filter(student__id_original=student_id)
+
+                calificaciones_adaptadas = [_CalificacionArchivadaAdapter(c) for c in calificaciones_arch_qs]
+
+                paginator = Paginator(calificaciones_adaptadas, self.paginate_by)
+                page_number = self.request.GET.get('page', 1)
+                context['calificaciones'] = paginator.get_page(page_number)
+                context['page_obj'] = context['calificaciones']
+                context['is_paginated'] = context['calificaciones'].has_other_pages()
+            except SemestreCursoArchivado.DoesNotExist:
+                pass
+
         return context
 
 
@@ -1786,6 +1967,60 @@ class CalificacionDetalleEstudianteView(BaseContextMixin, TemplateView):
         context['calificacion'] = calificacion
         context['notas']        = notas
         context['matricula']    = matricula
+        return context
+
+
+class CalificacionDetalleArchivadoView(BaseContextMixin, TemplateView):
+    """Vista de detalle de calificaciones archivadas de un estudiante en un curso."""
+    template_name = 'calificacion_detalle_estudiante.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from datos_archivados.models import (
+            UsuarioArchivado, CalificacionArchivada, MatriculaArchivada
+        )
+
+        student_id = self.kwargs['student_id']
+        course_id  = self.kwargs['course_id']
+
+        student = get_object_or_404(UsuarioArchivado, id=student_id)
+        calificacion_arch = CalificacionArchivada.objects.filter(
+            student=student, course_id=course_id
+        ).prefetch_related('notas_archivadas').first()
+
+        notas = []
+        average = None
+        if calificacion_arch:
+            notas = [_NotaArchivadaAdapter(n) for n in
+                     calificacion_arch.notas_archivadas.all().order_by('fecha_creacion')]
+            average = calificacion_arch.average
+
+        # Adaptamos para que el template reutilice la misma estructura
+        student_adapter = _UsuarioArchivadoAdapter(student)
+
+        # Buscar el curso archivado para el adaptador
+        from datos_archivados.models import CursoArchivado
+        course_arch = get_object_or_404(CursoArchivado, id=course_id)
+        course_adapter = _CursoArchivadoAdapter(course_arch)
+
+        # Crear un objeto calificacion compatible con el template
+        class _CalificacionProxy:
+            def __init__(self, notas_list, avg):
+                self.average = avg
+                self._notas = notas_list
+                self.notas = type('NM', (), {
+                    'all': lambda s: notas_list,
+                    'count': lambda s: len(notas_list),
+                })()
+
+        calificacion_proxy = _CalificacionProxy(notas, average) if calificacion_arch else None
+
+        context['student']      = student_adapter
+        context['course']       = course_adapter
+        context['calificacion'] = calificacion_proxy
+        context['notas']        = notas
+        context['matricula']    = None
+        context['es_archivado'] = True
         return context
 
 
@@ -1983,6 +2218,10 @@ class AsistenciasListView(BaseContextMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
+        semestre_id = self.request.GET.get('semestre')
+        if semestre_id:
+            return Matriculas.objects.none()
+
         queryset = Matriculas.objects.select_related('student', 'course', 'curso_academico').filter(activo=True)
 
         curso_academico_id = self.request.GET.get('curso_academico')
@@ -2000,6 +2239,7 @@ class AsistenciasListView(BaseContextMixin, ListView):
         return queryset.order_by('student__first_name', 'student__last_name', 'student__username')
 
     def get_context_data(self, **kwargs):
+        from datos_archivados.models import SemestreCursoArchivado, MatriculaArchivada
         context = super().get_context_data(**kwargs)
         context['cursos_academicos'] = CursoAcademico.objects.all()
         context['cursos'] = Curso.objects.all()
@@ -2007,6 +2247,49 @@ class AsistenciasListView(BaseContextMixin, ListView):
         context['selected_curso_academico'] = self.request.GET.get('curso_academico')
         context['selected_curso'] = self.request.GET.get('curso')
         context['selected_estudiante'] = self.request.GET.get('estudiante')
+
+        curso_academico_id = self.request.GET.get('curso_academico')
+        semestres_qs = SemestreCursoArchivado.objects.select_related('curso_archivado').order_by(
+            'curso_archivado__curso_academico', 'numero_semestre'
+        )
+        if curso_academico_id:
+            semestres_qs = semestres_qs.filter(
+                curso_archivado__id_original__in=Curso.objects.filter(
+                    curso_academico__id=curso_academico_id
+                ).values_list('id', flat=True)
+            )
+        context['semestres_disponibles'] = semestres_qs
+
+        semestre_id = self.request.GET.get('semestre')
+        context['semestre_seleccionado'] = None
+        context['viendo_semestre_archivado'] = False
+
+        if semestre_id:
+            try:
+                semestre = SemestreCursoArchivado.objects.get(pk=semestre_id)
+                context['semestre_seleccionado'] = semestre
+                context['viendo_semestre_archivado'] = True
+
+                matriculas_arch_qs = MatriculaArchivada.objects.filter(
+                    course=semestre.curso_archivado
+                ).select_related('student', 'course').order_by(
+                    'student__first_name', 'student__last_name'
+                )
+
+                estudiante_id = self.request.GET.get('estudiante')
+                if estudiante_id:
+                    matriculas_arch_qs = matriculas_arch_qs.filter(student__id_original=estudiante_id)
+
+                matriculas_adaptadas = [_MatriculaArchivadaAdapter(m) for m in matriculas_arch_qs]
+
+                paginator = Paginator(matriculas_adaptadas, self.paginate_by)
+                page_number = self.request.GET.get('page', 1)
+                context['matriculas'] = paginator.get_page(page_number)
+                context['page_obj'] = context['matriculas']
+                context['is_paginated'] = context['matriculas'].has_other_pages()
+            except SemestreCursoArchivado.DoesNotExist:
+                pass
+
         return context
 
 
@@ -5887,9 +6170,15 @@ class ReglamentoGeneralEditView(LoginRequiredMixin, SecretariaRequiredMixin, Vie
 @require_POST
 def terminar_semestre_view(request, curso_id):
     """
-    Endpoint AJAX para la acción "Terminar Semestre".
+    Endpoint AJAX para la acción "Terminar Semestre" o "Finalizar Curso".
     Solo accesible para el grupo Secretaría.
-    Retorna JsonResponse con {success, message, contadores} o {success: false, error}.
+
+    Body JSON esperado:
+      - accion: 'terminar_semestre' | 'finalizar_curso'
+      - enrollment_deadline: 'YYYY-MM-DD'  (solo para terminar_semestre)
+      - start_date: 'YYYY-MM-DD'           (solo para terminar_semestre)
+
+    Retorna JsonResponse con {success, message} o {success: false, error}.
     """
     import json
     from django.http import JsonResponse
@@ -5898,15 +6187,68 @@ def terminar_semestre_view(request, curso_id):
 
     # Verificar permisos: solo Secretaría
     if not request.user.groups.filter(name='Secretaría').exists():
-        return JsonResponse({'success': False, 'error': 'No tienes permisos para realizar esta acción.'}, status=403)
+        return JsonResponse(
+            {'success': False, 'error': 'No tienes permisos para realizar esta acción.'},
+            status=403
+        )
 
     try:
         curso = Curso.objects.get(pk=curso_id)
     except Curso.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Curso no encontrado.'}, status=404)
 
+    # Parsear body JSON
+    try:
+        body = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        body = {}
+
+    accion = body.get('accion', 'terminar_semestre')
+
+    # ── Acción: Finalizar Curso ───────────────────────────────────────────────
+    if accion == 'finalizar_curso':
+        try:
+            curso.status = 'F'
+            curso.save(update_fields=['status'])
+            return JsonResponse({
+                'success': True,
+                'message': f"El curso '{curso.name}' ha sido finalizado.",
+            })
+        except Exception as e:
+            return JsonResponse(
+                {'success': False, 'error': f'Error al finalizar el curso: {str(e)}'},
+                status=500
+            )
+
+    # ── Acción: Terminar Semestre ─────────────────────────────────────────────
+    enrollment_deadline = body.get('enrollment_deadline', '').strip()
+    start_date = body.get('start_date', '').strip()
+
+    if not enrollment_deadline or not start_date:
+        return JsonResponse(
+            {'success': False, 'error': 'Debe proporcionar la fecha límite de inscripción y la fecha de inicio.'},
+            status=400
+        )
+
+    # Validar formato de fechas
+    from datetime import date
+    try:
+        from datetime import datetime
+        enrollment_deadline_date = datetime.strptime(enrollment_deadline, '%Y-%m-%d').date()
+        start_date_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+    except ValueError:
+        return JsonResponse(
+            {'success': False, 'error': 'Formato de fecha inválido. Use YYYY-MM-DD.'},
+            status=400
+        )
+
     try:
         contadores = terminar_semestre(curso)
+        # Actualizar las fechas del curso para el nuevo semestre
+        curso.enrollment_deadline = enrollment_deadline_date
+        curso.start_date = start_date_date
+        curso.save(update_fields=['enrollment_deadline', 'start_date'])
+
         mensaje = (
             f"Semestre {contadores['semestre_num']} terminado exitosamente. "
             f"Se archivaron: {contadores['matriculas']} matrículas, "
@@ -5921,4 +6263,7 @@ def terminar_semestre_view(request, curso_id):
     except SemestreError as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
     except Exception as e:
-        return JsonResponse({'success': False, 'error': f'Error inesperado: {str(e)}'}, status=500)
+        return JsonResponse(
+            {'success': False, 'error': f'Error inesperado: {str(e)}'},
+            status=500
+        )

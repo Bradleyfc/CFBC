@@ -39,6 +39,7 @@ urlpatterns = [
     path('calificaciones/', views.CalificacionesListView.as_view(), name='calificaciones'),
     path('calificaciones/estudiante/<int:student_id>/curso/<int:course_id>/', views.CalificacionDetalleEstudianteView.as_view(), name='calificacion_detalle_estudiante'),
     path('calificaciones/estudiante/<int:student_id>/curso/<int:course_id>/pdf/', views.export_calificacion_pdf, name='export_calificacion_pdf'),
+    path('calificaciones/archivado/estudiante/<int:student_id>/curso/<int:course_id>/', views.CalificacionDetalleArchivadoView.as_view(), name='calificacion_detalle_archivado'),
     path('calificaciones/export-excel/', views.export_calificaciones_excel, name='export_calificaciones_excel'),
     path('asistencias_list/', views.AsistenciasListView.as_view(), name='asistencias_list'),
     path('asistencias_list/estudiante/<int:student_id>/curso/<int:course_id>/', views.AsistenciaDetalleEstudianteView.as_view(), name='asistencia_detalle_estudiante'),

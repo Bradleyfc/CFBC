@@ -360,8 +360,10 @@
               {% endif %}
 
               <button type="button"
-                      class="glass-option-link glass-option-indigo glass-option-compact flex items-center gap-1.5 p-2 rounded-md transition-all duration-300 w-full text-left"
-                      onclick="showTerminarSemestreModal('{{ course.id }}', '{{ course.name|escapejs }}', {{ course.semestre_activo_numero|default:1 }})">
+                      class="glass-option-link glass-option-indigo glass-option-compact flex items-center gap-1.5 p-2 rounded-md transition-all duration-300 w-full text-left js-terminar-semestre"
+                      data-curso-id="{{ course.id }}"
+                      data-curso-name="{{ course.name|escapejs }}"
+                      data-semestre-num="{{ course.semestre_activo_numero|default:1 }}">
                 <div class="glass-icon-compact-opt glass-icon-indigo">
                   <span class="material-icons text-sm">skip_next</span>
                 </div>
@@ -504,7 +506,7 @@
   </div>
 </div>
 
-<!-- Modal: Terminar Semestre -->
+<!-- Modal Paso 1: Advertencia de Terminar Semestre -->
 <div id="terminarSemestreModal" class="delete-modal hidden">
   <div class="delete-modal-overlay" onclick="hideTerminarSemestreModal()"></div>
   <div class="delete-modal-content">
@@ -516,24 +518,94 @@
     </div>
     <div class="delete-modal-body">
       <p class="delete-modal-message">
-        ¿Confirma que desea terminar el <strong id="semestreNumToEnd"></strong>
+        ¿Desea terminar el <strong id="semestreNumToEnd"></strong>
         del curso <strong id="courseNameToEndSemestre"></strong>?
       </p>
       <p class="delete-modal-warning">
-        Los datos académicos del semestre actual se guardarán en el historial
-        y el curso se reiniciará para el siguiente semestre.
+        Los datos académicos del semestre actual (matrículas, calificaciones, asistencias)
+        se guardarán en el historial. El curso se reiniciará para el siguiente semestre.
       </p>
-      <div id="terminarSemestreError" class="hidden text-red-600 text-sm mt-2"></div>
     </div>
     <div class="delete-modal-footer">
       <button type="button" class="delete-modal-btn delete-modal-btn-cancel"
-              onclick="hideTerminarSemestreModal()" id="terminarSemestreCancelBtn">
+              onclick="hideTerminarSemestreModal()">
         Cancelar
       </button>
       <button type="button" class="delete-modal-btn delete-modal-btn-confirm"
-              onclick="confirmTerminarSemestre()" id="terminarSemestreConfirmBtn">
+              onclick="mostrarPaso2TerminarSemestre()">
+        Continuar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Paso 2: Fechas del nuevo semestre o Finalizar Curso -->
+<div id="terminarSemestrePaso2Modal" class="delete-modal hidden">
+  <div class="delete-modal-overlay" onclick="hideTerminarSemestreModal()"></div>
+  <div class="delete-modal-content" style="max-width: 480px; overflow: visible;">
+    <div class="delete-modal-header">
+      <div class="delete-modal-icon" style="background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(79,70,229,0.1)); border-color: rgba(99,102,241,0.3);">
+        <span class="material-icons text-indigo-600">event</span>
+      </div>
+      <h3 class="delete-modal-title">Nuevo semestre</h3>
+    </div>
+    <div class="delete-modal-body" style="overflow-y: auto; max-height: 60vh; text-align: left;">
+      <p class="text-sm text-gray-600 mb-4 text-center">
+        Establezca las fechas para el nuevo semestre de
+        <strong id="courseNameToEndSemestre2"></strong>.
+      </p>
+
+      <div class="space-y-3 mb-4">
+        <div>
+          <label for="nuevaFechaInscripcion" class="block text-xs font-semibold text-gray-700 mb-1">
+            <span class="material-icons" style="font-size:13px; vertical-align:middle; color:#6366f1;">event</span>
+            Fecha límite de inscripción
+          </label>
+          <input type="date" id="nuevaFechaInscripcion"
+                 class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all">
+        </div>
+        <div>
+          <label for="nuevaFechaInicio" class="block text-xs font-semibold text-gray-700 mb-1">
+            <span class="material-icons" style="font-size:13px; vertical-align:middle; color:#6366f1;">play_circle</span>
+            Fecha de inicio del nuevo semestre
+          </label>
+          <input type="date" id="nuevaFechaInicio"
+                 class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all">
+        </div>
+      </div>
+
+      <!-- Botón confirmar fechas principal -->
+      <button type="button"
+              onclick="confirmTerminarSemestre()"
+              id="terminarSemestreConfirmBtn"
+              class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition-all duration-200 mb-4"
+              style="background: linear-gradient(135deg, #6366f1, #4f46e5); border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(99,102,241,0.35);">
         <span id="terminarSemestreSpinner" class="hidden">⏳ </span>
-        Confirmar
+        <span class="material-icons text-sm">check_circle</span>
+        Confirmar nuevo semestre
+      </button>
+
+      <div id="terminarSemestreError2" class="hidden text-red-600 text-sm mb-3 p-2 bg-red-50 rounded-lg text-center"></div>
+
+      <div class="pt-3 border-t border-gray-200">
+        <p class="text-xs text-gray-400 mb-2 font-medium text-center">— O bien —</p>
+        <button type="button"
+                id="finalizarCursoBtn"
+                onclick="confirmarFinalizarCurso()"
+                class="finalizar-curso-btn w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200"
+                style="background: transparent; border: 2px solid #ef4444; color: #ef4444; cursor: pointer;">
+          <span class="material-icons text-sm">stop_circle</span>
+          Finalizar el curso
+        </button>
+        <p class="text-xs text-gray-400 mt-1 text-center">El curso pasará a estado Finalizado</p>
+      </div>
+    </div>
+    <div class="delete-modal-footer" style="padding-top: 12px; padding-bottom: 16px;">
+      <button type="button"
+              onclick="hidePaso2TerminarSemestre()"
+              id="terminarSemestreCancelBtn2"
+              class="delete-modal-btn delete-modal-btn-cancel">
+        Cancelar
       </button>
     </div>
   </div>
@@ -2295,6 +2367,29 @@
     color: white;
   }
 
+  /* ── Botones del modal Terminar Semestre ── */
+  .finalizar-curso-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+    color: white !important;
+    border-color: #dc2626 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+  }
+  .finalizar-curso-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  #terminarSemestreConfirmBtn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #4f46e5, #4338ca) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.5) !important;
+  }
+  #terminarSemestreConfirmBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+
   /* Apply Modal Styles */
   .apply-modal {
     position: fixed;
@@ -3108,6 +3203,7 @@
       hideDeleteModal();
       hideApplyModal();
       hideTerminarSemestreModal();
+      hidePaso2TerminarSemestre();
     }
   });
 
@@ -3124,38 +3220,99 @@
   // ── Terminar Semestre ─────────────────────────────────────────────────────
   let _terminarSemestreCursoId = null;
 
+  // Event delegation: captura clics en cualquier botón .js-terminar-semestre
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.js-terminar-semestre');
+    if (!btn) return;
+    e.stopPropagation();
+    const cursoId   = btn.dataset.cursoId;
+    const cursoName = btn.dataset.cursoName;
+    const semNum    = btn.dataset.semestreNum || '1';
+    showTerminarSemestreModal(cursoId, cursoName, semNum);
+  });
+
   function showTerminarSemestreModal(cursoId, cursoName, semestreNum) {
     _terminarSemestreCursoId = cursoId;
     document.getElementById('courseNameToEndSemestre').textContent = cursoName;
     document.getElementById('semestreNumToEnd').textContent = 'Semestre ' + semestreNum;
-    document.getElementById('terminarSemestreError').classList.add('hidden');
-    document.getElementById('terminarSemestreError').textContent = '';
-    document.getElementById('terminarSemestreConfirmBtn').disabled = false;
-    document.getElementById('terminarSemestreCancelBtn').disabled = false;
-    document.getElementById('terminarSemestreSpinner').classList.add('hidden');
-    document.getElementById('terminarSemestreModal').classList.remove('hidden');
+    const modal = document.getElementById('terminarSemestreModal');
+    modal.classList.remove('hidden');
+    setTimeout(() => { modal.classList.add('show'); }, 10);
   }
 
   function hideTerminarSemestreModal() {
-    document.getElementById('terminarSemestreModal').classList.add('hidden');
+    const modal = document.getElementById('terminarSemestreModal');
+    modal.classList.remove('show');
+    setTimeout(() => { modal.classList.add('hidden'); }, 300);
+    hidePaso2TerminarSemestre();
     _terminarSemestreCursoId = null;
+  }
+
+  function mostrarPaso2TerminarSemestre() {
+    // Pasar el nombre del curso al paso 2
+    const cursoName = document.getElementById('courseNameToEndSemestre').textContent;
+    document.getElementById('courseNameToEndSemestre2').textContent = cursoName;
+    // Limpiar campos y errores
+    document.getElementById('nuevaFechaInscripcion').value = '';
+    document.getElementById('nuevaFechaInicio').value = '';
+    const errDiv = document.getElementById('terminarSemestreError2');
+    errDiv.classList.add('hidden');
+    errDiv.textContent = '';
+    document.getElementById('terminarSemestreConfirmBtn').disabled = false;
+    document.getElementById('terminarSemestreCancelBtn2').disabled = false;
+    document.getElementById('terminarSemestreSpinner').classList.add('hidden');
+    document.getElementById('finalizarCursoBtn').disabled = false;
+    // Ocultar paso 1 y mostrar paso 2
+    document.getElementById('terminarSemestreModal').classList.remove('show');
+    setTimeout(() => {
+      document.getElementById('terminarSemestreModal').classList.add('hidden');
+      document.getElementById('terminarSemestrePaso2Modal').classList.remove('hidden');
+      setTimeout(() => {
+        document.getElementById('terminarSemestrePaso2Modal').classList.add('show');
+      }, 10);
+    }, 200);
+  }
+
+  function hidePaso2TerminarSemestre() {
+    const m = document.getElementById('terminarSemestrePaso2Modal');
+    if (!m) return;
+    m.classList.remove('show');
+    setTimeout(() => { m.classList.add('hidden'); }, 300);
   }
 
   function confirmTerminarSemestre() {
     if (!_terminarSemestreCursoId) return;
+    const fechaInscripcion = document.getElementById('nuevaFechaInscripcion').value;
+    const fechaInicio = document.getElementById('nuevaFechaInicio').value;
+    const errDiv = document.getElementById('terminarSemestreError2');
+
+    if (!fechaInscripcion || !fechaInicio) {
+      errDiv.textContent = 'Por favor complete ambas fechas antes de confirmar.';
+      errDiv.classList.remove('hidden');
+      return;
+    }
+
     const btn = document.getElementById('terminarSemestreConfirmBtn');
-    const cancelBtn = document.getElementById('terminarSemestreCancelBtn');
+    const cancelBtn = document.getElementById('terminarSemestreCancelBtn2');
     const spinner = document.getElementById('terminarSemestreSpinner');
+    const finalizarBtn = document.getElementById('finalizarCursoBtn');
     btn.disabled = true;
     cancelBtn.disabled = true;
+    finalizarBtn.disabled = true;
     spinner.classList.remove('hidden');
+    errDiv.classList.add('hidden');
 
-    fetch(`/principal/cursos/${_terminarSemestreCursoId}/terminar-semestre/`, {
+    fetch(`/cursos/${_terminarSemestreCursoId}/terminar-semestre/`, {
       method: 'POST',
       headers: {
         'X-CSRFToken': getCookie('csrftoken'),
         'Content-Type': 'application/json'
       },
+      body: JSON.stringify({
+        accion: 'terminar_semestre',
+        enrollment_deadline: fechaInscripcion,
+        start_date: fechaInicio,
+      }),
     })
     .then(r => r.json())
     .then(data => {
@@ -3163,21 +3320,65 @@
         hideTerminarSemestreModal();
         location.reload();
       } else {
-        const errDiv = document.getElementById('terminarSemestreError');
         errDiv.textContent = data.error || 'Error al terminar el semestre.';
         errDiv.classList.remove('hidden');
         btn.disabled = false;
         cancelBtn.disabled = false;
+        finalizarBtn.disabled = false;
         spinner.classList.add('hidden');
       }
     })
     .catch(err => {
-      const errDiv = document.getElementById('terminarSemestreError');
       errDiv.textContent = 'Error de conexión. Intente nuevamente.';
       errDiv.classList.remove('hidden');
       btn.disabled = false;
       cancelBtn.disabled = false;
+      finalizarBtn.disabled = false;
       spinner.classList.add('hidden');
+    });
+  }
+
+  function confirmarFinalizarCurso() {
+    if (!_terminarSemestreCursoId) return;
+    const errDiv = document.getElementById('terminarSemestreError2');
+    const btn = document.getElementById('terminarSemestreConfirmBtn');
+    const cancelBtn = document.getElementById('terminarSemestreCancelBtn2');
+    const finalizarBtn = document.getElementById('finalizarCursoBtn');
+
+    btn.disabled = true;
+    cancelBtn.disabled = true;
+    finalizarBtn.disabled = true;
+    errDiv.classList.add('hidden');
+
+    fetch(`/cursos/${_terminarSemestreCursoId}/terminar-semestre/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        accion: 'finalizar_curso',
+      }),
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        hideTerminarSemestreModal();
+        location.reload();
+      } else {
+        errDiv.textContent = data.error || 'Error al finalizar el curso.';
+        errDiv.classList.remove('hidden');
+        btn.disabled = false;
+        cancelBtn.disabled = false;
+        finalizarBtn.disabled = false;
+      }
+    })
+    .catch(err => {
+      errDiv.textContent = 'Error de conexión. Intente nuevamente.';
+      errDiv.classList.remove('hidden');
+      btn.disabled = false;
+      cancelBtn.disabled = false;
+      finalizarBtn.disabled = false;
     });
   }
 
