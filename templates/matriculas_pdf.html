@@ -35,11 +35,12 @@
             border-radius: 4px;
             font-weight: bold;
         }
-        .estado-A { background-color: #28a745; color: white; }
-        .estado-P { background-color: #ffc107; color: black; }
-        .estado-R { background-color: #dc3545; color: white; }
-        .estado-L { background-color: #17a2b8; color: white; }
-        .estado-B { background-color: #6c757d; color: white; }
+        .estado-A  { background-color: #28a745; color: white; }
+        .estado-P  { background-color: #3b82f6; color: white; }
+        .estado-R  { background-color: #dc3545; color: white; }
+        .estado-BA { background-color: #6c757d; color: white; }
+        .estado-BL { background-color: #6c757d; color: white; }
+        .estado-BI { background-color: #f59e0b; color: black; }
     </style>
 </head>
 <body>
@@ -66,15 +67,17 @@
                     {% if matricula.estado == 'A' %}
                         <span class="estado estado-A">Aprobado</span>
                     {% elif matricula.estado == 'P' %}
-                        <span class="estado estado-P">Pendiente</span>
+                        <span class="estado estado-P">Activo</span>
                     {% elif matricula.estado == 'R' %}
                         <span class="estado estado-R">Reprobado</span>
-                    {% elif matricula.estado == 'L' %}
-                        <span class="estado estado-L">Licencia</span>
-                    {% elif matricula.estado == 'B' %}
-                        <span class="estado estado-B">Baja</span>
+                    {% elif matricula.estado == 'BA' %}
+                        <span class="estado estado-BA">Baja por Ausencia</span>
+                    {% elif matricula.estado == 'BL' %}
+                        <span class="estado estado-BL">Baja por Licencia</span>
+                    {% elif matricula.estado == 'BI' %}
+                        <span class="estado estado-BI">Baja por Insuf. Académica</span>
                     {% else %}
-                        <span class="estado estado-B">{{ matricula.estado }}</span>
+                        <span class="estado estado-BA">{{ matricula.estado }}</span>
                     {% endif %}
                 </td>
             </tr>

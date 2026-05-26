@@ -213,18 +213,20 @@ def export_matriculas_excel(request):
         top=Side(style='thin'),  bottom=Side(style='thin')
     )
     estado_fills = {
-        'A': PatternFill(start_color='C6EFCE', end_color='C6EFCE', fill_type='solid'),  # Aprobado - verde
-        'P': PatternFill(start_color='FFEB9C', end_color='FFEB9C', fill_type='solid'),  # Pendiente - amarillo
-        'R': PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid'),  # Reprobado - rojo
-        'L': PatternFill(start_color='BDD7EE', end_color='BDD7EE', fill_type='solid'),  # Licencia - azul
-        'B': PatternFill(start_color='D9D9D9', end_color='D9D9D9', fill_type='solid'),  # Baja - gris
+        'A':  PatternFill(start_color='C6EFCE', end_color='C6EFCE', fill_type='solid'),  # Aprobado - verde
+        'P':  PatternFill(start_color='BDD7EE', end_color='BDD7EE', fill_type='solid'),  # Activo - azul
+        'R':  PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid'),  # Reprobado - rojo
+        'BA': PatternFill(start_color='D9D9D9', end_color='D9D9D9', fill_type='solid'),  # Baja por Ausencia - gris
+        'BL': PatternFill(start_color='D9D9D9', end_color='D9D9D9', fill_type='solid'),  # Baja por Licencia - gris
+        'BI': PatternFill(start_color='FFEB9C', end_color='FFEB9C', fill_type='solid'),  # Baja por Insuf. - amarillo
     }
     estado_fonts = {
-        'A': Font(name='Arial', bold=True, color='276221'),
-        'P': Font(name='Arial', bold=True, color='7D5A00'),
-        'R': Font(name='Arial', bold=True, color='9C0006'),
-        'L': Font(name='Arial', bold=True, color='1F4E79'),
-        'B': Font(name='Arial', bold=True, color='595959'),
+        'A':  Font(name='Arial', bold=True, color='276221'),
+        'P':  Font(name='Arial', bold=True, color='1F4E79'),
+        'R':  Font(name='Arial', bold=True, color='9C0006'),
+        'BA': Font(name='Arial', bold=True, color='595959'),
+        'BL': Font(name='Arial', bold=True, color='595959'),
+        'BI': Font(name='Arial', bold=True, color='7D5A00'),
     }
 
     wb = openpyxl.Workbook()
@@ -1823,6 +1825,26 @@ class MatriculasListView(BaseContextMixin, ListView):
                 pass
 
         return context
+
+
+@login_required
+@require_POST
+def cambiar_estado_matricula(request, matricula_id):
+    """Permite a Secretaría cambiar el estado de una matrícula."""
+    if not request.user.groups.filter(name='Secretaría').exists():
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+    matricula = get_object_or_404(Matriculas, pk=matricula_id)
+    nuevo_estado = request.POST.get('estado')
+    estados_validos = [c[0] for c in Matriculas.ESTADO_CHOICES]
+    if nuevo_estado in estados_validos:
+        matricula.estado = nuevo_estado
+        matricula.save()
+        messages.success(request, f'Estado actualizado a "{matricula.get_estado_display()}".')
+    else:
+        messages.error(request, 'Estado no válido.')
+    # Redirigir de vuelta con los mismos filtros
+    return redirect(request.META.get('HTTP_REFERER', reverse('principal:matriculas')))
 
 
 # Vistas para Calificaciones

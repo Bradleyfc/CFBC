@@ -113,6 +113,7 @@
                             <th>Curso</th>
                             <th>Fecha de Matrícula</th>
                             <th>Estado</th>
+                            {% if request.user.groups.all|length > 0 %}{% for g in request.user.groups.all %}{% if g.name == 'Secretaría' %}<th>Cambiar Estado</th>{% endif %}{% endfor %}{% endif %}
                         </tr>
                     </thead>
                     <tbody>
@@ -132,17 +133,43 @@
                                 {% if matricula.estado == 'A' %}
                                 <span class="glass-badge glass-badge-success">Aprobado</span>
                                 {% elif matricula.estado == 'P' %}
-                                <span class="glass-badge glass-badge-warning">Pendiente</span>
+                                <span class="glass-badge glass-badge-primary">Activo</span>
                                 {% elif matricula.estado == 'R' %}
                                 <span class="glass-badge glass-badge-danger">Reprobado</span>
-                                {% elif matricula.estado == 'L' %}
-                                <span class="glass-badge glass-badge-info">Licencia</span>
-                                {% elif matricula.estado == 'B' %}
-                                <span class="glass-badge glass-badge-secondary">Baja</span>
+                                {% elif matricula.estado == 'BA' %}
+                                <span class="glass-badge glass-badge-secondary">Baja por Ausencia</span>
+                                {% elif matricula.estado == 'BL' %}
+                                <span class="glass-badge glass-badge-info">Baja por Licencia</span>
+                                {% elif matricula.estado == 'BI' %}
+                                <span class="glass-badge glass-badge-warning">Baja por Insuf. Académica</span>
                                 {% else %}
-                                <span class="glass-badge glass-badge-secondary">{{ matricula.estado }}</span>
+                                <span class="glass-badge glass-badge-secondary">{{ matricula.get_estado_display }}</span>
                                 {% endif %}
                             </td>
+                            {% if request.user.groups.all|length > 0 %}{% for g in request.user.groups.all %}{% if g.name == 'Secretaría' %}
+                            <td>
+                                {% if not viendo_semestre_archivado %}
+                                <form method="POST" action="{% url 'principal:cambiar_estado_matricula' matricula.id %}" class="estado-form">
+                                    {% csrf_token %}
+                                    <div class="flex gap-2 items-center">
+                                        <select name="estado" class="glass-select-compact">
+                                            <option value="P" {% if matricula.estado == 'P' %}selected{% endif %}>Activo</option>
+                                            <option value="A" {% if matricula.estado == 'A' %}selected{% endif %}>Aprobado</option>
+                                            <option value="R" {% if matricula.estado == 'R' %}selected{% endif %}>Reprobado</option>
+                                            <option value="BA" {% if matricula.estado == 'BA' %}selected{% endif %}>Baja por Ausencia</option>
+                                            <option value="BL" {% if matricula.estado == 'BL' %}selected{% endif %}>Baja por Licencia</option>
+                                            <option value="BI" {% if matricula.estado == 'BI' %}selected{% endif %}>Baja por Insuf. Académica</option>
+                                        </select>
+                                        <button type="submit" class="glass-button glass-button-primary" style="padding:0.3rem 0.7rem;font-size:0.75rem;">
+                                            <span class="fa material-icons" style="font-size:1rem;">save</span>
+                                        </button>
+                                    </div>
+                                </form>
+                                {% else %}
+                                <span class="text-gray-400 text-xs">—</span>
+                                {% endif %}
+                            </td>
+                            {% endif %}{% endfor %}{% endif %}
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -389,6 +416,11 @@
     .glass-badge-success {
         background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
         color: #14532d;
+    }
+
+    .glass-badge-primary {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        color: #1e3a8a;
     }
 
     .glass-badge-warning {

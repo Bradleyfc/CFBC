@@ -181,18 +181,19 @@ class CursoAcademico(models.Model):
 
 class Matriculas(models.Model):
     ESTADO_CHOICES = [
-        ('P', 'Pendiente'),
+        ('P', 'Activo'),
         ('A', 'Aprobado'),
         ('R', 'Reprobado'),
-        ('L', 'Licencia'),
-        ('B', 'Baja'),
+        ('BA', 'Baja por Ausencia'),
+        ('BL', 'Baja por Licencia'),
+        ('BI', 'Baja por Insuficiencia Académica'),
     ]
     course = models.ForeignKey(Curso, on_delete=models.CASCADE, verbose_name="Curso")
     student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='matriculas', limit_choices_to={'groups__name': 'Estudiantes'}, verbose_name='Estudiante')
     activo = models.BooleanField(default=True, verbose_name='Habilitado')
     curso_academico = models.ForeignKey(CursoAcademico, on_delete=models.CASCADE, null=True, blank=True, verbose_name='Curso Académico')
     fecha_matricula = models.DateField(auto_now_add=True, verbose_name='Fecha de Matrícula')
-    estado = models.CharField(max_length=1, choices=ESTADO_CHOICES, default='P', verbose_name='Estado')
+    estado = models.CharField(max_length=2, choices=ESTADO_CHOICES, default='P', verbose_name='Estado')
     
     @property
     def esta_aprobado(self):

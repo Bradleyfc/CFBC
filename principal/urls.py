@@ -52,6 +52,7 @@ urlpatterns = [
     path('asistencias/<int:course_id>/undo/', views.undo_last_asistencia, name='undo_last_asistencia'),
     path('matriculas/export-pdf/', views.export_matriculas_pdf, name='export_matriculas_pdf'),
     path('matriculas/export-excel/', views.export_matriculas_excel, name='export_matriculas_excel'),
+    path('matriculas/<int:matricula_id>/cambiar-estado/', views.cambiar_estado_matricula, name='cambiar_estado_matricula'),
     
     path('export-usuarios-excel/', views.export_usuarios_excel, name='export_usuarios_excel'),
     path('verify_email/', views.verify_email, name='verify_email'),

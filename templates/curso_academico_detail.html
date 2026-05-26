@@ -287,13 +287,15 @@
               {% if matricula.estado == 'A' %}
                 <span class="ca-status-badge ca-status-success">{{ matricula.get_estado_display }}</span>
               {% elif matricula.estado == 'P' %}
-                <span class="ca-status-badge ca-status-warning">{{ matricula.get_estado_display }}</span>
+                <span class="ca-status-badge ca-status-info">{{ matricula.get_estado_display }}</span>
               {% elif matricula.estado == 'R' %}
                 <span class="ca-status-badge ca-status-danger">{{ matricula.get_estado_display }}</span>
-              {% elif matricula.estado == 'L' %}
-                <span class="ca-status-badge ca-status-info">{{ matricula.get_estado_display }}</span>
-              {% elif matricula.estado == 'B' %}
+              {% elif matricula.estado == 'BA' %}
                 <span class="ca-status-badge ca-status-secondary">{{ matricula.get_estado_display }}</span>
+              {% elif matricula.estado == 'BL' %}
+                <span class="ca-status-badge ca-status-secondary">{{ matricula.get_estado_display }}</span>
+              {% elif matricula.estado == 'BI' %}
+                <span class="ca-status-badge ca-status-warning">{{ matricula.get_estado_display }}</span>
               {% else %}
                 <span class="ca-status-badge ca-status-secondary">{{ matricula.get_estado_display }}</span>
               {% endif %}
