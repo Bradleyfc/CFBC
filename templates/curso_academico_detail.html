@@ -324,16 +324,8 @@
           <tr>
             <th><span class="material-icons ca-th-icon">person</span> Estudiante</th>
             <th><span class="material-icons ca-th-icon">menu_book</span> Curso</th>
-            {% with max_notas=0 %}
-              {% for cal in calificaciones %}
-                {% with num_notas=cal.notas.count %}
-                  {% if num_notas > max_notas %}
-                    {% with max_notas=num_notas %}
-                      {% for i in max_notas|get_range:1 %}<th>Nota {{ forloop.counter }}</th>{% endfor %}
-                    {% endwith %}
-                  {% endif %}
-                {% endwith %}
-              {% endfor %}
+            {% with max_notas=calificaciones|map_max_notas %}
+              {% for i in max_notas|get_range:1 %}<th>Nota {{ forloop.counter }}</th>{% endfor %}
             {% endwith %}
             <th><span class="material-icons ca-th-icon">calculate</span> Promedio</th>
           </tr>

@@ -3035,6 +3035,7 @@ class StudentListNotasView(BaseContextMixin, ListView):
                 )
 
             student_data = []
+            max_notas = 0
             for enrollment in active_enrollments:
                 student = enrollment.student
                 calificacion = Calificaciones.objects.filter(
@@ -3046,6 +3047,10 @@ class StudentListNotasView(BaseContextMixin, ListView):
                 all_notes = []
                 if calificacion:
                     all_notes = list(calificacion.notas.all().order_by('fecha_creacion'))
+                    # Update max_notas
+                    num_notas = len(all_notes)
+                    if num_notas > max_notas:
+                        max_notas = num_notas
 
                 student_data.append({
                     'calificacion_id': calificacion.id if calificacion else None,
@@ -3056,6 +3061,7 @@ class StudentListNotasView(BaseContextMixin, ListView):
                     'student_id': student.id,
                 })
             context['student_data'] = student_data
+            context['max_notas'] = max_notas
         else:
             context['courses'] = CursoAcademico.objects.all()
             context['teachers'] = User.objects.filter(groups__name='Docente')
