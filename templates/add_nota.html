@@ -108,9 +108,14 @@
         <!-- Formulario: solo para agregar notas nuevas -->
         <div class="glass-card">
             <div class="glass-header">
-                <h3 class="text-xl font-bold text-gray-800 flex items-center">
-                    <span class="fa material-icons mr-2">add_circle</span>
-                    Agregar Nueva Nota
+                <h3 class="text-xl font-bold text-gray-800 flex items-center justify-between">
+                    <span class="flex items-center">
+                        <span class="fa material-icons mr-2">add_circle</span>
+                        Agregar Nueva Nota
+                    </span>
+                    <span id="contador-notas" class="text-sm font-medium text-gray-500">
+                        {{ notas_existentes|length }} / 50 notas
+                    </span>
                 </h3>
             </div>
             <div class="glass-content">
@@ -296,16 +301,42 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const MAX_NOTAS     = 50;
     const form          = document.getElementById('notas-form');
     const container     = document.getElementById('notas-nuevas-container');
     const btnAgregar    = document.getElementById('btn-agregar-nota');
     let   filaAEliminar = null;   // puede ser una fila nueva o una existente
     let   notaIdAEliminar = null; // id de nota existente a eliminar
 
+    function contarNotasActivas() {
+        const existentes = document.querySelectorAll('.nota-existente-row:not(.nota-eliminada)').length;
+        const nuevas     = container.querySelectorAll('.nota-nueva-row').length;
+        return existentes + nuevas;
+    }
+
+    function actualizarBotonAgregar() {
+        const total = contarNotasActivas();
+        const contador = document.getElementById('contador-notas');
+        if (contador) contador.textContent = `${total} / ${MAX_NOTAS} notas`;
+
+        if (total >= MAX_NOTAS) {
+            btnAgregar.disabled = true;
+            btnAgregar.title = `Límite de ${MAX_NOTAS} notas alcanzado`;
+            btnAgregar.style.opacity = '0.5';
+            btnAgregar.style.cursor  = 'not-allowed';
+        } else {
+            btnAgregar.disabled = false;
+            btnAgregar.title = '';
+            btnAgregar.style.opacity = '';
+            btnAgregar.style.cursor  = '';
+        }
+    }
+
     // ── Agregar nueva fila ────────────────────────────────────────────────────
     btnAgregar.addEventListener('click', function () {
-        const num = document.querySelectorAll('.nota-existente-row:not(.nota-eliminada)').length
-                  + container.querySelectorAll('.nota-nueva-row').length + 1;
+        if (contarNotasActivas() >= MAX_NOTAS) return;
+
+        const num = contarNotasActivas() + 1;
         const fila = document.createElement('div');
         fila.className = 'nota-nueva-row glass-note-card flex items-center gap-4';
         fila.innerHTML = `
@@ -323,7 +354,11 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>`;
         container.appendChild(fila);
         fila.querySelector('input[type="number"]').focus();
+        actualizarBotonAgregar();
     });
+
+    // Inicializar estado del botón al cargar
+    actualizarBotonAgregar();
 
     // ── Eliminar nota nueva ───────────────────────────────────────────────────
     container.addEventListener('click', function (e) {
@@ -392,6 +427,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         cerrarModal();
+        actualizarBotonAgregar();
     });
 
     // ── Cerrar modal con ESC ──────────────────────────────────────────────────

@@ -141,872 +141,208 @@
             </div>
         </div>
 
-        <!-- Paginación eliminada: se usa paginación JS en la tabla -->
-
     </div>
 </div>
 
 <style>
-    /* Glass Card */
     .glass-card {
         position: relative;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+        background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         border-radius: 24px;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        box-shadow:
-            0 8px 32px rgba(0, 0, 0, 0.1),
-            0 4px 16px rgba(0, 0, 0, 0.1),
-            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        border: 1px solid rgba(255,255,255,0.3);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.4);
         overflow: hidden;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
     }
-
     .glass-header {
         padding: 1.5rem;
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
-        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(37,99,235,0.1));
+        border-bottom: 1px solid rgba(255,255,255,0.2);
     }
+    .glass-content { padding: 2rem; }
 
-    .glass-content {
-        padding: 2rem;
-    }
-
-    /* Glass Button */
     .glass-button {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.625rem 1.25rem;
-        border-radius: 10px;
-        font-weight: 500;
-        font-size: 0.875rem;
-        text-align: center;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        text-decoration: none;
-        cursor: pointer;
+        display: inline-flex; align-items: center;
+        padding: 0.625rem 1.25rem; border-radius: 10px;
+        font-weight: 500; font-size: 0.875rem;
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2);
+        transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+        text-decoration: none; cursor: pointer;
     }
+    .glass-button:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+    .glass-button-primary  { background: linear-gradient(135deg, rgba(59,130,246,0.3), rgba(37,99,235,0.2)); color: #1e40af; }
+    .glass-button-secondary{ background: linear-gradient(135deg, rgba(156,163,175,0.3), rgba(107,114,128,0.2)); color: #374151; }
 
-    .glass-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    }
-
-    .glass-button-primary {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
-        color: #1e40af;
-    }
-
-    .glass-button-secondary {
-        background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
-        color: #374151;
-    }
-
-    /* Glass Input */
     .glass-input-compact {
-        width: 100%;
-        padding: 0.375rem 0.75rem;
-        border-radius: 8px;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        color: #374151;
-        font-size: 0.8rem;
-        transition: all 0.3s ease;
+        width: 100%; padding: 0.375rem 0.75rem; border-radius: 8px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.2));
+        backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3);
+        color: #374151; font-size: 0.8rem; transition: all 0.3s ease;
     }
-
     .glass-input-compact:focus {
-        outline: none;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3));
-        border-color: rgba(59, 130, 246, 0.5);
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        outline: none; border-color: rgba(59,130,246,0.5);
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
     }
 
-    /* Glass Table */
+    /* ── Tabla ── */
+    .overflow-x-auto {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 12px;
+    }
+
     .glass-table {
-        width: 100%;
+        /* table-layout: auto permite que el navegador calcule anchos naturalmente;
+           el JS sobreescribe con anchos fijos calculados dinámicamente */
         border-collapse: separate;
         border-spacing: 0;
-        table-layout: fixed; /* Forzar anchos fijos para mejor alineación */
+        table-layout: auto;
     }
 
     .glass-table thead tr {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(37,99,235,0.1));
         backdrop-filter: blur(10px);
     }
-
     .glass-table th {
-        padding: 1rem;
-        text-align: left;
-        font-weight: 600;
-        color: #1e40af;
-        border-bottom: 2px solid rgba(59, 130, 246, 0.3);
-        vertical-align: middle; /* Alineación vertical */
-    }
-
-    /* Anchos específicos para cada columna */
-    .glass-table th:nth-child(1), .glass-table td:nth-child(1) { /* Estudiante */
-        width: 25%;
-        text-align: left;
-    }
-    
-    .glass-table th:nth-child(2), .glass-table td:nth-child(2) { /* Curso */
-        width: 20%;
-        text-align: left;
-    }
-    
-    .glass-table th:nth-child(n+3):nth-last-child(n+3), 
-    .glass-table td:nth-child(n+3):nth-last-child(n+3) { /* Notas (columnas del medio) */
-        width: 8%;
+        padding: 0.75rem 0.5rem;
         text-align: center;
+        font-weight: 600; color: #1e40af;
+        border-bottom: 2px solid rgba(59,130,246,0.3);
+        vertical-align: middle;
+        white-space: nowrap;
     }
-    
-    .glass-table th:nth-last-child(2), .glass-table td:nth-last-child(2) { /* Promedio */
-        width: 12%;
-        text-align: center;
-    }
-    
-    .glass-table th:nth-last-child(1), .glass-table td:nth-last-child(1) { /* Acciones */
-        width: 15%;
-        text-align: center;
-    }
-
-    /* Estilos específicos por clase para mayor control */
-    .student-col {
-        text-align: left !important;
-        font-weight: 500;
-    }
-    
-    .course-col {
-        text-align: left !important;
-    }
-    
-    .nota-col {
-        text-align: center !important;
-        min-width: 70px; /* Ancho mínimo base para las notas */
-        width: 70px; /* Ancho fijo base para notas */
-    }
-    
-    /* Ajustar ancho de notas según número total de notas */
-    /* 1-10 notas: tamaño normal */
-    .glass-table[data-notas="1"] .nota-col,
-    .glass-table[data-notas="2"] .nota-col,
-    .glass-table[data-notas="3"] .nota-col,
-    .glass-table[data-notas="4"] .nota-col,
-    .glass-table[data-notas="5"] .nota-col,
-    .glass-table[data-notas="6"] .nota-col,
-    .glass-table[data-notas="7"] .nota-col,
-    .glass-table[data-notas="8"] .nota-col,
-    .glass-table[data-notas="9"] .nota-col,
-    .glass-table[data-notas="10"] .nota-col {
-        width: 70px !important;
-        min-width: 70px !important;
-    }
-    
-    /* 11-20 notas: un poco más compactas */
-    .glass-table[data-notas="11"] .nota-col,
-    .glass-table[data-notas="12"] .nota-col,
-    .glass-table[data-notas="13"] .nota-col,
-    .glass-table[data-notas="14"] .nota-col,
-    .glass-table[data-notas="15"] .nota-col,
-    .glass-table[data-notas="16"] .nota-col,
-    .glass-table[data-notas="17"] .nota-col,
-    .glass-table[data-notas="18"] .nota-col,
-    .glass-table[data-notas="19"] .nota-col,
-    .glass-table[data-notas="20"] .nota-col {
-        width: 65px !important;
-        min-width: 65px !important;
-    }
-    
-    /* 21-30 notas: más compactas */
-    .glass-table[data-notas="21"] .nota-col,
-    .glass-table[data-notas="22"] .nota-col,
-    .glass-table[data-notas="23"] .nota-col,
-    .glass-table[data-notas="24"] .nota-col,
-    .glass-table[data-notas="25"] .nota-col,
-    .glass-table[data-notas="26"] .nota-col,
-    .glass-table[data-notas="27"] .nota-col,
-    .glass-table[data-notas="28"] .nota-col,
-    .glass-table[data-notas="29"] .nota-col,
-    .glass-table[data-notas="30"] .nota-col {
-        width: 60px !important;
-        min-width: 60px !important;
-    }
-    
-    /* 31-40 notas: muy compactas */
-    .glass-table[data-notas="31"] .nota-col,
-    .glass-table[data-notas="32"] .nota-col,
-    .glass-table[data-notas="33"] .nota-col,
-    .glass-table[data-notas="34"] .nota-col,
-    .glass-table[data-notas="35"] .nota-col,
-    .glass-table[data-notas="36"] .nota-col,
-    .glass-table[data-notas="37"] .nota-col,
-    .glass-table[data-notas="38"] .nota-col,
-    .glass-table[data-notas="39"] .nota-col,
-    .glass-table[data-notas="40"] .nota-col {
-        width: 55px !important;
-        min-width: 55px !important;
-    }
-    
-    /* 41-50 notas: ultra compactas */
-    .glass-table[data-notas="41"] .nota-col,
-    .glass-table[data-notas="42"] .nota-col,
-    .glass-table[data-notas="43"] .nota-col,
-    .glass-table[data-notas="44"] .nota-col,
-    .glass-table[data-notas="45"] .nota-col,
-    .glass-table[data-notas="46"] .nota-col,
-    .glass-table[data-notas="47"] .nota-col,
-    .glass-table[data-notas="48"] .nota-col,
-    .glass-table[data-notas="49"] .nota-col,
-    .glass-table[data-notas="50"] .nota-col {
-        width: 50px !important;
-        min-width: 50px !important;
-    }
-    
-    /* 51+ notas: tamaño mínimo legible */
-    .glass-table[data-notas^="5"][data-notas$="1"] .nota-col, /* 51-59 */
-    .glass-table[data-notas^="5"][data-notas$="2"] .nota-col,
-    .glass-table[data-notas^="5"][data-notas$="3"] .nota-col,
-    .glass-table[data-notas^="5"][data-notas$="4"] .nota-col,
-    .glass-table[data-notas^="5"][data-notas$="5"] .nota-col,
-    .glass-table[data-notas^="5"][data-notas$="6"] .nota-col,
-    .glass-table[data-notas^="5"][data-notas$="7"] .nota-col,
-    .glass-table[data-notas^="5"][data-notas$="8"] .nota-col,
-    .glass-table[data-notas^="5"][data-notas$="9"] .nota-col,
-    .glass-table[data-notas^="6"] .nota-col { /* 60+ */
-        width: 45px !important;
-        min-width: 45px !important;
-    }
-    
-    .promedio-col {
-        text-align: center !important;
-        font-weight: 600;
-        width: 100px; /* Ancho fijo para promedio */
-    }
-    
-    .acciones-col {
-        text-align: center !important;
-        width: 140px; /* Ancho fijo para acciones */
-    }
-
-    /* Cálculo dinámico de anchos basado en cantidad de notas */
-    /* 1-3 notas: Estudiante y Curso más anchos */
-    .glass-table[data-notas="1"] .student-col,
-    .glass-table[data-notas="2"] .student-col,
-    .glass-table[data-notas="3"] .student-col {
-        width: 250px !important; /* Ancho fijo más generoso */
-    }
-    
-    .glass-table[data-notas="1"] .course-col,
-    .glass-table[data-notas="2"] .course-col,
-    .glass-table[data-notas="3"] .course-col {
-        width: 200px !important;
-    }
-
-    /* 4-6 notas: Reducir un poco */
-    .glass-table[data-notas="4"] .student-col,
-    .glass-table[data-notas="5"] .student-col,
-    .glass-table[data-notas="6"] .student-col {
-        width: 200px !important;
-    }
-    
-    .glass-table[data-notas="4"] .course-col,
-    .glass-table[data-notas="5"] .course-col,
-    .glass-table[data-notas="6"] .course-col {
-        width: 180px !important;
-    }
-
-    /* 7-10 notas: Más compacto pero legible */
-    .glass-table[data-notas="7"] .student-col,
-    .glass-table[data-notas="8"] .student-col,
-    .glass-table[data-notas="9"] .student-col,
-    .glass-table[data-notas="10"] .student-col {
-        width: 180px !important;
-        min-width: 150px !important; /* Ancho mínimo para legibilidad */
-    }
-    
-    .glass-table[data-notas="7"] .course-col,
-    .glass-table[data-notas="8"] .course-col,
-    .glass-table[data-notas="9"] .course-col,
-    .glass-table[data-notas="10"] .course-col {
-        width: 160px !important;
-        min-width: 120px !important; /* Ancho mínimo para legibilidad */
-    }
-    
-    /* 11-15 notas: Más compacto aún */
-    .glass-table[data-notas="11"] .student-col,
-    .glass-table[data-notas="12"] .student-col,
-    .glass-table[data-notas="13"] .student-col,
-    .glass-table[data-notas="14"] .student-col,
-    .glass-table[data-notas="15"] .student-col {
-        width: 150px !important;
-        min-width: 120px !important;
-    }
-    
-    .glass-table[data-notas="11"] .course-col,
-    .glass-table[data-notas="12"] .course-col,
-    .glass-table[data-notas="13"] .course-col,
-    .glass-table[data-notas="14"] .course-col,
-    .glass-table[data-notas="15"] .course-col {
-        width: 140px !important;
-        min-width: 100px !important;
-    }
-    
-    /* 16+ notas: Muy compacto, priorizar scroll horizontal */
-    .glass-table[data-notas="16"] .student-col,
-    .glass-table[data-notas="17"] .student-col,
-    .glass-table[data-notas="18"] .student-col,
-    .glass-table[data-notas="19"] .student-col,
-    .glass-table[data-notas="20"] .student-col,
-    .glass-table[data-notas="21"] .student-col,
-    .glass-table[data-notas="22"] .student-col,
-    .glass-table[data-notas="23"] .student-col,
-    .glass-table[data-notas="24"] .student-col,
-    .glass-table[data-notas="25"] .student-col {
-        width: 130px !important;
-        min-width: 100px !important;
-    }
-    
-    .glass-table[data-notas="16"] .course-col,
-    .glass-table[data-notas="17"] .course-col,
-    .glass-table[data-notas="18"] .course-col,
-    .glass-table[data-notas="19"] .course-col,
-    .glass-table[data-notas="20"] .course-col,
-    .glass-table[data-notas="21"] .course-col,
-    .glass-table[data-notas="22"] .course-col,
-    .glass-table[data-notas="23"] .course-col,
-    .glass-table[data-notas="24"] .course-col,
-    .glass-table[data-notas="25"] .course-col {
-        width: 120px !important;
-        min-width: 90px !important;
-    }
-    
-    /* Para 26-50 notas, usar valores compactos */
-    .glass-table[data-notas^="2"][data-notas$="6"] .student-col, /* 26-29 */
-    .glass-table[data-notas^="2"][data-notas$="7"] .student-col,
-    .glass-table[data-notas^="2"][data-notas$="8"] .student-col,
-    .glass-table[data-notas^="2"][data-notas$="9"] .student-col,
-    .glass-table[data-notas^="3"] .student-col, /* 30-39 */
-    .glass-table[data-notas^="4"] .student-col { /* 40-49 */
-        width: 110px !important;
-        min-width: 80px !important;
-    }
-    
-    .glass-table[data-notas^="2"][data-notas$="6"] .course-col, /* 26-29 */
-    .glass-table[data-notas^="2"][data-notas$="7"] .course-col,
-    .glass-table[data-notas^="2"][data-notas$="8"] .course-col,
-    .glass-table[data-notas^="2"][data-notas$="9"] .course-col,
-    .glass-table[data-notas^="3"] .course-col, /* 30-39 */
-    .glass-table[data-notas^="4"] .course-col { /* 40-49 */
-        width: 100px !important;
-        min-width: 70px !important;
-    }
-    
-    /* Para 50+ notas, usar valores mínimos */
-    .glass-table[data-notas^="5"] .student-col, /* 50-59 */
-    .glass-table[data-notas^="6"] .student-col, /* 60+ */
-    .glass-table[data-notas^="7"] .student-col,
-    .glass-table[data-notas^="8"] .student-col,
-    .glass-table[data-notas^="9"] .student-col {
-        width: 100px !important;
-        min-width: 70px !important;
-    }
-    
-    .glass-table[data-notas^="5"] .course-col, /* 50-59 */
-    .glass-table[data-notas^="6"] .course-col, /* 60+ */
-    .glass-table[data-notas^="7"] .course-col,
-    .glass-table[data-notas^="8"] .course-col,
-    .glass-table[data-notas^="9"] .course-col {
-        width: 90px !important;
-        min-width: 60px !important;
-    }
-    
-    /* Contenedor de tabla responsivo */
-    .overflow-x-auto {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch; /* Scroll suave en móviles */
-        border-radius: 12px; /* Bordes redondeados para el contenedor */
-        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2); /* Borde sutil */
-    }
-
-    /* Asegurar que la tabla mantenga su estructura */
-    .glass-table {
-        min-width: 800px; /* Ancho mínimo base */
-        width: max-content; /* Permitir que la tabla crezca según el contenido */
-    }
-    
-    /* Ajustar ancho mínimo dinámicamente según número de notas */
-    .glass-table[data-notas="1"] { min-width: 600px; }
-    .glass-table[data-notas="2"] { min-width: 650px; }
-    .glass-table[data-notas="3"] { min-width: 700px; }
-    .glass-table[data-notas="4"] { min-width: 750px; }
-    .glass-table[data-notas="5"] { min-width: 800px; }
-    .glass-table[data-notas="6"] { min-width: 850px; }
-    .glass-table[data-notas="7"] { min-width: 900px; }
-    .glass-table[data-notas="8"] { min-width: 950px; }
-    .glass-table[data-notas="9"] { min-width: 1000px; }
-    .glass-table[data-notas="10"] { min-width: 1050px; }
-    .glass-table[data-notas="11"] { min-width: 1100px; }
-    .glass-table[data-notas="12"] { min-width: 1150px; }
-    .glass-table[data-notas="13"] { min-width: 1200px; }
-    .glass-table[data-notas="14"] { min-width: 1250px; }
-    .glass-table[data-notas="15"] { min-width: 1300px; }
-    .glass-table[data-notas="16"] { min-width: 1350px; }
-    .glass-table[data-notas="17"] { min-width: 1400px; }
-    .glass-table[data-notas="18"] { min-width: 1450px; }
-    .glass-table[data-notas="19"] { min-width: 1500px; }
-    .glass-table[data-notas="20"] { min-width: 1550px; }
-    .glass-table[data-notas="21"] { min-width: 1600px; }
-    .glass-table[data-notas="22"] { min-width: 1650px; }
-    .glass-table[data-notas="23"] { min-width: 1700px; }
-    .glass-table[data-notas="24"] { min-width: 1750px; }
-    .glass-table[data-notas="25"] { min-width: 1800px; }
-    .glass-table[data-notas="26"] { min-width: 1850px; }
-    .glass-table[data-notas="27"] { min-width: 1900px; }
-    .glass-table[data-notas="28"] { min-width: 1950px; }
-    .glass-table[data-notas="29"] { min-width: 2000px; }
-    .glass-table[data-notas="30"] { min-width: 2050px; }
-    .glass-table[data-notas="31"] { min-width: 2100px; }
-    .glass-table[data-notas="32"] { min-width: 2150px; }
-    .glass-table[data-notas="33"] { min-width: 2200px; }
-    .glass-table[data-notas="34"] { min-width: 2250px; }
-    .glass-table[data-notas="35"] { min-width: 2300px; }
-    .glass-table[data-notas="36"] { min-width: 2350px; }
-    .glass-table[data-notas="37"] { min-width: 2400px; }
-    .glass-table[data-notas="38"] { min-width: 2450px; }
-    .glass-table[data-notas="39"] { min-width: 2500px; }
-    .glass-table[data-notas="40"] { min-width: 2550px; }
-    .glass-table[data-notas="41"] { min-width: 2600px; }
-    .glass-table[data-notas="42"] { min-width: 2650px; }
-    .glass-table[data-notas="43"] { min-width: 2700px; }
-    .glass-table[data-notas="44"] { min-width: 2750px; }
-    .glass-table[data-notas="45"] { min-width: 2800px; }
-    .glass-table[data-notas="46"] { min-width: 2850px; }
-    .glass-table[data-notas="47"] { min-width: 2900px; }
-    .glass-table[data-notas="48"] { min-width: 2950px; }
-    .glass-table[data-notas="49"] { min-width: 3000px; }
-    .glass-table[data-notas="50"] { min-width: 3050px; }
-    .glass-table[data-notas^="5"][data-notas$="1"], /* 51-59 */
-    .glass-table[data-notas^="5"][data-notas$="2"],
-    .glass-table[data-notas^="5"][data-notas$="3"],
-    .glass-table[data-notas^="5"][data-notas$="4"],
-    .glass-table[data-notas^="5"][data-notas$="5"],
-    .glass-table[data-notas^="5"][data-notas$="6"],
-    .glass-table[data-notas^="5"][data-notas$="7"],
-    .glass-table[data-notas^="5"][data-notas$="8"],
-    .glass-table[data-notas^="5"][data-notas$="9"],
-    .glass-table[data-notas^="6"] { /* 60+ */
-        min-width: 3500px;
-    }
-
-    /* Indicador visual de scroll */
-    .overflow-x-auto::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        width: 20px;
-        background: linear-gradient(to left, rgba(255, 255, 255, 0.8), transparent);
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-
-    .overflow-x-auto:hover::after {
-        opacity: 1;
-    }
-
-    /* Mejorar la visualización en pantallas pequeñas */
-    @media (max-width: 768px) {
-        .glass-table th,
-        .glass-table td {
-            padding: 0.5rem 0.75rem;
-            font-size: 0.8rem;
-        }
-        
-        /* En móviles, usar anchos más compactos */
-        .student-col {
-            width: 150px !important;
-            min-width: 120px !important;
-        }
-        
-        .course-col {
-            width: 120px !important;
-            min-width: 100px !important;
-        }
-        
-        .nota-col {
-            width: 50px !important;
-            min-width: 50px !important;
-        }
-        
-        /* En móviles, hacer notas aún más compactas según cantidad */
-        .glass-table[data-notas="11"] .nota-col,
-        .glass-table[data-notas="12"] .nota-col,
-        .glass-table[data-notas="13"] .nota-col,
-        .glass-table[data-notas="14"] .nota-col,
-        .glass-table[data-notas="15"] .nota-col,
-        .glass-table[data-notas="16"] .nota-col,
-        .glass-table[data-notas="17"] .nota-col,
-        .glass-table[data-notas="18"] .nota-col,
-        .glass-table[data-notas="19"] .nota-col,
-        .glass-table[data-notas="20"] .nota-col {
-            width: 45px !important;
-            min-width: 45px !important;
-        }
-        
-        .glass-table[data-notas="21"] .nota-col,
-        .glass-table[data-notas="22"] .nota-col,
-        .glass-table[data-notas="23"] .nota-col,
-        .glass-table[data-notas="24"] .nota-col,
-        .glass-table[data-notas="25"] .nota-col,
-        .glass-table[data-notas="26"] .nota-col,
-        .glass-table[data-notas="27"] .nota-col,
-        .glass-table[data-notas="28"] .nota-col,
-        .glass-table[data-notas="29"] .nota-col,
-        .glass-table[data-notas="30"] .nota-col {
-            width: 40px !important;
-            min-width: 40px !important;
-        }
-        
-        .glass-table[data-notas="31"] .nota-col,
-        .glass-table[data-notas="32"] .nota-col,
-        .glass-table[data-notas="33"] .nota-col,
-        .glass-table[data-notas="34"] .nota-col,
-        .glass-table[data-notas="35"] .nota-col,
-        .glass-table[data-notas="36"] .nota-col,
-        .glass-table[data-notas="37"] .nota-col,
-        .glass-table[data-notas="38"] .nota-col,
-        .glass-table[data-notas="39"] .nota-col,
-        .glass-table[data-notas="40"] .nota-col {
-            width: 35px !important;
-            min-width: 35px !important;
-        }
-        
-        .glass-table[data-notas="41"] .nota-col,
-        .glass-table[data-notas="42"] .nota-col,
-        .glass-table[data-notas="43"] .nota-col,
-        .glass-table[data-notas="44"] .nota-col,
-        .glass-table[data-notas="45"] .nota-col,
-        .glass-table[data-notas="46"] .nota-col,
-        .glass-table[data-notas="47"] .nota-col,
-        .glass-table[data-notas="48"] .nota-col,
-        .glass-table[data-notas="49"] .nota-col,
-        .glass-table[data-notas="50"] .nota-col {
-            width: 30px !important;
-            min-width: 30px !important;
-        }
-        
-        .glass-table[data-notas^="5"][data-notas$="1"] .nota-col, /* 51-59 */
-        .glass-table[data-notas^="5"][data-notas$="2"] .nota-col,
-        .glass-table[data-notas^="5"][data-notas$="3"] .nota-col,
-        .glass-table[data-notas^="5"][data-notas$="4"] .nota-col,
-        .glass-table[data-notas^="5"][data-notas$="5"] .nota-col,
-        .glass-table[data-notas^="5"][data-notas$="6"] .nota-col,
-        .glass-table[data-notas^="5"][data-notas$="7"] .nota-col,
-        .glass-table[data-notas^="5"][data-notas$="8"] .nota-col,
-        .glass-table[data-notas^="5"][data-notas$="9"] .nota-col,
-        .glass-table[data-notas^="6"] .nota-col { /* 60+ */
-            width: 25px !important;
-            min-width: 25px !important;
-        }
-        
-        .promedio-col {
-            width: 80px !important;
-        }
-        
-        .acciones-col {
-            width: 100px !important;
-        }
-        
-        /* Hacer la tabla más compacta en móviles */
-        .glass-table {
-            min-width: 800px;
-        }
-        
-        /* Badges ultra compactos en móviles para muchas notas */
-        /* 11-20 notas en móviles */
-        .glass-table[data-notas="11"] .glass-badge,
-        .glass-table[data-notas="12"] .glass-badge,
-        .glass-table[data-notas="13"] .glass-badge,
-        .glass-table[data-notas="14"] .glass-badge,
-        .glass-table[data-notas="15"] .glass-badge,
-        .glass-table[data-notas="16"] .glass-badge,
-        .glass-table[data-notas="17"] .glass-badge,
-        .glass-table[data-notas="18"] .glass-badge,
-        .glass-table[data-notas="19"] .glass-badge,
-        .glass-table[data-notas="20"] .glass-badge {
-            padding: 0.2rem 0.4rem !important;
-            font-size: 0.65rem !important;
-            border-radius: 10px !important;
-            letter-spacing: 0.3px !important;
-        }
-        
-        /* 21-30 notas en móviles */
-        .glass-table[data-notas="21"] .glass-badge,
-        .glass-table[data-notas="22"] .glass-badge,
-        .glass-table[data-notas="23"] .glass-badge,
-        .glass-table[data-notas="24"] .glass-badge,
-        .glass-table[data-notas="25"] .glass-badge,
-        .glass-table[data-notas="26"] .glass-badge,
-        .glass-table[data-notas="27"] .glass-badge,
-        .glass-table[data-notas="28"] .glass-badge,
-        .glass-table[data-notas="29"] .glass-badge,
-        .glass-table[data-notas="30"] .glass-badge {
-            padding: 0.15rem 0.3rem !important;
-            font-size: 0.6rem !important;
-            border-radius: 8px !important;
-            letter-spacing: 0.2px !important;
-        }
-        
-        /* 31+ notas en móviles */
-        .glass-table[data-notas="31"] .glass-badge,
-        .glass-table[data-notas="32"] .glass-badge,
-        .glass-table[data-notas="33"] .glass-badge,
-        .glass-table[data-notas="34"] .glass-badge,
-        .glass-table[data-notas="35"] .glass-badge,
-        .glass-table[data-notas="36"] .glass-badge,
-        .glass-table[data-notas="37"] .glass-badge,
-        .glass-table[data-notas="38"] .glass-badge,
-        .glass-table[data-notas="39"] .glass-badge,
-        .glass-table[data-notas="40"] .glass-badge,
-        .glass-table[data-notas="41"] .glass-badge,
-        .glass-table[data-notas="42"] .glass-badge,
-        .glass-table[data-notas="43"] .glass-badge,
-        .glass-table[data-notas="44"] .glass-badge,
-        .glass-table[data-notas="45"] .glass-badge,
-        .glass-table[data-notas="46"] .glass-badge,
-        .glass-table[data-notas="47"] .glass-badge,
-        .glass-table[data-notas="48"] .glass-badge,
-        .glass-table[data-notas="49"] .glass-badge,
-        .glass-table[data-notas="50"] .glass-badge,
-        .glass-table[data-notas^="5"][data-notas$="1"] .glass-badge, /* 51-59 */
-        .glass-table[data-notas^="5"][data-notas$="2"] .glass-badge,
-        .glass-table[data-notas^="5"][data-notas$="3"] .glass-badge,
-        .glass-table[data-notas^="5"][data-notas$="4"] .glass-badge,
-        .glass-table[data-notas^="5"][data-notas$="5"] .glass-badge,
-        .glass-table[data-notas^="5"][data-notas$="6"] .glass-badge,
-        .glass-table[data-notas^="5"][data-notas$="7"] .glass-badge,
-        .glass-table[data-notas^="5"][data-notas$="8"] .glass-badge,
-        .glass-table[data-notas^="5"][data-notas$="9"] .glass-badge,
-        .glass-table[data-notas^="6"] .glass-badge { /* 60+ */
-            padding: 0.1rem 0.25rem !important;
-            font-size: 0.55rem !important;
-            border-radius: 6px !important;
-            letter-spacing: 0.1px !important;
-        }
-    }
-
-    @media (max-width: 1024px) {
-        /* En tablets, ajustar anchos intermedios */
-        .glass-table {
-            min-width: 1000px;
-        }
-        
-        .student-col {
-            min-width: 140px !important;
-        }
-        
-        .course-col {
-            min-width: 120px !important;
-        }
-    }
+    .glass-table th.student-col,
+    .glass-table td.student-col { text-align: left !important; font-weight: 500; }
+    .glass-table th.course-col,
+    .glass-table td.course-col  { text-align: left !important; }
 
     .glass-table tbody tr {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+        background: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
         backdrop-filter: blur(8px);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        border-bottom: 1px solid rgba(255,255,255,0.2);
         transition: all 0.3s ease;
     }
-
     .glass-table tbody tr:hover {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+        background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.2));
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
-
     .glass-table td {
-        padding: 0.875rem 1rem;
-        color: #374151;
-        font-size: 0.875rem;
-        vertical-align: middle; /* Alineación vertical */
-        overflow: hidden;
-        text-overflow: ellipsis;
+        padding: 0.75rem 0.5rem;
+        color: #374151; font-size: 0.875rem;
+        vertical-align: middle;
+        text-align: center;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
 
     /* Glass Badge */
     .glass-badge {
         display: inline-block;
-        padding: 0.375rem 0.75rem;
-        border-radius: 16px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 0.3rem 0.6rem; border-radius: 14px;
+        font-size: 0.75rem; font-weight: 600;
+        letter-spacing: 0.3px;
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2);
+        white-space: nowrap;
     }
-
-    .glass-badge-success {
-        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
-        color: #14532d;
-    }
-
-    .glass-badge-danger {
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.2));
-        color: #7f1d1d;
-    }
-
-    .glass-badge-secondary {
-        background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
-        color: #374151;
-    }
-    
-    /* Badges compactos para muchas notas */
-    /* 21-30 notas: badges más pequeños */
-    .glass-table[data-notas="21"] .glass-badge,
-    .glass-table[data-notas="22"] .glass-badge,
-    .glass-table[data-notas="23"] .glass-badge,
-    .glass-table[data-notas="24"] .glass-badge,
-    .glass-table[data-notas="25"] .glass-badge,
-    .glass-table[data-notas="26"] .glass-badge,
-    .glass-table[data-notas="27"] .glass-badge,
-    .glass-table[data-notas="28"] .glass-badge,
-    .glass-table[data-notas="29"] .glass-badge,
-    .glass-table[data-notas="30"] .glass-badge {
-        padding: 0.25rem 0.5rem !important;
-        font-size: 0.7rem !important;
-        border-radius: 12px !important;
-    }
-    
-    /* 31-40 notas: badges aún más pequeños */
-    .glass-table[data-notas="31"] .glass-badge,
-    .glass-table[data-notas="32"] .glass-badge,
-    .glass-table[data-notas="33"] .glass-badge,
-    .glass-table[data-notas="34"] .glass-badge,
-    .glass-table[data-notas="35"] .glass-badge,
-    .glass-table[data-notas="36"] .glass-badge,
-    .glass-table[data-notas="37"] .glass-badge,
-    .glass-table[data-notas="38"] .glass-badge,
-    .glass-table[data-notas="39"] .glass-badge,
-    .glass-table[data-notas="40"] .glass-badge {
-        padding: 0.2rem 0.4rem !important;
-        font-size: 0.65rem !important;
-        border-radius: 10px !important;
-        letter-spacing: 0.3px !important;
-    }
-    
-    /* 41-50 notas: badges mínimos */
-    .glass-table[data-notas="41"] .glass-badge,
-    .glass-table[data-notas="42"] .glass-badge,
-    .glass-table[data-notas="43"] .glass-badge,
-    .glass-table[data-notas="44"] .glass-badge,
-    .glass-table[data-notas="45"] .glass-badge,
-    .glass-table[data-notas="46"] .glass-badge,
-    .glass-table[data-notas="47"] .glass-badge,
-    .glass-table[data-notas="48"] .glass-badge,
-    .glass-table[data-notas="49"] .glass-badge,
-    .glass-table[data-notas="50"] .glass-badge {
-        padding: 0.15rem 0.3rem !important;
-        font-size: 0.6rem !important;
-        border-radius: 8px !important;
-        letter-spacing: 0.2px !important;
-    }
-    
-    /* 51+ notas: badges ultra compactos */
-    .glass-table[data-notas^="5"][data-notas$="1"] .glass-badge, /* 51-59 */
-    .glass-table[data-notas^="5"][data-notas$="2"] .glass-badge,
-    .glass-table[data-notas^="5"][data-notas$="3"] .glass-badge,
-    .glass-table[data-notas^="5"][data-notas$="4"] .glass-badge,
-    .glass-table[data-notas^="5"][data-notas$="5"] .glass-badge,
-    .glass-table[data-notas^="5"][data-notas$="6"] .glass-badge,
-    .glass-table[data-notas^="5"][data-notas$="7"] .glass-badge,
-    .glass-table[data-notas^="5"][data-notas$="8"] .glass-badge,
-    .glass-table[data-notas^="5"][data-notas$="9"] .glass-badge,
-    .glass-table[data-notas^="6"] .glass-badge { /* 60+ */
-        padding: 0.1rem 0.25rem !important;
-        font-size: 0.55rem !important;
-        border-radius: 6px !important;
-        letter-spacing: 0.1px !important;
-    }
+    .glass-badge-success { background: linear-gradient(135deg, rgba(34,197,94,0.3), rgba(22,163,74,0.2)); color: #14532d; }
+    .glass-badge-danger  { background: linear-gradient(135deg, rgba(239,68,68,0.3), rgba(220,38,38,0.2)); color: #7f1d1d; }
+    .glass-badge-secondary{ background: linear-gradient(135deg, rgba(156,163,175,0.3), rgba(107,114,128,0.2)); color: #374151; }
 
     /* Glass Alert */
     .glass-alert {
-        padding: 1rem 1.25rem;
-        border-radius: 12px;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        display: flex;
-        align-items: center;
-        font-size: 0.875rem;
+        padding: 1rem 1.25rem; border-radius: 12px;
+        backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);
+        display: flex; align-items: center; font-size: 0.875rem;
     }
+    .glass-alert-info { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(37,99,235,0.1)); color: #1e3a8a; }
 
-    .glass-alert-info {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
-        color: #1e3a8a;
-    }
-
-    /* Glass Pagination (estilos JS) */
+    /* Paginación */
     .tabla-paginacion {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 0.375rem;
-        flex-wrap: wrap;
+        display: flex; justify-content: center; align-items: center;
+        gap: 0.375rem; flex-wrap: wrap;
     }
-
     .pag-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 2.25rem;
-        height: 2.25rem;
-        padding: 0 0.625rem;
-        border-radius: 8px;
-        font-size: 0.8rem;
-        font-weight: 500;
-        cursor: pointer;
-        border: 1px solid rgba(255, 255, 255, 0.3);
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 2.25rem; height: 2.25rem; padding: 0 0.625rem;
+        border-radius: 8px; font-size: 0.8rem; font-weight: 500;
+        cursor: pointer; border: 1px solid rgba(255,255,255,0.3);
         background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.2));
-        color: #374151;
-        transition: all 0.2s ease;
-        user-select: none;
+        color: #374151; transition: all 0.2s ease; user-select: none;
     }
-
     .pag-btn:hover:not(:disabled) {
         background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(37,99,235,0.1));
-        color: #1e40af;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        color: #1e40af; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
-
     .pag-btn.activo {
         background: linear-gradient(135deg, rgba(59,130,246,0.4), rgba(37,99,235,0.3));
-        color: #1e40af;
-        border-color: rgba(59,130,246,0.5);
-        font-weight: 700;
+        color: #1e40af; border-color: rgba(59,130,246,0.5); font-weight: 700;
     }
-
-    .pag-btn:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-    }
-
-    .pag-info {
-        font-size: 0.78rem;
-        color: #6b7280;
-        margin: 0 0.5rem;
-    }
+    .pag-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .pag-info { font-size: 0.78rem; color: #6b7280; margin: 0 0.5rem; }
 </style>
 
 <script>
+    // ── Ajuste dinámico de anchos de tabla ────────────────────────────────────
+    // Funciona para cualquier cantidad de notas sin reglas CSS hardcodeadas.
+    function ajustarTabla() {
+        const tabla = document.querySelector('.glass-table');
+        if (!tabla) return;
+
+        const numNotas = parseInt(tabla.dataset.notas || '0', 10);
+
+        // Anchos fijos para columnas no-nota (px)
+        const W_STUDENT  = Math.max(100, Math.min(200, 200 - numNotas * 1.5));
+        const W_COURSE   = Math.max(80,  Math.min(160, 160 - numNotas * 1.2));
+        const W_PROMEDIO = 80;
+        const W_ACCIONES = 130;
+
+        // Ancho por columna de nota: decrece suavemente con la cantidad
+        // Entre 65px (pocas notas) y 44px (muchas notas), mínimo 40px
+        const W_NOTA = Math.max(40, Math.round(65 - numNotas * 0.4));
+
+        // Badge: ajustar tamaño de fuente y padding según densidad
+        let badgePad, badgeFont;
+        if (numNotas <= 15) {
+            badgePad = '0.3rem 0.6rem'; badgeFont = '0.75rem';
+        } else if (numNotas <= 30) {
+            badgePad = '0.2rem 0.4rem'; badgeFont = '0.7rem';
+        } else if (numNotas <= 60) {
+            badgePad = '0.15rem 0.3rem'; badgeFont = '0.65rem';
+        } else {
+            badgePad = '0.1rem 0.2rem'; badgeFont = '0.6rem';
+        }
+
+        // Aplicar anchos a th y td por clase
+        const applyWidth = (cls, width) => {
+            tabla.querySelectorAll(`th.${cls}, td.${cls}`).forEach(el => {
+                el.style.width    = width + 'px';
+                el.style.minWidth = width + 'px';
+                el.style.maxWidth = width + 'px';
+            });
+        };
+
+        applyWidth('student-col',  W_STUDENT);
+        applyWidth('course-col',   W_COURSE);
+        applyWidth('promedio-col', W_PROMEDIO);
+        applyWidth('acciones-col', W_ACCIONES);
+        applyWidth('nota-col',     W_NOTA);
+
+        // Ajustar badges
+        tabla.querySelectorAll('.glass-badge').forEach(b => {
+            b.style.padding  = badgePad;
+            b.style.fontSize = badgeFont;
+        });
+
+        // Ancho total mínimo de la tabla para que el scroll horizontal funcione bien
+        const totalMin = W_STUDENT + W_COURSE + (numNotas * W_NOTA) + W_PROMEDIO + W_ACCIONES + 20;
+        tabla.style.minWidth = totalMin + 'px';
+        tabla.style.width    = 'max-content';
+    }
+
     // ── Paginación JS ─────────────────────────────────────────────────────────
     const FILAS_POR_PAGINA = 10;
 
@@ -1076,6 +412,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
+        ajustarTabla();
         iniciarPaginacion('.fila-calificacion', 'paginacion-calificaciones');
     });
 </script>
