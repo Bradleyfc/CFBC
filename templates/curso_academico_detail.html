@@ -210,7 +210,19 @@
                 </span>
               {% endif %}
             </td>
-            <td><span class="ca-status-badge">{{ curso.get_dynamic_status_display }}</span></td>
+            <td>
+              {% if curso.get_dynamic_status == 'F' %}
+                <span class="ca-status-badge ca-status-danger">{{ curso.get_dynamic_status_display }}</span>
+              {% elif curso.get_dynamic_status == 'P' %}
+                <span class="ca-status-badge ca-status-warning">{{ curso.get_dynamic_status_display }}</span>
+              {% elif curso.get_dynamic_status == 'I' %}
+                <span class="ca-status-badge ca-status-success">{{ curso.get_dynamic_status_display }}</span>
+              {% elif curso.get_dynamic_status == 'IT' %}
+                <span class="ca-status-badge ca-status-info">{{ curso.get_dynamic_status_display }}</span>
+              {% else %}
+                <span class="ca-status-badge ca-status-secondary">{{ curso.get_dynamic_status_display }}</span>
+              {% endif %}
+            </td>
           </tr>
           {% endfor %}
         </tbody>
@@ -271,7 +283,21 @@
           <tr>
             <td>{{ matricula.student.get_full_name|default:matricula.student.username }}</td>
             <td>{{ matricula.course.name }}</td>
-            <td><span class="ca-status-badge">{{ matricula.get_estado_display }}</span></td>
+            <td>
+              {% if matricula.estado == 'A' %}
+                <span class="ca-status-badge ca-status-success">{{ matricula.get_estado_display }}</span>
+              {% elif matricula.estado == 'P' %}
+                <span class="ca-status-badge ca-status-warning">{{ matricula.get_estado_display }}</span>
+              {% elif matricula.estado == 'R' %}
+                <span class="ca-status-badge ca-status-danger">{{ matricula.get_estado_display }}</span>
+              {% elif matricula.estado == 'L' %}
+                <span class="ca-status-badge ca-status-info">{{ matricula.get_estado_display }}</span>
+              {% elif matricula.estado == 'B' %}
+                <span class="ca-status-badge ca-status-secondary">{{ matricula.get_estado_display }}</span>
+              {% else %}
+                <span class="ca-status-badge ca-status-secondary">{{ matricula.get_estado_display }}</span>
+              {% endif %}
+            </td>
             <td>{{ matricula.fecha_matricula }}</td>
           </tr>
           {% endfor %}
@@ -610,7 +636,12 @@
 .ca-table tbody tr:hover { background:linear-gradient(135deg,rgba(255,255,255,0.5),rgba(255,255,255,0.3)); transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,0.07); }
 .ca-table td { padding:0.8rem 1rem; color:#374151; font-size:0.875rem; border-bottom:1px solid rgba(0,0,0,0.04); vertical-align:middle; }
 .ca-na { color:#9ca3af; font-style:italic; }
-.ca-status-badge { display:inline-block; padding:0.2rem 0.6rem; border-radius:8px; font-size:0.78rem; font-weight:600; background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(59,130,246,0.1)); color:#3730a3; border:1px solid rgba(99,102,241,0.2); }
+.ca-status-badge { display:inline-block; padding:0.2rem 0.6rem; border-radius:8px; font-size:0.78rem; font-weight:600; border:1px solid transparent; }
+.ca-status-success { background:linear-gradient(135deg,rgba(34,197,94,0.3),rgba(22,163,74,0.2)); color:#14532d; border-color:rgba(34,197,94,0.3); }
+.ca-status-warning { background:linear-gradient(135deg,rgba(245,158,11,0.3),rgba(217,119,6,0.2)); color:#78350f; border-color:rgba(245,158,11,0.3); }
+.ca-status-danger  { background:linear-gradient(135deg,rgba(239,68,68,0.3),rgba(220,38,38,0.2)); color:#7f1d1d; border-color:rgba(239,68,68,0.3); }
+.ca-status-info    { background:linear-gradient(135deg,rgba(59,130,246,0.3),rgba(37,99,235,0.2)); color:#1e3a8a; border-color:rgba(59,130,246,0.3); }
+.ca-status-secondary { background:linear-gradient(135deg,rgba(156,163,175,0.3),rgba(107,114,128,0.2)); color:#374151; border-color:rgba(156,163,175,0.3); }
 
 /* ---- Paginación ---- */
 .ca-pagination {
