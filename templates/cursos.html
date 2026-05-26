@@ -126,7 +126,7 @@
       </div>
 
       <!-- Botón Agregar Curso -->
-      {% if group_name == 'Secretaría' %}
+      {% if group_name == 'Secretaría' and curso_academico_activo %}
       <div class="flex justify-center lg:justify-start">
         <a href="{% url 'principal:crear_cursos'%}" class="glass-button glass-button-primary flex items-center justify-center">
           <span class="fa material-icons mr-2">add_circle</span></i>

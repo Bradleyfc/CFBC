@@ -252,25 +252,20 @@ class CourseForm(forms.ModelForm):
         model = Curso
         exclude = ['curso_academico']  # Excluir curso_academico ya que se asigna automáticamente
     
+    def clean(self):
+        cleaned_data = super().clean()
+        if not CursoAcademico.objects.filter(activo=True).exists():
+            raise forms.ValidationError(
+                'No hay un curso académico activo. Debe activar un curso académico antes de crear cursos.'
+            )
+        return cleaned_data
+
     def save(self, commit=True):
         instance = super().save(commit=False)
         
         # Asignar automáticamente el curso académico activo
-        try:
-            curso_academico_activo = CursoAcademico.objects.get(activo=True)
-            instance.curso_academico = curso_academico_activo
-        except CursoAcademico.DoesNotExist:
-            # Si no hay curso académico activo, crear uno para el año actual
-            from datetime import datetime
-            current_year = datetime.now().year
-            next_year = current_year + 1
-            nombre_curso = f"{current_year}-{next_year}"
-            
-            curso_academico_activo, created = CursoAcademico.objects.get_or_create(
-                nombre=nombre_curso,
-                defaults={'activo': True}
-            )
-            instance.curso_academico = curso_academico_activo
+        curso_academico_activo = CursoAcademico.objects.filter(activo=True).first()
+        instance.curso_academico = curso_academico_activo
         
         if commit:
             instance.save()

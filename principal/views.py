@@ -1320,6 +1320,7 @@ class ListadoCursosView(BaseContextMixin, TemplateView):
         context['area_seleccionada'] = area or ''
         context['tipo_seleccionado'] = tipo or ''
         context['filtro_servidor'] = True  # indica que el filtrado lo hace el servidor
+        context['curso_academico_activo'] = curso_academico_activo
 
         user = self.request.user
         if user.is_authenticated:
@@ -2865,6 +2866,15 @@ class CourseCreateView(LoginRequiredMixin, CreateView):
     form_class = CourseForm
     template_name = 'create_course.html'
     success_url = reverse_lazy('principal:cursos')
+
+    def dispatch(self, request, *args, **kwargs):
+        if not CursoAcademico.objects.filter(activo=True).exists():
+            messages.error(
+                request,
+                'No hay un curso académico activo. Debe activar un curso académico antes de crear cursos.'
+            )
+            return redirect('principal:cursos')
+        return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
         # Asigna el curso académico activo al curso
