@@ -751,6 +751,8 @@ class CursoAcademicoDetailView(DetailView):
         curso_id = self.request.GET.get('curso')
         estudiante_id = self.request.GET.get('estudiante')
         semestre_id = self.request.GET.get('semestre')  # ID del SemestreCursoArchivado
+        estado_curso = self.request.GET.get('estado_curso')
+        estado_matricula = self.request.GET.get('estado_matricula')
 
         # Páginas activas por sección
         page_m = self.request.GET.get('page_m', 1)
@@ -766,6 +768,8 @@ class CursoAcademicoDetailView(DetailView):
                     curso_academico, curso_id, estudiante_id,
                     page_m, page_c, page_a, page_cur, per_page,
                     semestre_id=semestre_id,
+                    estado_curso=estado_curso,
+                    estado_matricula=estado_matricula,
                 )
             )
         else:
@@ -774,6 +778,8 @@ class CursoAcademicoDetailView(DetailView):
                     curso_academico, curso_id, estudiante_id,
                     page_m, page_c, page_a, page_cur, per_page,
                     semestre_id=semestre_id,
+                    estado_curso=estado_curso,
+                    estado_matricula=estado_matricula,
                 )
             )
 
@@ -783,6 +789,8 @@ class CursoAcademicoDetailView(DetailView):
             'curso': curso_id or '',
             'estudiante': estudiante_id or '',
             'semestre': semestre_id or '',
+            'estado_curso': estado_curso or '',
+            'estado_matricula': estado_matricula or '',
         }
         context['todos_los_cursos_academicos'] = CursoAcademico.objects.all().order_by('-fecha_creacion')
 
@@ -793,6 +801,8 @@ class CursoAcademicoDetailView(DetailView):
         self, curso_academico, curso_id, estudiante_id,
         page_m, page_c, page_a, page_cur, per_page,
         semestre_id=None,
+        estado_curso=None,
+        estado_matricula=None,
     ):
         from principal.models import SemestreCurso
         from datos_archivados.models import SemestreCursoArchivado, MatriculaArchivada, CalificacionArchivada, AsistenciaArchivada
@@ -875,6 +885,8 @@ class CursoAcademicoDetailView(DetailView):
         ).distinct()
         if curso_id:
             cursos_qs = cursos_qs.filter(id=curso_id)
+        if estado_curso:
+            cursos_qs = [c for c in cursos_qs if c.get_dynamic_status() == estado_curso]
 
         matriculas_qs = Matriculas.objects.filter(
             curso_academico=curso_academico
@@ -883,6 +895,11 @@ class CursoAcademicoDetailView(DetailView):
             matriculas_qs = matriculas_qs.filter(course_id=curso_id)
         if estudiante_id:
             matriculas_qs = matriculas_qs.filter(student_id=estudiante_id)
+        if estado_matricula:
+            matriculas_qs = matriculas_qs.filter(estado=estado_matricula)
+        if estado_curso:
+            ids_cursos = [c.id for c in Curso.objects.filter(curso_academico=curso_academico) if c.get_dynamic_status() == estado_curso]
+            matriculas_qs = matriculas_qs.filter(course_id__in=ids_cursos)
 
         calificaciones_qs = Calificaciones.objects.filter(
             curso_academico=curso_academico
@@ -891,14 +908,9 @@ class CursoAcademicoDetailView(DetailView):
             calificaciones_qs = calificaciones_qs.filter(course_id=curso_id)
         if estudiante_id:
             calificaciones_qs = calificaciones_qs.filter(student_id=estudiante_id)
-
-        asistencias_qs = Asistencia.objects.filter(
-            course__matriculas__curso_academico=curso_academico
-        ).distinct().select_related('student', 'course')
-        if curso_id:
-            asistencias_qs = asistencias_qs.filter(course_id=curso_id)
-        if estudiante_id:
-            asistencias_qs = asistencias_qs.filter(student_id=estudiante_id)
+        if estado_curso:
+            ids_cursos = [c.id for c in Curso.objects.filter(curso_academico=curso_academico) if c.get_dynamic_status() == estado_curso]
+            calificaciones_qs = calificaciones_qs.filter(course_id__in=ids_cursos)
 
         asistencias_matriculas_qs = Matriculas.objects.filter(
             curso_academico=curso_academico
@@ -909,15 +921,21 @@ class CursoAcademicoDetailView(DetailView):
             asistencias_matriculas_qs = asistencias_matriculas_qs.filter(course_id=curso_id)
         if estudiante_id:
             asistencias_matriculas_qs = asistencias_matriculas_qs.filter(student_id=estudiante_id)
+        if estado_matricula:
+            asistencias_matriculas_qs = asistencias_matriculas_qs.filter(estado=estado_matricula)
+        if estado_curso:
+            ids_cursos = [c.id for c in Curso.objects.filter(curso_academico=curso_academico) if c.get_dynamic_status() == estado_curso]
+            asistencias_matriculas_qs = asistencias_matriculas_qs.filter(course_id__in=ids_cursos)
 
-        paginator_cur = Paginator(cursos_qs, per_page)
+        cursos_list = list(cursos_qs)
+        paginator_cur = Paginator(cursos_list, per_page)
         paginator_m   = Paginator(matriculas_qs, per_page)
         paginator_c   = Paginator(calificaciones_qs, per_page)
         paginator_a   = Paginator(asistencias_matriculas_qs, per_page)
 
         return {
             'cursos': paginator_cur.get_page(page_cur),
-            'cursos_total': cursos_qs.count(),
+            'cursos_total': len(cursos_list),
             'matriculas': paginator_m.get_page(page_m),
             'matriculas_total': matriculas_qs.count(),
             'calificaciones': paginator_c.get_page(page_c),
@@ -941,6 +959,8 @@ class CursoAcademicoDetailView(DetailView):
         self, curso_academico, curso_id, estudiante_id,
         page_m, page_c, page_a, page_cur, per_page,
         semestre_id=None,
+        estado_curso=None,
+        estado_matricula=None,
     ):
         from datos_archivados.models import (
             CursoAcademicoArchivado,
@@ -983,7 +1003,10 @@ class CursoAcademicoDetailView(DetailView):
 
         # Adaptar CursoArchivado para que el template pueda usar los mismos
         # atributos que usa con Curso (name, teacher.get_full_name, get_dynamic_status_display)
-        cursos_adaptados = [_CursoArchivadoAdapter(c) for c in cursos_qs]
+        if estado_curso:
+            cursos_adaptados = [_CursoArchivadoAdapter(c) for c in cursos_qs if c.status == estado_curso]
+        else:
+            cursos_adaptados = [_CursoArchivadoAdapter(c) for c in cursos_qs]
 
         # ── Matrículas ────────────────────────────────────────────────────────
         matriculas_qs = MatriculaArchivada.objects.filter(
@@ -993,6 +1016,11 @@ class CursoAcademicoDetailView(DetailView):
             matriculas_qs = matriculas_qs.filter(course_id=curso_id)
         if estudiante_id:
             matriculas_qs = matriculas_qs.filter(student_id=estudiante_id)
+        if estado_matricula:
+            matriculas_qs = matriculas_qs.filter(estado=estado_matricula)
+        if estado_curso:
+            ids_cursos_arch = [c.id for c in CursoArchivado.objects.filter(curso_academico=ca_archivado, status=estado_curso)]
+            matriculas_qs = matriculas_qs.filter(course_id__in=ids_cursos_arch)
 
         matriculas_adaptadas = [_MatriculaArchivadaAdapter(m) for m in matriculas_qs]
 
@@ -1004,6 +1032,9 @@ class CursoAcademicoDetailView(DetailView):
             calificaciones_qs = calificaciones_qs.filter(course_id=curso_id)
         if estudiante_id:
             calificaciones_qs = calificaciones_qs.filter(student_id=estudiante_id)
+        if estado_curso:
+            ids_cursos_arch = [c.id for c in CursoArchivado.objects.filter(curso_academico=ca_archivado, status=estado_curso)]
+            calificaciones_qs = calificaciones_qs.filter(course_id__in=ids_cursos_arch)
 
         calificaciones_adaptadas = [_CalificacionArchivadaAdapter(c) for c in calificaciones_qs]
 
@@ -1018,6 +1049,11 @@ class CursoAcademicoDetailView(DetailView):
             asistencias_matriculas_qs = asistencias_matriculas_qs.filter(course_id=curso_id)
         if estudiante_id:
             asistencias_matriculas_qs = asistencias_matriculas_qs.filter(student_id=estudiante_id)
+        if estado_matricula:
+            asistencias_matriculas_qs = asistencias_matriculas_qs.filter(estado=estado_matricula)
+        if estado_curso:
+            ids_cursos_arch = [c.id for c in CursoArchivado.objects.filter(curso_academico=ca_archivado, status=estado_curso)]
+            asistencias_matriculas_qs = asistencias_matriculas_qs.filter(course_id__in=ids_cursos_arch)
 
         asistencias_adaptadas = [_MatriculaArchivadaAdapter(m) for m in asistencias_matriculas_qs]
 
@@ -1799,6 +1835,19 @@ class MatriculasListView(BaseContextMixin, ListView):
         estado = self.request.GET.get('estado')
         if estado:
             queryset = queryset.filter(estado=estado)
+
+        estado_curso = self.request.GET.get('estado_curso')
+        if estado_curso:
+            # Filtrar por estado dinámico: obtener IDs de cursos con ese estado
+            ids_cursos = [
+                c.id for c in Curso.objects.filter(
+                    curso_academico__id=curso_academico_id
+                ) if c.get_dynamic_status() == estado_curso
+            ] if curso_academico_id else [
+                c.id for c in Curso.objects.all()
+                if c.get_dynamic_status() == estado_curso
+            ]
+            queryset = queryset.filter(course__id__in=ids_cursos)
 
         return queryset
 

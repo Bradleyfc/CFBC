@@ -84,9 +84,9 @@
           </div>
         </div>
 
-        <!-- Filtros de curso, semestre y estudiante -->
-        <div class="ca-filter-row" style="grid-template-columns: 1fr 1fr 1fr;">
-          <div class="ca-filter-group">
+        <!-- Filtros en una sola fila -->
+        <div class="flex flex-wrap gap-3 mb-3 items-end">
+          <div class="flex-1 min-w-40">
             <label class="ca-label"><span class="material-icons ca-label-icon">menu_book</span> Curso</label>
             <select name="curso" id="curso" class="ca-select">
               <option value="">Todos los cursos</option>
@@ -95,7 +95,7 @@
               {% endfor %}
             </select>
           </div>
-          <div class="ca-filter-group">
+          <div class="flex-1 min-w-40">
             <label class="ca-label"><span class="material-icons ca-label-icon">layers</span> Semestre</label>
             <select name="semestre" id="semestre" class="ca-select" style="border-color: rgba(99,102,241,0.35); background: linear-gradient(135deg,rgba(99,102,241,0.06),rgba(59,130,246,0.03));">
               <option value="">Todos (semestre actual)</option>
@@ -106,13 +106,34 @@
               {% endfor %}
             </select>
           </div>
-          <div class="ca-filter-group">
+          <div class="flex-1 min-w-40">
             <label class="ca-label"><span class="material-icons ca-label-icon">person</span> Estudiante</label>
             <select name="estudiante" id="estudiante" class="ca-select">
               <option value="">Todos los estudiantes</option>
               {% for e in estudiantes_disponibles %}
                 <option value="{{ e.id }}" {% if request.GET.estudiante == e.id|stringformat:"s" %}selected{% endif %}>{{ e.first_name }} {{ e.last_name }} ({{ e.username }})</option>
               {% endfor %}
+            </select>
+          </div>
+          <div class="flex-1 min-w-40">
+            <label class="ca-label"><span class="material-icons ca-label-icon">info</span> Estado Curso</label>
+            <select name="estado_curso" id="estado_curso" class="ca-select">
+              <option value="">Todos los estados</option>
+              <option value="I"  {% if request.GET.estado_curso == 'I'  %}selected{% endif %}>En etapa de inscripción</option>
+              <option value="IT" {% if request.GET.estado_curso == 'IT' %}selected{% endif %}>Plazo de Inscripción Terminado</option>
+              <option value="P"  {% if request.GET.estado_curso == 'P'  %}selected{% endif %}>En progreso</option>
+              <option value="F"  {% if request.GET.estado_curso == 'F'  %}selected{% endif %}>Finalizado</option>
+            </select>
+          </div>
+          <div class="flex-1 min-w-40">
+            <label class="ca-label"><span class="material-icons ca-label-icon">how_to_reg</span> Estado Matrícula</label>
+            <select name="estado_matricula" id="estado_matricula" class="ca-select">
+              <option value="">Todos los estados</option>
+              <option value="P"  {% if request.GET.estado_matricula == 'P'  %}selected{% endif %}>Activo</option>
+              <option value="A"  {% if request.GET.estado_matricula == 'A'  %}selected{% endif %}>Aprobado</option>
+              <option value="BA" {% if request.GET.estado_matricula == 'BA' %}selected{% endif %}>Baja por Ausencia</option>
+              <option value="BL" {% if request.GET.estado_matricula == 'BL' %}selected{% endif %}>Baja por Licencia</option>
+              <option value="BI" {% if request.GET.estado_matricula == 'BI' %}selected{% endif %}>Baja por Insuf. Académica</option>
             </select>
           </div>
         </div>
@@ -124,7 +145,7 @@
             Viendo datos del Semestre {{ semestre_seleccionado.numero_semestre }} — {{ semestre_seleccionado.curso_archivado.name }}
             {% if semestre_seleccionado.fecha_cierre %}(cerrado el {{ semestre_seleccionado.fecha_cierre|date:"d/m/Y" }}){% endif %}
           </span>
-          <a href="{{ request.path }}?tab={{ active_tab }}" style="margin-left:auto; font-size:0.8rem; color:#6366f1; text-decoration:none; font-weight:600;">
+          <a href="{{ request.path }}?tab={{ active_tab }}{% if request.GET.estado_curso %}&estado_curso={{ request.GET.estado_curso }}{% endif %}{% if request.GET.estado_matricula %}&estado_matricula={{ request.GET.estado_matricula }}{% endif %}" style="margin-left:auto; font-size:0.8rem; color:#6366f1; text-decoration:none; font-weight:600;">
             <span class="material-icons" style="font-size:0.9rem; vertical-align:middle;">close</span> Volver al semestre actual
           </a>
         </div>
@@ -151,22 +172,22 @@
 
   <!-- TABS NAV -->
   <div class="ca-tabs-nav mb-0">
-    <a href="?tab=cursos{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}" class="ca-tab {% if active_tab == 'cursos' %}ca-tab-active{% endif %}">
+    <a href="?tab=cursos{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.estado_curso %}&estado_curso={{ request.GET.estado_curso }}{% endif %}{% if request.GET.estado_matricula %}&estado_matricula={{ request.GET.estado_matricula }}{% endif %}" class="ca-tab {% if active_tab == 'cursos' %}ca-tab-active{% endif %}">
       <span class="material-icons ca-tab-icon">menu_book</span>
       <span>Cursos</span>
       <span class="ca-tab-count">{{ cursos_total }}</span>
     </a>
-    <a href="?tab=matriculas{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}" class="ca-tab {% if active_tab == 'matriculas' %}ca-tab-active{% endif %}">
+    <a href="?tab=matriculas{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.estado_curso %}&estado_curso={{ request.GET.estado_curso }}{% endif %}{% if request.GET.estado_matricula %}&estado_matricula={{ request.GET.estado_matricula }}{% endif %}" class="ca-tab {% if active_tab == 'matriculas' %}ca-tab-active{% endif %}">
       <span class="material-icons ca-tab-icon">how_to_reg</span>
       <span>Matrículas</span>
       <span class="ca-tab-count">{{ matriculas_total }}</span>
     </a>
-    <a href="?tab=calificaciones{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}" class="ca-tab {% if active_tab == 'calificaciones' %}ca-tab-active{% endif %}">
+    <a href="?tab=calificaciones{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.estado_curso %}&estado_curso={{ request.GET.estado_curso }}{% endif %}{% if request.GET.estado_matricula %}&estado_matricula={{ request.GET.estado_matricula }}{% endif %}" class="ca-tab {% if active_tab == 'calificaciones' %}ca-tab-active{% endif %}">
       <span class="material-icons ca-tab-icon">grade</span>
       <span>Calificaciones</span>
       <span class="ca-tab-count">{{ calificaciones_total }}</span>
     </a>
-    <a href="?tab=asistencias{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}" class="ca-tab {% if active_tab == 'asistencias' %}ca-tab-active{% endif %}">
+    <a href="?tab=asistencias{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.estado_curso %}&estado_curso={{ request.GET.estado_curso }}{% endif %}{% if request.GET.estado_matricula %}&estado_matricula={{ request.GET.estado_matricula }}{% endif %}" class="ca-tab {% if active_tab == 'asistencias' %}ca-tab-active{% endif %}">
       <span class="material-icons ca-tab-icon">event</span>
       <span>Asistencias</span>
       <span class="ca-tab-count">{{ asistencias_total }}</span>
@@ -230,7 +251,7 @@
       {% if cursos.has_other_pages %}
       <div class="ca-pagination">
         {% if cursos.has_previous %}
-          <a href="?tab=cursos&page_cur={{ cursos.previous_page_number }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_left</span></a>
+          <a href="?tab=cursos&page_cur={{ cursos.previous_page_number }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.estado_curso %}&estado_curso={{ request.GET.estado_curso }}{% endif %}{% if request.GET.estado_matricula %}&estado_matricula={{ request.GET.estado_matricula }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_left</span></a>
         {% else %}
           <span class="ca-page-btn ca-page-disabled"><span class="material-icons">chevron_left</span></span>
         {% endif %}
@@ -238,11 +259,11 @@
           {% if cursos.number == num %}
             <span class="ca-page-btn ca-page-active">{{ num }}</span>
           {% elif num > cursos.number|add:"-3" and num < cursos.number|add:"3" %}
-            <a href="?tab=cursos&page_cur={{ num }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}" class="ca-page-btn">{{ num }}</a>
+            <a href="?tab=cursos&page_cur={{ num }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.estado_curso %}&estado_curso={{ request.GET.estado_curso }}{% endif %}{% if request.GET.estado_matricula %}&estado_matricula={{ request.GET.estado_matricula }}{% endif %}" class="ca-page-btn">{{ num }}</a>
           {% endif %}
         {% endfor %}
         {% if cursos.has_next %}
-          <a href="?tab=cursos&page_cur={{ cursos.next_page_number }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_right</span></a>
+          <a href="?tab=cursos&page_cur={{ cursos.next_page_number }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.estado_curso %}&estado_curso={{ request.GET.estado_curso }}{% endif %}{% if request.GET.estado_matricula %}&estado_matricula={{ request.GET.estado_matricula }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_right</span></a>
         {% else %}
           <span class="ca-page-btn ca-page-disabled"><span class="material-icons">chevron_right</span></span>
         {% endif %}
@@ -306,7 +327,7 @@
       {% if matriculas.has_other_pages %}
       <div class="ca-pagination">
         {% if matriculas.has_previous %}
-          <a href="?tab=matriculas&page_m={{ matriculas.previous_page_number }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_left</span></a>
+          <a href="?tab=matriculas&page_m={{ matriculas.previous_page_number }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.estado_curso %}&estado_curso={{ request.GET.estado_curso }}{% endif %}{% if request.GET.estado_matricula %}&estado_matricula={{ request.GET.estado_matricula }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_left</span></a>
         {% else %}
           <span class="ca-page-btn ca-page-disabled"><span class="material-icons">chevron_left</span></span>
         {% endif %}
@@ -314,11 +335,11 @@
           {% if matriculas.number == num %}
             <span class="ca-page-btn ca-page-active">{{ num }}</span>
           {% elif num > matriculas.number|add:"-3" and num < matriculas.number|add:"3" %}
-            <a href="?tab=matriculas&page_m={{ num }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}" class="ca-page-btn">{{ num }}</a>
+            <a href="?tab=matriculas&page_m={{ num }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.estado_curso %}&estado_curso={{ request.GET.estado_curso }}{% endif %}{% if request.GET.estado_matricula %}&estado_matricula={{ request.GET.estado_matricula }}{% endif %}" class="ca-page-btn">{{ num }}</a>
           {% endif %}
         {% endfor %}
         {% if matriculas.has_next %}
-          <a href="?tab=matriculas&page_m={{ matriculas.next_page_number }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_right</span></a>
+          <a href="?tab=matriculas&page_m={{ matriculas.next_page_number }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.estado_curso %}&estado_curso={{ request.GET.estado_curso }}{% endif %}{% if request.GET.estado_matricula %}&estado_matricula={{ request.GET.estado_matricula }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_right</span></a>
         {% else %}
           <span class="ca-page-btn ca-page-disabled"><span class="material-icons">chevron_right</span></span>
         {% endif %}
@@ -379,7 +400,7 @@
       {% if calificaciones.has_other_pages %}
       <div class="ca-pagination">
         {% if calificaciones.has_previous %}
-          <a href="?tab=calificaciones&page_c={{ calificaciones.previous_page_number }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_left</span></a>
+          <a href="?tab=calificaciones&page_c={{ calificaciones.previous_page_number }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.estado_curso %}&estado_curso={{ request.GET.estado_curso }}{% endif %}{% if request.GET.estado_matricula %}&estado_matricula={{ request.GET.estado_matricula }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_left</span></a>
         {% else %}
           <span class="ca-page-btn ca-page-disabled"><span class="material-icons">chevron_left</span></span>
         {% endif %}
@@ -387,11 +408,11 @@
           {% if calificaciones.number == num %}
             <span class="ca-page-btn ca-page-active">{{ num }}</span>
           {% elif num > calificaciones.number|add:"-3" and num < calificaciones.number|add:"3" %}
-            <a href="?tab=calificaciones&page_c={{ num }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}" class="ca-page-btn">{{ num }}</a>
+            <a href="?tab=calificaciones&page_c={{ num }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.estado_curso %}&estado_curso={{ request.GET.estado_curso }}{% endif %}{% if request.GET.estado_matricula %}&estado_matricula={{ request.GET.estado_matricula }}{% endif %}" class="ca-page-btn">{{ num }}</a>
           {% endif %}
         {% endfor %}
         {% if calificaciones.has_next %}
-          <a href="?tab=calificaciones&page_c={{ calificaciones.next_page_number }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_right</span></a>
+          <a href="?tab=calificaciones&page_c={{ calificaciones.next_page_number }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.estado_curso %}&estado_curso={{ request.GET.estado_curso }}{% endif %}{% if request.GET.estado_matricula %}&estado_matricula={{ request.GET.estado_matricula }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_right</span></a>
         {% else %}
           <span class="ca-page-btn ca-page-disabled"><span class="material-icons">chevron_right</span></span>
         {% endif %}
@@ -451,7 +472,7 @@
       {% if asistencias.has_other_pages %}
       <div class="ca-pagination">
         {% if asistencias.has_previous %}
-          <a href="?tab=asistencias&page_a={{ asistencias.previous_page_number }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_left</span></a>
+          <a href="?tab=asistencias&page_a={{ asistencias.previous_page_number }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.estado_curso %}&estado_curso={{ request.GET.estado_curso }}{% endif %}{% if request.GET.estado_matricula %}&estado_matricula={{ request.GET.estado_matricula }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_left</span></a>
         {% else %}
           <span class="ca-page-btn ca-page-disabled"><span class="material-icons">chevron_left</span></span>
         {% endif %}
@@ -459,11 +480,11 @@
           {% if asistencias.number == num %}
             <span class="ca-page-btn ca-page-active">{{ num }}</span>
           {% elif num > asistencias.number|add:"-3" and num < asistencias.number|add:"3" %}
-            <a href="?tab=asistencias&page_a={{ num }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}" class="ca-page-btn">{{ num }}</a>
+            <a href="?tab=asistencias&page_a={{ num }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.estado_curso %}&estado_curso={{ request.GET.estado_curso }}{% endif %}{% if request.GET.estado_matricula %}&estado_matricula={{ request.GET.estado_matricula }}{% endif %}" class="ca-page-btn">{{ num }}</a>
           {% endif %}
         {% endfor %}
         {% if asistencias.has_next %}
-          <a href="?tab=asistencias&page_a={{ asistencias.next_page_number }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_right</span></a>
+          <a href="?tab=asistencias&page_a={{ asistencias.next_page_number }}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.estado_curso %}&estado_curso={{ request.GET.estado_curso }}{% endif %}{% if request.GET.estado_matricula %}&estado_matricula={{ request.GET.estado_matricula }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_right</span></a>
         {% else %}
           <span class="ca-page-btn ca-page-disabled"><span class="material-icons">chevron_right</span></span>
         {% endif %}
