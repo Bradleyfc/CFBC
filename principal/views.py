@@ -3146,8 +3146,13 @@ class StudentListNotasView(BaseContextMixin, ListView):
                     'matricula_id': enrollment.id,
                     'student_id': student.id,
                 })
+            # Pre-calcular notas faltantes por estudiante para el template
+            for data in student_data:
+                data['notas_faltantes'] = range(max_notas - len(data['notas']))
+
             context['student_data'] = student_data
             context['max_notas'] = max_notas
+            context['nota_range'] = range(1, max_notas + 1)
         else:
             context['courses'] = CursoAcademico.objects.all()
             context['teachers'] = User.objects.filter(groups__name='Docente')
