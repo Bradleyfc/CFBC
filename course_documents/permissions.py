@@ -81,14 +81,13 @@ class StudentPermissionMixin(UserPassesTestMixin):
         if not curso_id:
             return False
         
-        # Verificar que el estudiante está inscrito en el curso
+        # Verificar que el estudiante está inscrito en el curso y no tiene baja
         try:
             matricula = Matriculas.objects.get(
                 course_id=curso_id,
                 student=self.request.user,
-                activo=True
             )
-            return True
+            return matricula.estado not in ('BA', 'BL', 'BI')
         except Matriculas.DoesNotExist:
             return False
 
@@ -141,15 +140,14 @@ class DocumentAccessMixin:
         if user.groups.filter(name='Profesores').exists():
             return document.folder.curso.teacher == user
         
-        # Si es estudiante, verificar que esté inscrito en el curso
+        # Si es estudiante, verificar que esté inscrito en el curso y sin baja
         elif user.groups.filter(name='Estudiantes').exists():
             try:
-                Matriculas.objects.get(
+                matricula = Matriculas.objects.get(
                     course=document.folder.curso,
                     student=user,
-                    activo=True
                 )
-                return True
+                return matricula.estado not in ('BA', 'BL', 'BI')
             except Matriculas.DoesNotExist:
                 return False
         
@@ -230,8 +228,9 @@ def require_student_access(view_func):
                 matricula = Matriculas.objects.get(
                     course_id=curso_id,
                     student=request.user,
-                    activo=True
                 )
+                if matricula.estado in ('BA', 'BL', 'BI'):
+                    raise PermissionDenied("No estás inscrito en este curso.")
             except Matriculas.DoesNotExist:
                 # Log del intento no autorizado
                 try:

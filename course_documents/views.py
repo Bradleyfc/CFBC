@@ -413,12 +413,12 @@ class DownloadDocumentView(LoginRequiredMixin, StudentPermissionMixin, View):
             folder__curso=curso
         )
         
-        # Verificar que el estudiante esté inscrito en el curso
-        if not Matriculas.objects.filter(
+        # Verificar que el estudiante esté inscrito y sin baja en el curso
+        matricula = Matriculas.objects.filter(
             course=curso,
             student=request.user,
-            activo=True
-        ).exists():
+        ).first()
+        if not matricula or matricula.estado in ('BA', 'BL', 'BI'):
             raise PermissionDenied("No tienes acceso a este documento")
         
         try:

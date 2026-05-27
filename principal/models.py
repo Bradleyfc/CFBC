@@ -183,7 +183,6 @@ class Matriculas(models.Model):
     ESTADO_CHOICES = [
         ('P', 'Activo'),
         ('A', 'Aprobado'),
-        ('R', 'Reprobado'),
         ('BA', 'Baja por Ausencia'),
         ('BL', 'Baja por Licencia'),
         ('BI', 'Baja por Insuficiencia Académica'),

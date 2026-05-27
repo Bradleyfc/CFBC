@@ -11,7 +11,19 @@
             {% if enrolled_courses %}
             <div class="space-y-4">
                 {% for course in enrolled_courses %}
-                <div class="glass-course-item">
+                <div class="glass-course-wrapper">
+                    {% if not course.matricula_activa %}
+                    <div class="glass-baja-badge">
+                        <span class="fa material-icons">block</span>
+                        {{ course.matricula_estado_display }}
+                    </div>
+                    {% elif course.matricula_estado == 'A' %}
+                    <div class="glass-aprobado-badge">
+                        <span class="fa material-icons">verified</span>
+                        Aprobado
+                    </div>
+                    {% endif %}
+                    <div class="glass-course-item {% if not course.matricula_activa %}glass-course-item-inactive{% endif %}">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <!-- Course Info Column -->
                         <div class="md:col-span-2">
@@ -39,6 +51,7 @@
                         </div>
 
                         <!-- Enrollment Status Column -->
+                        {% if course.matricula_activa and course.matricula_estado != 'A' %}
                         {% if course.get_dynamic_status == 'I' or course.get_dynamic_status == 'IT' %}
                         {% if course.solicitud_estado == 'aprobada' %}
                         <div class="md:col-span-1">
@@ -63,29 +76,54 @@
                         </div>
                         {% endif %}
                         {% endif %}
+                        {% endif %}
                     </div>
 
                     <!-- Action Buttons -->
                     <div class="flex flex-row gap-2 mt-3">
-                        {% if course.get_dynamic_status == 'P' or course.get_dynamic_status == 'F' %}
-                        <!-- Botón de documentos solo visible si el curso está en progreso o finalizado -->
+                        {% if not course.matricula_activa %}
+                        <!-- Matrícula inactiva: todos los botones deshabilitados -->
+                        <button disabled class="glass-action-button glass-action-disabled flex-1 cursor-not-allowed">
+                            <span class="fa material-icons mr-1">folder_off</span>
+                            Documentos
+                        </button>
+                        <button disabled class="glass-action-button glass-action-disabled flex-1 cursor-not-allowed">
+                            <span class="fa material-icons mr-1">event_busy</span>
+                            Ver asistencias
+                        </button>
+                        <button disabled class="glass-action-button glass-action-disabled flex-1 cursor-not-allowed">
+                            <span class="fa material-icons mr-1">assignment_late</span>
+                            Ver Notas
+                        </button>
+                        {% elif course.get_dynamic_status == 'P' or course.get_dynamic_status == 'F' %}
+                        <!-- Curso en progreso o finalizado -->
+
+                        {% if course.get_dynamic_status == 'P' and course.matricula_estado != 'A' %}
+                        <!-- Documentos: solo si el curso está en progreso Y la matrícula no está aprobada -->
                         <a href="{% url 'course_documents:student_dashboard' curso_id=course.id %}"
                             class="glass-action-button glass-action-primary flex-1">
-                            <span class="fa material-icons mr-1">folder_open</span></i>
+                            <span class="fa material-icons mr-1">folder_open</span>
                             Documentos
                             {% if course.has_new_content_indicator %}
                             <span class="glass-badge-new">!</span>
                             {% endif %}
                         </a>
-                        
+                        {% else %}
+                        <!-- Documentos deshabilitado: curso finalizado o matrícula aprobada -->
+                        <button disabled class="glass-action-button glass-action-disabled flex-1 cursor-not-allowed">
+                            <span class="fa material-icons mr-1">folder_off</span>
+                            Documentos
+                        </button>
+                        {% endif %}
+
                         <a href="{% url 'principal:student_course_attendances' student_id=user.id course_id=course.id %}"
                             class="glass-action-button glass-action-info flex-1">
-                            <span class="fa material-icons mr-1">event</span></i>
+                            <span class="fa material-icons mr-1">event</span>
                             Ver asistencias
                         </a>
                         <a href="{% url 'principal:student_course_notes' student_id=user.id course_id=course.id %}"
                             class="glass-action-button glass-action-success flex-1">
-                            <span class="fa material-icons mr-1">assignment</span></i>
+                            <span class="fa material-icons mr-1">assignment</span>
                             Ver Notas
                         </a>
 
@@ -102,6 +140,7 @@
                         {% endif %}
                     </div>
                 </div>
+                </div><!-- /glass-course-wrapper -->
                 {% endfor %}
             </div>
             {% else %}
@@ -185,6 +224,75 @@
         background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3));
         transform: translateY(-2px);
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Wrapper que contiene la tarjeta + el badge de baja */
+    .glass-course-wrapper {
+        position: relative;
+    }
+
+    /* Badge de motivo de baja — siempre visible, fuera del efecto de opacidad */
+    .glass-baja-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        margin-bottom: 0.5rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.1));
+        color: #b91c1c;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .glass-baja-badge .material-icons {
+        font-size: 0.95rem;
+    }
+
+    /* Badge de aprobado */
+    .glass-aprobado-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        margin-bottom: 0.5rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(22, 163, 74, 0.1));
+        color: #15803d;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .glass-aprobado-badge .material-icons {
+        font-size: 0.95rem;
+    }
+    /* Tarjeta inactiva (baja, licencia, etc.) */
+    .glass-course-item-inactive {
+        opacity: 0.45;
+        background: linear-gradient(135deg, rgba(200, 200, 200, 0.25), rgba(180, 180, 180, 0.15));
+        border: 1px solid rgba(150, 150, 150, 0.2);
+        filter: grayscale(60%);
+        pointer-events: none;
+    }
+
+    .glass-course-item-inactive:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    /* Botón deshabilitado */
+    .glass-action-disabled {
+        background: linear-gradient(135deg, rgba(156, 163, 175, 0.25), rgba(107, 114, 128, 0.15));
+        color: #9ca3af;
+        border: 1px solid rgba(156, 163, 175, 0.2);
+        opacity: 0.6;
+    }
+
+    .glass-action-disabled:hover {
+        transform: none;
+        box-shadow: none;
     }
 
     /* Glass Badge Status */

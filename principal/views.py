@@ -215,7 +215,6 @@ def export_matriculas_excel(request):
     estado_fills = {
         'A':  PatternFill(start_color='C6EFCE', end_color='C6EFCE', fill_type='solid'),  # Aprobado - verde
         'P':  PatternFill(start_color='BDD7EE', end_color='BDD7EE', fill_type='solid'),  # Activo - azul
-        'R':  PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid'),  # Reprobado - rojo
         'BA': PatternFill(start_color='D9D9D9', end_color='D9D9D9', fill_type='solid'),  # Baja por Ausencia - gris
         'BL': PatternFill(start_color='D9D9D9', end_color='D9D9D9', fill_type='solid'),  # Baja por Licencia - gris
         'BI': PatternFill(start_color='FFEB9C', end_color='FFEB9C', fill_type='solid'),  # Baja por Insuf. - amarillo
@@ -223,7 +222,6 @@ def export_matriculas_excel(request):
     estado_fonts = {
         'A':  Font(name='Arial', bold=True, color='276221'),
         'P':  Font(name='Arial', bold=True, color='1F4E79'),
-        'R':  Font(name='Arial', bold=True, color='9C0006'),
         'BA': Font(name='Arial', bold=True, color='595959'),
         'BL': Font(name='Arial', bold=True, color='595959'),
         'BI': Font(name='Arial', bold=True, color='7D5A00'),
@@ -642,8 +640,8 @@ class _TeacherProxy:
 class _MatriculaArchivadaAdapter:
     """Adapta MatriculaArchivada para que se comporte como Matriculas en el template."""
     ESTADO_CHOICES = {
-        'P': 'Pendiente', 'A': 'Aprobado', 'R': 'Reprobado',
-        'L': 'Licencia', 'B': 'Baja',
+        'P': 'Activo', 'A': 'Aprobado',
+        'BA': 'Baja por Ausencia', 'BL': 'Baja por Licencia', 'BI': 'Baja por Insuficiencia Académica',
     }
 
     def __init__(self, ma):
@@ -1654,14 +1652,40 @@ class ProfileView(DocumentsProfileMixin, BaseContextMixin, TemplateView):
             # Obtener los cursos en los que el estudiante está inscrito y que pertenecen al curso académico activo
             curso_academico_activo = CursoAcademico.objects.filter(activo=True).first()
             if curso_academico_activo:
-                enrolled_courses = Curso.objects.filter(matriculas__student=user, curso_academico=curso_academico_activo)
-                
+                # Obtener todas las matrículas del estudiante en el curso académico activo de una sola consulta
+                matriculas_dict = {
+                    m.course_id: m
+                    for m in Matriculas.objects.filter(
+                        student=user,
+                        curso_academico=curso_academico_activo
+                    )
+                }
+
+                enrolled_courses = Curso.objects.filter(
+                    id__in=matriculas_dict.keys(),
+                    curso_academico=curso_academico_activo
+                )
+
                 # Separar cursos por estado de solicitud
                 approved_courses = []
                 pending_courses = []
-                
+
                 # Para cada curso inscrito, obtener información adicional sobre solicitudes
                 for course in enrolled_courses:
+                    # Estados que implican baja/inactividad del estudiante en el curso
+                    ESTADOS_INACTIVOS = {'BA', 'BL', 'BI'}
+
+                    # Asignar estado de matrícula directamente desde el dict
+                    matricula = matriculas_dict.get(course.id)
+                    if matricula:
+                        course.matricula_activa = matricula.estado not in ESTADOS_INACTIVOS
+                        course.matricula_estado = matricula.estado
+                        course.matricula_estado_display = matricula.get_estado_display()
+                    else:
+                        course.matricula_activa = True
+                        course.matricula_estado = 'P'
+                        course.matricula_estado_display = ''
+
                     # Verificar si hay una solicitud de inscripción para este curso
                     try:
                         solicitud = SolicitudInscripcion.objects.get(
@@ -1671,7 +1695,7 @@ class ProfileView(DocumentsProfileMixin, BaseContextMixin, TemplateView):
                         course.solicitud_estado = solicitud.estado
                         course.fecha_revision = solicitud.fecha_revision
                         course.revisado_por = solicitud.revisado_por
-                        
+
                         # Separar por estado solo para cursos en inscripción
                         if course.status in ['I', 'IT'] and solicitud.estado == 'pendiente':
                             pending_courses.append(course)
@@ -1682,13 +1706,13 @@ class ProfileView(DocumentsProfileMixin, BaseContextMixin, TemplateView):
                         course.fecha_revision = None
                         course.revisado_por = None
                         approved_courses.append(course)
-                    
+
                     # Agregar indicador de contenido nuevo si course_documents está disponible
                     if ContentIndicatorService:
                         course.has_new_content_indicator = ContentIndicatorService.has_new_content(course, user)
                     else:
                         course.has_new_content_indicator = False
-                
+
                 context['enrolled_courses'] = approved_courses
                 context['pending_courses'] = pending_courses
 
@@ -1929,6 +1953,21 @@ class StudentCourseAttendanceView(BaseContextMixin, ListView):
     model = Asistencia
     template_name = 'student_asistencias.html'
     context_object_name = 'asistencias'
+
+    def dispatch(self, request, *args, **kwargs):
+        # Bloquear acceso si la matrícula está en estado de baja
+        course_id = self.kwargs.get('course_id')
+        student_id = self.kwargs.get('student_id')
+        if course_id and student_id:
+            matricula = Matriculas.objects.filter(
+                student_id=student_id,
+                course_id=course_id
+            ).first()
+            if matricula and matricula.estado in ('BA', 'BL', 'BI'):
+                if request.user.is_authenticated and request.user.id == int(student_id):
+                    messages.error(request, 'No tienes acceso a este curso porque tu matrícula está inactiva.')
+                    return redirect('principal:profile')
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -2753,6 +2792,21 @@ class StudentCourseNotesView(BaseContextMixin, ListView):
     model = Calificaciones
     template_name = 'student_notes.html'  # New template for student notes
     context_object_name = 'calificaciones'
+
+    def dispatch(self, request, *args, **kwargs):
+        # Bloquear acceso si la matrícula está en estado de baja
+        course_id = self.kwargs.get('course_id')
+        student_id = self.kwargs.get('student_id')
+        if course_id and student_id:
+            matricula = Matriculas.objects.filter(
+                student_id=student_id,
+                course_id=course_id
+            ).first()
+            if matricula and matricula.estado in ('BA', 'BL', 'BI'):
+                if request.user.is_authenticated and request.user.id == int(student_id):
+                    messages.error(request, 'No tienes acceso a este curso porque tu matrícula está inactiva.')
+                    return redirect('principal:profile')
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         student_id = self.kwargs['student_id']

@@ -134,8 +134,6 @@
                                 <span class="glass-badge glass-badge-success">Aprobado</span>
                                 {% elif matricula.estado == 'P' %}
                                 <span class="glass-badge glass-badge-primary">Activo</span>
-                                {% elif matricula.estado == 'R' %}
-                                <span class="glass-badge glass-badge-danger">Reprobado</span>
                                 {% elif matricula.estado == 'BA' %}
                                 <span class="glass-badge glass-badge-secondary">Baja por Ausencia</span>
                                 {% elif matricula.estado == 'BL' %}
@@ -155,7 +153,6 @@
                                         <select name="estado" class="glass-select-compact">
                                             <option value="P" {% if matricula.estado == 'P' %}selected{% endif %}>Activo</option>
                                             <option value="A" {% if matricula.estado == 'A' %}selected{% endif %}>Aprobado</option>
-                                            <option value="R" {% if matricula.estado == 'R' %}selected{% endif %}>Reprobado</option>
                                             <option value="BA" {% if matricula.estado == 'BA' %}selected{% endif %}>Baja por Ausencia</option>
                                             <option value="BL" {% if matricula.estado == 'BL' %}selected{% endif %}>Baja por Licencia</option>
                                             <option value="BI" {% if matricula.estado == 'BI' %}selected{% endif %}>Baja por Insuf. Académica</option>
