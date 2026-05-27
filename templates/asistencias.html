@@ -126,8 +126,11 @@
                         </thead>
                         <tbody id="tbody-registro">
                             {% for matricula in matriculas %}
-                            <tr class="fila-registro">
-                                <td class="font-medium">{{ matricula.student.get_full_name|default:matricula.student.username }}</td>
+                            <tr class="fila-registro{% if not matricula.es_activo_semestre %} fila-inactiva{% endif %}">
+                                <td class="font-medium">
+                                    {{ matricula.student.get_full_name|default:matricula.student.username }}
+                                    {% if not matricula.es_activo_semestre %}<span class="badge-inactivo-asist">{{ matricula.get_estado_display }}</span>{% endif %}
+                                </td>
                                 {% for fecha in asistencias_por_fecha %}
                                     <td class="text-center w-32">
                                         {% with asistencia=asistencias|filter_asistencia:matricula.student.id|filter_by_date:fecha.grouper %}
@@ -181,8 +184,11 @@
                         </thead>
                         <tbody id="tbody-resumen">
                             {% for matricula in matriculas %}
-                                <tr class="fila-resumen">
-                                    <td class="font-medium">{{ matricula.student.get_full_name|default:matricula.student.username }}</td>
+                                <tr class="fila-resumen{% if not matricula.es_activo_semestre %} fila-inactiva{% endif %}">
+                                    <td class="font-medium">
+                                        {{ matricula.student.get_full_name|default:matricula.student.username }}
+                                        {% if not matricula.es_activo_semestre %}<span class="badge-inactivo-asist">{{ matricula.get_estado_display }}</span>{% endif %}
+                                    </td>
                                     {% with student_asistencias=matricula.student.asistencias.all %}
                                         {% with presentes=student_asistencias|filter_present_for_course:course %}
                                         {% with total=student_asistencias|filter_total_for_course:course %}
@@ -461,6 +467,28 @@
     .glass-badge-secondary {
         background: linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.2));
         color: #374151;
+    }
+
+    /* Filas de estudiantes inactivos */
+    .fila-inactiva {
+        opacity: 0.35;
+        pointer-events: none;
+    }
+    .fila-inactiva:hover {
+        transform: none !important;
+        box-shadow: none !important;
+    }
+    .badge-inactivo-asist {
+        display: inline-block;
+        margin-left: 0.4rem;
+        padding: 0.1rem 0.4rem;
+        border-radius: 6px;
+        font-size: 0.62rem;
+        font-weight: 600;
+        background: rgba(239,68,68,0.12);
+        color: #b91c1c;
+        border: 1px solid rgba(239,68,68,0.25);
+        vertical-align: middle;
     }
 
     /* Glass Alert */

@@ -21,7 +21,7 @@
                     <span class="fa material-icons mr-2">article</span></i>
                     Exportar PDF
                 </a>
-                {% if matricula %}
+                {% if matricula and matricula.estado == 'P' %}
                 <a href="{% url 'principal:add_nota' matricula_id=matricula.id %}?next={% url 'principal:calificacion_detalle_estudiante' student_id=student.id course_id=course.id %}"
                    class="glass-button glass-button-primary">
                     <span class="fa material-icons mr-2">add_circle</span>

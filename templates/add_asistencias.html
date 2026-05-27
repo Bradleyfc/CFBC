@@ -106,12 +106,13 @@
                         {% if matriculas %}
                             <div class="flex flex-wrap gap-3">
                                 {% for matricula in matriculas %}
-                                <div class="glass-checkbox-card">
+                                <div class="glass-checkbox-card{% if not matricula.es_activo_semestre %} checkbox-card-inactivo{% endif %}">
                                     <input class="glass-checkbox" 
                                            type="checkbox" 
                                            name="asistencia_{{matricula.id}}" 
                                            id="asistencia_{{matricula.id}}" 
-                                           value="{{matricula.id}}">
+                                           value="{{matricula.id}}"
+                                           {% if not matricula.es_activo_semestre %}disabled{% endif %}>
                                     <label class="glass-checkbox-label" for="asistencia_{{matricula.id}}">
                                         <div class="flex flex-col items-center text-center">
                                             <div class="glass-checkbox-indicator mb-2"></div>
@@ -122,6 +123,9 @@
                                                 <div class="text-xs text-gray-500 mt-1">
                                                     {{matricula.student.username}}
                                                 </div>
+                                                {% if not matricula.es_activo_semestre %}
+                                                <div class="text-xs mt-1" style="color:#b91c1c;font-weight:600;">{{ matricula.get_estado_display }}</div>
+                                                {% endif %}
                                             </div>
                                         </div>
                                     </label>
@@ -310,6 +314,13 @@
     .glass-checkbox-card:has(.glass-checkbox:checked) {
         background: linear-gradient(135deg, rgba(254, 226, 226, 0.8), rgba(252, 165, 165, 0.4));
         border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    /* Tarjeta de estudiante inactivo */
+    .checkbox-card-inactivo {
+        opacity: 0.35;
+        pointer-events: none;
+        filter: grayscale(60%);
     }
 
     /* Glass Alert */

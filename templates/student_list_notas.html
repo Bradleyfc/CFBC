@@ -84,8 +84,13 @@
                         </thead>
                         <tbody>
                             {% for data in student_data %}
-                            <tr class="fila-calificacion">
-                                <td class="student-col">{{ data.name }}</td>
+                            <tr class="fila-calificacion{% if not data.matricula_activa %} fila-inactiva{% endif %}">
+                                <td class="student-col">
+                                    {{ data.name }}
+                                    {% if not data.matricula_activa %}
+                                    <span class="badge-inactivo">Inactivo</span>
+                                    {% endif %}
+                                </td>
                                 <td class="course-col">{{ course.name }}</td>
                                 {% for nota in data.notas %}
                                     <td class="nota-col">
@@ -117,11 +122,15 @@
                                     {% endif %}
                                 </td>
                                 <td class="acciones-col">
+                                    {% if data.matricula_activa %}
                                     <a href="{% url 'principal:add_nota' matricula_id=data.matricula_id %}" 
-                                       class="glass-button glass-button-primary text-xs px-3 py-1">
+                                       class="glass-button glass-button-primary text-xs px-3 py-1" style="white-space:nowrap;">
                                         <span class="fa material-icons mr-1">add_circle</span></i>
                                         Agregar/Editar
                                     </a>
+                                    {% else %}
+                                    <span class="badge-inactivo-accion">Sin acceso</span>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -258,6 +267,38 @@
     }
     .glass-alert-info { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(37,99,235,0.1)); color: #1e3a8a; }
 
+    /* Fila inactiva */
+    .fila-inactiva {
+        opacity: 0.4;
+        pointer-events: none;
+    }
+    .fila-inactiva:hover {
+        transform: none !important;
+        box-shadow: none !important;
+    }
+    .badge-inactivo {
+        display: inline-block;
+        margin-left: 0.4rem;
+        padding: 0.15rem 0.45rem;
+        border-radius: 8px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        background: rgba(239,68,68,0.15);
+        color: #b91c1c;
+        border: 1px solid rgba(239,68,68,0.3);
+        vertical-align: middle;
+    }
+    .badge-inactivo-accion {
+        display: inline-block;
+        padding: 0.3rem 0.6rem;
+        border-radius: 8px;
+        font-size: 0.72rem;
+        font-weight: 500;
+        color: #9ca3af;
+        background: rgba(156,163,175,0.15);
+        border: 1px solid rgba(156,163,175,0.2);
+    }
+
     /* Paginación */
     .tabla-paginacion {
         display: flex; justify-content: center; align-items: center;
@@ -296,7 +337,7 @@
         const W_STUDENT  = Math.max(100, Math.min(200, 200 - numNotas * 1.5));
         const W_COURSE   = Math.max(80,  Math.min(160, 160 - numNotas * 1.2));
         const W_PROMEDIO = 80;
-        const W_ACCIONES = 130;
+        const W_ACCIONES = 170;
 
         // Ancho por columna de nota: decrece suavemente con la cantidad
         // Entre 65px (pocas notas) y 44px (muchas notas), mínimo 40px

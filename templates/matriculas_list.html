@@ -62,6 +62,17 @@
                                 {% endfor %}
                             </select>
                         </div>
+                        <div class="flex-1 min-w-40">
+                            <label for="estado" class="block text-xs font-medium text-gray-600 mb-1">Estado:</label>
+                            <select class="glass-select-compact" id="estado" name="estado">
+                                <option value="">Todos</option>
+                                <option value="P" {% if request.GET.estado == 'P' %}selected{% endif %}>Activo</option>
+                                <option value="A" {% if request.GET.estado == 'A' %}selected{% endif %}>Aprobado</option>
+                                <option value="BA" {% if request.GET.estado == 'BA' %}selected{% endif %}>Baja por Ausencia</option>
+                                <option value="BL" {% if request.GET.estado == 'BL' %}selected{% endif %}>Baja por Licencia</option>
+                                <option value="BI" {% if request.GET.estado == 'BI' %}selected{% endif %}>Baja por Insuf. Académica</option>
+                            </select>
+                        </div>
                     </div>
 
                     {% if viendo_semestre_archivado and semestre_seleccionado %}
@@ -179,7 +190,7 @@
             <ul class="glass-pagination">
                 {% if page_obj.has_previous %}
                 <li>
-                    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.curso_academico %}&curso_academico={{ request.GET.curso_academico }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.student %}&student={{ request.GET.student }}{% endif %}"
+                    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.curso_academico %}&curso_academico={{ request.GET.curso_academico }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.student %}&student={{ request.GET.student }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}"
                         class="glass-page-link">
                         Anterior
                     </a>
@@ -193,7 +204,7 @@
                 </li>
                 {% else %}
                 <li>
-                    <a href="?page={{ i }}{% if request.GET.curso_academico %}&curso_academico={{ request.GET.curso_academico }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.student %}&student={{ request.GET.student }}{% endif %}"
+                    <a href="?page={{ i }}{% if request.GET.curso_academico %}&curso_academico={{ request.GET.curso_academico }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.student %}&student={{ request.GET.student }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}"
                         class="glass-page-link">
                         {{ i }}
                     </a>
@@ -203,7 +214,7 @@
 
                 {% if page_obj.has_next %}
                 <li>
-                    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.curso_academico %}&curso_academico={{ request.GET.curso_academico }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.student %}&student={{ request.GET.student }}{% endif %}"
+                    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.curso_academico %}&curso_academico={{ request.GET.curso_academico }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.student %}&student={{ request.GET.student }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}"
                         class="glass-page-link">
                         Siguiente
                     </a>

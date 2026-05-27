@@ -21,7 +21,7 @@ from .forms import (
     ReglamentoGeneralForm, ArticuloReglamentoGeneralFormSet,
 )
 from django.contrib.auth.models import Group, User
-from django.db.models import Q, Max
+from django.db.models import Q, Max, Case, When, IntegerField
 from datetime import date, datetime
 from django.http import HttpResponse, JsonResponse
 from django.core.paginator import Paginator
@@ -1796,6 +1796,10 @@ class MatriculasListView(BaseContextMixin, ListView):
         if student_id:
             queryset = queryset.filter(student__id=student_id)
 
+        estado = self.request.GET.get('estado')
+        if estado:
+            queryset = queryset.filter(estado=estado)
+
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -3105,16 +3109,21 @@ class StudentListNotasView(BaseContextMixin, ListView):
             curso_academico_activo = CursoAcademico.objects.filter(activo=True).first()
             context['curso_academico'] = curso_academico_activo
 
-            # Obtener matrículas activas para este curso y curso académico activo
+            # Obtener todas las matrículas del curso para mostrar inactivos transparentes.
+            # Un estudiante es "activo en el semestre" solo si estado == 'P'.
+            # Cualquier baja (BA, BL, BI) o aprobado (A) se trata como inactivo.
             search_query = self.request.GET.get('search_query', '').strip()
-            active_enrollments = Matriculas.objects.filter(
+            all_enrollments = Matriculas.objects.filter(
                 course=course,
-                activo=True,
                 curso_academico=curso_academico_activo,
-            ).select_related('student')
+            ).select_related('student').order_by(
+                # Activos (estado P) primero
+                Case(When(estado='P', then=0), default=1, output_field=IntegerField()),
+                'student__first_name', 'student__last_name'
+            )
 
             if search_query:
-                active_enrollments = active_enrollments.filter(
+                all_enrollments = all_enrollments.filter(
                     Q(student__first_name__icontains=search_query) |
                     Q(student__last_name__icontains=search_query) |
                     Q(student__username__icontains=search_query)
@@ -3122,8 +3131,10 @@ class StudentListNotasView(BaseContextMixin, ListView):
 
             student_data = []
             max_notas = 0
-            for enrollment in active_enrollments:
+            for enrollment in all_enrollments:
                 student = enrollment.student
+                # Activo en semestre = estado 'P' (Activo). Cualquier otro estado es inactivo.
+                es_activo = enrollment.estado == 'P'
                 calificacion = Calificaciones.objects.filter(
                     course=course,
                     student=student,
@@ -3133,10 +3144,11 @@ class StudentListNotasView(BaseContextMixin, ListView):
                 all_notes = []
                 if calificacion:
                     all_notes = list(calificacion.notas.all().order_by('fecha_creacion'))
-                    # Update max_notas
-                    num_notas = len(all_notes)
-                    if num_notas > max_notas:
-                        max_notas = num_notas
+                    # Solo contar notas para el ancho de columnas si el estudiante está activo
+                    if es_activo:
+                        num_notas = len(all_notes)
+                        if num_notas > max_notas:
+                            max_notas = num_notas
 
                 student_data.append({
                     'calificacion_id': calificacion.id if calificacion else None,
@@ -3145,6 +3157,8 @@ class StudentListNotasView(BaseContextMixin, ListView):
                     'average': calificacion.average if calificacion else None,
                     'matricula_id': enrollment.id,
                     'student_id': student.id,
+                    'matricula_activa': es_activo,
+                    'estado_display': enrollment.get_estado_display(),
                 })
             # Pre-calcular notas faltantes por estudiante para el template
             for data in student_data:
@@ -3207,6 +3221,12 @@ class AddNotaView(LoginRequiredMixin, View):
 
     def get(self, request, matricula_id):
         matricula = get_object_or_404(Matriculas, id=matricula_id)
+
+        # Bloquear acceso si la matrícula no está activa en el semestre (estado != 'P')
+        if matricula.estado != 'P':
+            messages.error(request, f'Este estudiante está inactivo ({matricula.get_estado_display()}). No se pueden agregar ni editar notas.')
+            return redirect('principal:calificacion_detalle_estudiante', student_id=matricula.student.id, course_id=matricula.course.id)
+
         calificacion = Calificaciones.objects.filter(
             course=matricula.course,
             student=matricula.student,
@@ -3231,6 +3251,11 @@ class AddNotaView(LoginRequiredMixin, View):
 
     def post(self, request, matricula_id):
         matricula = get_object_or_404(Matriculas, id=matricula_id)
+
+        # Bloquear si la matrícula no está activa en el semestre (estado != 'P')
+        if matricula.estado != 'P':
+            messages.error(request, f'Este estudiante está inactivo ({matricula.get_estado_display()}). No se pueden agregar ni editar notas.')
+            return redirect('principal:calificacion_detalle_estudiante', student_id=matricula.student.id, course_id=matricula.course.id)
 
         # ── Recopilar notas enviadas ──────────────────────────────────────────
         # El template envía: nota_id[], nota_valor[], nota_delete[]
@@ -3365,19 +3390,24 @@ class AsistenciaView(BaseContextMixin, TemplateView):
         # Obtener el curso académico activo
         curso_academico_activo = CursoAcademico.objects.filter(activo=True).first()
         
-        # Filtrar asistencias por curso y ordenar por fecha descendente
+        # Filtrar asistencias — incluir todos los estudiantes del curso académico activo
         asistencias = Asistencia.objects.filter(
             course=course,
             student__matriculas__curso_academico=curso_academico_activo,
-            student__matriculas__activo=True
-        ).select_related('student', 'course').order_by('-date')
+        ).select_related('student', 'course').order_by('-date').distinct()
         
-        # Obtener todas las matrículas activas para este curso en el curso académico activo
-        matriculas = Matriculas.objects.filter(
+        # Todas las matrículas del curso: activos (estado='P') primero, luego inactivos
+        matriculas_qs = Matriculas.objects.filter(
             course=course,
-            activo=True,
             curso_academico=curso_academico_activo
-        ).select_related('student')  # Optimizar consulta de estudiantes
+        ).select_related('student').order_by(
+            Case(When(estado='P', then=0), default=1, output_field=IntegerField()),
+            'student__first_name', 'student__last_name'
+        )
+        # Anotar cada matrícula con flag de activo en semestre para el template
+        matriculas = list(matriculas_qs)
+        for m in matriculas:
+            m.es_activo_semestre = (m.estado == 'P')
         
         # Filtrar por fecha si se proporciona en la solicitud
         fecha_filtro = self.request.GET.get('fecha')
@@ -3411,11 +3441,17 @@ class AddAsistenciaView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         course_id = kwargs['course_id']
         course = Curso.objects.get(id=course_id)
-        matriculas = Matriculas.objects.filter(course=course)
-        # Obtener las asistencias existentes para este curso
+        # Todas las matrículas: activos (estado='P') primero, inactivos al final
+        matriculas_qs = Matriculas.objects.filter(course=course).select_related('student').order_by(
+            Case(When(estado='P', then=0), default=1, output_field=IntegerField()),
+            'student__first_name', 'student__last_name'
+        )
+        # Anotar flag de activo en semestre para el template
+        matriculas = list(matriculas_qs)
+        for m in matriculas:
+            m.es_activo_semestre = (m.estado == 'P')
         asistencias = Asistencia.objects.order_by('date')
 
-        # Calcular clases restantes para determinar el modo (agregar vs modificar)
         asistencias_registradas = Asistencia.objects.filter(course=course).values('date').distinct().count()
         clases_restantes = course.class_quantity - asistencias_registradas
 
@@ -3429,7 +3465,8 @@ class AddAsistenciaView(LoginRequiredMixin, TemplateView):
 
     def post(self, request, course_id):
         course = Curso.objects.get(id=course_id)
-        matriculas = Matriculas.objects.filter(course=course)
+        # Solo procesar matrículas con estado 'P' (activo en el semestre)
+        matriculas = Matriculas.objects.filter(course=course, estado='P')
 
         if request.method == 'POST':
             date_str = request.POST.get('date')
@@ -3481,7 +3518,8 @@ def eliminar_asistencia(request, asistencia_id):
 
 def add_asistencias(request, course_id):
     course = get_object_or_404(Curso, id=course_id)
-    matriculas = Matriculas.objects.filter(course=course, activo=True)
+    # Solo estudiantes con estado 'P' (activo en el semestre)
+    matriculas = Matriculas.objects.filter(course=course, estado='P')
 
     if request.method == 'POST':
         date_str = request.POST.get('date')
