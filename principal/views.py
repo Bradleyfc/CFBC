@@ -6499,3 +6499,231 @@ def terminar_semestre_view(request, curso_id):
             {'success': False, 'error': f'Error inesperado: {str(e)}'},
             status=500
         )
+
+
+@login_required
+def revertir_semestre_view(request, curso_id):
+    """
+    Endpoint AJAX para revertir el semestre actual de un curso y restaurar el anterior.
+
+    GET: Devuelve la lista de semestres archivados disponibles para el curso.
+    POST: Ejecuta la reversión del semestre indicado.
+
+    Condiciones:
+      - Solo accesible para Secretaría.
+      - El curso debe estar en estado 'I' (inscripción) o 'IT' (plazo terminado).
+      - Si está en 'P' (en progreso), devuelve error.
+      - Elimina el semestre actual (matrículas, solicitudes, etc.) y restaura el archivado.
+      - Envía correo a los estudiantes que habían aplicado.
+    """
+    import json
+    from django.http import JsonResponse
+    from principal.models import Curso, SemestreCurso, SolicitudInscripcion, Matriculas, Calificaciones, NotaIndividual, Asistencia
+    from datos_archivados.models import SemestreCursoArchivado, MatriculaArchivada, CalificacionArchivada, NotaIndividualArchivada, AsistenciaArchivada, CursoArchivado
+
+    if not request.user.groups.filter(name='Secretaría').exists():
+        return JsonResponse({'success': False, 'error': 'No tienes permisos para realizar esta acción.'}, status=403)
+
+    try:
+        curso = Curso.objects.get(pk=curso_id)
+    except Curso.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Curso no encontrado.'}, status=404)
+
+    # GET: devolver semestres archivados disponibles
+    if request.method == 'GET':
+        semestres = SemestreCursoArchivado.objects.filter(
+            curso_archivado__id_original=curso_id
+        ).order_by('-numero_semestre').values('id', 'numero_semestre', 'fecha_cierre', 'fecha_inicio')
+        lista = []
+        for s in semestres:
+            lista.append({
+                'id': s['id'],
+                'numero_semestre': s['numero_semestre'],
+                'fecha_cierre': s['fecha_cierre'].strftime('%d/%m/%Y') if s['fecha_cierre'] else '—',
+                'fecha_inicio': s['fecha_inicio'].strftime('%d/%m/%Y') if s['fecha_inicio'] else '—',
+            })
+        return JsonResponse({'semestres': lista})
+
+    # POST: ejecutar reversión
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Método no permitido.'}, status=405)
+
+    # Verificar estado del curso
+    estado_actual = curso.get_dynamic_status()
+    if estado_actual == 'P':
+        return JsonResponse({
+            'success': False,
+            'error': 'No se puede revertir un semestre mientras el curso está en progreso.',
+            'en_progreso': True,
+        }, status=400)
+
+    if estado_actual not in ('I', 'IT'):
+        return JsonResponse({
+            'success': False,
+            'error': f'Solo se puede revertir en estado de inscripción o plazo terminado. Estado actual: {curso.get_dynamic_status_display()}',
+        }, status=400)
+
+    try:
+        body = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        body = {}
+
+    semestre_archivado_id = body.get('semestre_archivado_id')
+    if not semestre_archivado_id:
+        return JsonResponse({'success': False, 'error': 'Debe indicar el semestre a restaurar.'}, status=400)
+
+    try:
+        semestre_archivado = SemestreCursoArchivado.objects.select_related('curso_archivado').get(
+            pk=semestre_archivado_id,
+            curso_archivado__id_original=curso_id,
+        )
+    except SemestreCursoArchivado.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Semestre archivado no encontrado para este curso.'}, status=404)
+
+    # Recopilar emails de estudiantes con solicitudes pendientes/aprobadas en el semestre actual
+    solicitudes_actuales = SolicitudInscripcion.objects.filter(
+        curso=curso,
+        estado__in=('pendiente', 'aprobada'),
+    ).select_related('estudiante')
+
+    emails_notificar = []
+    for sol in solicitudes_actuales:
+        if sol.estudiante.email:
+            emails_notificar.append((sol.estudiante.email, sol.estudiante.get_full_name() or sol.estudiante.username))
+
+    try:
+        from django.db import transaction
+        with transaction.atomic():
+            # 1. Eliminar datos del semestre actual del curso
+            NotaIndividual.objects.filter(calificacion__course=curso).delete()
+            Calificaciones.objects.filter(course=curso).delete()
+            Asistencia.objects.filter(course=curso).delete()
+            Matriculas.objects.filter(course=curso).delete()
+            SolicitudInscripcion.objects.filter(curso=curso).delete()
+
+            # 2. Desactivar el SemestreCurso actual
+            SemestreCurso.objects.filter(curso=curso, activo=True).update(activo=False)
+
+            # 3. Restaurar datos del semestre archivado
+            curso_archivado = semestre_archivado.curso_archivado
+
+            # Restaurar matrículas
+            from django.contrib.auth.models import User
+            matriculas_archivadas = MatriculaArchivada.objects.filter(
+                course=curso_archivado
+            ).select_related('student__usuario_actual')
+
+            matriculas_map = {}
+            for ma in matriculas_archivadas:
+                student = ma.student.usuario_actual if ma.student.usuario_actual else User.objects.filter(pk=ma.student.id_original).first()
+                if not student:
+                    continue
+                m, _ = Matriculas.objects.get_or_create(
+                    course=curso,
+                    student=student,
+                    curso_academico=curso.curso_academico,
+                    defaults={'activo': ma.activo, 'fecha_matricula': ma.fecha_matricula, 'estado': ma.estado},
+                )
+                matriculas_map[ma.pk] = m
+
+            # Restaurar calificaciones y notas
+            calificaciones_archivadas = CalificacionArchivada.objects.filter(
+                course=curso_archivado
+            ).select_related('student__usuario_actual', 'matricula').prefetch_related('notas_archivadas')
+
+            for cala in calificaciones_archivadas:
+                student = cala.student.usuario_actual if cala.student.usuario_actual else User.objects.filter(pk=cala.student.id_original).first()
+                if not student:
+                    continue
+                matricula = matriculas_map.get(cala.matricula.pk) if cala.matricula else None
+                cal, created = Calificaciones.objects.get_or_create(
+                    course=curso,
+                    student=student,
+                    curso_academico=curso.curso_academico,
+                    defaults={'matricula': matricula, 'average': cala.average},
+                )
+                if created:
+                    for na in cala.notas_archivadas.all():
+                        NotaIndividual.objects.create(calificacion=cal, valor=na.valor, fecha_creacion=na.fecha_creacion)
+
+            # Restaurar asistencias
+            asistencias_archivadas = AsistenciaArchivada.objects.filter(
+                course=curso_archivado
+            ).select_related('student__usuario_actual')
+
+            for aa in asistencias_archivadas:
+                student = aa.student.usuario_actual if aa.student.usuario_actual else User.objects.filter(pk=aa.student.id_original).first()
+                if not student:
+                    continue
+                Asistencia.objects.get_or_create(course=curso, student=student, date=aa.date, defaults={'presente': aa.presente})
+
+            # 4. Reactivar el SemestreCurso archivado (restaurar en principal)
+            SemestreCurso.objects.filter(
+                curso=curso,
+                numero_semestre=semestre_archivado.numero_semestre,
+            ).update(activo=True)
+
+            # Si no existe, crearlo
+            if not SemestreCurso.objects.filter(curso=curso, numero_semestre=semestre_archivado.numero_semestre).exists():
+                SemestreCurso.objects.create(
+                    curso=curso,
+                    numero_semestre=semestre_archivado.numero_semestre,
+                    activo=True,
+                    curso_academico=curso.curso_academico,
+                    fecha_inicio=semestre_archivado.fecha_inicio,
+                    fecha_cierre=semestre_archivado.fecha_cierre,
+                )
+
+            # 5. Eliminar los datos archivados del semestre restaurado
+            from datos_archivados.models import UsuarioArchivado
+            cursos_archivados_ids = [curso_archivado.pk]
+            NotaIndividualArchivada.objects.filter(calificacion__course__pk__in=cursos_archivados_ids).delete()
+            CalificacionArchivada.objects.filter(course__pk__in=cursos_archivados_ids).delete()
+            AsistenciaArchivada.objects.filter(course__pk__in=cursos_archivados_ids).delete()
+            MatriculaArchivada.objects.filter(course__pk__in=cursos_archivados_ids).delete()
+            semestre_archivado.delete()
+
+            # 6. Restaurar estado del curso a 'P' (en progreso) y limpiar fechas
+            Curso.objects.filter(pk=curso_id).update(
+                status='P',
+                enrollment_deadline=None,
+                start_date=None,
+            )
+            curso.status = 'P'
+            curso.enrollment_deadline = None
+            curso.start_date = None
+
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).error(f'[revertir_semestre] Error: {exc}', exc_info=True)
+        return JsonResponse({'success': False, 'error': f'Error al revertir el semestre: {str(exc)}'}, status=500)
+
+    # 7. Enviar correos a estudiantes notificados (fuera de la transacción para no bloquearla)
+    correos_enviados = 0
+    for email, nombre in emails_notificar:
+        try:
+            send_mail(
+                subject='Aviso: Tu solicitud de inscripción ha sido cancelada',
+                message=(
+                    f'Estimado/a {nombre},\n\n'
+                    f'Te informamos que el semestre del curso "{curso.name}" ha sido restablecido '
+                    f'al semestre anterior. Como consecuencia, tu solicitud de inscripción para el '
+                    f'semestre actual no es válida y ha sido cancelada.\n\n'
+                    f'Si tienes alguna duda, por favor contacta con la secretaría del centro.\n\n'
+                    f'Atentamente,\nEl equipo del centro.'
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+                fail_silently=True,
+            )
+            correos_enviados += 1
+        except Exception:
+            pass
+
+    return JsonResponse({
+        'success': True,
+        'message': (
+            f'Semestre {semestre_archivado.numero_semestre} restaurado correctamente. '
+            f'Se notificó a {correos_enviados} estudiante(s) por correo.'
+        ),
+    })

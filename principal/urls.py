@@ -123,4 +123,7 @@ urlpatterns = [
 
     # Endpoint AJAX: Terminar Semestre
     path('cursos/<int:curso_id>/terminar-semestre/', views.terminar_semestre_view, name='terminar_semestre'),
+
+    # Endpoint AJAX: Revertir Semestre
+    path('cursos/<int:curso_id>/revertir-semestre/', views.revertir_semestre_view, name='revertir_semestre'),
 ]
