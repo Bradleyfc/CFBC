@@ -75,23 +75,32 @@
                     {% endif %}
 
                     <!-- Action Buttons -->
-                    <div class="flex flex-wrap gap-2 justify-end">
-                        <button type="submit" class="glass-button glass-button-primary">
-                            <span class="fa material-icons mr-2">filter_list</span></i>
-                            Aplicar Filtros
-                        </button>
-                        <a href="{% url 'principal:calificaciones' %}" class="glass-button glass-button-secondary">
-                            <span class="fa material-icons mr-2">refresh</span></i>
-                            Limpiar Filtros
-                        </a>
-                        <a href="{% url 'principal:profile' %}" class="glass-button glass-button-secondary">
-                            <span class="fa material-icons mr-2">arrow_back</span></i>
-                            Volver
-                        </a>
-                        <a href="#" onclick="checkCalificacionesBeforeExport('excel')" class="glass-button glass-button-success">
-                            <span class="fa material-icons mr-2">table_chart</span></i>
-                            Exportar Excel
-                        </a>
+                    <div class="flex flex-wrap gap-2 justify-between items-center">
+                        <!-- Checkbox mostrar sin calificaciones -->
+                        <label class="flex items-center gap-2 cursor-pointer select-none text-sm text-gray-700 font-medium">
+                            <input type="checkbox" name="mostrar_sin_calificaciones" value="1"
+                                {% if mostrar_sin_calificaciones %}checked{% endif %}
+                                class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                            Mostrar estudiantes sin calificaciones
+                        </label>
+                        <div class="flex flex-wrap gap-2 justify-end">
+                            <button type="submit" class="glass-button glass-button-primary">
+                                <span class="fa material-icons mr-2">filter_list</span></i>
+                                Aplicar Filtros
+                            </button>
+                            <a href="{% url 'principal:calificaciones' %}" class="glass-button glass-button-secondary">
+                                <span class="fa material-icons mr-2">refresh</span></i>
+                                Limpiar Filtros
+                            </a>
+                            <a href="{% url 'principal:profile' %}" class="glass-button glass-button-secondary">
+                                <span class="fa material-icons mr-2">arrow_back</span></i>
+                                Volver
+                            </a>
+                            <a href="#" onclick="checkCalificacionesBeforeExport('excel')" class="glass-button glass-button-success">
+                                <span class="fa material-icons mr-2">table_chart</span></i>
+                                Exportar Excel
+                            </a>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -161,7 +170,7 @@
             <ul class="glass-pagination">
                 {% if page_obj.has_previous %}
                 <li>
-                    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.curso_academico %}&curso_academico={{ request.GET.curso_academico }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}"
+                    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.curso_academico %}&curso_academico={{ request.GET.curso_academico }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if mostrar_sin_calificaciones %}&mostrar_sin_calificaciones=1{% endif %}"
                         class="glass-page-link">
                         Anterior
                     </a>
@@ -175,7 +184,7 @@
                 </li>
                 {% else %}
                 <li>
-                    <a href="?page={{ i }}{% if request.GET.curso_academico %}&curso_academico={{ request.GET.curso_academico }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}"
+                    <a href="?page={{ i }}{% if request.GET.curso_academico %}&curso_academico={{ request.GET.curso_academico }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if mostrar_sin_calificaciones %}&mostrar_sin_calificaciones=1{% endif %}"
                         class="glass-page-link">
                         {{ i }}
                     </a>
@@ -185,7 +194,7 @@
 
                 {% if page_obj.has_next %}
                 <li>
-                    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.curso_academico %}&curso_academico={{ request.GET.curso_academico }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}"
+                    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.curso_academico %}&curso_academico={{ request.GET.curso_academico }}{% endif %}{% if request.GET.semestre %}&semestre={{ request.GET.semestre }}{% endif %}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if mostrar_sin_calificaciones %}&mostrar_sin_calificaciones=1{% endif %}"
                         class="glass-page-link">
                         Siguiente
                     </a>
@@ -197,7 +206,11 @@
         <!-- Empty State -->
         <div class="glass-alert glass-alert-info">
             <span class="fa material-icons mr-2">info</span></i>
-            No se encontraron calificaciones con los filtros seleccionados.
+            {% if mostrar_sin_calificaciones %}
+                No se encontraron estudiantes activos sin calificaciones con los filtros seleccionados.
+            {% else %}
+                No se encontraron calificaciones con los filtros seleccionados.
+            {% endif %}
         </div>
         {% endif %}
 

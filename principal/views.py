@@ -1936,6 +1936,11 @@ class CalificacionesListView(BaseContextMixin, ListView):
         if semestre_id:
             return Calificaciones.objects.none()
 
+        # Si se pide mostrar sin calificaciones, el queryset base se maneja en get_context_data
+        mostrar_sin_cal = self.request.GET.get('mostrar_sin_calificaciones') == '1'
+        if mostrar_sin_cal:
+            return Calificaciones.objects.none()
+
         queryset = Calificaciones.objects.select_related('student', 'course', 'curso_academico')
 
         curso_academico_id = self.request.GET.get('curso_academico')
@@ -1974,6 +1979,8 @@ class CalificacionesListView(BaseContextMixin, ListView):
         semestre_id = self.request.GET.get('semestre')
         context['semestre_seleccionado'] = None
         context['viendo_semestre_archivado'] = False
+        mostrar_sin_cal = self.request.GET.get('mostrar_sin_calificaciones') == '1'
+        context['mostrar_sin_calificaciones'] = mostrar_sin_cal
 
         if semestre_id:
             try:
@@ -1998,6 +2005,47 @@ class CalificacionesListView(BaseContextMixin, ListView):
                 context['is_paginated'] = context['calificaciones'].has_other_pages()
             except SemestreCursoArchivado.DoesNotExist:
                 pass
+
+        elif mostrar_sin_cal:
+            # Construir lista de estudiantes activos sin calificaciones
+            matriculas_qs = Matriculas.objects.filter(
+                estado='P', activo=True
+            ).select_related('student', 'course', 'curso_academico')
+
+            if curso_academico_id:
+                matriculas_qs = matriculas_qs.filter(curso_academico__id=curso_academico_id)
+
+            curso_id = self.request.GET.get('curso')
+            if curso_id:
+                matriculas_qs = matriculas_qs.filter(course__id=curso_id)
+
+            student_id = self.request.GET.get('student') or self.request.GET.get('estudiante')
+            if student_id:
+                matriculas_qs = matriculas_qs.filter(student__id=student_id)
+
+            # Excluir los que ya tienen calificación
+            estudiantes_con_cal = Calificaciones.objects.values_list('student_id', 'course_id')
+            pares_con_cal = set(estudiantes_con_cal)
+
+            # Crear objetos pseudo-calificacion para el template
+            class _EstudianteSinCalificacion:
+                def __init__(self, matricula):
+                    self.student = matricula.student
+                    self.course = matricula.course
+                    self.curso_academico = matricula.curso_academico
+                    self.average = None
+
+            sin_cal = [
+                _EstudianteSinCalificacion(m)
+                for m in matriculas_qs
+                if (m.student_id, m.course_id) not in pares_con_cal
+            ]
+
+            paginator = Paginator(sin_cal, self.paginate_by)
+            page_number = self.request.GET.get('page', 1)
+            context['calificaciones'] = paginator.get_page(page_number)
+            context['page_obj'] = context['calificaciones']
+            context['is_paginated'] = context['calificaciones'].has_other_pages()
 
         return context
 
