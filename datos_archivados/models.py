@@ -148,8 +148,11 @@ class MatriculaArchivada(models.Model):
     Modelo para almacenar matrículas archivadas de la base de datos antigua
     """
     ESTADO_CHOICES = [
-        ('P', 'Pendiente'),
+        ('P', 'Activo'),
         ('A', 'Aprobado'),
+        ('BA', 'Baja por Ausencia'),
+        ('BL', 'Baja por Licencia'),
+        ('BI', 'Baja por Insuficiencia Académica'),
         ('R', 'Reprobado'),
         ('L', 'Licencia'),
         ('B', 'Baja'),
@@ -161,7 +164,7 @@ class MatriculaArchivada(models.Model):
                               related_name='matriculas_archivadas', verbose_name='Estudiante Archivado')
     activo = models.BooleanField(default=True, verbose_name='Habilitado')
     fecha_matricula = models.DateField(verbose_name='Fecha de Matrícula')
-    estado = models.CharField(max_length=1, choices=ESTADO_CHOICES, default='P', verbose_name='Estado')
+    estado = models.CharField(max_length=2, choices=ESTADO_CHOICES, default='P', verbose_name='Estado')
     
     # Vinculación con matrícula actual (si existe)
     # matricula_actual = models.ForeignKey('principal.Matriculas', on_delete=models.SET_NULL, 
