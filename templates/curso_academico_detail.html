@@ -829,10 +829,45 @@
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════════════════
+     MODAL: Resultado de la reversión (éxito o error)
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div id="modal-resultado-overlay" style="display:none;position:fixed;inset:0;z-index:9300;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:2rem;max-width:460px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.25);text-align:center;">
+    <span id="modal-resultado-icon" class="material-icons" style="font-size:3rem;display:block;margin-bottom:0.75rem;"></span>
+    <h3 id="modal-resultado-titulo" style="margin:0 0 0.6rem;font-size:1.1rem;font-weight:700;color:#1e1b4b;"></h3>
+    <p id="modal-resultado-mensaje" style="margin:0 0 1.5rem;font-size:0.9rem;color:#374151;line-height:1.6;"></p>
+    <button id="modal-resultado-btn" onclick="cerrarModalResultado()" class="ca-btn ca-btn-secondary" style="margin:0 auto;">Cerrar</button>
+  </div>
+</div>
+
 <script>
 (function() {
   var _cursoIdRevertir = null;
   var _semestreArchivadoId = null;
+  var _recargarAlCerrar = false;
+
+  window.cerrarModalResultado = function() {
+    document.getElementById('modal-resultado-overlay').style.display = 'none';
+    if (_recargarAlCerrar) { window.location.reload(); }
+  };
+
+  function mostrarResultado(exito, titulo, mensaje) {
+    var iconEl = document.getElementById('modal-resultado-icon');
+    var tituloEl = document.getElementById('modal-resultado-titulo');
+    var mensajeEl = document.getElementById('modal-resultado-mensaje');
+    var btnEl = document.getElementById('modal-resultado-btn');
+
+    iconEl.textContent = exito ? 'check_circle' : 'error';
+    iconEl.style.color = exito ? '#16a34a' : '#ef4444';
+    tituloEl.textContent = titulo;
+    mensajeEl.textContent = mensaje;
+    btnEl.className = exito ? 'ca-btn ca-btn-primary' : 'ca-btn ca-btn-secondary';
+    btnEl.style.margin = '0 auto';
+
+    _recargarAlCerrar = exito;
+    document.getElementById('modal-resultado-overlay').style.display = 'flex';
+  }
 
   window.abrirModalRevertir = function() {
     document.getElementById('revertir-curso-select').value = '';
@@ -841,8 +876,7 @@
     document.getElementById('btn-confirmar-revertir').disabled = true;
     _cursoIdRevertir = null;
     _semestreArchivadoId = null;
-    var overlay = document.getElementById('modal-revertir-overlay');
-    overlay.style.display = 'flex';
+    document.getElementById('modal-revertir-overlay').style.display = 'flex';
   };
 
   window.cerrarModalRevertir = function() {
@@ -871,7 +905,6 @@
 
     if (!cursoId) return;
 
-    // Verificar estado del curso seleccionado
     var opt = document.querySelector('#revertir-curso-select option[value="' + cursoId + '"]');
     var status = opt ? opt.dataset.status : '';
 
@@ -887,7 +920,6 @@
       return;
     }
 
-    // Cargar semestres archivados vía AJAX
     var btnRevertir = document.querySelector('[data-revertir-base-url]');
     var baseUrl = btnRevertir ? btnRevertir.dataset.revertirBaseUrl : '/cursos/0/revertir-semestre/';
     var url = baseUrl.replace('/0/', '/' + cursoId + '/');
@@ -908,7 +940,6 @@
         });
         semestresWrap.style.display = 'block';
         _cursoIdRevertir = cursoId;
-
         semSelect.onchange = function() {
           _semestreArchivadoId = this.value || null;
           btnConfirmar.disabled = !_semestreArchivadoId;
@@ -950,13 +981,12 @@
     .then(function(data) {
       cerrarModalConfirmar();
       if (data.success) {
-        alert('✅ ' + data.message);
-        window.location.reload();
+        mostrarResultado(true, 'Semestre revertido', data.message);
       } else {
         if (data.en_progreso) {
           document.getElementById('modal-error-progreso-overlay').style.display = 'flex';
         } else {
-          alert('❌ ' + (data.error || 'Error desconocido.'));
+          mostrarResultado(false, 'No se pudo revertir', data.error || 'Error desconocido.');
         }
         btnEjecutar.disabled = false;
         btnEjecutar.innerHTML = '<span class="material-icons">restore</span> Sí, revertir';
@@ -964,7 +994,7 @@
     })
     .catch(function() {
       cerrarModalConfirmar();
-      alert('❌ Error de conexión. Intenta de nuevo.');
+      mostrarResultado(false, 'Error de conexión', 'No se pudo completar la operación. Intenta de nuevo.');
       btnEjecutar.disabled = false;
       btnEjecutar.innerHTML = '<span class="material-icons">restore</span> Sí, revertir';
     });
