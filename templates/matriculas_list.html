@@ -38,7 +38,9 @@
                             <select class="glass-select-compact" id="semestre" name="semestre">
                                 <option value="">Todos (semestre actual)</option>
                                 {% for s in semestres_disponibles %}
-                                <option value="{{ s.id }}" {% if request.GET.semestre == s.id|stringformat:"s" %}selected{% endif %}>
+                                <option value="{{ s.id }}"
+                                        data-curso-id="{{ s.curso_archivado.id_original }}"
+                                        {% if request.GET.semestre == s.id|stringformat:"s" %}selected{% endif %}>
                                     Sem. {{ s.numero_semestre }} — {{ s.curso_archivado.name }}{% if s.fecha_cierre %} ({{ s.fecha_cierre|date:"d/m/Y" }}){% endif %}
                                 </option>
                                 {% endfor %}
@@ -640,12 +642,35 @@
 </style>
 
 <script>
-    // Auto-submit al cambiar cualquier filtro
-    document.querySelectorAll('#curso_academico, #semestre, #curso, #student, #estado, #estado_curso').forEach(function(select) {
+    // Auto-submit al cambiar cualquier filtro (excepto #curso que filtra semestres primero)
+    document.querySelectorAll('#curso_academico, #semestre, #student, #estado, #estado_curso').forEach(function(select) {
         select.addEventListener('change', function() {
             this.closest('form').submit();
         });
     });
+
+    function filtrarSemestresPorCurso(cursoId) {
+        var semSelect = document.getElementById('semestre');
+        semSelect.querySelectorAll('option[data-curso-id]').forEach(function(opt) {
+            if (!cursoId || opt.dataset.cursoId === cursoId) {
+                opt.style.display = '';
+            } else {
+                opt.style.display = 'none';
+                if (opt.selected) { semSelect.value = ''; }
+            }
+        });
+    }
+
+    (function() {
+        var cursoSelect = document.getElementById('curso');
+        if (cursoSelect) {
+            filtrarSemestresPorCurso(cursoSelect.value);
+            cursoSelect.addEventListener('change', function() {
+                filtrarSemestresPorCurso(this.value);
+                this.closest('form').submit();
+            });
+        }
+    })();
 
     // Verificar si hay matrículas antes de exportar
     function checkMatriculasBeforeExport(type) {
