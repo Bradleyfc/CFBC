@@ -44,7 +44,7 @@
 
                         <!-- Action Buttons -->
                         <div class="flex gap-2">
-                            <button type="submit" class="glass-button glass-button-primary flex-1">
+                            <button type="submit" class="glass-button glass-button-primary flex-1" style="display:none;">
                                 <span class="fa material-icons mr-1">filter_list</span></i>
                                 Filtrar
                             </button>
@@ -701,6 +701,14 @@
 </style>
 
 <script>
+    // Auto-submit al cambiar la fecha del filtro
+    var fechaInput = document.getElementById('fecha');
+    if (fechaInput) {
+        fechaInput.addEventListener('change', function() {
+            this.closest('form').submit();
+        });
+    }
+
     // ── Paginación de tablas ──────────────────────────────────────────────────
     const FILAS_POR_PAGINA = 10;
 

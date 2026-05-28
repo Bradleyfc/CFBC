@@ -83,7 +83,7 @@
           </div>
           <!-- Botones -->
           <div class="flex gap-2 items-end pb-0.5">
-            <button type="submit" class="glass-button glass-button-purple">
+            <button type="submit" class="glass-button glass-button-purple" style="display:none;">
               <span class="fa material-icons mr-1">filter_list</span>Filtrar
             </button>
             {% if hay_filtros %}
@@ -241,4 +241,15 @@
   .glass-alert-danger  { background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(220,38,38,0.08)); color: #7f1d1d; }
   .glass-alert-success { background: linear-gradient(135deg, rgba(34,197,94,0.15), rgba(22,163,74,0.08)); color: #14532d; }
 </style>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // Auto-submit al cambiar el select de curso
+  var selectCurso = document.querySelector('select[name="curso_id"]');
+  if (selectCurso) {
+    selectCurso.addEventListener('change', function () {
+      this.closest('form').submit();
+    });
+  }
+});
+</script>
 {% endblock %}

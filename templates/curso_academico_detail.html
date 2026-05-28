@@ -151,7 +151,7 @@
         </div>
         {% endif %}
         <div class="ca-filter-actions">
-          <button type="submit" class="ca-btn ca-btn-primary"><span class="material-icons">search</span> Filtrar</button>
+          <button type="submit" class="ca-btn ca-btn-primary" style="display:none;"><span class="material-icons">search</span> Filtrar</button>
           <a href="{{ request.path }}?tab={{ active_tab }}" class="ca-btn ca-btn-secondary"><span class="material-icons">clear</span> Limpiar</a>
           <a href="{{ request.path }}?{% if request.GET.curso %}curso={{ request.GET.curso }}&{% endif %}{% if request.GET.estudiante %}estudiante={{ request.GET.estudiante }}&{% endif %}pdf=1" class="ca-btn ca-btn-danger"><span class="material-icons">picture_as_pdf</span> PDF</a>
           <a href="{{ request.path }}?{% if request.GET.curso %}curso={{ request.GET.curso }}&{% endif %}{% if request.GET.estudiante %}estudiante={{ request.GET.estudiante }}&{% endif %}excel=1" class="ca-btn ca-btn-success"><span class="material-icons">table_chart</span> Excel</a>
@@ -168,6 +168,13 @@
     var baseUrl = select.dataset.baseUrl.replace('/0/', '/' + pk + '/');
     window.location.href = baseUrl + '?tab=' + tab;
   }
+
+  // Auto-submit al cambiar cualquier filtro (excepto el selector de curso académico que tiene su propio handler)
+  document.querySelectorAll('.ca-filter-form select:not(#selector-curso-academico)').forEach(function(select) {
+    select.addEventListener('change', function() {
+      this.closest('form').submit();
+    });
+  });
   </script>
 
   <!-- TABS NAV -->

@@ -2962,6 +2962,14 @@ class ValidationErrorHandler {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit al cambiar el tipo de búsqueda
+    var searchTypeEl = document.getElementById('searchType');
+    if (searchTypeEl) {
+        searchTypeEl.addEventListener('change', function() {
+            document.getElementById('searchForm').submit();
+        });
+    }
+
     // Inicializar ValidationErrorHandler temprano
     window.validationErrorHandler = new ValidationErrorHandler();
     window.validationErrorHandler.initialize();

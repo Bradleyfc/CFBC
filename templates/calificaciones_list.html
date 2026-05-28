@@ -84,7 +84,7 @@
                             Mostrar estudiantes sin calificaciones
                         </label>
                         <div class="flex flex-wrap gap-2 justify-end">
-                            <button type="submit" class="glass-button glass-button-primary">
+                            <button type="submit" class="glass-button glass-button-primary" style="display:none;">
                                 <span class="fa material-icons mr-2">filter_list</span></i>
                                 Aplicar Filtros
                             </button>
@@ -583,6 +583,19 @@
 </style>
 
 <script>
+    // Auto-submit al cambiar cualquier filtro
+    document.querySelectorAll('#curso_academico, #semestre, #curso, #estudiante').forEach(function(select) {
+        select.addEventListener('change', function() {
+            this.closest('form').submit();
+        });
+    });
+    var checkboxFiltro = document.querySelector('input[name="mostrar_sin_calificaciones"]');
+    if (checkboxFiltro) {
+        checkboxFiltro.addEventListener('change', function() {
+            this.closest('form').submit();
+        });
+    }
+
     // Verificar si hay calificaciones antes de exportar
     function checkCalificacionesBeforeExport(type) {
         // Verificar si hay calificaciones contando las filas de la tabla

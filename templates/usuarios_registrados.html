@@ -93,7 +93,7 @@
 
                     <!-- Action Buttons -->
                     <div class="flex flex-wrap gap-2 justify-end">
-                        <button type="submit" class="glass-button glass-button-primary">
+        <button type="submit" class="glass-button glass-button-primary" style="display:none;">
                             <span class="icon material-icons mr-2">help</span>
                             Aplicar Filtros
                         </button>
@@ -1277,6 +1277,12 @@
     // Inicializar redimensionamiento de columnas
     document.addEventListener('DOMContentLoaded', function() {
         initializeColumnResizing();
+
+        // Auto-submit al cambiar selects de filtro
+        ['grupo', 'anio', 'orden'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.addEventListener('change', function() { this.closest('form').submit(); });
+        });
     });
 
     function initializeColumnResizing() {

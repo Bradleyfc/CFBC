@@ -68,7 +68,7 @@
           </div>
 
           <div class="flex gap-2">
-            <button type="submit" class="glass-button glass-button-purple">
+            <button type="submit" class="glass-button glass-button-purple" style="display:none;">
               <span class="fa material-icons mr-1">filter_list</span>
               Filtrar
             </button>
@@ -261,13 +261,19 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   // Al cambiar el curso, enviar el formulario automáticamente
-  // para actualizar la lista de estudiantes del select
   var selectCurso = document.getElementById('select-curso');
   if (selectCurso) {
     selectCurso.addEventListener('change', function () {
-      // Limpiar el estudiante seleccionado y enviar
       var selectEst = document.getElementById('select-estudiante');
       if (selectEst) selectEst.value = '';
+      this.closest('form').submit();
+    });
+  }
+
+  // Al cambiar el estudiante, también enviar automáticamente
+  var selectEst = document.getElementById('select-estudiante');
+  if (selectEst) {
+    selectEst.addEventListener('change', function () {
       this.closest('form').submit();
     });
   }
