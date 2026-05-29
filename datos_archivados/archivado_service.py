@@ -170,7 +170,7 @@ def archivar_datos_curso_academico(curso_academico):
                     teacher_name=curso.teacher.get_full_name() or curso.teacher.username,
                     image=curso.image.name if curso.image else None,
                     class_quantity=curso.class_quantity,
-                    status=curso.status,
+                    status=curso.get_dynamic_status(),
                     curso_academico=curso_academico_archivado,
                     enrollment_deadline=curso.enrollment_deadline,
                     start_date=curso.start_date,
@@ -205,19 +205,33 @@ def archivar_datos_curso_academico(curso_academico):
                     )
                     contadores['articulos_reglamento'] += 1
 
-            # ── 3b. Archivar SemestreCurso activos ──────────────────────────────
+            # ── 3b. Archivar SemestreCurso ───────────────────────────────────
             from principal.models import SemestreCurso
             from datos_archivados.models import SemestreCursoArchivado
 
+            # Mapa semestre.pk → SemestreCursoArchivado (para vincular matrículas/calificaciones/asistencias)
+            semestres_archivados_map = {}
+
             for curso_pk, curso_archivado in cursos_archivados_map.items():
-                semestres = SemestreCurso.objects.filter(curso__pk=curso_pk)
+                semestres = SemestreCurso.objects.filter(curso__pk=curso_pk).order_by('numero_semestre', '-activo', '-pk')
+                numeros_vistos = set()
                 for semestre in semestres:
-                    if SemestreCursoArchivado.objects.filter(id_original=semestre.pk).exists():
+                    # Evitar duplicados por id_original
+                    existente_arch = SemestreCursoArchivado.objects.filter(id_original=semestre.pk).first()
+                    if existente_arch:
+                        logger.info(f"SemestreCurso id={semestre.pk} ya archivado. Se reutiliza.")
+                        semestres_archivados_map[semestre.pk] = existente_arch
+                        numeros_vistos.add(semestre.numero_semestre)
+                        continue
+                    # Evitar duplicados por (curso_archivado, numero_semestre)
+                    if semestre.numero_semestre in numeros_vistos:
                         logger.info(
-                            f"SemestreCurso id={semestre.pk} ya archivado. Se omite."
+                            f"SemestreCurso semestre={semestre.numero_semestre} del curso "
+                            f"'{curso_archivado.name}' ya procesado. Se omite duplicado id={semestre.pk}."
                         )
                         continue
-                    SemestreCursoArchivado.objects.create(
+                    numeros_vistos.add(semestre.numero_semestre)
+                    sa = SemestreCursoArchivado.objects.create(
                         id_original=semestre.pk,
                         curso_archivado=curso_archivado,
                         numero_semestre=semestre.numero_semestre,
@@ -227,21 +241,19 @@ def archivar_datos_curso_academico(curso_academico):
                         fecha_cierre=semestre.fecha_cierre,
                         fecha_creacion=semestre.fecha_creacion,
                     )
+                    semestres_archivados_map[semestre.pk] = sa
 
             # ── 4. Archivar Matrículas ────────────────────────────────────────
             matriculas_qs = Matriculas.objects.filter(
                 curso_academico=curso_academico
-            ).select_related('student', 'course')
+            ).select_related('student', 'course', 'semestre')
 
             matriculas_archivadas_map = {}
 
             for matricula in matriculas_qs:
                 curso_archivado = cursos_archivados_map.get(matricula.course.pk)
                 if not curso_archivado:
-                    # Curso sin curso_academico asignado pero con matrícula vinculada
-                    existente = CursoArchivado.objects.filter(
-                        id_original=matricula.course.pk
-                    ).first()
+                    existente = CursoArchivado.objects.filter(id_original=matricula.course.pk).first()
                     if not existente:
                         obtener_o_crear_usuario_archivado(matricula.course.teacher)
                         existente = CursoArchivado.objects.create(
@@ -254,7 +266,7 @@ def archivar_datos_curso_academico(curso_academico):
                             teacher_name=matricula.course.teacher.get_full_name() or matricula.course.teacher.username,
                             image=matricula.course.image.name if matricula.course.image else None,
                             class_quantity=matricula.course.class_quantity,
-                            status=matricula.course.status,
+                            status=matricula.course.get_dynamic_status(),
                             curso_academico=curso_academico_archivado,
                             enrollment_deadline=matricula.course.enrollment_deadline,
                             start_date=matricula.course.start_date,
@@ -266,10 +278,16 @@ def archivar_datos_curso_academico(curso_academico):
 
                 estudiante_archivado = obtener_o_crear_usuario_archivado(matricula.student)
 
+                # Resolver semestre archivado
+                semestre_arch = None
+                if matricula.semestre_id:
+                    semestre_arch = semestres_archivados_map.get(matricula.semestre_id)
+
                 ma = MatriculaArchivada.objects.create(
                     id_original=matricula.pk,
                     course=curso_archivado,
                     student=estudiante_archivado,
+                    semestre_archivado=semestre_arch,
                     activo=matricula.activo,
                     fecha_matricula=matricula.fecha_matricula,
                     estado=matricula.estado,
@@ -280,14 +298,12 @@ def archivar_datos_curso_academico(curso_academico):
             # ── 5. Archivar Calificaciones y Notas Individuales ───────────────
             calificaciones_qs = Calificaciones.objects.filter(
                 curso_academico=curso_academico
-            ).select_related('student', 'course', 'matricula').prefetch_related('notas')
+            ).select_related('student', 'course', 'matricula', 'semestre').prefetch_related('notas')
 
             for calificacion in calificaciones_qs:
                 curso_archivado = cursos_archivados_map.get(calificacion.course.pk)
                 if not curso_archivado:
-                    curso_archivado = CursoArchivado.objects.filter(
-                        id_original=calificacion.course.pk
-                    ).first()
+                    curso_archivado = CursoArchivado.objects.filter(id_original=calificacion.course.pk).first()
                     if not curso_archivado:
                         logger.warning(
                             f"No se encontró CursoArchivado para course.pk="
@@ -307,7 +323,6 @@ def archivar_datos_curso_academico(curso_academico):
                         ).first()
 
                 if not matricula_archivada:
-                    # Matrícula mínima de respaldo (ID negativo para distinguir)
                     matricula_archivada = MatriculaArchivada.objects.create(
                         id_original=calificacion.pk * -1,
                         course=curso_archivado,
@@ -318,11 +333,17 @@ def archivar_datos_curso_academico(curso_academico):
                     )
                     contadores['matriculas'] += 1
 
+                # Resolver semestre archivado
+                semestre_arch = None
+                if calificacion.semestre_id:
+                    semestre_arch = semestres_archivados_map.get(calificacion.semestre_id)
+
                 calificacion_archivada = CalificacionArchivada.objects.create(
                     id_original=calificacion.pk,
                     matricula=matricula_archivada,
                     course=curso_archivado,
                     student=estudiante_archivado,
+                    semestre_archivado=semestre_arch,
                     average=calificacion.average,
                 )
                 contadores['calificaciones'] += 1
@@ -339,13 +360,9 @@ def archivar_datos_curso_academico(curso_academico):
             # ── 6. Archivar Asistencias ───────────────────────────────────────
             cursos_ids = list(cursos_archivados_map.keys())
 
-            # Ampliar cursos_ids para incluir TODOS los cursos del CA,
-            # incluyendo los finalizados que pueden no estar en cursos_archivados_map
-            # (porque sus matrículas/calificaciones ya no existen)
+            # Incluir cursos del CA sin matrículas (finalizados, etc.)
             todos_cursos_del_ca = list(
-                Curso.objects.filter(
-                    curso_academico=curso_academico
-                ).values_list('pk', flat=True)
+                Curso.objects.filter(curso_academico=curso_academico).values_list('pk', flat=True)
             )
             for cid in todos_cursos_del_ca:
                 if cid not in cursos_ids:
@@ -353,7 +370,7 @@ def archivar_datos_curso_academico(curso_academico):
 
             asistencias_qs = Asistencia.objects.filter(
                 course__pk__in=cursos_ids
-            ).select_related('student', 'course')
+            ).select_related('student', 'course', 'semestre')
 
             for asistencia in asistencias_qs:
                 curso_archivado = cursos_archivados_map.get(asistencia.course.pk)
@@ -362,10 +379,16 @@ def archivar_datos_curso_academico(curso_academico):
 
                 estudiante_archivado = obtener_o_crear_usuario_archivado(asistencia.student)
 
+                # Resolver semestre archivado
+                semestre_arch = None
+                if asistencia.semestre_id:
+                    semestre_arch = semestres_archivados_map.get(asistencia.semestre_id)
+
                 AsistenciaArchivada.objects.create(
                     id_original=asistencia.pk,
                     course=curso_archivado,
                     student=estudiante_archivado,
+                    semestre_archivado=semestre_arch,
                     presente=asistencia.presente,
                     date=asistencia.date,
                 )

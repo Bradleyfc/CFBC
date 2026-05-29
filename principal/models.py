@@ -191,6 +191,7 @@ class Matriculas(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='matriculas', limit_choices_to={'groups__name': 'Estudiantes'}, verbose_name='Estudiante')
     activo = models.BooleanField(default=True, verbose_name='Habilitado')
     curso_academico = models.ForeignKey(CursoAcademico, on_delete=models.CASCADE, null=True, blank=True, verbose_name='Curso Académico')
+    semestre = models.ForeignKey('SemestreCurso', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Semestre', related_name='matriculas')
     fecha_matricula = models.DateField(auto_now_add=True, verbose_name='Fecha de Matrícula')
     estado = models.CharField(max_length=2, choices=ESTADO_CHOICES, default='P', verbose_name='Estado')
     
@@ -212,10 +213,11 @@ class Matriculas(models.Model):
 
 class Asistencia(models.Model):
     course = models.ForeignKey(Curso, on_delete=models.CASCADE, verbose_name="Curso")
-    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='asistencias', limit_choices_to={'groups__name': 'Estudiantes'}, verbose_name='Estudiante') 
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='asistencias', limit_choices_to={'groups__name': 'Estudiantes'}, verbose_name='Estudiante')
+    semestre = models.ForeignKey('SemestreCurso', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Semestre', related_name='asistencias')
     presente = models.BooleanField(default=False, blank=True, null=True, verbose_name='Asistió')
     date = models.DateField(null=False, blank=False, verbose_name='Fecha')
-    
+
     def __str__(self):
         return f"Asistencia de {self.student.first_name} {self.student.last_name} en {self.course.name} el {self.date}"
 
@@ -230,8 +232,9 @@ class Asistencia(models.Model):
 class Calificaciones(models.Model):
     matricula = models.OneToOneField(Matriculas, on_delete=models.CASCADE, related_name='calificaciones', verbose_name='Matrícula', null=True, blank=True)
     course = models.ForeignKey(Curso, on_delete=models.CASCADE, verbose_name="Curso")
-    student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'groups__name': 'Estudiantes'}, verbose_name='Estudiante') 
+    student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'groups__name': 'Estudiantes'}, verbose_name='Estudiante')
     curso_academico = models.ForeignKey(CursoAcademico, on_delete=models.CASCADE, null=True, blank=True, verbose_name='Curso Académico')
+    semestre = models.ForeignKey('SemestreCurso', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Semestre', related_name='calificaciones')
     # Las notas individuales ahora se manejarán a través del modelo NotaIndividual
     average = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True, verbose_name='Promedio', editable=False)
 

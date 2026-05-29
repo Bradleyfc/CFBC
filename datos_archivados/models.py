@@ -160,8 +160,12 @@ class MatriculaArchivada(models.Model):
     
     id_original = models.IntegerField(verbose_name='ID Original en MariaDB')
     course = models.ForeignKey(CursoArchivado, on_delete=models.CASCADE, verbose_name="Curso Archivado")
-    student = models.ForeignKey(UsuarioArchivado, on_delete=models.CASCADE, 
+    student = models.ForeignKey(UsuarioArchivado, on_delete=models.CASCADE,
                               related_name='matriculas_archivadas', verbose_name='Estudiante Archivado')
+    semestre_archivado = models.ForeignKey(
+        'SemestreCursoArchivado', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='matriculas', verbose_name='Semestre Archivado'
+    )
     activo = models.BooleanField(default=True, verbose_name='Habilitado')
     fecha_matricula = models.DateField(verbose_name='Fecha de Matrícula')
     estado = models.CharField(max_length=2, choices=ESTADO_CHOICES, default='P', verbose_name='Estado')
@@ -185,10 +189,14 @@ class CalificacionArchivada(models.Model):
     Modelo para almacenar calificaciones archivadas de la base de datos antigua
     """
     id_original = models.IntegerField(verbose_name='ID Original en MariaDB')
-    matricula = models.ForeignKey(MatriculaArchivada, on_delete=models.CASCADE, 
+    matricula = models.ForeignKey(MatriculaArchivada, on_delete=models.CASCADE,
                                 related_name='calificaciones_archivadas', verbose_name='Matrícula Archivada')
     course = models.ForeignKey(CursoArchivado, on_delete=models.CASCADE, verbose_name="Curso Archivado")
     student = models.ForeignKey(UsuarioArchivado, on_delete=models.CASCADE, verbose_name='Estudiante Archivado')
+    semestre_archivado = models.ForeignKey(
+        'SemestreCursoArchivado', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='calificaciones', verbose_name='Semestre Archivado'
+    )
     average = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True, verbose_name='Promedio')
     
     fecha_migracion = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de migración')
@@ -226,8 +234,12 @@ class AsistenciaArchivada(models.Model):
     """
     id_original = models.IntegerField(verbose_name='ID Original en MariaDB')
     course = models.ForeignKey(CursoArchivado, on_delete=models.CASCADE, verbose_name="Curso Archivado")
-    student = models.ForeignKey(UsuarioArchivado, on_delete=models.CASCADE, 
+    student = models.ForeignKey(UsuarioArchivado, on_delete=models.CASCADE,
                               related_name='asistencias_archivadas', verbose_name='Estudiante Archivado')
+    semestre_archivado = models.ForeignKey(
+        'SemestreCursoArchivado', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='asistencias', verbose_name='Semestre Archivado'
+    )
     presente = models.BooleanField(default=False, blank=True, null=True, verbose_name='Asistió')
     date = models.DateField(null=False, blank=False, verbose_name='Fecha')
     
