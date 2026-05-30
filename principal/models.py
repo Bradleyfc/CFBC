@@ -754,3 +754,35 @@ def _crear_semestre_inicial(sender, instance, created, **kwargs):
     if created:
         from principal.semestre_service import crear_semestre_inicial
         crear_semestre_inicial(instance)
+
+
+def _semestre_activo_del_curso(curso):
+    """Devuelve el SemestreCurso activo del curso, o None si no existe."""
+    return SemestreCurso.objects.filter(curso=curso, activo=True).order_by('-numero_semestre').first()
+
+
+@receiver(post_save, sender=Matriculas)
+def _asignar_semestre_matricula(sender, instance, created, **kwargs):
+    """Asigna el semestre activo del curso a la matrícula al crearla."""
+    if created and instance.semestre_id is None:
+        semestre = _semestre_activo_del_curso(instance.course)
+        if semestre:
+            Matriculas.objects.filter(pk=instance.pk).update(semestre=semestre)
+
+
+@receiver(post_save, sender=Asistencia)
+def _asignar_semestre_asistencia(sender, instance, created, **kwargs):
+    """Asigna el semestre activo del curso a la asistencia al crearla."""
+    if created and instance.semestre_id is None:
+        semestre = _semestre_activo_del_curso(instance.course)
+        if semestre:
+            Asistencia.objects.filter(pk=instance.pk).update(semestre=semestre)
+
+
+@receiver(post_save, sender=Calificaciones)
+def _asignar_semestre_calificacion(sender, instance, created, **kwargs):
+    """Asigna el semestre activo del curso a la calificación al crearla."""
+    if created and instance.semestre_id is None:
+        semestre = _semestre_activo_del_curso(instance.course)
+        if semestre:
+            Calificaciones.objects.filter(pk=instance.pk).update(semestre=semestre)
