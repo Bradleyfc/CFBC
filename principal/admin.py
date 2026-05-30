@@ -1,5 +1,7 @@
 from django.contrib import admin, messages
 from django import forms
+from django.template.response import TemplateResponse
+from django.urls import path
 from.models import (
     Curso, Matriculas, Asistencia, Calificaciones, CursoAcademico, NotaIndividual,
     FormularioAplicacion, PreguntaFormulario, OpcionRespuesta, SolicitudInscripcion, RespuestaEstudiante,
@@ -105,6 +107,100 @@ class CursoAcademicoAdmin(admin.ModelAdmin):
     class Media:
         js = ('admin/js/curso_academico_admin.js',)
 
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                'confirmar-archivado/',
+                self.admin_site.admin_view(self.confirmar_archivado_view),
+                name='principal_cursoacademico_confirmar_archivado',
+            ),
+        ]
+        return custom_urls + urls
+
+    def confirmar_archivado_view(self, request):
+        """Vista intermedia que muestra advertencia y ejecuta el archivado al confirmar."""
+        from principal.models import SemestreCurso
+
+        if request.method == 'POST' and request.POST.get('confirmado') == '1':
+            ca_ids = request.POST.getlist('ca_ids')
+            cursos_academicos = CursoAcademico.objects.filter(pk__in=ca_ids)
+
+            # Finalizar todos los cursos no finalizados y desactivar semestres
+            for ca in cursos_academicos:
+                Curso.objects.filter(
+                    curso_academico=ca
+                ).exclude(status='F').update(status='F')
+
+                SemestreCurso.objects.filter(
+                    curso__curso_academico=ca,
+                    activo=True
+                ).update(activo=False)
+
+            # Ejecutar el archivado
+            exitosos = []
+            fallidos = []
+            for ca in cursos_academicos:
+                ca.archivar()
+                if hasattr(ca, '_archivado_error'):
+                    fallidos.append((ca.nombre, ca._archivado_error))
+                else:
+                    exitosos.append(ca.nombre)
+
+            if exitosos:
+                nombres = ', '.join(f"'{n}'" for n in exitosos)
+                self.message_user(
+                    request,
+                    f"Archivado exitoso: {nombres}. Todos los cursos fueron finalizados y los datos guardados en el archivo histórico.",
+                    level=messages.SUCCESS,
+                )
+            for nombre, error in fallidos:
+                self.message_user(
+                    request,
+                    (
+                        f"⚠ ERROR al archivar '{nombre}': No se pudieron guardar los datos. "
+                        f"El curso quedó INACTIVO pero NO archivado para preservar sus datos. "
+                        f"Detalle: {error}"
+                    ),
+                    level=messages.ERROR,
+                )
+
+            from django.http import HttpResponseRedirect
+            return HttpResponseRedirect('../')
+
+        # GET: mostrar página de confirmación
+        ca_ids = request.GET.getlist('ca_ids')
+        cursos_a_archivar = CursoAcademico.objects.filter(pk__in=ca_ids)
+
+        from principal.models import SemestreCurso
+        resumen_por_ca = []
+        for ca in cursos_a_archivar:
+            cursos_no_finalizados = Curso.objects.filter(
+                curso_academico=ca
+            ).exclude(status='F').count()
+            semestres_activos = SemestreCurso.objects.filter(
+                curso__curso_academico=ca,
+                activo=True
+            ).count()
+            resumen_por_ca.append({
+                'nombre': ca.nombre,
+                'cursos_no_finalizados': cursos_no_finalizados,
+                'semestres_activos': semestres_activos,
+            })
+
+        context = {
+            **self.admin_site.each_context(request),
+            'cursos_a_archivar': cursos_a_archivar,
+            'resumen_por_ca': resumen_por_ca,
+            'title': 'Confirmar Archivado',
+            'opts': self.model._meta,
+        }
+        return TemplateResponse(
+            request,
+            'admin/principal/cursoacademico/confirmar_archivado.html',
+            context,
+        )
+
     def activar_curso(self, request, queryset):
         if queryset.count() != 1:
             self.message_user(
@@ -121,10 +217,8 @@ class CursoAcademicoAdmin(admin.ModelAdmin):
         tiene_datos_archivados = curso.archivado and hay_datos_archivados(curso)
 
         # Usar el método activar() para que las señales se disparen correctamente
-        # (no usar .update() que las omite)
         curso.activar()
 
-        # Verificar resultado de la restauración
         if hasattr(curso, '_restaurado_error'):
             self.message_user(
                 request,
@@ -148,13 +242,6 @@ class CursoAcademicoAdmin(admin.ModelAdmin):
                 ),
                 level=messages.SUCCESS,
             )
-        elif tiene_datos_archivados:
-            # Tenía datos archivados pero la señal no reportó éxito ni error (no debería pasar)
-            self.message_user(
-                request,
-                f"El curso '{curso.nombre}' ha sido activado.",
-                level=messages.SUCCESS,
-            )
         else:
             self.message_user(
                 request,
@@ -164,59 +251,20 @@ class CursoAcademicoAdmin(admin.ModelAdmin):
     activar_curso.short_description = "Activar curso seleccionado (desactiva los demás)"
 
     def archivar_curso(self, request, queryset):
-        exitosos = []
-        fallidos = []
-
-        for curso in queryset:
-            # Llamar archivar() que dispara la señal y el archivado_service
-            curso.archivar()
-
-            # La señal almacena el error en _archivado_error si falló
-            if hasattr(curso, '_archivado_error'):
-                fallidos.append((curso.nombre, curso._archivado_error))
-            else:
-                exitosos.append(curso.nombre)
-
-        if exitosos:
-            nombres = ', '.join(f"'{n}'" for n in exitosos)
-            self.message_user(
-                request,
-                f"Archivado exitoso: {nombres}. "
-                f"Los datos de gestión académica han sido guardados en datos archivados.",
-                level=messages.SUCCESS,
-            )
-
-        for nombre, error in fallidos:
-            self.message_user(
-                request,
-                (
-                    f"⚠ ERROR al archivar '{nombre}': No se pudieron guardar los datos "
-                    f"en datos archivados. El curso ha quedado INACTIVO pero NO archivado "
-                    f"para preservar todos sus datos. "
-                    f"Revisa los logs del servidor para más detalles. "
-                    f"Detalle técnico: {error}"
-                ),
-                level=messages.ERROR,
-            )
+        """Redirige a la vista de confirmación antes de archivar."""
+        ca_ids = list(queryset.values_list('pk', flat=True))
+        params = '&'.join(f'ca_ids={pk}' for pk in ca_ids)
+        from django.http import HttpResponseRedirect
+        from django.urls import reverse
+        url = reverse('admin:principal_cursoacademico_confirmar_archivado')
+        return HttpResponseRedirect(f'{url}?{params}')
     archivar_curso.short_description = "Archivar cursos seleccionados"
 
     def desarchivar_curso(self, request, queryset):
-        # Desarchivar los cursos seleccionados (sin activarlos)
         queryset.update(archivado=False)
         contador = queryset.count()
-
-        if contador == 1:
-            self.message_user(
-                request,
-                "El curso ha sido desarchivado.",
-                level=messages.SUCCESS,
-            )
-        else:
-            self.message_user(
-                request,
-                f"{contador} cursos han sido desarchivados.",
-                level=messages.SUCCESS,
-            )
+        msg = "El curso ha sido desarchivado." if contador == 1 else f"{contador} cursos han sido desarchivados."
+        self.message_user(request, msg, level=messages.SUCCESS)
     desarchivar_curso.short_description = "Desarchivar cursos seleccionados (sin activarlos)"
 
     def ver_detalles_curso_academico(self, obj):

@@ -1,0 +1,71 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}Confirmar Archivado de Curso Académico{% endblock %}
+
+{% block content %}
+<h1>⚠️ Confirmar Archivado</h1>
+
+<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:20px;margin-bottom:20px;">
+  <h2 style="color:#856404;margin-top:0;">Advertencia: Esta acción finalizará todos los cursos activos</h2>
+  <p style="color:#856404;">
+    Al archivar {% if cursos_a_archivar|length == 1 %}el curso académico <strong>{{ cursos_a_archivar.0.nombre }}</strong>{% else %}los siguientes cursos académicos{% endif %},
+    se realizarán automáticamente las siguientes acciones:
+  </p>
+  <ul style="color:#856404;">
+    <li>Todos los <strong>cursos</strong> con estado distinto a "Finalizado" pasarán al estado <strong>Finalizado</strong>.</li>
+    <li>Todos los <strong>semestres activos</strong> pasarán al estado <strong>Finalizado</strong> (inactivo).</li>
+    <li>Los datos (matrículas, calificaciones, asistencias) serán guardados en el archivo histórico.</li>
+    <li>Los cursos y sus datos serán eliminados del sistema activo.</li>
+  </ul>
+  <p style="color:#856404;font-weight:bold;">Esta operación no se puede deshacer fácilmente.</p>
+</div>
+
+{% if cursos_a_archivar|length > 1 %}
+<h3>Cursos académicos a archivar:</h3>
+<ul>
+  {% for ca in cursos_a_archivar %}
+  <li><strong>{{ ca.nombre }}</strong></li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if resumen_por_ca %}
+<h3>Resumen de lo que se finalizará:</h3>
+<table style="border-collapse:collapse;width:100%;margin-bottom:20px;">
+  <thead>
+    <tr style="background:#f8f9fa;">
+      <th style="border:1px solid #dee2e6;padding:8px;text-align:left;">Curso Académico</th>
+      <th style="border:1px solid #dee2e6;padding:8px;text-align:center;">Cursos a finalizar</th>
+      <th style="border:1px solid #dee2e6;padding:8px;text-align:center;">Semestres a finalizar</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for fila in resumen_por_ca %}
+    <tr>
+      <td style="border:1px solid #dee2e6;padding:8px;">{{ fila.nombre }}</td>
+      <td style="border:1px solid #dee2e6;padding:8px;text-align:center;">{{ fila.cursos_no_finalizados }}</td>
+      <td style="border:1px solid #dee2e6;padding:8px;text-align:center;">{{ fila.semestres_activos }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<form method="post">
+  {% csrf_token %}
+  {% for ca in cursos_a_archivar %}
+  <input type="hidden" name="ca_ids" value="{{ ca.pk }}">
+  {% endfor %}
+  <input type="hidden" name="confirmado" value="1">
+
+  <div style="display:flex;gap:12px;align-items:center;">
+    <input type="submit" value="Sí, finalizar y archivar" class="button"
+           style="background:#dc3545;color:white;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;font-size:14px;">
+    <a href="../" class="button cancel-link"
+       style="background:#6c757d;color:white;padding:10px 20px;border-radius:4px;text-decoration:none;font-size:14px;">
+      Cancelar
+    </a>
+  </div>
+</form>
+{% endblock %}
