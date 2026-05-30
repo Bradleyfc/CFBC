@@ -6485,6 +6485,7 @@ def terminar_semestre_view(request, curso_id):
     # ── Acción: Terminar Semestre ─────────────────────────────────────────────
     enrollment_deadline = body.get('enrollment_deadline', '').strip()
     start_date = body.get('start_date', '').strip()
+    mantener_documentos = body.get('mantener_documentos', True)  # True = conservar, False = eliminar
 
     if not enrollment_deadline or not start_date:
         return JsonResponse(
@@ -6510,6 +6511,24 @@ def terminar_semestre_view(request, curso_id):
         curso.enrollment_deadline = enrollment_deadline_date
         curso.start_date = start_date_date
         curso.save(update_fields=['enrollment_deadline', 'start_date'])
+
+        # Eliminar documentos del profesor si el usuario lo solicitó
+        if not mantener_documentos:
+            from course_documents.models import DocumentFolder, CourseDocument
+            from django.core.files.storage import default_storage
+            carpetas = list(DocumentFolder.objects.filter(curso=curso))
+            docs_eliminados = 0
+            for carpeta in carpetas:
+                for doc in carpeta.documents.all():
+                    if doc.file and default_storage.exists(doc.file.name):
+                        default_storage.delete(doc.file.name)
+                    doc.delete()
+                    docs_eliminados += 1
+                carpeta.delete()
+            logger.info(
+                f"Documentos eliminados al cambiar semestre de '{curso.name}': "
+                f"{docs_eliminados} documentos en {len(carpetas)} carpetas."
+            )
 
         mensaje = (
             f"Semestre {contadores['semestre_num']} terminado exitosamente. "
