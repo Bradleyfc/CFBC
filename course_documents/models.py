@@ -31,7 +31,8 @@ class DocumentFolder(models.Model):
         # se maneja en clean())
 
     def __str__(self):
-        return f"{self.name} - {self.curso.name}"
+        curso_name = self.curso.name if self.curso else '— sin curso —'
+        return f"{self.name} - {curso_name}"
 
     def clean(self):
         from django.core.exceptions import ValidationError

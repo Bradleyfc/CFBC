@@ -8,7 +8,9 @@ class DocumentFolderAdmin(admin.ModelAdmin):
     search_fields = ('name', 'curso__name')
 
     def get_curso_academico(self, obj):
-        return obj.curso.curso_academico if obj.curso.curso_academico else '— sin asignar —'
+        if obj.curso and obj.curso.curso_academico:
+            return obj.curso.curso_academico
+        return '— sin asignar —'
     get_curso_academico.short_description = 'Curso Académico'
 
 @admin.register(CourseDocument)
@@ -18,14 +20,18 @@ class CourseDocumentAdmin(admin.ModelAdmin):
     search_fields = ('name', 'folder__name', 'folder__curso__name')
 
     def get_folder(self, obj):
-        return obj.folder.name
+        return obj.folder.name if obj.folder else '—'
     get_folder.short_description = 'Carpeta'
 
     def get_curso(self, obj):
-        return obj.folder.curso.name
+        if obj.folder and obj.folder.curso:
+            return obj.folder.curso.name
+        return '—'
     get_curso.short_description = 'Curso'
 
     def get_curso_academico(self, obj):
-        ca = obj.folder.curso.curso_academico
-        return ca.nombre if ca else '— sin asignar —'
+        if obj.folder and obj.folder.curso:
+            ca = obj.folder.curso.curso_academico
+            return ca.nombre if ca else '— sin asignar —'
+        return '—'
     get_curso_academico.short_description = 'Curso Académico'
