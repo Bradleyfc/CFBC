@@ -3055,6 +3055,7 @@ class CoursesView(BaseContextMixin, TemplateView):
         context['area_seleccionada'] = area or ''
         context['tipo_seleccionado'] = tipo or ''
         context['filtro_servidor'] = True
+        context['curso_academico_activo'] = curso_academico_activo
 
         user = self.request.user
         if user.is_authenticated:
