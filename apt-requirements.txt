@@ -1,0 +1,14 @@
+# Dependencias del sistema (Ubuntu/Debian)
+# Instalar con: sudo apt install $(cat apt-requirements.txt | grep -v '#' | tr '\n' ' ')
+# O dejar que setup_proyecto.sh las instale automáticamente
+
+# Compilación de paquetes Python con extensiones C
+build-essential
+pkg-config
+python3-dev
+
+# Cairo - requerido por pycairo y rlPyCairo (backend PDF de reportlab)
+libcairo2-dev
+
+# ImageMagick - requerido por Wand (procesamiento de imágenes y thumbnails)
+libmagickwand-dev

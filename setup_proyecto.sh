@@ -13,6 +13,14 @@ handle_error() {
     exit 1
 }
 
+echo "[0/5] Instalando dependencias del sistema..."
+if [ -f apt-requirements.txt ]; then
+    PKGS=$(grep -v '#' apt-requirements.txt | grep -v '^\s*$' | tr '\n' ' ')
+    sudo apt update && sudo apt install -y $PKGS || handle_error "No se pudieron instalar las dependencias del sistema"
+else
+    echo "  ADVERTENCIA: apt-requirements.txt no encontrado, omitiendo..."
+fi
+
 echo "[1/5] Creando entorno virtual..."
 python3 -m venv venv || handle_error "No se pudo crear el entorno virtual"
 
