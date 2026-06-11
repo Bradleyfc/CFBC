@@ -159,7 +159,7 @@ def configurar_migracion_view(request):
                 try:
                     servicio.inspeccionar_y_migrar_automaticamente(request.user)
                 except Exception as e:
-                    pass  # Error handling is in the service
+                    logger.error(f"Error en hilo de migración automática: {e}", exc_info=True)
             
             import threading
             thread = threading.Thread(target=ejecutar_migracion_automatica)

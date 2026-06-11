@@ -1006,8 +1006,23 @@ class MigracionService:
         """
         cursor = self.connection.cursor(dictionary=True)
         try:
+            # Determinar si la tabla tiene columna 'id' para ordenar
+            try:
+                cursor.execute(
+                    "SELECT COUNT(*) FROM information_schema.COLUMNS "
+                    "WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = 'id'",
+                    (self.database, nombre_tabla)
+                )
+                tiene_id = cursor.fetchone()['COUNT(*)'] > 0
+            except Exception:
+                tiene_id = False
+
+            if tiene_id:
+                query = f"SELECT * FROM `{nombre_tabla}` ORDER BY id DESC"
+            else:
+                query = f"SELECT * FROM `{nombre_tabla}`"
+
             # Obtener todos los registros de la tabla
-            query = f"SELECT * FROM {nombre_tabla} ORDER BY id DESC"
             cursor.execute(query)
             registros = cursor.fetchall()
             
@@ -1061,14 +1076,33 @@ class MigracionService:
     
     def crear_modelo_archivado_dinamico(self, nombre_tabla, datos_registro):
         """
-        Crea un registro archivado dinámico en la base de datos local
+        Crea un registro archivado dinámico en la base de datos local.
+        Soporta tablas cuya clave primaria no se llama 'id'.
         """
         from .models import DatoArchivadoDinamico
         
         try:
-            # Verificar si ya existe este registro
+            # Obtener el valor de la clave primaria del registro.
+            # Primero intentamos el campo 'id' (convención Django/Rails),
+            # luego buscamos cualquier campo que termine en '_id' o que sea
+            # el primer campo numérico del registro.
             id_original = datos_registro.get('id')
+
             if not id_original:
+                # Buscar otros campos que puedan ser la PK
+                for campo, valor in datos_registro.items():
+                    if campo.lower() in ('id', 'pk') and valor is not None:
+                        id_original = valor
+                        break
+
+            if not id_original:
+                # Usar el primer campo como identificador si no hay 'id'
+                primer_campo = next(iter(datos_registro), None)
+                if primer_campo:
+                    id_original = datos_registro[primer_campo]
+
+            if id_original is None:
+                logger.warning(f"Registro sin clave primaria en tabla {nombre_tabla}, se omite: {datos_registro}")
                 return None
             
             # Verificar si ya existe
