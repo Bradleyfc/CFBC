@@ -100,11 +100,9 @@
                             <td class="text-center text-gray-500 font-medium">{{ forloop.counter }}</td>
                             <td class="text-center">
                                 {% if nota.valor >= 6 %}
-                                <span class="glass-badge glass-badge-success text-base">{{ nota.valor|floatformat:1
-                                    }}</span>
+                                <span class="glass-badge glass-badge-success text-base">{{ nota.valor|floatformat:1 }}</span>
                                 {% else %}
-                                <span class="glass-badge glass-badge-danger text-base">{{ nota.valor|floatformat:1
-                                    }}</span>
+                                <span class="glass-badge glass-badge-danger text-base">{{ nota.valor|floatformat:1 }}</span>
                                 {% endif %}
                             </td>
                             <td class="text-center text-gray-600">{{ nota.fecha_creacion|date:"d/m/Y" }}</td>
