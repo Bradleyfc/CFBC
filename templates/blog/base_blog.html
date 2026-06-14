@@ -35,6 +35,8 @@
                 0 8px 32px rgba(0, 0, 0, 0.3),
                 inset 0 1px 0 rgba(147, 197, 253, 0.4);
             position: relative;
+            padding: 0.75rem 1.5rem;
+            margin: 0.75rem 1rem;
             /* Sin overflow para permitir dropdown */
         }
 
@@ -367,10 +369,10 @@
 </head>
 <body class="bg-gray-50">
     <!-- Glassmorphism Header Container -->
-    <div class="container mx-auto px-4" style="position: relative; z-index: 1000;">
-        <header class="glass-header-container flex flex-wrap items-center justify-between py-4 mb-4 mx-4 mt-3 px-6">
+    <div id="header-root" style="position: relative; z-index: 1000; width: 100%; max-width: 100vw; box-sizing: border-box;">
+        <header class="glass-header-container flex flex-wrap items-center justify-between">
             <!-- Left Side: Logo and Inicio -->
-            <div class="flex items-center space-x-4 ml-4">
+            <div class="flex items-center space-x-4">
                 <a href="{% url 'blog:lista_noticias' %}" class="glass-logo flex items-center font-bold text-xl">
                     <span class="material-icons mr-2">article</span>
                     Noticias CFBC
@@ -393,7 +395,7 @@
             </div>
 
             <!-- Right Side: Search and User Menu (moved left) -->
-            <div class="hidden md:flex items-center space-x-4 mr-8">
+            <div class="hidden md:flex items-center space-x-4">
                 <!-- Search Form -->
                 <form class="flex items-center" method="GET" action="{% url 'blog:lista_noticias' %}">
                     <div class="relative">
@@ -408,6 +410,12 @@
 
                 <!-- User Menu -->
                 {% if user.is_authenticated %}
+                    {% if is_editor %}
+                    <a href="{% url 'blog:panel_editores' %}" class="glass-nav-link" style="background: rgba(99,102,241,0.3); border-color: rgba(165,180,252,0.4);">
+                        <span class="material-icons mr-1" style="font-size:1rem;">edit</span>
+                        Panel de Editor
+                    </a>
+                    {% endif %}
                     <div class="dropdown-container" style="position: relative;">
                         <button class="glass-nav-link flex items-center" id="user-menu-button">
                             <span class="material-icons mr-1">person</span>
@@ -416,15 +424,11 @@
                         </button>
                         <div class="glass-dropdown" id="user-dropdown" style="width: 200px !important; position: absolute !important; right: 0 !important; left: auto !important;">
                             <div class="py-1" style="width: 200px;">
-                                {% if user.groups.all|length > 0 %}
-                                    {% for group in user.groups.all %}
-                                        {% if group.name == 'Editor' %}
+                                {% if is_editor %}
                                             <a href="{% url 'blog:panel_editores' %}">
                                                 <span class="material-icons mr-2 text-sm">edit</span>
                                                 Panel de Editor
                                             </a>
-                                        {% endif %}
-                                    {% endfor %}
                                 {% endif %}
                                 {% if user.is_staff %}
                                 <a href="{% url 'admin:index' %}">
@@ -452,7 +456,13 @@
             </div>
 
             <!-- Mobile menu button -->
-            <div class="md:hidden relative mr-8">
+            <div class="md:hidden flex items-center gap-2">
+                {% if user.is_authenticated %}
+                <span class="glass-nav-link text-sm" style="pointer-events:none;">
+                    <span class="material-icons" style="font-size:1rem;">person</span>&nbsp;{{ user.username }}
+                </span>
+                {% endif %}
+                <div class="relative">
                 <button type="button" class="glass-nav-link" onclick="toggleMobileMenu()" id="mobile-menu-button">
                     <span class="material-icons">menu</span>
                 </button>
@@ -491,15 +501,11 @@
                                 </div>
                                 
                                 <div class="flex flex-col items-center gap-2">
-                                    {% if user.groups.all|length > 0 %}
-                                        {% for group in user.groups.all %}
-                                            {% if group.name == 'Editor' %}
+                                    {% if is_editor %}
                                                 <a href="{% url 'blog:panel_editores' %}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium bg-blue-500 bg-opacity-70 text-white hover:bg-opacity-90 transition-all shadow-sm">
                                                     <span class="material-icons text-base leading-none">edit</span>
                                                     Panel de Editor
                                                 </a>
-                                            {% endif %}
-                                        {% endfor %}
                                     {% endif %}
                                     {% if user.is_staff %}
                                     <a href="{% url 'admin:index' %}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium bg-purple-500 bg-opacity-70 text-white hover:bg-opacity-90 transition-all shadow-sm">
@@ -521,6 +527,7 @@
                         {% endif %}
                     </div>
                 </div>
+                </div>{# /div.relative #}
             </div>
         </header>
     </div>

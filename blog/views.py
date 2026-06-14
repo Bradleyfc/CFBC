@@ -49,12 +49,14 @@ def lista_noticias(request):
     # Categorías para el menú (máximo 10)
     categorias = Categoria.objects.all()[:10]
     
+    is_editor = request.user.is_authenticated and request.user.groups.filter(name='Editor').exists()
     context = {
         'page_obj': page_obj,
         'noticias_destacadas': noticias_destacadas,
         'categorias': categorias,
         'busqueda': busqueda,
         'categoria_actual': categoria_slug,
+        'is_editor': is_editor,
     }
     
     return render(request, 'blog/lista_noticias.html', context)
@@ -87,11 +89,13 @@ def detalle_noticia(request, slug):
         noticias_relacionadas_qs = noticias_relacionadas_qs.exclude(visibilidad='solo_registrados')
     noticias_relacionadas = noticias_relacionadas_qs[:4]
     
+    is_editor = request.user.is_authenticated and request.user.groups.filter(name='Editor').exists()
     context = {
         'noticia': noticia,
         'comentarios': comentarios,
         'comentario_form': comentario_form,
         'noticias_relacionadas': noticias_relacionadas,
+        'is_editor': is_editor,
     }
     
     return render(request, 'blog/detalle_noticia.html', context)
@@ -146,12 +150,14 @@ def noticias_por_categoria(request, slug):
     # Categorías para el menú (máximo 10)
     categorias = Categoria.objects.all()[:10]
 
+    is_editor = request.user.is_authenticated and request.user.groups.filter(name='Editor').exists()
     context = {
         'categoria': categoria,
         'page_obj': page_obj,
         'noticias_destacadas': noticias_destacadas,
         'categorias': categorias,
         'categoria_actual': slug,
+        'is_editor': is_editor,
     }
 
     return render(request, 'blog/lista_noticias.html', context)
