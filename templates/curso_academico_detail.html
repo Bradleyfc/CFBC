@@ -95,15 +95,16 @@
               {% endfor %}
             </select>
           </div>
-          <div class="flex-1 min-w-40">
+          <div class="flex-1 min-w-40" style="min-width: 280px;">
             <label class="ca-label"><span class="material-icons ca-label-icon">layers</span> Semestre</label>
-            <select name="semestre" id="semestre" class="ca-select" style="border-color: rgba(99,102,241,0.35); background: linear-gradient(135deg,rgba(99,102,241,0.06),rgba(59,130,246,0.03));">
-              <option value="">Todos (semestre actual)</option>
+            <select name="semestre" id="semestre" class="ca-select" style="border-color: rgba(99,102,241,0.35); background: linear-gradient(135deg,rgba(99,102,241,0.06),rgba(59,130,246,0.03)); min-width: 280px;">
+              <option value="">Cursos no finalizados (semestre actual)</option>
+              <option value="todos" {% if request.GET.semestre == 'todos' %}selected{% endif %}>Todos los semestres</option>
               {% for s in semestres_disponibles %}
                 <option value="{{ s.id }}"
                         data-curso-id="{{ s.curso_archivado.id_original }}"
                         {% if request.GET.semestre == s.id|stringformat:"s" %}selected{% endif %}>
-                  Semestre {{ s.numero_semestre }} — {{ s.curso_archivado.name }}{% if s.fecha_cierre %} ({{ s.fecha_cierre|date:"d/m/Y" }}){% endif %}
+                  Semestre {{ s.numero_semestre }} — {{ s.curso_archivado.name }}{% if s.fecha_cierre %} ({{ s.fecha_cierre|date:"d/m/Y" }}){% endif %}{% if s.es_finalizado_no_archivado %} — Finalizado{% endif %}
                 </option>
               {% endfor %}
             </select>
@@ -237,6 +238,11 @@
       <span>Asistencias</span>
       <span class="ca-tab-count">{{ asistencias_total }}</span>
     </a>
+    <a href="?tab=semestres{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}{% if request.GET.estudiante %}&estudiante={{ request.GET.estudiante }}{% endif %}{% if request.GET.estado_curso %}&estado_curso={{ request.GET.estado_curso }}{% endif %}" class="ca-tab {% if active_tab == 'semestres' %}ca-tab-active{% endif %}">
+      <span class="material-icons ca-tab-icon">layers</span>
+      <span>Semestres</span>
+      <span class="ca-tab-count">{{ semestres_tab_total }}</span>
+    </a>
   </div>
 
   <!-- TAB: CURSOS -->
@@ -277,7 +283,9 @@
               {% endif %}
             </td>
             <td>
-              {% if curso.get_dynamic_status == 'F' %}
+              {% if viendo_semestre_archivado %}
+                <span class="ca-status-badge ca-status-danger">Finalizado</span>
+              {% elif curso.get_dynamic_status == 'F' %}
                 <span class="ca-status-badge ca-status-danger">{{ curso.get_dynamic_status_display }}</span>
               {% elif curso.get_dynamic_status == 'P' %}
                 <span class="ca-status-badge ca-status-warning">{{ curso.get_dynamic_status_display }}</span>
@@ -540,6 +548,140 @@
       <div class="ca-empty-state">
         <span class="material-icons ca-empty-icon">event_busy</span>
         <p>No hay estudiantes con asistencias registradas para este curso académico.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- TAB: SEMESTRES -->
+  {% if active_tab == 'semestres' %}
+  <div class="ca-glass-card ca-tab-panel">
+    <div class="ca-card-header" style="background:linear-gradient(135deg,rgba(99,102,241,0.18),rgba(139,92,246,0.12));">
+      <span class="material-icons ca-section-icon">layers</span>
+      <h3 class="ca-section-title">Semestres</h3>
+      <span class="ca-count-badge">{{ semestres_tab_total }}</span>
+    </div>
+    <div class="ca-card-body ca-table-wrap">
+
+      <!-- Filtros en línea -->
+      <form method="GET" style="display:flex;align-items:center;gap:0.6rem;flex-wrap:nowrap;margin-bottom:1rem;">
+        <input type="hidden" name="tab" value="semestres">
+        {% if request.GET.curso %}<input type="hidden" name="curso" value="{{ request.GET.curso }}">{% endif %}
+
+        <span style="font-size:0.82rem;font-weight:600;color:#4b5563;white-space:nowrap;display:flex;align-items:center;gap:0.25rem;">
+          <span class="material-icons" style="font-size:0.95rem;color:#6366f1;">info</span> Estado:
+        </span>
+        <select name="estado_semestre" class="ca-select" style="width:150px;font-size:0.82rem;padding:0.3rem 0.6rem;" onchange="this.form.submit()">
+          <option value="" {% if not estado_semestre %}selected{% endif %}>Todos</option>
+          <option value="I"  {% if estado_semestre == 'I'  %}selected{% endif %}>En inscripción</option>
+          <option value="IT" {% if estado_semestre == 'IT' %}selected{% endif %}>Plazo terminado</option>
+          <option value="P"  {% if estado_semestre == 'P'  %}selected{% endif %}>En progreso</option>
+          <option value="F"  {% if estado_semestre == 'F'  %}selected{% endif %}>Finalizado</option>
+        </select>
+
+        <span style="font-size:0.82rem;font-weight:600;color:#4b5563;white-space:nowrap;display:flex;align-items:center;gap:0.25rem;">
+          <span class="material-icons" style="font-size:0.95rem;color:#6366f1;">layers</span> Semestre:
+        </span>
+        <select name="numero_semestre" class="ca-select" style="width:130px;font-size:0.82rem;padding:0.3rem 0.6rem;" onchange="this.form.submit()">
+          <option value="" {% if not numero_semestre_filtro %}selected{% endif %}>Todos</option>
+          {% for n in numeros_semestre_disponibles %}
+            <option value="{{ n }}" {% if numero_semestre_filtro == n|stringformat:"s" %}selected{% endif %}>Semestre {{ n }}</option>
+          {% endfor %}
+        </select>
+
+        {% if estado_semestre or numero_semestre_filtro %}
+          <a href="?tab=semestres" class="ca-btn ca-btn-secondary" style="padding:0.3rem 0.7rem;font-size:0.8rem;white-space:nowrap;">
+            <span class="material-icons" style="font-size:0.85rem;">clear</span> Limpiar
+          </a>
+        {% endif %}
+      </form>
+
+      {% if semestres_tab %}
+      <table class="ca-table">
+        <thead>
+          <tr>
+            <th><span class="material-icons ca-th-icon">menu_book</span> Curso</th>
+            <th><span class="material-icons ca-th-icon">layers</span> Semestre</th>
+            <th><span class="material-icons ca-th-icon">info</span> Estado</th>
+            <th><span class="material-icons ca-th-icon">calendar_today</span> Fecha Inicio</th>
+            <th><span class="material-icons ca-th-icon">event</span> Fecha Cierre</th>
+            <th><span class="material-icons ca-th-icon">how_to_reg</span> Matrículas</th>
+            <th><span class="material-icons ca-th-icon">search</span> Ver</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in semestres_tab %}
+          <tr>
+            <td><strong>{{ s.curso_nombre }}</strong></td>
+            <td>
+              <span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.6rem;border-radius:8px;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(79,70,229,0.1));color:#4338ca;font-size:0.85rem;font-weight:600;border:1px solid rgba(99,102,241,0.25);">
+                <span class="material-icons" style="font-size:0.85rem;">layers</span>
+                Semestre {{ s.numero }}
+              </span>
+            </td>
+            <td>
+              {% if s.estado == 'F' %}
+                <span class="ca-status-badge ca-status-danger">{{ s.estado_display }}</span>
+              {% elif s.estado == 'P' %}
+                <span class="ca-status-badge ca-status-warning">{{ s.estado_display }}</span>
+              {% elif s.estado == 'I' %}
+                <span class="ca-status-badge ca-status-success">{{ s.estado_display }}</span>
+              {% elif s.estado == 'IT' %}
+                <span class="ca-status-badge ca-status-info">{{ s.estado_display }}</span>
+              {% else %}
+                <span class="ca-status-badge ca-status-secondary">{{ s.estado_display }}</span>
+              {% endif %}
+            </td>
+            <td>{{ s.fecha_inicio|date:"d/m/Y"|default:"—" }}</td>
+            <td>
+              {% if s.fecha_cierre %}
+                {{ s.fecha_cierre|date:"d/m/Y" }}
+              {% else %}
+                <span style="color:#9ca3af;">—</span>
+              {% endif %}
+            </td>
+            <td>
+              <span style="font-weight:600;color:#4338ca;">{{ s.num_matriculas }}</span>
+            </td>
+            <td>
+              <a href="?tab=matriculas&semestre={{ s.semestre_id }}"
+                 style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.7rem;border-radius:8px;background:linear-gradient(135deg,rgba(99,102,241,0.12),rgba(59,130,246,0.08));color:#4338ca;font-size:0.8rem;font-weight:600;border:1px solid rgba(99,102,241,0.2);text-decoration:none;">
+                <span class="material-icons" style="font-size:0.9rem;">open_in_new</span> Ver
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      {% if semestres_tab.has_other_pages %}
+      <div class="ca-pagination">
+        {% if semestres_tab.has_previous %}
+          <a href="?tab=semestres&page_sem={{ semestres_tab.previous_page_number }}{% if estado_semestre %}&estado_semestre={{ estado_semestre }}{% endif %}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_left</span></a>
+        {% else %}
+          <span class="ca-page-btn ca-page-disabled"><span class="material-icons">chevron_left</span></span>
+        {% endif %}
+        {% for num in semestres_tab.paginator.page_range %}
+          {% if semestres_tab.number == num %}
+            <span class="ca-page-btn ca-page-active">{{ num }}</span>
+          {% elif num > semestres_tab.number|add:"-3" and num < semestres_tab.number|add:"3" %}
+            <a href="?tab=semestres&page_sem={{ num }}{% if estado_semestre %}&estado_semestre={{ estado_semestre }}{% endif %}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}" class="ca-page-btn">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+        {% if semestres_tab.has_next %}
+          <a href="?tab=semestres&page_sem={{ semestres_tab.next_page_number }}{% if estado_semestre %}&estado_semestre={{ estado_semestre }}{% endif %}{% if request.GET.curso %}&curso={{ request.GET.curso }}{% endif %}" class="ca-page-btn"><span class="material-icons">chevron_right</span></a>
+        {% else %}
+          <span class="ca-page-btn ca-page-disabled"><span class="material-icons">chevron_right</span></span>
+        {% endif %}
+        <span class="ca-page-info">Página {{ semestres_tab.number }} de {{ semestres_tab.paginator.num_pages }} &mdash; {{ semestres_tab_total }} registros</span>
+      </div>
+      {% endif %}
+
+      {% else %}
+      <div class="ca-empty-state">
+        <span class="material-icons ca-empty-icon">layers</span>
+        <p>No hay semestres{% if estado_semestre %} con el estado seleccionado{% endif %} para este curso académico.</p>
       </div>
       {% endif %}
     </div>

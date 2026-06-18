@@ -573,6 +573,31 @@ def generate_excel(context_dict={}):
 # interfaz que los modelos de principal, de modo que el template y el generador
 # de Excel no necesitan distinguir entre datos activos y archivados.
 
+
+class _SemestreCursoFinalizadoAdapter:
+    """
+    Adapta un SemestreCurso de un curso finalizado (status='F', no archivado aún)
+    para que el template lo trate igual que un SemestreCursoArchivado en el
+    selector de semestres.
+    Se usa una clase interna _CursoRef para imitar la interfaz de curso_archivado.
+    """
+
+    class _CursoRef:
+        def __init__(self, curso):
+            self.id_original = curso.id
+            self.name = curso.name
+            self.id = curso.id
+
+    def __init__(self, semestre_curso):
+        self._sc = semestre_curso
+        self.id = f"activo_{semestre_curso.id}"   # prefijo para distinguirlo de archivados
+        self.pk = self.id
+        self.numero_semestre = semestre_curso.numero_semestre
+        self.fecha_cierre = semestre_curso.fecha_cierre
+        self.fecha_creacion = semestre_curso.fecha_creacion
+        self.curso_archivado = self._CursoRef(semestre_curso.curso)
+        self.es_finalizado_no_archivado = True   # bandera para el template si se necesita
+
 class _UsuarioArchivadoAdapter:
     """Adapta UsuarioArchivado para que se comporte como User en el template."""
     def __init__(self, ua):
@@ -765,7 +790,10 @@ class CursoAcademicoDetailView(DetailView):
         # Obtener los filtros de la URL
         curso_id = self.request.GET.get('curso')
         estudiante_id = self.request.GET.get('estudiante')
-        semestre_id = self.request.GET.get('semestre')  # ID del SemestreCursoArchivado
+        semestre_id = self.request.GET.get('semestre')
+        # Descartar valores inválidos (ej. prefijos desconocidos)
+        if semestre_id and not str(semestre_id).startswith('activo_') and not str(semestre_id).isdigit() and str(semestre_id) != 'todos':
+            semestre_id = None
         estado_curso = self.request.GET.get('estado_curso')
         estado_matricula = self.request.GET.get('estado_matricula')
 
@@ -809,7 +837,118 @@ class CursoAcademicoDetailView(DetailView):
         }
         context['todos_los_cursos_academicos'] = CursoAcademico.objects.all().order_by('-fecha_creacion')
 
+        # ── Pestaña Semestres: lista de todos los semestres del CA ────────────
+        context.update(self._context_semestres_tab(curso_academico))
+
         return context
+
+    def _context_semestres_tab(self, curso_academico):
+        """
+        Construye la lista completa de semestres para la pestaña 'Semestres'.
+        Combina SemestreCurso de la tabla principal con SemestreCursoArchivado,
+        evitando duplicados por id_original.
+        Soporta filtro por estado y paginación (page_sem).
+        """
+        from principal.models import SemestreCurso, Matriculas
+        from datos_archivados.models import SemestreCursoArchivado, MatriculaArchivada
+
+        estado_semestre = self.request.GET.get('estado_semestre', '')
+        numero_semestre_filtro = self.request.GET.get('numero_semestre', '')
+        page_sem = self.request.GET.get('page_sem', 1)
+        per_page = 10
+
+        semestres_lista = []
+
+        # 1. Semestres archivados
+        archivados = SemestreCursoArchivado.objects.filter(
+            curso_archivado__id_original__in=Curso.objects.filter(
+                curso_academico=curso_academico
+            ).values_list('id', flat=True)
+        ).select_related('curso_archivado').order_by('curso_archivado__name', 'numero_semestre')
+
+        ids_archivados = set()
+        for s in archivados:
+            ids_archivados.add(s.id_original)
+            # Contar por curso_archivado ya que semestre_archivado FK puede ser None
+            num_matriculas = MatriculaArchivada.objects.filter(
+                course=s.curso_archivado
+            ).count()
+            semestres_lista.append({
+                'curso_nombre': s.curso_archivado.name,
+                'numero': s.numero_semestre,
+                'estado': 'F',
+                'estado_display': 'Finalizado',
+                'fecha_inicio': s.fecha_inicio,
+                'fecha_cierre': s.fecha_cierre,
+                'num_matriculas': num_matriculas,
+                'es_archivado': True,
+                'semestre_id': s.id,
+            })
+
+        # 2. SemestreCurso actuales (incluyendo cerrados y activos)
+        actuales = SemestreCurso.objects.filter(
+            curso__curso_academico=curso_academico,
+        ).exclude(
+            id__in=ids_archivados,
+        ).select_related('curso').order_by('curso__name', 'numero_semestre')
+
+        for s in actuales:
+            if s.activo and s.curso.status != 'F':
+                estado = s.curso.get_dynamic_status()
+                estado_display = s.curso.get_dynamic_status_display()
+            else:
+                estado = 'F'
+                estado_display = 'Finalizado'
+
+            # Si no hay fecha_cierre pero el curso está finalizado,
+            # usar fecha_actualizacion del curso como fecha de cierre de facto.
+            fecha_cierre = s.fecha_cierre
+            if not fecha_cierre and s.curso.status == 'F':
+                fecha_cierre = s.curso.fecha_actualizacion.date() if s.curso.fecha_actualizacion else None
+
+            num_matriculas = Matriculas.objects.filter(semestre=s).count()
+            semestres_lista.append({
+                'curso_nombre': s.curso.name,
+                'numero': s.numero_semestre,
+                'estado': estado,
+                'estado_display': estado_display,
+                'fecha_inicio': s.fecha_inicio,
+                'fecha_cierre': fecha_cierre,
+                'num_matriculas': num_matriculas,
+                'es_archivado': False,
+                'semestre_id': f'activo_{s.id}',
+            })
+
+        # Ordenar: por nombre de curso, luego número de semestre
+        semestres_lista.sort(key=lambda x: (x['curso_nombre'], x['numero']))
+
+        # Guardar lista completa para extraer números únicos de semestre
+        semestres_lista_completa = semestres_lista[:]
+        numeros_semestre = sorted({s['numero'] for s in semestres_lista_completa})
+
+        # Filtrar por estado si se especificó
+        if estado_semestre:
+            semestres_lista = [s for s in semestres_lista if s['estado'] == estado_semestre]
+
+        # Filtrar por número de semestre si se especificó
+        if numero_semestre_filtro:
+            try:
+                num = int(numero_semestre_filtro)
+                semestres_lista = [s for s in semestres_lista if s['numero'] == num]
+            except ValueError:
+                pass
+
+        # Paginar
+        paginator = Paginator(semestres_lista, per_page)
+        semestres_page = paginator.get_page(page_sem)
+
+        return {
+            'semestres_tab': semestres_page,
+            'semestres_tab_total': len(semestres_lista),
+            'estado_semestre': estado_semestre,
+            'numero_semestre_filtro': numero_semestre_filtro,
+            'numeros_semestre_disponibles': numeros_semestre,
+        }
 
     # ── Fuente: gestión académica (curso activo / no archivado) ───────────────
     def _context_desde_principal(
@@ -822,89 +961,265 @@ class CursoAcademicoDetailView(DetailView):
         from principal.models import SemestreCurso
         from datos_archivados.models import SemestreCursoArchivado, MatriculaArchivada, CalificacionArchivada, AsistenciaArchivada
 
-        # ── Semestres archivados disponibles para este CA ─────────────────────
-        # Busca todos los SemestreCursoArchivado cuyos cursos pertenecen a este CA
-        semestres_archivados = SemestreCursoArchivado.objects.filter(
-            curso_archivado__id_original__in=Curso.objects.filter(
-                curso_academico=curso_academico
-            ).values_list('id', flat=True)
-        ).select_related('curso_archivado').order_by('numero_semestre')
+        # ── Semestres disponibles para este CA ────────────────────────────────
+        # 1. Semestres de cursos ya archivados en datos_archivados
+        semestres_archivados_qs = list(
+            SemestreCursoArchivado.objects.filter(
+                curso_archivado__id_original__in=Curso.objects.filter(
+                    curso_academico=curso_academico
+                ).values_list('id', flat=True)
+            ).select_related('curso_archivado').order_by('numero_semestre')
+        )
+        # IDs de SemestreCurso (id_original) que ya tienen copia en datos_archivados
+        ids_semestres_ya_archivados = {s.id_original for s in semestres_archivados_qs}
 
-        # Si se seleccionó un semestre archivado, mostrar sus datos
+        # 2. Semestres cerrados (activo=False + fecha_cierre) de cursos NO archivados
+        #    que aún no tienen copia en datos_archivados.
+        #    Un semestre cerrado = activo=False y fecha_cierre definida.
+        # 3. También incluir semestres activos de cursos con status='F' (finalizados),
+        #    ya que esos cursos no deben aparecer en la vista "semestre actual".
+        semestres_finalizados_no_archivados = [
+            _SemestreCursoFinalizadoAdapter(sc)
+            for sc in SemestreCurso.objects.filter(
+                curso__curso_academico=curso_academico,
+            ).filter(
+                # Semestre cerrado (cualquier curso) O semestre de curso finalizado
+                Q(activo=False, fecha_cierre__isnull=False) |
+                Q(curso__status='F')
+            ).exclude(
+                id__in=ids_semestres_ya_archivados,
+            ).select_related('curso').order_by('curso__name', 'numero_semestre')
+        ]
+
+        semestres_archivados = semestres_archivados_qs + semestres_finalizados_no_archivados
+
+        # Si se seleccionó un semestre, mostrar sus datos
         semestre_seleccionado = None
-        if semestre_id:
-            try:
-                semestre_seleccionado = SemestreCursoArchivado.objects.get(pk=semestre_id)
-            except SemestreCursoArchivado.DoesNotExist:
-                semestre_seleccionado = None
+        semestre_finalizado_no_archivado = None  # SemestreCurso de curso finalizado
+
+        # Ignorar valores no numéricos que no sean el prefijo 'activo_' ni 'todos'
+        if semestre_id and not str(semestre_id).startswith('activo_') and not str(semestre_id).isdigit() and str(semestre_id) != 'todos':
+            semestre_id = None
+
+        mostrar_todos = (str(semestre_id) == 'todos') if semestre_id else False
+
+        if semestre_id and not mostrar_todos:
+            if str(semestre_id).startswith('activo_'):
+                # Semestre de curso finalizado no archivado
+                real_id = str(semestre_id).replace('activo_', '')
+                try:
+                    sc = SemestreCurso.objects.select_related('curso').get(pk=real_id)
+                    semestre_seleccionado = _SemestreCursoFinalizadoAdapter(sc)
+                    semestre_finalizado_no_archivado = sc
+                except SemestreCurso.DoesNotExist:
+                    semestre_seleccionado = None
+            else:
+                try:
+                    semestre_seleccionado = SemestreCursoArchivado.objects.get(pk=semestre_id)
+                except SemestreCursoArchivado.DoesNotExist:
+                    semestre_seleccionado = None
 
         if semestre_seleccionado:
-            # Mostrar datos del semestre archivado seleccionado
-            curso_archivado = semestre_seleccionado.curso_archivado
+            if semestre_finalizado_no_archivado:
+                # ── Semestre de curso FINALIZADO pero no archivado ─────────────
+                # Los datos siguen en la tabla principal; filtramos por semestre y curso.
+                curso_finalizado = semestre_finalizado_no_archivado.curso
 
-            matriculas_qs = MatriculaArchivada.objects.filter(
-                course=curso_archivado
-            ).select_related('student', 'course')
-            if estudiante_id:
-                matriculas_qs = matriculas_qs.filter(student__id_original=estudiante_id)
+                cursos_qs = Curso.objects.filter(
+                    curso_academico=curso_academico,
+                    id=curso_finalizado.id,
+                )
 
-            calificaciones_qs = CalificacionArchivada.objects.filter(
-                course=curso_archivado
-            ).select_related('student', 'course').prefetch_related('notas_archivadas')
-            if estudiante_id:
-                calificaciones_qs = calificaciones_qs.filter(student__id_original=estudiante_id)
+                matriculas_qs = Matriculas.objects.filter(
+                    semestre=semestre_finalizado_no_archivado,
+                ).select_related('student', 'course')
+                if estudiante_id:
+                    matriculas_qs = matriculas_qs.filter(student_id=estudiante_id)
 
-            asistencias_matriculas_qs = MatriculaArchivada.objects.filter(
-                course=curso_archivado
-            ).select_related('student', 'course').order_by(
-                'student__first_name', 'student__last_name'
-            )
-            if estudiante_id:
-                asistencias_matriculas_qs = asistencias_matriculas_qs.filter(student__id_original=estudiante_id)
+                calificaciones_qs = Calificaciones.objects.filter(
+                    semestre=semestre_finalizado_no_archivado,
+                ).select_related('student', 'course').prefetch_related('notas')
+                if estudiante_id:
+                    calificaciones_qs = calificaciones_qs.filter(student_id=estudiante_id)
 
-            matriculas_adaptadas = [_MatriculaArchivadaAdapter(m) for m in matriculas_qs]
-            calificaciones_adaptadas = [_CalificacionArchivadaAdapter(c) for c in calificaciones_qs]
-            asistencias_adaptadas = [_MatriculaArchivadaAdapter(m) for m in asistencias_matriculas_qs]
+                asistencias_matriculas_qs = Matriculas.objects.filter(
+                    semestre=semestre_finalizado_no_archivado,
+                ).select_related('student', 'course').order_by(
+                    'student__first_name', 'student__last_name'
+                )
+                if estudiante_id:
+                    asistencias_matriculas_qs = asistencias_matriculas_qs.filter(student_id=estudiante_id)
 
-            # Cursos: solo el curso del semestre seleccionado
+                paginator_cur = Paginator(list(cursos_qs), per_page)
+                paginator_m   = Paginator(list(matriculas_qs), per_page)
+                paginator_c   = Paginator(list(calificaciones_qs), per_page)
+                paginator_a   = Paginator(list(asistencias_matriculas_qs), per_page)
+
+                return {
+                    'cursos': paginator_cur.get_page(page_cur),
+                    'cursos_total': cursos_qs.count(),
+                    'matriculas': paginator_m.get_page(page_m),
+                    'matriculas_total': matriculas_qs.count(),
+                    'calificaciones': paginator_c.get_page(page_c),
+                    'calificaciones_total': calificaciones_qs.count(),
+                    'asistencias': paginator_a.get_page(page_a),
+                    'asistencias_total': asistencias_matriculas_qs.count(),
+                    'cursos_disponibles': Curso.objects.filter(curso_academico=curso_academico).distinct(),
+                    'estudiantes_disponibles': User.objects.filter(matriculas__curso_academico=curso_academico).distinct(),
+                    'es_archivado': False,
+                    'semestres_disponibles': semestres_archivados,
+                    'semestre_seleccionado': semestre_seleccionado,
+                    'viendo_semestre_archivado': True,
+                }
+            else:
+                # ── Semestre ya archivado en datos_archivados ──────────────────
+                curso_archivado = semestre_seleccionado.curso_archivado
+
+                matriculas_qs = MatriculaArchivada.objects.filter(
+                    course=curso_archivado
+                ).select_related('student', 'course')
+                if estudiante_id:
+                    matriculas_qs = matriculas_qs.filter(student__id_original=estudiante_id)
+
+                calificaciones_qs = CalificacionArchivada.objects.filter(
+                    course=curso_archivado
+                ).select_related('student', 'course').prefetch_related('notas_archivadas')
+                if estudiante_id:
+                    calificaciones_qs = calificaciones_qs.filter(student__id_original=estudiante_id)
+
+                asistencias_matriculas_qs = MatriculaArchivada.objects.filter(
+                    course=curso_archivado
+                ).select_related('student', 'course').order_by(
+                    'student__first_name', 'student__last_name'
+                )
+                if estudiante_id:
+                    asistencias_matriculas_qs = asistencias_matriculas_qs.filter(student__id_original=estudiante_id)
+
+                matriculas_adaptadas = [_MatriculaArchivadaAdapter(m) for m in matriculas_qs]
+                calificaciones_adaptadas = [_CalificacionArchivadaAdapter(c) for c in calificaciones_qs]
+                asistencias_adaptadas = [_MatriculaArchivadaAdapter(m) for m in asistencias_matriculas_qs]
+
+                # Cursos: solo el curso del semestre seleccionado
+                cursos_qs = Curso.objects.filter(
+                    curso_academico=curso_academico,
+                    id=curso_archivado.id_original,
+                )
+
+                paginator_cur = Paginator(list(cursos_qs), per_page)
+                paginator_m   = Paginator(matriculas_adaptadas, per_page)
+                paginator_c   = Paginator(calificaciones_adaptadas, per_page)
+                paginator_a   = Paginator(asistencias_adaptadas, per_page)
+
+                return {
+                    'cursos': paginator_cur.get_page(page_cur),
+                    'cursos_total': cursos_qs.count(),
+                    'matriculas': paginator_m.get_page(page_m),
+                    'matriculas_total': len(matriculas_adaptadas),
+                    'calificaciones': paginator_c.get_page(page_c),
+                    'calificaciones_total': len(calificaciones_adaptadas),
+                    'asistencias': paginator_a.get_page(page_a),
+                    'asistencias_total': len(asistencias_adaptadas),
+                    'cursos_disponibles': Curso.objects.filter(curso_academico=curso_academico).distinct(),
+                    'estudiantes_disponibles': User.objects.filter(matriculas__curso_academico=curso_academico).distinct(),
+                    'es_archivado': False,
+                    'semestres_disponibles': semestres_archivados,
+                    'semestre_seleccionado': semestre_seleccionado,
+                    'viendo_semestre_archivado': True,
+                }
+
+        # ── "Todos": mostrar todos los cursos sin filtrar por semestre ────────
+        if mostrar_todos:
             cursos_qs = Curso.objects.filter(
-                curso_academico=curso_academico,
-                id=curso_archivado.id_original,
-            )
+                curso_academico=curso_academico
+            ).distinct()
+            if curso_id:
+                cursos_qs = cursos_qs.filter(id=curso_id)
+            if estado_curso:
+                cursos_qs = [c for c in cursos_qs if c.get_dynamic_status() == estado_curso]
 
-            paginator_cur = Paginator(list(cursos_qs), per_page)
-            paginator_m   = Paginator(matriculas_adaptadas, per_page)
-            paginator_c   = Paginator(calificaciones_adaptadas, per_page)
-            paginator_a   = Paginator(asistencias_adaptadas, per_page)
+            matriculas_qs = Matriculas.objects.filter(
+                curso_academico=curso_academico,
+            ).select_related('student', 'course')
+            if curso_id:
+                matriculas_qs = matriculas_qs.filter(course_id=curso_id)
+            if estudiante_id:
+                matriculas_qs = matriculas_qs.filter(student_id=estudiante_id)
+            if estado_matricula:
+                matriculas_qs = matriculas_qs.filter(estado=estado_matricula)
+            if estado_curso:
+                ids_cursos = [c.id for c in Curso.objects.filter(curso_academico=curso_academico) if c.get_dynamic_status() == estado_curso]
+                matriculas_qs = matriculas_qs.filter(course_id__in=ids_cursos)
+
+            calificaciones_qs = Calificaciones.objects.filter(
+                curso_academico=curso_academico,
+            ).select_related('student', 'course').prefetch_related('notas')
+            if curso_id:
+                calificaciones_qs = calificaciones_qs.filter(course_id=curso_id)
+            if estudiante_id:
+                calificaciones_qs = calificaciones_qs.filter(student_id=estudiante_id)
+            if estado_curso:
+                ids_cursos = [c.id for c in Curso.objects.filter(curso_academico=curso_academico) if c.get_dynamic_status() == estado_curso]
+                calificaciones_qs = calificaciones_qs.filter(course_id__in=ids_cursos)
+
+            asistencias_matriculas_qs = Matriculas.objects.filter(
+                curso_academico=curso_academico,
+            ).select_related('student', 'course').order_by(
+                'student__first_name', 'student__last_name', 'student__username'
+            )
+            if curso_id:
+                asistencias_matriculas_qs = asistencias_matriculas_qs.filter(course_id=curso_id)
+            if estudiante_id:
+                asistencias_matriculas_qs = asistencias_matriculas_qs.filter(student_id=estudiante_id)
+            if estado_matricula:
+                asistencias_matriculas_qs = asistencias_matriculas_qs.filter(estado=estado_matricula)
+            if estado_curso:
+                ids_cursos = [c.id for c in Curso.objects.filter(curso_academico=curso_academico) if c.get_dynamic_status() == estado_curso]
+                asistencias_matriculas_qs = asistencias_matriculas_qs.filter(course_id__in=ids_cursos)
+
+            cursos_list = list(cursos_qs)
+            paginator_cur = Paginator(cursos_list, per_page)
+            paginator_m   = Paginator(matriculas_qs, per_page)
+            paginator_c   = Paginator(calificaciones_qs, per_page)
+            paginator_a   = Paginator(asistencias_matriculas_qs, per_page)
 
             return {
                 'cursos': paginator_cur.get_page(page_cur),
-                'cursos_total': cursos_qs.count(),
+                'cursos_total': len(cursos_list),
                 'matriculas': paginator_m.get_page(page_m),
-                'matriculas_total': len(matriculas_adaptadas),
+                'matriculas_total': matriculas_qs.count(),
                 'calificaciones': paginator_c.get_page(page_c),
-                'calificaciones_total': len(calificaciones_adaptadas),
+                'calificaciones_total': calificaciones_qs.count(),
                 'asistencias': paginator_a.get_page(page_a),
-                'asistencias_total': len(asistencias_adaptadas),
+                'asistencias_total': asistencias_matriculas_qs.count(),
                 'cursos_disponibles': Curso.objects.filter(curso_academico=curso_academico).distinct(),
                 'estudiantes_disponibles': User.objects.filter(matriculas__curso_academico=curso_academico).distinct(),
                 'es_archivado': False,
                 'semestres_disponibles': semestres_archivados,
-                'semestre_seleccionado': semestre_seleccionado,
-                'viendo_semestre_archivado': True,
+                'semestre_seleccionado': None,
+                'viendo_semestre_archivado': False,
             }
 
-        # ── Semestre activo (datos actuales) ──────────────────────────────────
+        # ── Semestre activo (solo cursos no finalizados, semestre activo) ─────
+        # Los semestres cerrados y los de cursos finalizados se consultan
+        # desde el selector de semestres.
+        semestres_activos_ids = SemestreCurso.objects.filter(
+            curso__curso_academico=curso_academico,
+            activo=True,
+        ).exclude(
+            curso__status='F',
+        ).values_list('id', flat=True)
+
         cursos_qs = Curso.objects.filter(
-            curso_academico=curso_academico
-        ).distinct()
+            curso_academico=curso_academico,
+            semestres__activo=True,
+        ).exclude(status='F').distinct()
         if curso_id:
             cursos_qs = cursos_qs.filter(id=curso_id)
         if estado_curso:
             cursos_qs = [c for c in cursos_qs if c.get_dynamic_status() == estado_curso]
 
         matriculas_qs = Matriculas.objects.filter(
-            curso_academico=curso_academico
+            semestre__in=semestres_activos_ids,
         ).select_related('student', 'course')
         if curso_id:
             matriculas_qs = matriculas_qs.filter(course_id=curso_id)
@@ -917,7 +1232,7 @@ class CursoAcademicoDetailView(DetailView):
             matriculas_qs = matriculas_qs.filter(course_id__in=ids_cursos)
 
         calificaciones_qs = Calificaciones.objects.filter(
-            curso_academico=curso_academico
+            semestre__in=semestres_activos_ids,
         ).select_related('student', 'course').prefetch_related('notas')
         if curso_id:
             calificaciones_qs = calificaciones_qs.filter(course_id=curso_id)
@@ -928,7 +1243,7 @@ class CursoAcademicoDetailView(DetailView):
             calificaciones_qs = calificaciones_qs.filter(course_id__in=ids_cursos)
 
         asistencias_matriculas_qs = Matriculas.objects.filter(
-            curso_academico=curso_academico
+            semestre__in=semestres_activos_ids,
         ).select_related('student', 'course').order_by(
             'student__first_name', 'student__last_name', 'student__username'
         )
