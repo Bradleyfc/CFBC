@@ -14,7 +14,14 @@
         {% with enrollment_count=course.matriculas_set.count %}
         <div class="glass-course-item">
           <div class="flex items-center justify-between flex-wrap gap-2">
-            <span class="font-semibold text-gray-800 flex-1">{{course.name}}</span>
+            <span class="font-semibold text-gray-800 flex-1">
+              {{course.name}}
+              {% for semestre in course.semestres.all %}
+                {% if semestre.activo %}
+                <span class="text-sm font-normal text-gray-500 ml-1">(Semestre {{ semestre.numero_semestre }})</span>
+                {% endif %}
+              {% endfor %}
+            </span>
 
             <div class="flex items-center gap-2 flex-wrap">
               {% if course.get_dynamic_status == 'F' %}
