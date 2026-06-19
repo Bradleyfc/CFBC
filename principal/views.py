@@ -1584,19 +1584,21 @@ class HomeView(DocumentsCourseMixin, BaseContextMixin, TemplateView):
         cursos_con_solicitudes_rechazadas = set()
         
         if student:
-            # Obtener todos los IDs de cursos con solicitudes pendientes
+            # Obtener todos los IDs de cursos con solicitudes pendientes EN EL SEMESTRE ACTIVO
             cursos_con_solicitudes_pendientes = set(
                 SolicitudInscripcion.objects.filter(
                     estudiante=student,
-                    estado='pendiente'
+                    estado='pendiente',
+                    curso_academico=curso_academico_activo
                 ).values_list('curso_id', flat=True)
             )
             
-            # Obtener todos los IDs de cursos con solicitudes rechazadas
+            # Obtener todos los IDs de cursos con solicitudes rechazadas EN EL SEMESTRE ACTIVO
             cursos_con_solicitudes_rechazadas = set(
                 SolicitudInscripcion.objects.filter(
                     estudiante=student,
-                    estado='rechazada'
+                    estado='rechazada',
+                    curso_academico=curso_academico_activo
                 ).values_list('curso_id', flat=True)
             )
             
@@ -1666,12 +1668,14 @@ class ListadoCursosView(BaseContextMixin, TemplateView):
         if student and student.is_authenticated:
             cursos_con_solicitudes_pendientes = set(
                 SolicitudInscripcion.objects.filter(
-                    estudiante=student, estado='pendiente'
+                    estudiante=student, estado='pendiente',
+                    curso_academico=curso_academico_activo
                 ).values_list('curso_id', flat=True)
             )
             cursos_con_solicitudes_rechazadas = set(
                 SolicitudInscripcion.objects.filter(
-                    estudiante=student, estado='rechazada'
+                    estudiante=student, estado='rechazada',
+                    curso_academico=curso_academico_activo
                 ).values_list('curso_id', flat=True)
             )
 
@@ -3334,12 +3338,14 @@ class CoursesView(BaseContextMixin, TemplateView):
         if student and student.is_authenticated:
             cursos_con_solicitudes_pendientes = set(
                 SolicitudInscripcion.objects.filter(
-                    estudiante=student, estado='pendiente'
+                    estudiante=student, estado='pendiente',
+                    curso_academico=curso_academico_activo
                 ).values_list('curso_id', flat=True)
             )
             cursos_con_solicitudes_rechazadas = set(
                 SolicitudInscripcion.objects.filter(
-                    estudiante=student, estado='rechazada'
+                    estudiante=student, estado='rechazada',
+                    curso_academico=curso_academico_activo
                 ).values_list('curso_id', flat=True)
             )
 
@@ -4433,24 +4439,27 @@ def aplicar_curso(request, curso_id):
         messages.error(request, 'Este curso no tiene un formulario de aplicación disponible.')
         return redirect('principal:cursos')
     
-    # Verificar si el estudiante ya ha aplicado a este curso
+    # Verificar si el estudiante ya ha aplicado a este curso EN EL SEMESTRE ACTIVO
+    curso_academico_activo = CursoAcademico.objects.filter(activo=True).first()
     solicitud_existente = SolicitudInscripcion.objects.filter(
         curso=curso,
-        estudiante=request.user
-    ).first()
+        estudiante=request.user,
+        curso_academico=curso_academico_activo
+    ).exclude(estado='rechazada').first()
     
     if solicitud_existente:
-        messages.info(request, 'Ya has aplicado a este curso. Tu solicitud está en proceso de revisión.')
+        messages.info(request, 'Ya has aplicado a este curso en el semestre actual. Tu solicitud está en proceso de revisión.')
         return redirect('principal:cursos')
     
-    # Verificar si el estudiante ya está matriculado en este curso
+    # Verificar si el estudiante ya está matriculado en este curso EN EL SEMESTRE ACTIVO
     matricula_existente = Matriculas.objects.filter(
         course=curso,
-        student=request.user
+        student=request.user,
+        curso_academico=curso_academico_activo
     ).exists()
     
     if matricula_existente:
-        messages.info(request, 'Ya estás matriculado en este curso.')
+        messages.info(request, 'Ya estás matriculado en este curso en el semestre actual.')
         return redirect('principal:cursos')
     
     # Obtener las preguntas del formulario
@@ -4489,11 +4498,12 @@ def aplicar_curso(request, curso_id):
             return render(request, 'formularios/aplicar_curso.html', context)
 
         try:
-            # Crear la solicitud de inscripción
+            # Crear la solicitud de inscripción con el curso académico activo
             solicitud = SolicitudInscripcion.objects.create(
                 curso=curso,
                 estudiante=request.user,
                 formulario=formulario,
+                curso_academico=curso_academico_activo,
                 estado='pendiente'  # Asegurarse de que el estado sea 'pendiente'
             )
             

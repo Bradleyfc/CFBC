@@ -383,6 +383,7 @@ class SolicitudInscripcion(models.Model):
     curso = models.ForeignKey(Curso, on_delete=models.CASCADE, related_name='solicitudes', verbose_name='Curso')
     estudiante = models.ForeignKey(User, on_delete=models.CASCADE, related_name='solicitudes_inscripcion', limit_choices_to={'groups__name': 'Estudiantes'}, verbose_name='Estudiante')
     formulario = models.ForeignKey(FormularioAplicacion, on_delete=models.CASCADE, related_name='solicitudes', verbose_name='Formulario')
+    curso_academico = models.ForeignKey('CursoAcademico', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Curso Académico')
     fecha_solicitud = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de solicitud')
     estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='pendiente', verbose_name='Estado')
     fecha_revision = models.DateTimeField(null=True, blank=True, verbose_name='Fecha de revisión')
@@ -395,7 +396,7 @@ class SolicitudInscripcion(models.Model):
         verbose_name = '📝 Solicitud de Inscripción'
         verbose_name_plural = '📝 Solicitudes de Inscripción'
         ordering = ['-fecha_solicitud']
-        unique_together = [['estudiante', 'curso']]
+        unique_together = [['estudiante', 'curso', 'curso_academico']]
     
     def aprobar(self, usuario):
         """
@@ -406,10 +407,9 @@ class SolicitudInscripcion(models.Model):
         self.revisado_por = usuario
         self.save()
         
-        # Crear la matrícula usando el curso académico activo del sistema,
-        # igual que inscribirse_curso, para mantener consistencia
-        curso_academico = CursoAcademico.objects.filter(activo=True).first()
-        # Fallback: si no hay activo, usar el del curso
+        # Usar el curso_academico guardado en la solicitud; si no hay, usar el activo
+        curso_academico = self.curso_academico or CursoAcademico.objects.filter(activo=True).first()
+        # Fallback final: usar el del curso
         if not curso_academico:
             curso_academico = self.curso.curso_academico
 
