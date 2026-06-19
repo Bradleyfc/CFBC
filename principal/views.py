@@ -1,3 +1,4 @@
+import logging
 from typing import override
 from django.contrib.auth.forms import UserCreationForm
 from django.views import View
@@ -44,6 +45,8 @@ from .models import (
     ReglamentoGeneral, ArticuloReglamentoGeneral,
 )
 from course_documents.mixins import DocumentsProfileMixin, DocumentsCourseMixin
+
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 
