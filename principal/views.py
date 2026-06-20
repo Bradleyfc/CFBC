@@ -2075,11 +2075,17 @@ class ProfileView(DocumentsProfileMixin, BaseContextMixin, TemplateView):
                         course.matricula_estado_display = ''
 
                     # Verificar si hay una solicitud de inscripción para este curso
-                    try:
-                        solicitud = SolicitudInscripcion.objects.get(
-                            estudiante=user,
-                            curso=course
-                        )
+                    # Filtrar primero por curso_academico activo; si no hay, tomar la más reciente
+                    solicitud = SolicitudInscripcion.objects.filter(
+                        estudiante=user,
+                        curso=course,
+                        curso_academico=curso_academico_activo
+                    ).first() or SolicitudInscripcion.objects.filter(
+                        estudiante=user,
+                        curso=course
+                    ).order_by('-fecha_solicitud').first()
+
+                    if solicitud:
                         course.solicitud_estado = solicitud.estado
                         course.fecha_revision = solicitud.fecha_revision
                         course.revisado_por = solicitud.revisado_por
@@ -2089,7 +2095,7 @@ class ProfileView(DocumentsProfileMixin, BaseContextMixin, TemplateView):
                             pending_courses.append(course)
                         else:
                             approved_courses.append(course)
-                    except SolicitudInscripcion.DoesNotExist:
+                    else:
                         course.solicitud_estado = None
                         course.fecha_revision = None
                         course.revisado_por = None
