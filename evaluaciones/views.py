@@ -112,15 +112,24 @@ def _registrar_nota_en_calificaciones(estudiante, curso, puntaje, evaluacion=Non
     para el curso dado. Si no existe el registro de Calificaciones, lo crea.
     Guarda la referencia a la evaluación para poder eliminarla si se borra la evaluación.
     """
-    from principal.models import Calificaciones, NotaIndividual, CursoAcademico
+    from principal.models import Calificaciones, NotaIndividual, CursoAcademico, Matriculas
     from decimal import Decimal
 
     curso_academico = curso.curso_academico or CursoAcademico.objects.filter(activo=True).first()
+
+    # Intentar obtener el semestre activo del estudiante para este curso
+    semestre = None
+    matricula = Matriculas.objects.filter(
+        course=curso, student=estudiante
+    ).select_related('semestre').order_by('-fecha_matricula').first()
+    if matricula:
+        semestre = matricula.semestre
 
     calificacion_obj, _ = Calificaciones.objects.get_or_create(
         course=curso,
         student=estudiante,
         curso_academico=curso_academico,
+        semestre=semestre,
     )
 
     NotaIndividual.objects.create(

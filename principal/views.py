@@ -1073,6 +1073,8 @@ class CursoAcademicoDetailView(DetailView):
                     'semestres_disponibles': semestres_archivados,
                     'semestre_seleccionado': semestre_seleccionado,
                     'viendo_semestre_archivado': True,
+                    # Los datos siguen en la tabla principal (User activo, no UsuarioArchivado)
+                    'semestre_datos_en_principal': True,
                 }
             else:
                 # ── Semestre ya archivado en datos_archivados ──────────────────
@@ -1128,6 +1130,8 @@ class CursoAcademicoDetailView(DetailView):
                     'semestres_disponibles': semestres_archivados,
                     'semestre_seleccionado': semestre_seleccionado,
                     'viendo_semestre_archivado': True,
+                    # Datos en datos_archivados: student_id es UsuarioArchivado.id
+                    'semestre_datos_en_principal': False,
                 }
 
         # ── "Todos": mostrar todos los cursos sin filtrar por semestre ────────
@@ -1200,6 +1204,7 @@ class CursoAcademicoDetailView(DetailView):
                 'semestres_disponibles': semestres_archivados,
                 'semestre_seleccionado': None,
                 'viendo_semestre_archivado': False,
+                'semestre_datos_en_principal': False,
             }
 
         # ── Semestre activo (solo cursos no finalizados, semestre activo) ─────
@@ -1285,6 +1290,7 @@ class CursoAcademicoDetailView(DetailView):
             'semestres_disponibles': semestres_archivados,
             'semestre_seleccionado': None,
             'viendo_semestre_archivado': False,
+            'semestre_datos_en_principal': False,
         }
 
     # ── Fuente: datos archivados (curso archivado) ────────────────────────────
@@ -1442,6 +1448,7 @@ class CursoAcademicoDetailView(DetailView):
             'semestres_disponibles': semestres_archivados,
             'semestre_seleccionado': semestre_seleccionado,
             'viendo_semestre_archivado': semestre_seleccionado is not None,
+            'semestre_datos_en_principal': False,
         }
         
     def render_to_response(self, context, **response_kwargs):
@@ -3636,12 +3643,22 @@ class AddNotaView(LoginRequiredMixin, View):
 
     def _get_calificacion(self, matricula):
         """Obtiene o crea el objeto Calificaciones para la matrícula dada."""
-        # Primero intentar con curso_academico exacto
+        # Primero intentar con curso_academico y semestre exactos
         calificacion = Calificaciones.objects.filter(
             course=matricula.course,
             student=matricula.student,
             curso_academico=matricula.curso_academico,
+            semestre=matricula.semestre,
         ).first()
+
+        if not calificacion:
+            # Fallback: buscar por curso_academico sin semestre (registros antiguos)
+            calificacion = Calificaciones.objects.filter(
+                course=matricula.course,
+                student=matricula.student,
+                curso_academico=matricula.curso_academico,
+                semestre__isnull=True,
+            ).first()
 
         if not calificacion:
             # Fallback: buscar cualquier calificación existente para este estudiante/curso
@@ -3651,18 +3668,25 @@ class AddNotaView(LoginRequiredMixin, View):
             ).first()
 
         if not calificacion:
-            # Crear nueva
+            # Crear nueva con semestre asignado
             calificacion = Calificaciones.objects.create(
                 course=matricula.course,
                 student=matricula.student,
                 curso_academico=matricula.curso_academico,
+                semestre=matricula.semestre,
                 matricula=matricula,
             )
         else:
-            # Asegurar que la FK matricula esté enlazada
+            # Asegurar que la FK matricula y semestre estén enlazados
+            update_fields = []
             if calificacion.matricula_id != matricula.pk:
                 calificacion.matricula = matricula
-                calificacion.save(update_fields=['matricula'])
+                update_fields.append('matricula')
+            if calificacion.semestre_id != getattr(matricula.semestre, 'pk', None):
+                calificacion.semestre = matricula.semestre
+                update_fields.append('semestre')
+            if update_fields:
+                calificacion.save(update_fields=update_fields)
 
         return calificacion
 

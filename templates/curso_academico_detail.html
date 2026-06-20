@@ -506,13 +506,21 @@
             <td>{{ matricula.student.get_full_name|default:matricula.student.username }}</td>
             <td>{{ matricula.course.name }}</td>
             <td class="text-center">
-              {% if not es_archivado and not viendo_semestre_archivado %}
-              <a href="{% url 'principal:asistencia_detalle_estudiante' student_id=matricula.student.id course_id=matricula.course.id %}"
+              {% if es_archivado and not semestre_datos_en_principal %}
+              {# Datos en datos_archivados: student_id es UsuarioArchivado.id #}
+              <a href="{% url 'principal:asistencia_detalle_archivado' student_id=matricula.student.id course_id=matricula.course.id %}"
+                 class="ca-btn ca-btn-primary" style="padding:0.3rem 0.8rem;font-size:0.8rem;">
+                <span class="material-icons" style="font-size:1rem;">visibility</span> Ver
+              </a>
+              {% elif viendo_semestre_archivado and not semestre_datos_en_principal %}
+              {# Semestre ya archivado (desde _context_desde_principal): student_id es UsuarioArchivado.id #}
+              <a href="{% url 'principal:asistencia_detalle_archivado' student_id=matricula.student.id course_id=matricula.course.id %}"
                  class="ca-btn ca-btn-primary" style="padding:0.3rem 0.8rem;font-size:0.8rem;">
                 <span class="material-icons" style="font-size:1rem;">visibility</span> Ver
               </a>
               {% else %}
-              <a href="{% url 'principal:asistencia_detalle_archivado' student_id=matricula.student.id course_id=matricula.course.id %}"
+              {# Datos en tabla principal (User activo): semestre activo o finalizado no archivado #}
+              <a href="{% url 'principal:asistencia_detalle_estudiante' student_id=matricula.student.id course_id=matricula.course.id %}"
                  class="ca-btn ca-btn-primary" style="padding:0.3rem 0.8rem;font-size:0.8rem;">
                 <span class="material-icons" style="font-size:1rem;">visibility</span> Ver
               </a>

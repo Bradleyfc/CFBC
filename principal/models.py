@@ -272,7 +272,7 @@ class Calificaciones(models.Model):
     class Meta:
         verbose_name= 'Calificacion'
         verbose_name_plural= 'Calificaciones'
-        unique_together = ('course', 'student', 'curso_academico')
+        unique_together = ('course', 'student', 'curso_academico', 'semestre')
       
 
 class NotaIndividual(models.Model):
