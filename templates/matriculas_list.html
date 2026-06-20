@@ -150,7 +150,14 @@
                                 {% endif %}
                             </td>
                             <td>{{ matricula.curso_academico.nombre }}</td>
-                            <td>{{ matricula.course.name }}</td>
+                            <td>
+                                {{ matricula.course.name }}
+                                {% for semestre in matricula.course.semestres.all %}
+                                    {% if semestre.activo %}
+                                    <span class="text-sm font-normal text-gray-500 ml-1">(Semestre {{ semestre.numero_semestre }})</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
                             <td>{{ matricula.fecha_matricula|date:"d/m/Y" }}</td>
                             <td>
                                 {% if matricula.estado == 'A' %}
