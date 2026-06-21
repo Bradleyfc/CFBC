@@ -1398,94 +1398,30 @@ class CursoAcademicoDetailView(DetailView):
 
         # ── Filtro por semestre ───────────────────────────────────────────────
         from datos_archivados.models import SemestreCursoArchivado
-        from principal.models import SemestreCurso as SemestreCursoPrincipal
 
         semestres_archivados_qs = SemestreCursoArchivado.objects.filter(
             curso_archivado__curso_academico=ca_archivado
         ).select_related('curso_archivado').order_by('curso_archivado__name', 'numero_semestre')
 
-        # IDs de SemestreCurso ya archivados (para no duplicar)
-        ids_ya_archivados = {s.id_original for s in semestres_archivados_qs}
-
-        # Semestres en principal que corresponden a cursos de este CA archivado
-        # (son los semestres finales que no llegaron a archivarse)
-        ids_originales_cursos = [c.id_original for c in CursoArchivado.objects.filter(curso_academico=ca_archivado)]
-        semestres_principal_qs = SemestreCursoPrincipal.objects.filter(
-            curso__id__in=ids_originales_cursos
-        ).exclude(
-            id__in=ids_ya_archivados
-        ).select_related('curso').order_by('curso__name', 'numero_semestre')
-
         # Mapa curso_archivado.id → lista ordenada de números de semestre
-        # Construido combinando archivados + los que aún están en principal
         _semestre_map = {}
-        # id_original del curso → curso_archivado.id (para mapear los semestres de principal)
-        _curso_id_original_to_arch_id = {
-            c.id_original: c.id
-            for c in CursoArchivado.objects.filter(curso_academico=ca_archivado)
-        }
         for s in semestres_archivados_qs:
             _semestre_map.setdefault(s.curso_archivado_id, []).append(s.numero_semestre)
-        for s in semestres_principal_qs:
-            arch_id = _curso_id_original_to_arch_id.get(s.curso_id)
-            if arch_id is not None:
-                nums = _semestre_map.setdefault(arch_id, [])
-                if s.numero_semestre not in nums:
-                    nums.append(s.numero_semestre)
-        # Ordenar cada lista
         for k in _semestre_map:
             _semestre_map[k].sort()
 
-        # Lista combinada para el selector de semestres
-        semestres_archivados = list(semestres_archivados_qs)
-
-        # Agregar los semestres de principal como adaptadores compatibles con el template
-        class _SemestrePrincipalEnArchivadoAdapter:
-            """Hace que un SemestreCurso parezca SemestreCursoArchivado para el template del selector."""
-            def __init__(self, sc, curso_archivado):
-                self.id = f'activo_{sc.id}'
-                self.numero_semestre = sc.numero_semestre
-                self.fecha_inicio = sc.fecha_inicio
-                self.fecha_cierre = sc.fecha_cierre
-                self.es_finalizado_no_archivado = True
-                self._curso_archivado = curso_archivado
-
-            @property
-            def curso_archivado(self):
-                return self._curso_archivado
-
-        _ca_map = {c.id_original: c for c in CursoArchivado.objects.filter(curso_academico=ca_archivado)}
-        for s in semestres_principal_qs:
-            ca_obj = _ca_map.get(s.curso_id)
-            if ca_obj:
-                semestres_archivados.append(_SemestrePrincipalEnArchivadoAdapter(s, ca_obj))
-
         semestre_seleccionado = None
         curso_archivado_filtro = None  # CursoArchivado para filtrar cuando se selecciona un semestre
-        # Manejar los tres casos:
         # - 'todos' o vacío: sin filtro de semestre
-        # - 'activo_X': semestre que aún está en principal.SemestreCurso
         # - número: SemestreCursoArchivado
-        if semestre_id and str(semestre_id) != 'todos':
-            if str(semestre_id).startswith('activo_'):
-                real_id = str(semestre_id).replace('activo_', '')
-                try:
-                    sc = SemestreCursoPrincipal.objects.select_related('curso').get(pk=real_id)
-                    ca_obj = _ca_map.get(sc.curso_id)
-                    if ca_obj:
-                        semestre_seleccionado = _SemestrePrincipalEnArchivadoAdapter(sc, ca_obj)
-                        curso_archivado_filtro = ca_obj
-                        cursos_qs = cursos_qs.filter(id=ca_obj.id)
-                except (SemestreCursoPrincipal.DoesNotExist, ValueError):
-                    pass
-            else:
-                try:
-                    sem_arch = SemestreCursoArchivado.objects.get(pk=semestre_id)
-                    semestre_seleccionado = sem_arch
-                    curso_archivado_filtro = sem_arch.curso_archivado
-                    cursos_qs = cursos_qs.filter(id=sem_arch.curso_archivado.id)
-                except (SemestreCursoArchivado.DoesNotExist, ValueError):
-                    pass
+        if semestre_id and str(semestre_id) != 'todos' and not str(semestre_id).startswith('activo_'):
+            try:
+                sem_arch = SemestreCursoArchivado.objects.get(pk=semestre_id)
+                semestre_seleccionado = sem_arch
+                curso_archivado_filtro = sem_arch.curso_archivado
+                cursos_qs = cursos_qs.filter(id=sem_arch.curso_archivado.id)
+            except (SemestreCursoArchivado.DoesNotExist, ValueError):
+                pass
 
         if curso_id:
             cursos_qs = cursos_qs.filter(id=curso_id)
@@ -1582,7 +1518,7 @@ class CursoAcademicoDetailView(DetailView):
             'estudiantes_disponibles': estudiantes_disponibles,
             'es_archivado': True,
             'sin_datos_archivados': False,
-            'semestres_disponibles': semestres_archivados,
+            'semestres_disponibles': semestres_archivados_qs,
             'semestre_seleccionado': semestre_seleccionado,
             'viendo_semestre_archivado': semestre_seleccionado is not None,
             'semestre_datos_en_principal': False,
