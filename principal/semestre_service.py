@@ -357,11 +357,15 @@ def terminar_semestre(curso):
 
             # ── 9. Crear nuevo SemestreCurso ──────────────────────────────────
             nuevo_numero = numero_semestre_actual + 1
+            # El nuevo semestre hereda el mismo CursoAcademico del semestre que se cierra,
+            # no el CA "activo global". Así el curso permanece vinculado a su CA original
+            # aunque se use el modal después de que ese CA haya sido archivado.
+            ca_nuevo_semestre = semestre_activo.curso_academico if semestre_activo else curso_academico_activo
             SemestreCurso.objects.create(
                 curso=curso,
                 numero_semestre=nuevo_numero,
                 activo=True,
-                curso_academico=curso_academico_activo,
+                curso_academico=ca_nuevo_semestre,
                 fecha_inicio=timezone.now().date(),
             )
 

@@ -6982,8 +6982,15 @@ def terminar_semestre_view(request, curso_id):
     # ── Acción: Finalizar Curso ───────────────────────────────────────────────
     if accion == 'finalizar_curso':
         try:
+            from django.utils import timezone
             curso.status = 'F'
             curso.save(update_fields=['status'])
+            # Cerrar el semestre activo para que quede registrado con fecha_cierre
+            semestre_activo = curso.semestres.filter(activo=True).order_by('-numero_semestre').first()
+            if semestre_activo and not semestre_activo.fecha_cierre:
+                semestre_activo.activo = False
+                semestre_activo.fecha_cierre = timezone.now().date()
+                semestre_activo.save(update_fields=['activo', 'fecha_cierre'])
             return JsonResponse({
                 'success': True,
                 'message': f"El curso '{curso.name}' ha sido finalizado.",

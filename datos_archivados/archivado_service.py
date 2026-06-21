@@ -209,6 +209,9 @@ def archivar_datos_curso_academico(curso_academico):
             from principal.models import SemestreCurso
             from datos_archivados.models import SemestreCursoArchivado
 
+            # Fecha de cierre de facto para semestres que estaban abiertos al archivar
+            fecha_archivado = timezone.now().date()
+
             # Mapa semestre.pk → SemestreCursoArchivado (para vincular matrículas/calificaciones/asistencias)
             semestres_archivados_map = {}
 
@@ -231,14 +234,16 @@ def archivar_datos_curso_academico(curso_academico):
                         )
                         continue
                     numeros_vistos.add(semestre.numero_semestre)
+                    # Si el semestre estaba abierto al momento del archivado, cerrarlo ahora
+                    fecha_cierre = semestre.fecha_cierre or (fecha_archivado if semestre.activo else None)
                     sa = SemestreCursoArchivado.objects.create(
                         id_original=semestre.pk,
                         curso_archivado=curso_archivado,
                         numero_semestre=semestre.numero_semestre,
-                        activo=semestre.activo,
+                        activo=False,  # al archivar el CA todos los semestres quedan cerrados
                         curso_academico_archivado=curso_academico_archivado,
                         fecha_inicio=semestre.fecha_inicio,
-                        fecha_cierre=semestre.fecha_cierre,
+                        fecha_cierre=fecha_cierre,
                         fecha_creacion=semestre.fecha_creacion,
                     )
                     semestres_archivados_map[semestre.pk] = sa
