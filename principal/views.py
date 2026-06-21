@@ -579,7 +579,7 @@ def generate_excel(context_dict={}):
 
 class _SemestreCursoFinalizadoAdapter:
     """
-    Adapta un SemestreCurso de un curso finalizado (status='F', no archivado aún)
+    Adapta un SemestreCurso (activo, cerrado o de curso finalizado, no archivado aún)
     para que el template lo trate igual que un SemestreCursoArchivado en el
     selector de semestres.
     Se usa una clase interna _CursoRef para imitar la interfaz de curso_archivado.
@@ -599,7 +599,11 @@ class _SemestreCursoFinalizadoAdapter:
         self.fecha_cierre = semestre_curso.fecha_cierre
         self.fecha_creacion = semestre_curso.fecha_creacion
         self.curso_archivado = self._CursoRef(semestre_curso.curso)
-        self.es_finalizado_no_archivado = True   # bandera para el template si se necesita
+        # Solo marcar como finalizado si el curso está finalizado o el semestre está cerrado
+        self.es_finalizado_no_archivado = (
+            semestre_curso.curso.status == 'F' or
+            (not semestre_curso.activo and semestre_curso.fecha_cierre is not None)
+        )
 
 class _UsuarioArchivadoAdapter:
     """Adapta UsuarioArchivado para que se comporte como User en el template."""
@@ -622,7 +626,7 @@ class _UsuarioArchivadoAdapter:
 
 class _CursoArchivadoAdapter:
     """Adapta CursoArchivado para que se comporte como Curso en el template."""
-    def __init__(self, ca):
+    def __init__(self, ca, semestre_map=None):
         self._ca = ca
         self.id = ca.id
         self.pk = ca.id
@@ -638,6 +642,8 @@ class _CursoArchivadoAdapter:
         self.teacher = _TeacherProxy(ca)
         # Exponer curso_academico para compatibilidad con generate_excel
         self.curso_academico = ca.curso_academico
+        # Lista de números de semestre precalculada desde el mapa (sin queries extra)
+        self._semestre_map = semestre_map
 
     def get_dynamic_status(self):
         return self._ca.status
@@ -650,15 +656,23 @@ class _CursoArchivadoAdapter:
 
     @property
     def semestre_activo_numero(self):
-        # Buscar el semestre activo archivado para este curso
+        # Para compatibilidad: devuelve el número más alto disponible
+        numeros = self.semestres_numeros
+        return numeros[-1] if numeros else 1
+
+    @property
+    def semestres_numeros(self):
+        """Lista de todos los números de semestre para este curso."""
+        if self._semestre_map is not None:
+            return self._semestre_map.get(self._ca.id, [])
+        # Fallback con query si no se pasó mapa
         from datos_archivados.models import SemestreCursoArchivado
-        semestre = (
+        return list(
             SemestreCursoArchivado.objects
             .filter(curso_archivado=self._ca)
-            .order_by('-activo', '-numero_semestre')
-            .first()
+            .order_by('numero_semestre')
+            .values_list('numero_semestre', flat=True)
         )
-        return semestre.numero_semestre if semestre else 1
 
     def __str__(self):
         return self.name
@@ -687,7 +701,7 @@ class _MatriculaArchivadaAdapter:
         'BA': 'Baja por Ausencia', 'BL': 'Baja por Licencia', 'BI': 'Baja por Insuficiencia Académica',
     }
 
-    def __init__(self, ma):
+    def __init__(self, ma, semestre_map=None):
         self._ma = ma
         self.id = ma.id
         self.pk = ma.id
@@ -698,6 +712,18 @@ class _MatriculaArchivadaAdapter:
         self.course = _CursoArchivadoAdapter(ma.course)
         # Exponer curso_academico para compatibilidad con templates que lo usan
         self.curso_academico = ma.course.curso_academico if ma.course else None
+        # Número de semestre para mostrar junto al nombre del curso.
+        # Primero intenta el FK directo; si es None usa el mapa por curso.
+        if ma.semestre_archivado:
+            self.semestre_numero = f'Semestre {ma.semestre_archivado.numero_semestre}'
+        elif semestre_map and ma.course_id in semestre_map:
+            numeros = semestre_map[ma.course_id]
+            if len(numeros) == 1:
+                self.semestre_numero = f'Semestre {numeros[0]}'
+            else:
+                self.semestre_numero = 'Semestres ' + ', '.join(str(n) for n in numeros)
+        else:
+            self.semestre_numero = None
 
     def get_estado_display(self):
         return self.ESTADO_CHOICES.get(self._ma.estado, self._ma.estado)
@@ -737,7 +763,7 @@ class _NotasList(list):
 
 class _CalificacionArchivadaAdapter:
     """Adapta CalificacionArchivada para que se comporte como Calificaciones en el template."""
-    def __init__(self, ca):
+    def __init__(self, ca, semestre_map=None):
         self._ca = ca
         self.id = ca.id
         self.pk = ca.id
@@ -748,6 +774,18 @@ class _CalificacionArchivadaAdapter:
         self.notas = _NotasManager(ca.notas_archivadas.all())
         # Exponer curso_academico para compatibilidad con templates
         self.curso_academico = ca.course.curso_academico if ca.course else None
+        # Número de semestre para mostrar junto al nombre del curso.
+        # Primero intenta el FK directo; si es None usa el mapa por curso.
+        if ca.semestre_archivado:
+            self.semestre_numero = f'Semestre {ca.semestre_archivado.numero_semestre}'
+        elif semestre_map and ca.course_id in semestre_map:
+            numeros = semestre_map[ca.course_id]
+            if len(numeros) == 1:
+                self.semestre_numero = f'Semestre {numeros[0]}'
+            else:
+                self.semestre_numero = 'Semestres ' + ', '.join(str(n) for n in numeros)
+        else:
+            self.semestre_numero = None
 
     def __str__(self):
         return str(self._ca)
@@ -976,19 +1014,35 @@ class CursoAcademicoDetailView(DetailView):
         # IDs de SemestreCurso (id_original) que ya tienen copia en datos_archivados
         ids_semestres_ya_archivados = {s.id_original for s in semestres_archivados_qs}
 
-        # 2. Semestres cerrados (activo=False + fecha_cierre) de cursos NO archivados
-        #    que aún no tienen copia en datos_archivados.
-        #    Un semestre cerrado = activo=False y fecha_cierre definida.
-        # 3. También incluir semestres activos de cursos con status='F' (finalizados),
-        #    ya que esos cursos no deben aparecer en la vista "semestre actual".
+        # Mapa curso.id → lista ordenada de todos los números de semestre
+        # (combina archivados + activos/cerrados en principal)
+        _semestre_map_principal = {}
+        # De SemestreCursoArchivado: mapear via id_original del curso archivado
+        # Necesitamos curso.id (principal) ← curso_archivado.id_original
+        for s in semestres_archivados_qs:
+            curso_id_real = s.curso_archivado.id_original
+            nums = _semestre_map_principal.setdefault(curso_id_real, [])
+            if s.numero_semestre not in nums:
+                nums.append(s.numero_semestre)
+        # De SemestreCurso en principal (todos los que no están archivados)
+        todos_semestres_principal = SemestreCurso.objects.filter(
+            curso__curso_academico=curso_academico
+        ).values_list('curso_id', 'numero_semestre').order_by('curso_id', 'numero_semestre')
+        for curso_id_real, num_sem in todos_semestres_principal:
+            nums = _semestre_map_principal.setdefault(curso_id_real, [])
+            if num_sem not in nums:
+                nums.append(num_sem)
+        # Ordenar cada lista
+        for k in _semestre_map_principal:
+            _semestre_map_principal[k].sort()
+
+        # 2. Semestres cerrados (activo=False + fecha_cierre) de cursos NO archivados,
+        #    semestres activos de cursos finalizados, Y semestres activos de cursos
+        #    activos — todos los que no tienen copia en datos_archivados.
         semestres_finalizados_no_archivados = [
             _SemestreCursoFinalizadoAdapter(sc)
             for sc in SemestreCurso.objects.filter(
                 curso__curso_academico=curso_academico,
-            ).filter(
-                # Semestre cerrado (cualquier curso) O semestre de curso finalizado
-                Q(activo=False, fecha_cierre__isnull=False) |
-                Q(curso__status='F')
             ).exclude(
                 id__in=ids_semestres_ya_archivados,
             ).select_related('curso').order_by('curso__name', 'numero_semestre')
@@ -1075,6 +1129,7 @@ class CursoAcademicoDetailView(DetailView):
                     'viendo_semestre_archivado': True,
                     # Los datos siguen en la tabla principal (User activo, no UsuarioArchivado)
                     'semestre_datos_en_principal': True,
+                    'semestre_map_cursos': _semestre_map_principal,
                 }
             else:
                 # ── Semestre ya archivado en datos_archivados ──────────────────
@@ -1132,6 +1187,7 @@ class CursoAcademicoDetailView(DetailView):
                     'viendo_semestre_archivado': True,
                     # Datos en datos_archivados: student_id es UsuarioArchivado.id
                     'semestre_datos_en_principal': False,
+                    'semestre_map_cursos': _semestre_map_principal,
                 }
 
         # ── "Todos": mostrar todos los cursos sin filtrar por semestre ────────
@@ -1205,6 +1261,7 @@ class CursoAcademicoDetailView(DetailView):
                 'semestre_seleccionado': None,
                 'viendo_semestre_archivado': False,
                 'semestre_datos_en_principal': False,
+                'semestre_map_cursos': _semestre_map_principal,
             }
 
         # ── Semestre activo (solo cursos no finalizados, semestre activo) ─────
@@ -1291,6 +1348,7 @@ class CursoAcademicoDetailView(DetailView):
             'semestre_seleccionado': None,
             'viendo_semestre_archivado': False,
             'semestre_datos_en_principal': False,
+            'semestre_map_cursos': _semestre_map_principal,
         }
 
     # ── Fuente: datos archivados (curso archivado) ────────────────────────────
@@ -1340,18 +1398,94 @@ class CursoAcademicoDetailView(DetailView):
 
         # ── Filtro por semestre ───────────────────────────────────────────────
         from datos_archivados.models import SemestreCursoArchivado
-        semestres_archivados = SemestreCursoArchivado.objects.filter(
+        from principal.models import SemestreCurso as SemestreCursoPrincipal
+
+        semestres_archivados_qs = SemestreCursoArchivado.objects.filter(
             curso_archivado__curso_academico=ca_archivado
         ).select_related('curso_archivado').order_by('curso_archivado__name', 'numero_semestre')
 
+        # IDs de SemestreCurso ya archivados (para no duplicar)
+        ids_ya_archivados = {s.id_original for s in semestres_archivados_qs}
+
+        # Semestres en principal que corresponden a cursos de este CA archivado
+        # (son los semestres finales que no llegaron a archivarse)
+        ids_originales_cursos = [c.id_original for c in CursoArchivado.objects.filter(curso_academico=ca_archivado)]
+        semestres_principal_qs = SemestreCursoPrincipal.objects.filter(
+            curso__id__in=ids_originales_cursos
+        ).exclude(
+            id__in=ids_ya_archivados
+        ).select_related('curso').order_by('curso__name', 'numero_semestre')
+
+        # Mapa curso_archivado.id → lista ordenada de números de semestre
+        # Construido combinando archivados + los que aún están en principal
+        _semestre_map = {}
+        # id_original del curso → curso_archivado.id (para mapear los semestres de principal)
+        _curso_id_original_to_arch_id = {
+            c.id_original: c.id
+            for c in CursoArchivado.objects.filter(curso_academico=ca_archivado)
+        }
+        for s in semestres_archivados_qs:
+            _semestre_map.setdefault(s.curso_archivado_id, []).append(s.numero_semestre)
+        for s in semestres_principal_qs:
+            arch_id = _curso_id_original_to_arch_id.get(s.curso_id)
+            if arch_id is not None:
+                nums = _semestre_map.setdefault(arch_id, [])
+                if s.numero_semestre not in nums:
+                    nums.append(s.numero_semestre)
+        # Ordenar cada lista
+        for k in _semestre_map:
+            _semestre_map[k].sort()
+
+        # Lista combinada para el selector de semestres
+        semestres_archivados = list(semestres_archivados_qs)
+
+        # Agregar los semestres de principal como adaptadores compatibles con el template
+        class _SemestrePrincipalEnArchivadoAdapter:
+            """Hace que un SemestreCurso parezca SemestreCursoArchivado para el template del selector."""
+            def __init__(self, sc, curso_archivado):
+                self.id = f'activo_{sc.id}'
+                self.numero_semestre = sc.numero_semestre
+                self.fecha_inicio = sc.fecha_inicio
+                self.fecha_cierre = sc.fecha_cierre
+                self.es_finalizado_no_archivado = True
+                self._curso_archivado = curso_archivado
+
+            @property
+            def curso_archivado(self):
+                return self._curso_archivado
+
+        _ca_map = {c.id_original: c for c in CursoArchivado.objects.filter(curso_academico=ca_archivado)}
+        for s in semestres_principal_qs:
+            ca_obj = _ca_map.get(s.curso_id)
+            if ca_obj:
+                semestres_archivados.append(_SemestrePrincipalEnArchivadoAdapter(s, ca_obj))
+
         semestre_seleccionado = None
-        if semestre_id:
-            try:
-                semestre_seleccionado = SemestreCursoArchivado.objects.get(pk=semestre_id)
-                # Filtrar solo el curso de ese semestre
-                cursos_qs = cursos_qs.filter(id=semestre_seleccionado.curso_archivado.id)
-            except SemestreCursoArchivado.DoesNotExist:
-                semestre_seleccionado = None
+        curso_archivado_filtro = None  # CursoArchivado para filtrar cuando se selecciona un semestre
+        # Manejar los tres casos:
+        # - 'todos' o vacío: sin filtro de semestre
+        # - 'activo_X': semestre que aún está en principal.SemestreCurso
+        # - número: SemestreCursoArchivado
+        if semestre_id and str(semestre_id) != 'todos':
+            if str(semestre_id).startswith('activo_'):
+                real_id = str(semestre_id).replace('activo_', '')
+                try:
+                    sc = SemestreCursoPrincipal.objects.select_related('curso').get(pk=real_id)
+                    ca_obj = _ca_map.get(sc.curso_id)
+                    if ca_obj:
+                        semestre_seleccionado = _SemestrePrincipalEnArchivadoAdapter(sc, ca_obj)
+                        curso_archivado_filtro = ca_obj
+                        cursos_qs = cursos_qs.filter(id=ca_obj.id)
+                except (SemestreCursoPrincipal.DoesNotExist, ValueError):
+                    pass
+            else:
+                try:
+                    sem_arch = SemestreCursoArchivado.objects.get(pk=semestre_id)
+                    semestre_seleccionado = sem_arch
+                    curso_archivado_filtro = sem_arch.curso_archivado
+                    cursos_qs = cursos_qs.filter(id=sem_arch.curso_archivado.id)
+                except (SemestreCursoArchivado.DoesNotExist, ValueError):
+                    pass
 
         if curso_id:
             cursos_qs = cursos_qs.filter(id=curso_id)
@@ -1359,16 +1493,17 @@ class CursoAcademicoDetailView(DetailView):
         # Adaptar CursoArchivado para que el template pueda usar los mismos
         # atributos que usa con Curso (name, teacher.get_full_name, get_dynamic_status_display)
         if estado_curso:
-            cursos_adaptados = [_CursoArchivadoAdapter(c) for c in cursos_qs if c.status == estado_curso]
+            cursos_adaptados = [_CursoArchivadoAdapter(c, _semestre_map) for c in cursos_qs if c.status == estado_curso]
         else:
-            cursos_adaptados = [_CursoArchivadoAdapter(c) for c in cursos_qs]
+            cursos_adaptados = [_CursoArchivadoAdapter(c, _semestre_map) for c in cursos_qs]
 
         # ── Matrículas ────────────────────────────────────────────────────────
         matriculas_qs = MatriculaArchivada.objects.filter(
             course__curso_academico=ca_archivado
         ).select_related('student', 'course', 'semestre_archivado')
-        if semestre_seleccionado:
-            matriculas_qs = matriculas_qs.filter(semestre_archivado=semestre_seleccionado)
+        if curso_archivado_filtro:
+            # Filtrar por el curso del semestre seleccionado (semestre_archivado FK puede ser NULL)
+            matriculas_qs = matriculas_qs.filter(course=curso_archivado_filtro)
         if curso_id:
             matriculas_qs = matriculas_qs.filter(course_id=curso_id)
         if estudiante_id:
@@ -1379,14 +1514,15 @@ class CursoAcademicoDetailView(DetailView):
             ids_cursos_arch = [c.id for c in CursoArchivado.objects.filter(curso_academico=ca_archivado, status=estado_curso)]
             matriculas_qs = matriculas_qs.filter(course_id__in=ids_cursos_arch)
 
-        matriculas_adaptadas = [_MatriculaArchivadaAdapter(m) for m in matriculas_qs]
+        matriculas_adaptadas = [_MatriculaArchivadaAdapter(m, _semestre_map) for m in matriculas_qs]
 
         # ── Calificaciones ────────────────────────────────────────────────────
         calificaciones_qs = CalificacionArchivada.objects.filter(
             course__curso_academico=ca_archivado
         ).select_related('student', 'course', 'semestre_archivado').prefetch_related('notas_archivadas')
-        if semestre_seleccionado:
-            calificaciones_qs = calificaciones_qs.filter(semestre_archivado=semestre_seleccionado)
+        if curso_archivado_filtro:
+            # Filtrar por el curso del semestre seleccionado (semestre_archivado FK puede ser NULL)
+            calificaciones_qs = calificaciones_qs.filter(course=curso_archivado_filtro)
         if curso_id:
             calificaciones_qs = calificaciones_qs.filter(course_id=curso_id)
         if estudiante_id:
@@ -1395,7 +1531,7 @@ class CursoAcademicoDetailView(DetailView):
             ids_cursos_arch = [c.id for c in CursoArchivado.objects.filter(curso_academico=ca_archivado, status=estado_curso)]
             calificaciones_qs = calificaciones_qs.filter(course_id__in=ids_cursos_arch)
 
-        calificaciones_adaptadas = [_CalificacionArchivadaAdapter(c) for c in calificaciones_qs]
+        calificaciones_adaptadas = [_CalificacionArchivadaAdapter(c, _semestre_map) for c in calificaciones_qs]
 
         # ── Asistencias ───────────────────────────────────────────────────────
         asistencias_matriculas_qs = MatriculaArchivada.objects.filter(
@@ -1403,8 +1539,9 @@ class CursoAcademicoDetailView(DetailView):
         ).select_related('student', 'course', 'semestre_archivado').order_by(
             'student__first_name', 'student__last_name', 'student__username'
         )
-        if semestre_seleccionado:
-            asistencias_matriculas_qs = asistencias_matriculas_qs.filter(semestre_archivado=semestre_seleccionado)
+        if curso_archivado_filtro:
+            # Filtrar por el curso del semestre seleccionado (semestre_archivado FK puede ser NULL)
+            asistencias_matriculas_qs = asistencias_matriculas_qs.filter(course=curso_archivado_filtro)
         if curso_id:
             asistencias_matriculas_qs = asistencias_matriculas_qs.filter(course_id=curso_id)
         if estudiante_id:
@@ -1415,7 +1552,7 @@ class CursoAcademicoDetailView(DetailView):
             ids_cursos_arch = [c.id for c in CursoArchivado.objects.filter(curso_academico=ca_archivado, status=estado_curso)]
             asistencias_matriculas_qs = asistencias_matriculas_qs.filter(course_id__in=ids_cursos_arch)
 
-        asistencias_adaptadas = [_MatriculaArchivadaAdapter(m) for m in asistencias_matriculas_qs]
+        asistencias_adaptadas = [_MatriculaArchivadaAdapter(m, _semestre_map) for m in asistencias_matriculas_qs]
 
         # ── Selectores de filtro ──────────────────────────────────────────────
         cursos_disponibles = [
@@ -2240,7 +2377,12 @@ class MatriculasListView(BaseContextMixin, ListView):
         context['semestre_seleccionado'] = None
         context['viendo_semestre_archivado'] = False
 
-        if semestre_id:
+        # Ignorar valores especiales que no son IDs numéricos de SemestreCursoArchivado
+        _semestre_id_valido = (
+            semestre_id
+            and str(semestre_id).isdigit()
+        )
+        if _semestre_id_valido:
             try:
                 semestre = SemestreCursoArchivado.objects.get(pk=semestre_id)
                 context['semestre_seleccionado'] = semestre
@@ -2347,7 +2489,12 @@ class CalificacionesListView(BaseContextMixin, ListView):
         mostrar_sin_cal = self.request.GET.get('mostrar_sin_calificaciones') == '1'
         context['mostrar_sin_calificaciones'] = mostrar_sin_cal
 
-        if semestre_id:
+        # Ignorar valores especiales que no son IDs numéricos de SemestreCursoArchivado
+        _semestre_id_valido = (
+            semestre_id
+            and str(semestre_id).isdigit()
+        )
+        if _semestre_id_valido:
             try:
                 semestre = SemestreCursoArchivado.objects.get(pk=semestre_id)
                 context['semestre_seleccionado'] = semestre
@@ -2792,7 +2939,12 @@ class AsistenciasListView(BaseContextMixin, ListView):
         context['semestre_seleccionado'] = None
         context['viendo_semestre_archivado'] = False
 
-        if semestre_id:
+        # Ignorar valores especiales que no son IDs numéricos de SemestreCursoArchivado
+        _semestre_id_valido = (
+            semestre_id
+            and str(semestre_id).isdigit()
+        )
+        if _semestre_id_valido:
             try:
                 semestre = SemestreCursoArchivado.objects.get(pk=semestre_id)
                 context['semestre_seleccionado'] = semestre
@@ -2815,6 +2967,7 @@ class AsistenciasListView(BaseContextMixin, ListView):
                 context['matriculas'] = paginator.get_page(page_number)
                 context['page_obj'] = context['matriculas']
                 context['is_paginated'] = context['matriculas'].has_other_pages()
+
             except SemestreCursoArchivado.DoesNotExist:
                 pass
 

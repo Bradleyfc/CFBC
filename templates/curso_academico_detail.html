@@ -99,7 +99,7 @@
             <label class="ca-label"><span class="material-icons ca-label-icon">layers</span> Semestre</label>
             <select name="semestre" id="semestre" class="ca-select" style="border-color: rgba(99,102,241,0.35); background: linear-gradient(135deg,rgba(99,102,241,0.06),rgba(59,130,246,0.03)); min-width: 280px;">
               <option value="">Cursos no finalizados (semestre actual)</option>
-              <option value="todos" {% if request.GET.semestre == 'todos' %}selected{% endif %}>Todos los semestres</option>
+              <option value="todos" {% if request.GET.semestre == 'todos' or es_archivado and not request.GET.semestre %}selected{% endif %}>Todos los semestres</option>
               {% for s in semestres_disponibles %}
                 <option value="{{ s.id }}"
                         data-curso-id="{{ s.curso_archivado.id_original }}"
@@ -275,6 +275,31 @@
                   <span class="material-icons" style="font-size:0.85rem;">history</span>
                   Semestre {{ semestre_seleccionado.numero_semestre }}
                 </span>
+              {% elif es_archivado %}
+                {% for num in curso.semestres_numeros %}
+                  <span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.6rem;border-radius:8px;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(79,70,229,0.1));color:#4338ca;font-size:0.8rem;font-weight:600;border:1px solid rgba(99,102,241,0.25);margin-right:0.2rem;">
+                    <span class="material-icons" style="font-size:0.85rem;">layers</span>
+                    Semestre {{ num }}
+                  </span>
+                {% empty %}
+                  <span style="color:#9ca3af;font-size:0.8rem;">—</span>
+                {% endfor %}
+              {% elif semestre_map_cursos %}
+                {% with nums=semestre_map_cursos|dict_get:curso.id %}
+                  {% if nums %}
+                    {% for num in nums %}
+                      <span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.6rem;border-radius:8px;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(79,70,229,0.1));color:#4338ca;font-size:0.8rem;font-weight:600;border:1px solid rgba(99,102,241,0.25);margin-right:0.2rem;">
+                        <span class="material-icons" style="font-size:0.85rem;">layers</span>
+                        Semestre {{ num }}
+                      </span>
+                    {% endfor %}
+                  {% else %}
+                    <span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.6rem;border-radius:8px;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(79,70,229,0.1));color:#4338ca;font-size:0.8rem;font-weight:600;border:1px solid rgba(99,102,241,0.25);">
+                      <span class="material-icons" style="font-size:0.85rem;">layers</span>
+                      Semestre {{ curso.semestre_activo_numero }}
+                    </span>
+                  {% endif %}
+                {% endwith %}
               {% else %}
                 <span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.6rem;border-radius:8px;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(79,70,229,0.1));color:#4338ca;font-size:0.8rem;font-weight:600;border:1px solid rgba(99,102,241,0.25);">
                   <span class="material-icons" style="font-size:0.85rem;">layers</span>
@@ -283,7 +308,7 @@
               {% endif %}
             </td>
             <td>
-              {% if viendo_semestre_archivado %}
+              {% if es_archivado or viendo_semestre_archivado %}
                 <span class="ca-status-badge ca-status-danger">Finalizado</span>
               {% elif curso.get_dynamic_status == 'F' %}
                 <span class="ca-status-badge ca-status-danger">{{ curso.get_dynamic_status_display }}</span>
@@ -356,7 +381,14 @@
           {% for matricula in matriculas %}
           <tr>
             <td>{{ matricula.student.get_full_name|default:matricula.student.username }}</td>
-            <td>{{ matricula.course.name }}</td>
+            <td>
+              {{ matricula.course.name }}
+              {% if matricula.semestre_numero %}
+                <span style="font-size:0.78rem;color:#6b7280;font-weight:500;margin-left:0.25rem;">({{ matricula.semestre_numero }})</span>
+              {% elif matricula.semestre %}
+                <span style="font-size:0.78rem;color:#6b7280;font-weight:500;margin-left:0.25rem;">(Semestre {{ matricula.semestre.numero_semestre }})</span>
+              {% endif %}
+            </td>
             <td>
               {% if matricula.estado == 'A' %}
                 <span class="ca-status-badge ca-status-success">{{ matricula.get_estado_display }}</span>
@@ -434,7 +466,14 @@
           {% for calificacion in calificaciones %}
           <tr>
             <td>{{ calificacion.student.get_full_name|default:calificacion.student.username }}</td>
-            <td>{{ calificacion.course.name }}</td>
+            <td>
+              {{ calificacion.course.name }}
+              {% if calificacion.semestre_numero %}
+                <span style="font-size:0.78rem;color:#6b7280;font-weight:500;margin-left:0.25rem;">({{ calificacion.semestre_numero }})</span>
+              {% elif calificacion.semestre %}
+                <span style="font-size:0.78rem;color:#6b7280;font-weight:500;margin-left:0.25rem;">(Semestre {{ calificacion.semestre.numero_semestre }})</span>
+              {% endif %}
+            </td>
             {% with notas=calificacion.notas.all|dictsort:"fecha_creacion" %}
               {% for nota in notas %}<td>{{ nota.valor }}</td>{% endfor %}
               {% with max_notas=calificaciones|map_max_notas %}
@@ -504,7 +543,14 @@
           {% for matricula in asistencias %}
           <tr>
             <td>{{ matricula.student.get_full_name|default:matricula.student.username }}</td>
-            <td>{{ matricula.course.name }}</td>
+            <td>
+              {{ matricula.course.name }}
+              {% if matricula.semestre_numero %}
+                <span style="font-size:0.78rem;color:#6b7280;font-weight:500;margin-left:0.25rem;">({{ matricula.semestre_numero }})</span>
+              {% elif matricula.semestre %}
+                <span style="font-size:0.78rem;color:#6b7280;font-weight:500;margin-left:0.25rem;">(Semestre {{ matricula.semestre.numero_semestre }})</span>
+              {% endif %}
+            </td>
             <td class="text-center">
               {% if es_archivado and not semestre_datos_en_principal %}
               {# Datos en datos_archivados: student_id es UsuarioArchivado.id #}

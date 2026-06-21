@@ -3,6 +3,13 @@ from django import template
 register = template.Library()
 
 @register.filter
+def dict_get(d, key):
+    """Obtiene un valor de un diccionario por clave. Uso: {{ dict|dict_get:key }}"""
+    if d is None:
+        return None
+    return d.get(key)
+
+@register.filter
 def filter_present_for_course(queryset, curso):
     return queryset.filter(presente=True, course=curso).count()
 
