@@ -349,6 +349,19 @@ def terminar_semestre(curso):
             # 7d. Matrículas
             Matriculas.objects.filter(course=curso).delete()
 
+            # 7e. Solicitudes de inscripción y sus respuestas
+            # IMPORTANTE: se deben limpiar para que los estudiantes puedan
+            # volver a aplicar en el nuevo semestre del mismo curso.
+            from principal.models import SolicitudInscripcion, RespuestaEstudiante
+            solicitudes_del_curso = SolicitudInscripcion.objects.filter(curso=curso)
+            for solicitud in solicitudes_del_curso:
+                RespuestaEstudiante.objects.filter(solicitud=solicitud).delete()
+            solicitudes_del_curso.delete()
+            logger.info(
+                f"Solicitudes de inscripción del semestre {numero_semestre_actual} "
+                f"de '{curso.name}' eliminadas para el nuevo semestre."
+            )
+
             # ── 8. Actualizar SemestreCurso ───────────────────────────────────
             if semestre_activo:
                 semestre_activo.activo = False
