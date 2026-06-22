@@ -2149,10 +2149,19 @@ class ProfileView(DocumentsProfileMixin, BaseContextMixin, TemplateView):
                         course.matricula_activa = matricula.estado not in ESTADOS_INACTIVOS
                         course.matricula_estado = matricula.estado
                         course.matricula_estado_display = matricula.get_estado_display()
+                        # Agregar información del semestre de la matrícula
+                        if matricula.semestre:
+                            course.semestre_matricula = matricula.semestre.numero_semestre
+                            course.semestre_matricula_display = f"Semestre {matricula.semestre.numero_semestre}"
+                        else:
+                            course.semestre_matricula = 1
+                            course.semestre_matricula_display = "Semestre 1"
                     else:
                         course.matricula_activa = True
                         course.matricula_estado = 'P'
                         course.matricula_estado_display = ''
+                        course.semestre_matricula = 1
+                        course.semestre_matricula_display = "Semestre 1"
 
                     # Verificar si hay una solicitud de inscripción para este curso
                     # Filtrar primero por curso_academico activo; si no hay, tomar la más reciente
