@@ -707,7 +707,7 @@ def secretaria_evaluacion_create(request):
     if not request.user.groups.filter(name='Secretaría').exists():
         raise PermissionDenied
 
-    cursos = Curso.objects.all().order_by('name')
+    cursos = Curso.objects.filter(curso_academico__isnull=False).order_by('name').distinct()
 
     if request.method == 'POST':
         form = EvaluacionForm(request.POST)
@@ -831,7 +831,8 @@ class SecretariaEvaluacionListView(LoginRequiredMixin, UserPassesTestMixin, List
                 pendientes_por_eval[ev.pk] = 0
         context['pendientes_por_eval'] = pendientes_por_eval
         context['total_pendientes'] = sum(pendientes_por_eval.values())
-        context['cursos'] = Curso.objects.all().order_by('name')
+        # Filtrar cursos: solo aquellos con curso académico asignado
+        context['cursos'] = Curso.objects.filter(curso_academico__isnull=False).order_by('name').distinct()
         context['curso_id_filtro'] = self.request.GET.get('curso_id', '')
         context['titulo_filtro']   = self.request.GET.get('titulo', '')
         context['fecha_desde']     = self.request.GET.get('fecha_desde', '')
@@ -856,7 +857,7 @@ def secretaria_evaluacion_create(request):
     if not request.user.groups.filter(name='Secretaría').exists():
         raise PermissionDenied
 
-    cursos = Curso.objects.all().order_by('name')
+    cursos = Curso.objects.filter(curso_academico__isnull=False).order_by('name').distinct()
 
     if request.method == 'POST':
         form = EvaluacionForm(request.POST)

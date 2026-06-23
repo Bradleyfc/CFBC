@@ -170,6 +170,7 @@ def export_matriculas_pdf(request):
     curso_academico_id = request.GET.get('curso_academico')
     curso_id = request.GET.get('curso')
     student_id = request.GET.get('student')
+    estado = request.GET.get('estado')
 
     matriculas = Matriculas.objects.all()
 
@@ -179,6 +180,8 @@ def export_matriculas_pdf(request):
         matriculas = matriculas.filter(course__id=curso_id)
     if student_id:
         matriculas = matriculas.filter(student__id=student_id)
+    if estado:
+        matriculas = matriculas.filter(estado=estado)
 
     context = {
         'matriculas': matriculas,
@@ -191,6 +194,7 @@ def export_matriculas_excel(request):
     curso_academico_id = request.GET.get('curso_academico')
     curso_id = request.GET.get('curso')
     student_id = request.GET.get('student')
+    estado = request.GET.get('estado')
 
     # Aplicar los mismos filtros que MatriculasListView
     matriculas = Matriculas.objects.select_related(
@@ -203,6 +207,8 @@ def export_matriculas_excel(request):
         matriculas = matriculas.filter(course__id=curso_id)
     if student_id:
         matriculas = matriculas.filter(student__id=student_id)
+    if estado:
+        matriculas = matriculas.filter(estado=estado)
 
     matriculas = matriculas.order_by('course__name', 'student__first_name', 'student__last_name')
 
@@ -2509,30 +2515,29 @@ class MatriculasListView(BaseContextMixin, ListView):
         if estado:
             queryset = queryset.filter(estado=estado)
 
-        estado_curso = self.request.GET.get('estado_curso')
-        if estado_curso:
-            # Filtrar por estado dinámico: obtener IDs de cursos con ese estado
-            ids_cursos = [
-                c.id for c in Curso.objects.filter(
-                    curso_academico__id=curso_academico_id
-                ) if c.get_dynamic_status() == estado_curso
-            ] if curso_academico_id else [
-                c.id for c in Curso.objects.all()
-                if c.get_dynamic_status() == estado_curso
-            ]
-            queryset = queryset.filter(course__id__in=ids_cursos)
-
         return queryset
 
     def get_context_data(self, **kwargs):
         from datos_archivados.models import SemestreCursoArchivado, MatriculaArchivada
         context = super().get_context_data(**kwargs)
         context['cursos_academicos'] = CursoAcademico.objects.all()
-        context['cursos'] = Curso.objects.all()
+        
+        # Filtrar cursos: solo aquellos con curso académico asignado
+        # Si hay un curso académico seleccionado, filtrar por ese también
+        curso_academico_id = self.request.GET.get('curso_academico')
+        if curso_academico_id:
+            context['cursos'] = Curso.objects.filter(
+                curso_academico__id=curso_academico_id
+            ).distinct()
+        else:
+            # Mostrar solo cursos que tienen curso académico asignado
+            context['cursos'] = Curso.objects.filter(
+                curso_academico__isnull=False
+            ).distinct()
+        
         context['estudiantes'] = User.objects.filter(groups__name='Estudiantes')
 
         # Semestres archivados disponibles (de todos los CAs o del CA seleccionado)
-        curso_academico_id = self.request.GET.get('curso_academico')
         semestres_qs = SemestreCursoArchivado.objects.select_related('curso_archivado').order_by(
             'curso_archivado__curso_academico', 'numero_semestre'
         )
@@ -2640,7 +2645,20 @@ class CalificacionesListView(BaseContextMixin, ListView):
         from datos_archivados.models import SemestreCursoArchivado, CalificacionArchivada
         context = super().get_context_data(**kwargs)
         context['cursos_academicos'] = CursoAcademico.objects.all()
-        context['cursos'] = Curso.objects.all()
+        
+        # Filtrar cursos: solo aquellos con curso académico asignado
+        # Si hay un curso académico seleccionado, filtrar por ese también
+        curso_academico_id = self.request.GET.get('curso_academico')
+        if curso_academico_id:
+            context['cursos'] = Curso.objects.filter(
+                curso_academico__id=curso_academico_id
+            ).distinct()
+        else:
+            # Mostrar solo cursos que tienen curso académico asignado
+            context['cursos'] = Curso.objects.filter(
+                curso_academico__isnull=False
+            ).distinct()
+        
         context['estudiantes'] = User.objects.filter(groups__name='Estudiantes')
 
         curso_academico_id = self.request.GET.get('curso_academico')
@@ -3143,7 +3161,20 @@ class AsistenciasListView(BaseContextMixin, ListView):
         from datos_archivados.models import SemestreCursoArchivado, MatriculaArchivada
         context = super().get_context_data(**kwargs)
         context['cursos_academicos'] = CursoAcademico.objects.all()
-        context['cursos'] = Curso.objects.all()
+        
+        # Filtrar cursos: solo aquellos con curso académico asignado
+        # Si hay un curso académico seleccionado, filtrar por ese también
+        curso_academico_id = self.request.GET.get('curso_academico')
+        if curso_academico_id:
+            context['cursos'] = Curso.objects.filter(
+                curso_academico__id=curso_academico_id
+            ).distinct()
+        else:
+            # Mostrar solo cursos que tienen curso académico asignado
+            context['cursos'] = Curso.objects.filter(
+                curso_academico__isnull=False
+            ).distinct()
+        
         context['estudiantes'] = User.objects.filter(groups__name='Estudiantes')
         context['selected_curso_academico'] = self.request.GET.get('curso_academico')
         context['selected_curso'] = self.request.GET.get('curso')
