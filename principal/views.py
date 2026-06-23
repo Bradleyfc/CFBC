@@ -624,6 +624,131 @@ class _UsuarioArchivadoAdapter:
         return self.get_full_name()
 
 
+# ── Adapters para modelos de principal (CA activo) ────────────────────────────
+# Envuelven los objetos Django directos para que el template pueda usar los
+# mismos atributos que usa con los adapters de datos_archivados.
+
+class _CursoPrincipalAdapter:
+    """
+    Adapta un Curso de principal para exponer semestres_numeros y
+    semestre_activo_numero igual que _CursoArchivadoAdapter.
+    """
+    def __init__(self, curso, semestre_map=None):
+        self._curso = curso
+        self._semestre_map = semestre_map  # curso.id → [1, 2, 3, ...]
+        # Re-exponer todos los atributos del modelo directamente
+        self.id = curso.id
+        self.pk = curso.pk
+        self.name = curso.name
+        self.description = curso.description
+        self.area = curso.area
+        self.tipo = curso.tipo
+        self.class_quantity = curso.class_quantity
+        self.status = curso.status
+        self.enrollment_deadline = curso.enrollment_deadline
+        self.start_date = curso.start_date
+        self.teacher = curso.teacher
+        self.curso_academico = curso.curso_academico
+
+    @property
+    def semestres_numeros(self):
+        if self._semestre_map is not None:
+            return self._semestre_map.get(self._curso.id, [])
+        from principal.models import SemestreCurso
+        return list(
+            SemestreCurso.objects.filter(curso=self._curso)
+            .order_by('numero_semestre')
+            .values_list('numero_semestre', flat=True)
+        )
+
+    @property
+    def semestre_activo_numero(self):
+        nums = self.semestres_numeros
+        return nums[-1] if nums else 1
+
+    def get_dynamic_status(self):
+        return self._curso.get_dynamic_status()
+
+    def get_dynamic_status_display(self):
+        return self._curso.get_dynamic_status_display()
+
+    def get_status_display(self):
+        return self._curso.get_status_display()
+
+    def __str__(self):
+        return self.name
+
+
+class _MatriculaPrincipalAdapter:
+    """
+    Adapta una Matricula de principal para exponer semestre_numero
+    igual que _MatriculaArchivadaAdapter.
+    """
+    def __init__(self, matricula, semestre_map=None):
+        self._m = matricula
+        self.id = matricula.id
+        self.pk = matricula.pk
+        self.activo = matricula.activo
+        self.fecha_matricula = matricula.fecha_matricula
+        self.estado = matricula.estado
+        self.student = matricula.student
+        self.course = matricula.course
+        self.semestre = matricula.semestre
+        self.curso_academico = matricula.curso_academico
+        # Número de semestre para mostrar junto al nombre del curso
+        if matricula.semestre_id:
+            self.semestre_numero = f'Semestre {matricula.semestre.numero_semestre}'
+        elif semestre_map and matricula.course_id in semestre_map:
+            numeros = semestre_map[matricula.course_id]
+            if len(numeros) == 1:
+                self.semestre_numero = f'Semestre {numeros[0]}'
+            else:
+                self.semestre_numero = 'Semestres ' + ', '.join(str(n) for n in numeros)
+        else:
+            self.semestre_numero = None
+
+    def get_estado_display(self):
+        return self._m.get_estado_display()
+
+    def __str__(self):
+        return str(self._m)
+
+
+class _CalificacionPrincipalAdapter:
+    """
+    Adapta una Calificacion de principal para exponer semestre_numero
+    igual que _CalificacionArchivadaAdapter.
+    """
+    def __init__(self, calificacion, semestre_map=None):
+        self._c = calificacion
+        self.id = calificacion.id
+        self.pk = calificacion.pk
+        self.average = calificacion.average
+        self.student = calificacion.student
+        self.course = calificacion.course
+        self.semestre = calificacion.semestre
+        self.matricula = calificacion.matricula
+        self.notas = calificacion.notas
+        self.curso_academico = calificacion.curso_academico
+        # Número de semestre para mostrar junto al nombre del curso
+        if calificacion.semestre_id:
+            self.semestre_numero = f'Semestre {calificacion.semestre.numero_semestre}'
+        elif semestre_map and calificacion.course_id in semestre_map:
+            numeros = semestre_map[calificacion.course_id]
+            if len(numeros) == 1:
+                self.semestre_numero = f'Semestre {numeros[0]}'
+            else:
+                self.semestre_numero = 'Semestres ' + ', '.join(str(n) for n in numeros)
+        else:
+            self.semestre_numero = None
+
+    def __str__(self):
+        return str(self._c)
+
+
+# ── Fin adapters principal ────────────────────────────────────────────────────
+
+
 class _CursoArchivadoAdapter:
     """Adapta CursoArchivado para que se comporte como Curso en el template."""
     def __init__(self, ca, semestre_map=None):
@@ -1122,20 +1247,25 @@ class CursoAcademicoDetailView(DetailView):
                 if estudiante_id:
                     asistencias_matriculas_qs = asistencias_matriculas_qs.filter(student_id=estudiante_id)
 
-                paginator_cur = Paginator(list(cursos_qs), per_page)
-                paginator_m   = Paginator(list(matriculas_qs), per_page)
-                paginator_c   = Paginator(list(calificaciones_qs), per_page)
-                paginator_a   = Paginator(list(asistencias_matriculas_qs), per_page)
+                cursos_list = [_CursoPrincipalAdapter(c, _semestre_map_principal) for c in cursos_qs]
+                matriculas_list = [_MatriculaPrincipalAdapter(m, _semestre_map_principal) for m in matriculas_qs]
+                calificaciones_list = [_CalificacionPrincipalAdapter(c, _semestre_map_principal) for c in calificaciones_qs]
+                asistencias_list = [_MatriculaPrincipalAdapter(m, _semestre_map_principal) for m in asistencias_matriculas_qs]
+
+                paginator_cur = Paginator(cursos_list, per_page)
+                paginator_m   = Paginator(matriculas_list, per_page)
+                paginator_c   = Paginator(calificaciones_list, per_page)
+                paginator_a   = Paginator(asistencias_list, per_page)
 
                 return {
                     'cursos': paginator_cur.get_page(page_cur),
-                    'cursos_total': cursos_qs.count(),
+                    'cursos_total': len(cursos_list),
                     'matriculas': paginator_m.get_page(page_m),
-                    'matriculas_total': matriculas_qs.count(),
+                    'matriculas_total': len(matriculas_list),
                     'calificaciones': paginator_c.get_page(page_c),
-                    'calificaciones_total': calificaciones_qs.count(),
+                    'calificaciones_total': len(calificaciones_list),
                     'asistencias': paginator_a.get_page(page_a),
-                    'asistencias_total': asistencias_matriculas_qs.count(),
+                    'asistencias_total': len(asistencias_list),
                     'cursos_disponibles': Curso.objects.filter(curso_academico=curso_academico).distinct(),
                     'estudiantes_disponibles': User.objects.filter(matriculas__curso_academico=curso_academico).distinct(),
                     'es_archivado': False,
@@ -1254,21 +1384,25 @@ class CursoAcademicoDetailView(DetailView):
                 ids_cursos = [c.id for c in Curso.objects.filter(curso_academico=curso_academico) if c.get_dynamic_status() == estado_curso]
                 asistencias_matriculas_qs = asistencias_matriculas_qs.filter(course_id__in=ids_cursos)
 
-            cursos_list = list(cursos_qs)
+            cursos_list = [_CursoPrincipalAdapter(c, _semestre_map_principal) for c in cursos_qs]
+            matriculas_list = [_MatriculaPrincipalAdapter(m, _semestre_map_principal) for m in matriculas_qs]
+            calificaciones_list = [_CalificacionPrincipalAdapter(c, _semestre_map_principal) for c in calificaciones_qs]
+            asistencias_list = [_MatriculaPrincipalAdapter(m, _semestre_map_principal) for m in asistencias_matriculas_qs]
+
             paginator_cur = Paginator(cursos_list, per_page)
-            paginator_m   = Paginator(matriculas_qs, per_page)
-            paginator_c   = Paginator(calificaciones_qs, per_page)
-            paginator_a   = Paginator(asistencias_matriculas_qs, per_page)
+            paginator_m   = Paginator(matriculas_list, per_page)
+            paginator_c   = Paginator(calificaciones_list, per_page)
+            paginator_a   = Paginator(asistencias_list, per_page)
 
             return {
                 'cursos': paginator_cur.get_page(page_cur),
                 'cursos_total': len(cursos_list),
                 'matriculas': paginator_m.get_page(page_m),
-                'matriculas_total': matriculas_qs.count(),
+                'matriculas_total': len(matriculas_list),
                 'calificaciones': paginator_c.get_page(page_c),
-                'calificaciones_total': calificaciones_qs.count(),
+                'calificaciones_total': len(calificaciones_list),
                 'asistencias': paginator_a.get_page(page_a),
-                'asistencias_total': asistencias_matriculas_qs.count(),
+                'asistencias_total': len(asistencias_list),
                 'cursos_disponibles': Curso.objects.filter(curso_academico=curso_academico).distinct(),
                 'estudiantes_disponibles': User.objects.filter(matriculas__curso_academico=curso_academico).distinct(),
                 'es_archivado': False,
@@ -1337,21 +1471,25 @@ class CursoAcademicoDetailView(DetailView):
             ids_cursos = [c.id for c in Curso.objects.filter(curso_academico=curso_academico) if c.get_dynamic_status() == estado_curso]
             asistencias_matriculas_qs = asistencias_matriculas_qs.filter(course_id__in=ids_cursos)
 
-        cursos_list = list(cursos_qs)
+        cursos_list = [_CursoPrincipalAdapter(c, _semestre_map_principal) for c in cursos_qs]
+        matriculas_list = [_MatriculaPrincipalAdapter(m, _semestre_map_principal) for m in matriculas_qs]
+        calificaciones_list = [_CalificacionPrincipalAdapter(c, _semestre_map_principal) for c in calificaciones_qs]
+        asistencias_list = [_MatriculaPrincipalAdapter(m, _semestre_map_principal) for m in asistencias_matriculas_qs]
+
         paginator_cur = Paginator(cursos_list, per_page)
-        paginator_m   = Paginator(matriculas_qs, per_page)
-        paginator_c   = Paginator(calificaciones_qs, per_page)
-        paginator_a   = Paginator(asistencias_matriculas_qs, per_page)
+        paginator_m   = Paginator(matriculas_list, per_page)
+        paginator_c   = Paginator(calificaciones_list, per_page)
+        paginator_a   = Paginator(asistencias_list, per_page)
 
         return {
             'cursos': paginator_cur.get_page(page_cur),
             'cursos_total': len(cursos_list),
             'matriculas': paginator_m.get_page(page_m),
-            'matriculas_total': matriculas_qs.count(),
+            'matriculas_total': len(matriculas_list),
             'calificaciones': paginator_c.get_page(page_c),
-            'calificaciones_total': calificaciones_qs.count(),
+            'calificaciones_total': len(calificaciones_list),
             'asistencias': paginator_a.get_page(page_a),
-            'asistencias_total': asistencias_matriculas_qs.count(),
+            'asistencias_total': len(asistencias_list),
             'cursos_disponibles': Curso.objects.filter(
                 curso_academico=curso_academico
             ).distinct(),

@@ -275,36 +275,18 @@
                   <span class="material-icons" style="font-size:0.85rem;">history</span>
                   Semestre {{ semestre_seleccionado.numero_semestre }}
                 </span>
-              {% elif es_archivado %}
+              {% else %}
                 {% for num in curso.semestres_numeros %}
                   <span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.6rem;border-radius:8px;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(79,70,229,0.1));color:#4338ca;font-size:0.8rem;font-weight:600;border:1px solid rgba(99,102,241,0.25);margin-right:0.2rem;">
                     <span class="material-icons" style="font-size:0.85rem;">layers</span>
                     Semestre {{ num }}
                   </span>
                 {% empty %}
-                  <span style="color:#9ca3af;font-size:0.8rem;">—</span>
+                  <span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.6rem;border-radius:8px;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(79,70,229,0.1));color:#4338ca;font-size:0.8rem;font-weight:600;border:1px solid rgba(99,102,241,0.25);">
+                    <span class="material-icons" style="font-size:0.85rem;">layers</span>
+                    Semestre {{ curso.semestre_activo_numero }}
+                  </span>
                 {% endfor %}
-              {% elif semestre_map_cursos %}
-                {% with nums=semestre_map_cursos|dict_get:curso.id %}
-                  {% if nums %}
-                    {% for num in nums %}
-                      <span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.6rem;border-radius:8px;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(79,70,229,0.1));color:#4338ca;font-size:0.8rem;font-weight:600;border:1px solid rgba(99,102,241,0.25);margin-right:0.2rem;">
-                        <span class="material-icons" style="font-size:0.85rem;">layers</span>
-                        Semestre {{ num }}
-                      </span>
-                    {% endfor %}
-                  {% else %}
-                    <span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.6rem;border-radius:8px;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(79,70,229,0.1));color:#4338ca;font-size:0.8rem;font-weight:600;border:1px solid rgba(99,102,241,0.25);">
-                      <span class="material-icons" style="font-size:0.85rem;">layers</span>
-                      Semestre {{ curso.semestre_activo_numero }}
-                    </span>
-                  {% endif %}
-                {% endwith %}
-              {% else %}
-                <span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.6rem;border-radius:8px;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(79,70,229,0.1));color:#4338ca;font-size:0.8rem;font-weight:600;border:1px solid rgba(99,102,241,0.25);">
-                  <span class="material-icons" style="font-size:0.85rem;">layers</span>
-                  Semestre {{ curso.semestre_activo_numero }}
-                </span>
               {% endif %}
             </td>
             <td>
