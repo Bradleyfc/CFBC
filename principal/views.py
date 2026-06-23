@@ -891,7 +891,7 @@ class CursoAcademicoDetailView(DetailView):
         Soporta filtro por estado y paginación (page_sem).
         """
         from principal.models import SemestreCurso, Matriculas
-        from datos_archivados.models import SemestreCursoArchivado, MatriculaArchivada
+        from datos_archivados.models import SemestreCursoArchivado, MatriculaArchivada, CursoAcademicoArchivado
 
         estado_semestre = self.request.GET.get('estado_semestre', '')
         numero_semestre_filtro = self.request.GET.get('numero_semestre', '')
@@ -901,11 +901,25 @@ class CursoAcademicoDetailView(DetailView):
         semestres_lista = []
 
         # 1. Semestres archivados
-        archivados = SemestreCursoArchivado.objects.filter(
-            curso_archivado__id_original__in=Curso.objects.filter(
-                curso_academico=curso_academico
-            ).values_list('id', flat=True)
-        ).select_related('curso_archivado').order_by('curso_archivado__name', 'numero_semestre')
+        # Cuando el CA está archivado los Curso ya fueron eliminados de la tabla
+        # principal, por lo que hay que filtrar por CursoAcademicoArchivado en
+        # lugar de hacer la subquery sobre Curso (que devolvería vacío).
+        if curso_academico.archivado:
+            ca_archivado = CursoAcademicoArchivado.objects.filter(
+                id_original=curso_academico.pk
+            ).first()
+            if ca_archivado:
+                archivados = SemestreCursoArchivado.objects.filter(
+                    curso_archivado__curso_academico=ca_archivado
+                ).select_related('curso_archivado').order_by('curso_archivado__name', 'numero_semestre')
+            else:
+                archivados = SemestreCursoArchivado.objects.none()
+        else:
+            archivados = SemestreCursoArchivado.objects.filter(
+                curso_archivado__id_original__in=Curso.objects.filter(
+                    curso_academico=curso_academico
+                ).values_list('id', flat=True)
+            ).select_related('curso_archivado').order_by('curso_archivado__name', 'numero_semestre')
 
         ids_archivados = set()
         for s in archivados:
@@ -926,7 +940,8 @@ class CursoAcademicoDetailView(DetailView):
                 'semestre_id': s.id,
             })
 
-        # 2. SemestreCurso actuales (incluyendo cerrados y activos)
+        # 2. SemestreCurso actuales (solo aplica cuando el CA no está archivado,
+        # pues al archivar los Curso y SemestreCurso se eliminan de principal)
         actuales = SemestreCurso.objects.filter(
             curso__curso_academico=curso_academico,
         ).exclude(
