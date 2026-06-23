@@ -1,0 +1,83 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}Confirmar Activación — Curso Académico{% endblock %}
+
+{% block content %}
+<h1>⚠️ Confirmar Activación</h1>
+
+{% if es_archivado %}
+{# ── CA ARCHIVADO: advertencia muy fuerte ─────────────────────────────────── #}
+<div style="background:#f8d7da;border:2px solid #dc3545;border-radius:6px;padding:20px;margin-bottom:20px;">
+  <h2 style="color:#721c24;margin-top:0;">🚫 Advertencia: Este curso académico fue archivado</h2>
+  <p style="color:#721c24;font-size:1rem;">
+    El curso académico <strong>{{ ca_a_activar.nombre }}</strong> fue archivado anteriormente.
+    Cuando se archivó, <strong>todos sus datos fueron eliminados del sistema activo</strong>:
+  </p>
+  <ul style="color:#721c24;">
+    <li>Los <strong>cursos</strong> fueron eliminados de la tabla principal.</li>
+    <li>Las <strong>matrículas, calificaciones, asistencias y semestres</strong> fueron eliminados.</li>
+    <li>Esos datos solo existen ahora en el archivo histórico (datos_archivados) y <strong>no se restaurarán</strong>.</li>
+  </ul>
+  <p style="color:#721c24;font-weight:bold;font-size:1rem;">
+    ⛔ Si activas este CA, quedará activo pero <u>vacío</u> — sin cursos, matrículas ni historial.
+    Los datos archivados permanecerán en el histórico pero <strong>no volverán al sistema activo</strong>.
+    Esta situación <strong>no se puede revertir</strong>.
+  </p>
+  <p style="color:#721c24;">
+    <strong>Recomendación:</strong> En lugar de activar este CA archivado, crea un <strong>nuevo Curso Académico</strong>
+    con el nombre del período actual y actívalo desde ahí.
+  </p>
+</div>
+{% else %}
+{# ── CA NO ARCHIVADO pero hay uno activo que se archivará ─────────────────── #}
+<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:20px;margin-bottom:20px;">
+  <h2 style="color:#856404;margin-top:0;">⚠️ Advertencia: Se archivará el curso académico activo</h2>
+  <p style="color:#856404;">
+    {% if accion == 'crear' %}
+      Estás creando el curso académico <strong>{{ nombre_nuevo }}</strong> como activo.
+    {% else %}
+      Estás activando el curso académico <strong>{{ ca_a_activar.nombre }}</strong>.
+    {% endif %}
+    Para activarlo, el curso académico activo actual
+    {% if ca_actual %}<strong>{{ ca_actual.nombre }}</strong>{% else %}(actual){% endif %}
+    será <strong>archivado automáticamente</strong>.
+  </p>
+  <ul style="color:#856404;">
+    <li>Todos los <strong>cursos activos</strong> del CA actual serán finalizados y eliminados del sistema activo.</li>
+    <li>Sus <strong>matrículas, calificaciones y asistencias</strong> serán movidas al archivo histórico.</li>
+    <li>Los datos quedarán disponibles en <em>Detalles del Curso Académico</em> del CA archivado.</li>
+  </ul>
+  <p style="color:#856404;font-weight:bold;">⛔ Esta operación no se puede deshacer.</p>
+</div>
+{% endif %}
+
+{% if ca_actual and not es_archivado %}
+<div style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:4px;padding:12px;margin-bottom:20px;color:#000;">
+  <strong>CA activo actualmente:</strong> {{ ca_actual.nombre }}
+</div>
+{% endif %}
+
+<form method="post">
+  {% csrf_token %}
+  <input type="hidden" name="ca_id" value="{{ ca_id }}">
+  <input type="hidden" name="accion" value="{{ accion }}">
+  <input type="hidden" name="confirmado" value="1">
+
+  <div style="display:flex;gap:12px;align-items:center;margin-top:16px;">
+    {% if es_archivado %}
+      <input type="submit" value="Entiendo el riesgo, activar de todas formas"
+             class="button"
+             style="background:#dc3545;color:white;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;font-size:14px;">
+    {% else %}
+      <input type="submit" value="Sí, activar y archivar el actual"
+             class="button"
+             style="background:#fd7e14;color:white;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;font-size:14px;">
+    {% endif %}
+    <a href="../" class="button cancel-link"
+       style="background:#6c757d;color:white;padding:10px 20px;border-radius:4px;text-decoration:none;font-size:14px;">
+      Cancelar
+    </a>
+  </div>
+</form>
+{% endblock %}

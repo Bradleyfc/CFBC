@@ -11,6 +11,12 @@ from.models import (
 
 from .models import CursoAcademico
 
+
+class _RedirectException(Exception):
+    """Permite interrumpir save_model y devolver una redirección HTTP."""
+    def __init__(self, response):
+        self.response = response
+
 class CursoAdmin(admin.ModelAdmin):
     list_display = ('name', 'area', 'tipo', 'teacher', 'class_quantity', 'curso_academico')
     list_filter = ('area', 'tipo', 'teacher', 'curso_academico')
@@ -115,6 +121,11 @@ class CursoAcademicoAdmin(admin.ModelAdmin):
                 self.admin_site.admin_view(self.confirmar_archivado_view),
                 name='principal_cursoacademico_confirmar_archivado',
             ),
+            path(
+                'confirmar-activar/',
+                self.admin_site.admin_view(self.confirmar_activar_view),
+                name='principal_cursoacademico_confirmar_activar',
+            ),
         ]
         return custom_urls + urls
 
@@ -201,6 +212,168 @@ class CursoAcademicoAdmin(admin.ModelAdmin):
             context,
         )
 
+    def confirmar_activar_view(self, request):
+        """
+        Vista intermedia que muestra advertencia cuando se intenta:
+          - Activar un CA que estaba archivado (datos destruidos, no restaurables).
+          - Crear/guardar un CA nuevo como activo (el CA activo actual será archivado).
+        Al confirmar ejecuta la acción.
+        """
+        from django.http import HttpResponseRedirect
+
+        if request.method == 'POST' and request.POST.get('confirmado') == '1':
+            ca_id = request.POST.get('ca_id')
+            accion = request.POST.get('accion', 'activar')
+
+            if accion == 'activar' and ca_id:
+                # Activar CA existente
+                try:
+                    ca = CursoAcademico.objects.get(pk=ca_id)
+                    ca.activar()
+                    self.message_user(
+                        request,
+                        f"El curso académico '{ca.nombre}' ha sido activado.",
+                        level=messages.SUCCESS,
+                    )
+                except CursoAcademico.DoesNotExist:
+                    self.message_user(request, "Curso académico no encontrado.", level=messages.ERROR)
+
+            elif accion == 'crear':
+                # Guardar el nuevo CA pendiente almacenado en sesión
+                datos = request.session.pop('nuevo_ca_pendiente', None)
+                if datos:
+                    nuevo_ca = CursoAcademico(
+                        nombre=datos['nombre'],
+                        activo=datos['activo'],
+                        archivado=False,
+                        fecha_creacion=datos['fecha_creacion'],
+                    )
+                    nuevo_ca.save()
+                    self.message_user(
+                        request,
+                        f"El curso académico '{nuevo_ca.nombre}' fue creado y activado. "
+                        f"El curso anterior ha sido archivado.",
+                        level=messages.SUCCESS,
+                    )
+                else:
+                    self.message_user(request, "No se encontraron datos del nuevo CA. Intenta de nuevo.", level=messages.ERROR)
+
+            elif accion == 'editar' and ca_id:
+                # Guardar cambios del CA editado (activo=True)
+                datos = request.session.pop('ca_edicion_pendiente', None)
+                if datos:
+                    try:
+                        ca = CursoAcademico.objects.get(pk=ca_id)
+                        ca.nombre = datos['nombre']
+                        ca.activo = True
+                        ca.archivado = False
+                        ca.fecha_creacion = datos['fecha_creacion']
+                        ca.save()
+                        self.message_user(
+                            request,
+                            f"El curso académico '{ca.nombre}' fue guardado y activado. "
+                            f"El curso anterior ha sido archivado.",
+                            level=messages.SUCCESS,
+                        )
+                    except CursoAcademico.DoesNotExist:
+                        self.message_user(request, "Curso académico no encontrado.", level=messages.ERROR)
+                else:
+                    self.message_user(request, "No se encontraron datos de edición. Intenta de nuevo.", level=messages.ERROR)
+
+            return HttpResponseRedirect('../')
+
+        # ── GET: preparar contexto de advertencia ─────────────────────────────
+        ca_id   = request.GET.get('ca_id')
+        accion  = request.GET.get('accion', 'activar')
+        ca_actual = CursoAcademico.objects.filter(activo=True).first()
+        ca_a_activar = None
+        es_archivado = False
+
+        if ca_id:
+            try:
+                ca_a_activar = CursoAcademico.objects.get(pk=ca_id)
+                es_archivado = ca_a_activar.archivado
+            except CursoAcademico.DoesNotExist:
+                pass
+
+        nombre_nuevo = request.GET.get('nombre_nuevo', '')
+
+        context = {
+            **self.admin_site.each_context(request),
+            'title': 'Confirmar Activación',
+            'opts': self.model._meta,
+            'ca_id': ca_id,
+            'accion': accion,
+            'ca_a_activar': ca_a_activar,
+            'ca_actual': ca_actual,
+            'es_archivado': es_archivado,
+            'nombre_nuevo': nombre_nuevo,
+        }
+        return TemplateResponse(
+            request,
+            'admin/principal/cursoacademico/confirmar_activar.html',
+            context,
+        )
+
+    def save_model(self, request, obj, form, change):
+        """
+        Intercepta guardar un CA cuando activo=True para mostrar la advertencia
+        antes de ejecutar el archivado del CA actual.
+        """
+        from django.http import HttpResponseRedirect
+        from django.urls import reverse
+        import datetime
+
+        # Solo intervenir si se está marcando como activo
+        if obj.activo:
+            ca_activo_actual = CursoAcademico.objects.filter(activo=True).exclude(pk=obj.pk).first()
+
+            if ca_activo_actual:
+                # Hay un CA activo que se archivará — mostrar advertencia
+                if not change:
+                    # CA nuevo: guardar datos en sesión y redirigir
+                    request.session['nuevo_ca_pendiente'] = {
+                        'nombre': obj.nombre,
+                        'activo': obj.activo,
+                        'archivado': False,
+                        'fecha_creacion': obj.fecha_creacion.isoformat() if obj.fecha_creacion else datetime.date.today().isoformat(),
+                    }
+                    url = reverse('admin:principal_cursoacademico_confirmar_activar')
+                    raise _RedirectException(
+                        HttpResponseRedirect(
+                            f'{url}?accion=crear&nombre_nuevo={obj.nombre}'
+                        )
+                    )
+                else:
+                    # CA existente editado para activarlo
+                    request.session['ca_edicion_pendiente'] = {
+                        'nombre': obj.nombre,
+                        'activo': obj.activo,
+                        'fecha_creacion': obj.fecha_creacion.isoformat() if obj.fecha_creacion else datetime.date.today().isoformat(),
+                    }
+                    url = reverse('admin:principal_cursoacademico_confirmar_activar')
+                    raise _RedirectException(
+                        HttpResponseRedirect(
+                            f'{url}?accion=editar&ca_id={obj.pk}&nombre_nuevo={obj.nombre}'
+                        )
+                    )
+
+        super().save_model(request, obj, form, change)
+
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        """Captura el _RedirectException lanzado por save_model."""
+        try:
+            return super().changeform_view(request, object_id, form_url, extra_context)
+        except _RedirectException as e:
+            return e.response
+
+    def add_view(self, request, form_url='', extra_context=None):
+        """Captura el _RedirectException lanzado por save_model al crear."""
+        try:
+            return super().add_view(request, form_url, extra_context)
+        except _RedirectException as e:
+            return e.response
+
     def activar_curso(self, request, queryset):
         if queryset.count() != 1:
             self.message_user(
@@ -212,42 +385,28 @@ class CursoAcademicoAdmin(admin.ModelAdmin):
 
         curso = queryset.first()
 
-        # Verificar si tiene datos archivados para informar al usuario
-        from datos_archivados.restore_service import hay_datos_archivados
-        tiene_datos_archivados = curso.archivado and hay_datos_archivados(curso)
+        # Si el CA está archivado, redirigir a confirmación con advertencia
+        if curso.archivado:
+            from django.http import HttpResponseRedirect
+            from django.urls import reverse
+            url = reverse('admin:principal_cursoacademico_confirmar_activar')
+            return HttpResponseRedirect(f'{url}?accion=activar&ca_id={curso.pk}')
 
-        # Usar el método activar() para que las señales se disparen correctamente
+        # Si hay un CA activo actualmente, también confirmar
+        ca_activo_actual = CursoAcademico.objects.filter(activo=True).exclude(pk=curso.pk).first()
+        if ca_activo_actual:
+            from django.http import HttpResponseRedirect
+            from django.urls import reverse
+            url = reverse('admin:principal_cursoacademico_confirmar_activar')
+            return HttpResponseRedirect(f'{url}?accion=activar&ca_id={curso.pk}')
+
+        # Sin riesgo: activar directamente
         curso.activar()
-
-        if hasattr(curso, '_restaurado_error'):
-            self.message_user(
-                request,
-                (
-                    f"El curso '{curso.nombre}' fue activado, pero ocurrió un error "
-                    f"al restaurar sus datos archivados. Los datos archivados se conservan intactos. "
-                    f"Detalle: {curso._restaurado_error}"
-                ),
-                level=messages.ERROR,
-            )
-        elif hasattr(curso, '_restaurado_exitoso') and curso._restaurado_exitoso:
-            c = curso._restaurado_contadores
-            self.message_user(
-                request,
-                (
-                    f"El curso '{curso.nombre}' ha sido activado y sus datos han sido restaurados: "
-                    f"{c['cursos']} cursos, {c['matriculas']} matrículas, "
-                    f"{c['calificaciones']} calificaciones, {c['notas']} notas, "
-                    f"{c['asistencias']} asistencias, "
-                    f"{c.get('carpetas_documentos', 0)} carpetas de documentos."
-                ),
-                level=messages.SUCCESS,
-            )
-        else:
-            self.message_user(
-                request,
-                f"El curso '{curso.nombre}' ha sido activado.",
-                level=messages.SUCCESS,
-            )
+        self.message_user(
+            request,
+            f"El curso académico '{curso.nombre}' ha sido activado.",
+            level=messages.SUCCESS,
+        )
     activar_curso.short_description = "Activar curso seleccionado (desactiva los demás)"
 
     def archivar_curso(self, request, queryset):
