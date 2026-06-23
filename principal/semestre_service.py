@@ -264,6 +264,7 @@ def terminar_semestre(curso):
                     id_original=matricula.pk,
                     course=curso_archivado,
                     student=estudiante_archivado,
+                    semestre_archivado=semestre_archivado,
                     activo=matricula.activo,
                     fecha_matricula=matricula.fecha_matricula,
                     estado=matricula.estado,
@@ -297,6 +298,7 @@ def terminar_semestre(curso):
                     matricula=matricula_archivada,
                     course=curso_archivado,
                     student=estudiante_archivado,
+                    semestre_archivado=semestre_archivado,
                     average=calificacion.average,
                 )
                 contadores['calificaciones'] += 1
@@ -321,6 +323,7 @@ def terminar_semestre(curso):
                     id_original=asistencia.pk,
                     course=curso_archivado,
                     student=estudiante_archivado,
+                    semestre_archivado=semestre_archivado,
                     presente=asistencia.presente,
                     date=asistencia.date,
                 )

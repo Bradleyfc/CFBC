@@ -31,6 +31,9 @@
                     {% endif %}
                 </strong>
                 &mdash; {{ course.name }}
+                {% if semestre_info %}
+                  &mdash; <span style="font-weight:600;color:#4338ca;">Semestre {{ semestre_info.numero_semestre }}</span>
+                {% endif %}
             </p>
         </div>
 

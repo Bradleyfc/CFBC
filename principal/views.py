@@ -837,6 +837,8 @@ class _MatriculaArchivadaAdapter:
         self.course = _CursoArchivadoAdapter(ma.course)
         # Exponer curso_academico para compatibilidad con templates que lo usan
         self.curso_academico = ma.course.curso_academico if ma.course else None
+        # FK directo al semestre archivado (útil para links a detalle de asistencia)
+        self.semestre_archivado_id = ma.semestre_archivado_id
         # Número de semestre para mostrar junto al nombre del curso.
         # Primero intenta el FK directo; si es None usa el mapa por curso.
         if ma.semestre_archivado:
@@ -1281,19 +1283,22 @@ class CursoAcademicoDetailView(DetailView):
                 curso_archivado = semestre_seleccionado.curso_archivado
 
                 matriculas_qs = MatriculaArchivada.objects.filter(
-                    course=curso_archivado
+                    course=curso_archivado,
+                    semestre_archivado=semestre_seleccionado,
                 ).select_related('student', 'course')
                 if estudiante_id:
                     matriculas_qs = matriculas_qs.filter(student__id_original=estudiante_id)
 
                 calificaciones_qs = CalificacionArchivada.objects.filter(
-                    course=curso_archivado
+                    course=curso_archivado,
+                    semestre_archivado=semestre_seleccionado,
                 ).select_related('student', 'course').prefetch_related('notas_archivadas')
                 if estudiante_id:
                     calificaciones_qs = calificaciones_qs.filter(student__id_original=estudiante_id)
 
                 asistencias_matriculas_qs = MatriculaArchivada.objects.filter(
-                    course=curso_archivado
+                    course=curso_archivado,
+                    semestre_archivado=semestre_seleccionado,
                 ).select_related('student', 'course').order_by(
                     'student__first_name', 'student__last_name'
                 )
@@ -1335,59 +1340,117 @@ class CursoAcademicoDetailView(DetailView):
                     'semestre_map_cursos': _semestre_map_principal,
                 }
 
-        # ── "Todos": mostrar todos los cursos sin filtrar por semestre ────────
+        # ── "Todos": combinar datos de principal + datos_archivados ─────────
         if mostrar_todos:
-            cursos_qs = Curso.objects.filter(
-                curso_academico=curso_academico
-            ).distinct()
+            from datos_archivados.models import (
+                MatriculaArchivada, CalificacionArchivada, CursoArchivado,
+            )
+
+            # IDs de CursoArchivado vinculados a los cursos de este CA
+            cursos_ids_principal = list(
+                Curso.objects.filter(curso_academico=curso_academico).values_list('id', flat=True)
+            )
+            cursos_archivados_del_ca = CursoArchivado.objects.filter(
+                id_original__in=cursos_ids_principal
+            )
+            ids_cursos_archivados = list(cursos_archivados_del_ca.values_list('id', flat=True))
+
+            # ── Cursos ───────────────────────────────────────────────────────
+            cursos_qs = Curso.objects.filter(curso_academico=curso_academico).distinct()
             if curso_id:
                 cursos_qs = cursos_qs.filter(id=curso_id)
             if estado_curso:
                 cursos_qs = [c for c in cursos_qs if c.get_dynamic_status() == estado_curso]
 
-            matriculas_qs = Matriculas.objects.filter(
-                curso_academico=curso_academico,
-            ).select_related('student', 'course')
+            cursos_list = [_CursoPrincipalAdapter(c, _semestre_map_principal) for c in cursos_qs]
+
+            # Filtro de cursos_archivados que corresponden al filtro de curso_id
             if curso_id:
-                matriculas_qs = matriculas_qs.filter(course_id=curso_id)
+                cursos_archivados_filtro = cursos_archivados_del_ca.filter(id_original=curso_id)
+            else:
+                cursos_archivados_filtro = cursos_archivados_del_ca
+
+            ids_cursos_archivados_filtro = list(
+                cursos_archivados_filtro.values_list('id', flat=True)
+            )
+
+            # ── Matrículas: principal + archivadas ───────────────────────────
+            matriculas_principal_qs = Matriculas.objects.filter(
+                curso_academico=curso_academico,
+            ).select_related('student', 'course', 'semestre')
+            if curso_id:
+                matriculas_principal_qs = matriculas_principal_qs.filter(course_id=curso_id)
             if estudiante_id:
-                matriculas_qs = matriculas_qs.filter(student_id=estudiante_id)
+                matriculas_principal_qs = matriculas_principal_qs.filter(student_id=estudiante_id)
             if estado_matricula:
-                matriculas_qs = matriculas_qs.filter(estado=estado_matricula)
-            if estado_curso:
-                ids_cursos = [c.id for c in Curso.objects.filter(curso_academico=curso_academico) if c.get_dynamic_status() == estado_curso]
-                matriculas_qs = matriculas_qs.filter(course_id__in=ids_cursos)
+                matriculas_principal_qs = matriculas_principal_qs.filter(estado=estado_matricula)
 
-            calificaciones_qs = Calificaciones.objects.filter(
-                curso_academico=curso_academico,
-            ).select_related('student', 'course').prefetch_related('notas')
-            if curso_id:
-                calificaciones_qs = calificaciones_qs.filter(course_id=curso_id)
+            matriculas_archivadas_qs = MatriculaArchivada.objects.filter(
+                course_id__in=ids_cursos_archivados_filtro,
+            ).select_related('student', 'course', 'semestre_archivado')
             if estudiante_id:
-                calificaciones_qs = calificaciones_qs.filter(student_id=estudiante_id)
-            if estado_curso:
-                ids_cursos = [c.id for c in Curso.objects.filter(curso_academico=curso_academico) if c.get_dynamic_status() == estado_curso]
-                calificaciones_qs = calificaciones_qs.filter(course_id__in=ids_cursos)
+                matriculas_archivadas_qs = matriculas_archivadas_qs.filter(
+                    student__id_original=estudiante_id
+                )
+            if estado_matricula:
+                matriculas_archivadas_qs = matriculas_archivadas_qs.filter(estado=estado_matricula)
 
-            asistencias_matriculas_qs = Matriculas.objects.filter(
+            matriculas_list = (
+                [_MatriculaPrincipalAdapter(m, _semestre_map_principal) for m in matriculas_principal_qs]
+                + [_MatriculaArchivadaAdapter(m) for m in matriculas_archivadas_qs]
+            )
+
+            # ── Calificaciones: principal + archivadas ───────────────────────
+            calificaciones_principal_qs = Calificaciones.objects.filter(
                 curso_academico=curso_academico,
-            ).select_related('student', 'course').order_by(
+            ).select_related('student', 'course', 'semestre').prefetch_related('notas')
+            if curso_id:
+                calificaciones_principal_qs = calificaciones_principal_qs.filter(course_id=curso_id)
+            if estudiante_id:
+                calificaciones_principal_qs = calificaciones_principal_qs.filter(student_id=estudiante_id)
+
+            calificaciones_archivadas_qs = CalificacionArchivada.objects.filter(
+                course_id__in=ids_cursos_archivados_filtro,
+            ).select_related('student', 'course', 'semestre_archivado').prefetch_related('notas_archivadas')
+            if estudiante_id:
+                calificaciones_archivadas_qs = calificaciones_archivadas_qs.filter(
+                    student__id_original=estudiante_id
+                )
+
+            calificaciones_list = (
+                [_CalificacionPrincipalAdapter(c, _semestre_map_principal) for c in calificaciones_principal_qs]
+                + [_CalificacionArchivadaAdapter(c) for c in calificaciones_archivadas_qs]
+            )
+
+            # ── Asistencias: principal + archivadas ──────────────────────────
+            asistencias_principal_qs = Matriculas.objects.filter(
+                curso_academico=curso_academico,
+            ).select_related('student', 'course', 'semestre').order_by(
                 'student__first_name', 'student__last_name', 'student__username'
             )
             if curso_id:
-                asistencias_matriculas_qs = asistencias_matriculas_qs.filter(course_id=curso_id)
+                asistencias_principal_qs = asistencias_principal_qs.filter(course_id=curso_id)
             if estudiante_id:
-                asistencias_matriculas_qs = asistencias_matriculas_qs.filter(student_id=estudiante_id)
+                asistencias_principal_qs = asistencias_principal_qs.filter(student_id=estudiante_id)
             if estado_matricula:
-                asistencias_matriculas_qs = asistencias_matriculas_qs.filter(estado=estado_matricula)
-            if estado_curso:
-                ids_cursos = [c.id for c in Curso.objects.filter(curso_academico=curso_academico) if c.get_dynamic_status() == estado_curso]
-                asistencias_matriculas_qs = asistencias_matriculas_qs.filter(course_id__in=ids_cursos)
+                asistencias_principal_qs = asistencias_principal_qs.filter(estado=estado_matricula)
 
-            cursos_list = [_CursoPrincipalAdapter(c, _semestre_map_principal) for c in cursos_qs]
-            matriculas_list = [_MatriculaPrincipalAdapter(m, _semestre_map_principal) for m in matriculas_qs]
-            calificaciones_list = [_CalificacionPrincipalAdapter(c, _semestre_map_principal) for c in calificaciones_qs]
-            asistencias_list = [_MatriculaPrincipalAdapter(m, _semestre_map_principal) for m in asistencias_matriculas_qs]
+            asistencias_archivadas_qs = MatriculaArchivada.objects.filter(
+                course_id__in=ids_cursos_archivados_filtro,
+            ).select_related('student', 'course', 'semestre_archivado').order_by(
+                'student__first_name', 'student__last_name', 'student__username'
+            )
+            if estudiante_id:
+                asistencias_archivadas_qs = asistencias_archivadas_qs.filter(
+                    student__id_original=estudiante_id
+                )
+            if estado_matricula:
+                asistencias_archivadas_qs = asistencias_archivadas_qs.filter(estado=estado_matricula)
+
+            asistencias_list = (
+                [_MatriculaPrincipalAdapter(m, _semestre_map_principal) for m in asistencias_principal_qs]
+                + [_MatriculaArchivadaAdapter(m) for m in asistencias_archivadas_qs]
+            )
 
             paginator_cur = Paginator(cursos_list, per_page)
             paginator_m   = Paginator(matriculas_list, per_page)
@@ -1590,8 +1653,9 @@ class CursoAcademicoDetailView(DetailView):
         matriculas_qs = MatriculaArchivada.objects.filter(
             course__curso_academico=ca_archivado
         ).select_related('student', 'course', 'semestre_archivado')
-        if curso_archivado_filtro:
-            # Filtrar por el curso del semestre seleccionado (semestre_archivado FK puede ser NULL)
+        if semestre_seleccionado:
+            matriculas_qs = matriculas_qs.filter(semestre_archivado=semestre_seleccionado)
+        elif curso_archivado_filtro:
             matriculas_qs = matriculas_qs.filter(course=curso_archivado_filtro)
         if curso_id:
             matriculas_qs = matriculas_qs.filter(course_id=curso_id)
@@ -1609,8 +1673,9 @@ class CursoAcademicoDetailView(DetailView):
         calificaciones_qs = CalificacionArchivada.objects.filter(
             course__curso_academico=ca_archivado
         ).select_related('student', 'course', 'semestre_archivado').prefetch_related('notas_archivadas')
-        if curso_archivado_filtro:
-            # Filtrar por el curso del semestre seleccionado (semestre_archivado FK puede ser NULL)
+        if semestre_seleccionado:
+            calificaciones_qs = calificaciones_qs.filter(semestre_archivado=semestre_seleccionado)
+        elif curso_archivado_filtro:
             calificaciones_qs = calificaciones_qs.filter(course=curso_archivado_filtro)
         if curso_id:
             calificaciones_qs = calificaciones_qs.filter(course_id=curso_id)
@@ -1628,8 +1693,9 @@ class CursoAcademicoDetailView(DetailView):
         ).select_related('student', 'course', 'semestre_archivado').order_by(
             'student__first_name', 'student__last_name', 'student__username'
         )
-        if curso_archivado_filtro:
-            # Filtrar por el curso del semestre seleccionado (semestre_archivado FK puede ser NULL)
+        if semestre_seleccionado:
+            asistencias_matriculas_qs = asistencias_matriculas_qs.filter(semestre_archivado=semestre_seleccionado)
+        elif curso_archivado_filtro:
             asistencias_matriculas_qs = asistencias_matriculas_qs.filter(course=curso_archivado_filtro)
         if curso_id:
             asistencias_matriculas_qs = asistencias_matriculas_qs.filter(course_id=curso_id)
@@ -3110,35 +3176,63 @@ class AsistenciaDetalleArchivadoView(BaseContextMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         from datos_archivados.models import (
-            UsuarioArchivado, MatriculaArchivada, AsistenciaArchivada
+            UsuarioArchivado, MatriculaArchivada, AsistenciaArchivada,
+            SemestreCursoArchivado,
         )
 
         student_id = self.kwargs['student_id']
         course_id  = self.kwargs['course_id']
+        # Semestre opcional: filtra solo las asistencias de ese semestre
+        semestre_archivado_id = self.request.GET.get('semestre')
 
         student = get_object_or_404(UsuarioArchivado, id=student_id)
-        matricula = get_object_or_404(
-            MatriculaArchivada,
+
+        # Puede haber varias matrículas (una por semestre); tomamos la primera
+        # para obtener el curso. Si se especificó semestre, filtrar por él.
+        matriculas_qs = MatriculaArchivada.objects.filter(
             student=student, course_id=course_id
-        )
+        ).select_related('course', 'semestre_archivado')
+
+        if semestre_archivado_id:
+            matriculas_qs = matriculas_qs.filter(semestre_archivado_id=semestre_archivado_id)
+
+        matricula = matriculas_qs.first()
+        if not matricula:
+            from django.http import Http404
+            raise Http404("No se encontró la matrícula archivada.")
+
         course = matricula.course
 
-        asistencias = AsistenciaArchivada.objects.filter(
+        # Asistencias: filtrar por semestre si se especificó
+        asistencias_qs = AsistenciaArchivada.objects.filter(
             student=student, course=course
-        ).order_by('date')
+        )
+        if semestre_archivado_id:
+            asistencias_qs = asistencias_qs.filter(
+                semestre_archivado_id=semestre_archivado_id
+            )
+        asistencias = asistencias_qs.order_by('date')
+
+        # Información del semestre para mostrar en el título
+        semestre_info = None
+        if semestre_archivado_id:
+            semestre_info = SemestreCursoArchivado.objects.filter(
+                pk=semestre_archivado_id
+            ).first()
 
         total     = asistencias.count()
         presentes = asistencias.filter(presente=True).count()
         ausentes  = total - presentes
         porcentaje = round((presentes / total) * 100, 2) if total > 0 else 0
 
-        context['student']    = _UsuarioArchivadoAdapter(student)
-        context['course']     = _CursoArchivadoAdapter(course)
-        context['asistencias'] = [_AsistenciaArchivadaAdapter(a) for a in asistencias]
-        context['total']      = total
-        context['presentes']  = presentes
-        context['ausentes']   = ausentes
-        context['porcentaje'] = porcentaje
+        context['student']      = _UsuarioArchivadoAdapter(student)
+        context['course']       = _CursoArchivadoAdapter(course)
+        context['asistencias']  = [_AsistenciaArchivadaAdapter(a) for a in asistencias]
+        context['total']        = total
+        context['presentes']    = presentes
+        context['ausentes']     = ausentes
+        context['porcentaje']   = porcentaje
+        context['semestre_info'] = semestre_info
         return context
 
 

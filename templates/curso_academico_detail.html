@@ -536,13 +536,13 @@
             <td class="text-center">
               {% if es_archivado and not semestre_datos_en_principal %}
               {# Datos en datos_archivados: student_id es UsuarioArchivado.id #}
-              <a href="{% url 'principal:asistencia_detalle_archivado' student_id=matricula.student.id course_id=matricula.course.id %}"
+              <a href="{% url 'principal:asistencia_detalle_archivado' student_id=matricula.student.id course_id=matricula.course.id %}{% if matricula.semestre_archivado_id %}?semestre={{ matricula.semestre_archivado_id }}{% endif %}"
                  class="ca-btn ca-btn-primary" style="padding:0.3rem 0.8rem;font-size:0.8rem;">
                 <span class="material-icons" style="font-size:1rem;">visibility</span> Ver
               </a>
               {% elif viendo_semestre_archivado and not semestre_datos_en_principal %}
               {# Semestre ya archivado (desde _context_desde_principal): student_id es UsuarioArchivado.id #}
-              <a href="{% url 'principal:asistencia_detalle_archivado' student_id=matricula.student.id course_id=matricula.course.id %}"
+              <a href="{% url 'principal:asistencia_detalle_archivado' student_id=matricula.student.id course_id=matricula.course.id %}{% if matricula.semestre_archivado_id %}?semestre={{ matricula.semestre_archivado_id }}{% endif %}"
                  class="ca-btn ca-btn-primary" style="padding:0.3rem 0.8rem;font-size:0.8rem;">
                 <span class="material-icons" style="font-size:1rem;">visibility</span> Ver
               </a>
