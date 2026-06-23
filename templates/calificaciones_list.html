@@ -134,11 +134,11 @@
                             </td>
                             <td>
                                 {{ calificacion.course.name }}
-                                {% for semestre in calificacion.course.semestres.all %}
-                                    {% if semestre.activo %}
-                                    <span class="text-sm font-normal text-gray-500 ml-1">(Semestre {{ semestre.numero_semestre }})</span>
-                                    {% endif %}
-                                {% endfor %}
+                                {% if calificacion.semestre_numero %}
+                                    <span class="text-sm font-normal text-gray-500 ml-1">({{ calificacion.semestre_numero }})</span>
+                                {% elif calificacion.semestre %}
+                                    <span class="text-sm font-normal text-gray-500 ml-1">(Semestre {{ calificacion.semestre.numero_semestre }})</span>
+                                {% endif %}
                             </td>
                             <td>{{ calificacion.curso_academico.nombre }}</td>
                             <td>
@@ -606,23 +606,15 @@
     }
 
     function filtrarSemestresPorCurso(cursoId) {
-        var semSelect = document.getElementById('semestre');
-        semSelect.querySelectorAll('option[data-curso-id]').forEach(function(opt) {
-            if (!cursoId || opt.dataset.cursoId === cursoId) {
-                opt.style.display = '';
-            } else {
-                opt.style.display = 'none';
-                if (opt.selected) { semSelect.value = ''; }
-            }
-        });
+        // No filtrar semestres por curso — los semestres archivados tienen id_original
+        // que puede no coincidir con el id del curso en el selector principal.
+        // El servidor filtra correctamente por semestre_id.
     }
 
     (function() {
         var cursoSelect = document.getElementById('curso');
         if (cursoSelect) {
-            filtrarSemestresPorCurso(cursoSelect.value);
             cursoSelect.addEventListener('change', function() {
-                filtrarSemestresPorCurso(this.value);
                 this.closest('form').submit();
             });
         }

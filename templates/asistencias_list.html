@@ -132,16 +132,16 @@
                             </td>
                             <td>
                                 {{ matricula.course.name }}
-                                {% for semestre in matricula.course.semestres.all %}
-                                    {% if semestre.activo %}
-                                    <span class="text-sm font-normal text-gray-500 ml-1">(Semestre {{ semestre.numero_semestre }})</span>
-                                    {% endif %}
-                                {% endfor %}
+                                {% if matricula.semestre_numero %}
+                                    <span class="text-sm font-normal text-gray-500 ml-1">({{ matricula.semestre_numero }})</span>
+                                {% elif matricula.semestre %}
+                                    <span class="text-sm font-normal text-gray-500 ml-1">(Semestre {{ matricula.semestre.numero_semestre }})</span>
+                                {% endif %}
                             </td>
                             <td>{{ matricula.curso_academico.nombre|default:"—" }}</td>
                             <td class="text-center">
                                 {% if viendo_semestre_archivado %}
-                                <a href="{% url 'principal:asistencia_detalle_archivado' student_id=matricula.student.id course_id=matricula.course.id %}"
+                                <a href="{% url 'principal:asistencia_detalle_archivado' student_id=matricula.student.id course_id=matricula.course.id %}{% if matricula.semestre_archivado_id %}?semestre={{ matricula.semestre_archivado_id }}{% endif %}"
                                    class="glass-button glass-button-primary text-xs px-3 py-1">
                                     <span class="fa material-icons mr-1">visibility</span></i>
                                     Ver

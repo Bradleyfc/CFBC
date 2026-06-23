@@ -1202,6 +1202,13 @@ class CursoAcademicoDetailView(DetailView):
 
         mostrar_todos = (str(semestre_id) == 'todos') if semestre_id else False
 
+        # Si se filtra por estado_curso y no se eligió un semestre específico,
+        # forzar "todos los semestres" para que los cursos finalizados sean visibles.
+        # El bloque de semestre activo excluye status='F', así que sin este ajuste
+        # filtrar por "Finalizado" devolvería siempre vacío.
+        if estado_curso and not semestre_id:
+            mostrar_todos = True
+
         if semestre_id and not mostrar_todos:
             if str(semestre_id).startswith('activo_'):
                 # Semestre de curso finalizado no archivado
@@ -2554,8 +2561,8 @@ class MatriculasListView(BaseContextMixin, ListView):
 
                 # Cargar matrículas archivadas del semestre
                 matriculas_arch_qs = MatriculaArchivada.objects.filter(
-                    course=semestre.curso_archivado
-                ).select_related('student', 'course')
+                    semestre_archivado=semestre,
+                ).select_related('student', 'course', 'semestre_archivado')
 
                 student_id = self.request.GET.get('student')
                 if student_id:
@@ -2612,11 +2619,12 @@ class CalificacionesListView(BaseContextMixin, ListView):
         if mostrar_sin_cal:
             return Calificaciones.objects.none()
 
-        queryset = Calificaciones.objects.select_related('student', 'course', 'curso_academico')
-
+        # Cuando hay CA seleccionado, los datos combinados se manejan en get_context_data
         curso_academico_id = self.request.GET.get('curso_academico')
         if curso_academico_id:
-            queryset = queryset.filter(curso_academico__id=curso_academico_id)
+            return Calificaciones.objects.none()
+
+        queryset = Calificaciones.objects.select_related('student', 'course', 'curso_academico')
 
         curso_id = self.request.GET.get('curso')
         if curso_id:
@@ -2665,8 +2673,8 @@ class CalificacionesListView(BaseContextMixin, ListView):
                 context['viendo_semestre_archivado'] = True
 
                 calificaciones_arch_qs = CalificacionArchivada.objects.filter(
-                    course=semestre.curso_archivado
-                ).select_related('student', 'course').prefetch_related('notas_archivadas')
+                    semestre_archivado=semestre,
+                ).select_related('student', 'course', 'semestre_archivado').prefetch_related('notas_archivadas')
 
                 student_id = self.request.GET.get('student') or self.request.GET.get('estudiante')
                 if student_id:
@@ -2681,6 +2689,60 @@ class CalificacionesListView(BaseContextMixin, ListView):
                 context['is_paginated'] = context['calificaciones'].has_other_pages()
             except SemestreCursoArchivado.DoesNotExist:
                 pass
+
+        elif curso_academico_id and not mostrar_sin_cal:
+            # ── Sin semestre específico pero con CA: combinar principal + archivadas ──
+            from datos_archivados.models import CalificacionArchivada, CursoArchivado
+            from principal.models import SemestreCurso
+
+            curso_id = self.request.GET.get('curso')
+            student_id = self.request.GET.get('student') or self.request.GET.get('estudiante')
+
+            # Calificaciones de principal para este CA
+            cal_principal_qs = Calificaciones.objects.filter(
+                curso_academico__id=curso_academico_id
+            ).select_related('student', 'course', 'semestre').prefetch_related('notas')
+            if curso_id:
+                cal_principal_qs = cal_principal_qs.filter(course_id=curso_id)
+            if student_id:
+                cal_principal_qs = cal_principal_qs.filter(student_id=student_id)
+
+            # Calificaciones archivadas (semestres anteriores del mismo CA)
+            cursos_ids = list(
+                Curso.objects.filter(curso_academico__id=curso_academico_id).values_list('id', flat=True)
+            )
+            cursos_archivados = CursoArchivado.objects.filter(id_original__in=cursos_ids)
+            cal_archivadas_qs = CalificacionArchivada.objects.filter(
+                course__in=cursos_archivados
+            ).select_related('student', 'course', 'semestre_archivado').prefetch_related('notas_archivadas')
+            if curso_id:
+                cal_archivadas_qs = cal_archivadas_qs.filter(
+                    course__id_original=curso_id
+                )
+            if student_id:
+                cal_archivadas_qs = cal_archivadas_qs.filter(
+                    student__id_original=student_id
+                )
+
+            # Construir mapa semestre para CalificacionPrincipalAdapter
+            semestre_map = {}
+            for sc in SemestreCurso.objects.filter(
+                curso__curso_academico__id=curso_academico_id
+            ).values_list('curso_id', 'numero_semestre'):
+                semestre_map.setdefault(sc[0], []).append(sc[1])
+            for k in semestre_map:
+                semestre_map[k].sort()
+
+            calificaciones_combinadas = (
+                [_CalificacionPrincipalAdapter(c, semestre_map) for c in cal_principal_qs]
+                + [_CalificacionArchivadaAdapter(c) for c in cal_archivadas_qs]
+            )
+
+            paginator = Paginator(calificaciones_combinadas, self.paginate_by)
+            page_number = self.request.GET.get('page', 1)
+            context['calificaciones'] = paginator.get_page(page_number)
+            context['page_obj'] = context['calificaciones']
+            context['is_paginated'] = context['calificaciones'].has_other_pages()
 
         elif mostrar_sin_cal:
             # Construir lista de estudiantes activos sin calificaciones
@@ -3115,8 +3177,8 @@ class AsistenciasListView(BaseContextMixin, ListView):
                 context['viendo_semestre_archivado'] = True
 
                 matriculas_arch_qs = MatriculaArchivada.objects.filter(
-                    course=semestre.curso_archivado
-                ).select_related('student', 'course').order_by(
+                    semestre_archivado=semestre,
+                ).select_related('student', 'course', 'semestre_archivado').order_by(
                     'student__first_name', 'student__last_name'
                 )
 
