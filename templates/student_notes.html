@@ -21,7 +21,7 @@
             </div>
             
             <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">Mis Calificaciones</h2>
-            <p class="text-center text-gray-600">Curso: <strong>{{ course.name }}</strong></p>
+            <p class="text-center text-gray-600">Curso: <strong>{{ course.name }}{% if semestre_seleccionado %} (Semestre {{ semestre_seleccionado.numero_semestre }}){% endif %}</strong></p>
         </div>
 
         <!-- Notes Summary Cards -->

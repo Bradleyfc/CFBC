@@ -2,9 +2,16 @@
     <!-- Cursos Inscritos Card -->
     <div class="glass-card">
         <div class="glass-content">
-            <h5 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <span class="fa material-icons mr-2">book</span></i>
-                Cursos Inscritos
+            <h5 class="text-xl font-bold text-gray-800 mb-4 flex items-center justify-between">
+                <span class="flex items-center">
+                    <span class="fa material-icons mr-2">book</span>
+                    Cursos Inscritos
+                </span>
+                <a href="{% url 'principal:student_historial_anos_anteriores' %}"
+                    class="glass-btn-historial">
+                    <span class="fa material-icons mr-1">history</span>
+                    Ver Cursos Académicos Anteriores
+                </a>
             </h5>
             <div class="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent mb-4"></div>
 
@@ -80,7 +87,7 @@
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="flex flex-row gap-2 mt-3">
+                    <div class="flex flex-row flex-wrap gap-2 mt-3">
                         {% if not course.matricula_activa %}
                         <!-- Matrícula inactiva: todos los botones deshabilitados -->
                         <button disabled class="glass-action-button glass-action-disabled flex-1 cursor-not-allowed">
@@ -116,16 +123,31 @@
                         </button>
                         {% endif %}
 
-                        <a href="{% url 'principal:student_course_attendances' student_id=user.id course_id=course.id %}"
+                        <!-- Semestre actual (datos en principal) -->
+                        <a href="{% url 'principal:student_course_attendances' student_id=user.id course_id=course.id %}{% if course.semestre_matricula_obj %}?semestre_id={{ course.semestre_matricula_obj.id }}{% endif %}"
                             class="glass-action-button glass-action-info flex-1">
                             <span class="fa material-icons mr-1">event</span>
-                            Ver asistencias
+                            Asistencias{% if course.semestre_matricula_obj %} Sem. {{ course.semestre_matricula_obj.numero_semestre }}{% endif %}
                         </a>
-                        <a href="{% url 'principal:student_course_notes' student_id=user.id course_id=course.id %}"
+                        <a href="{% url 'principal:student_course_notes' student_id=user.id course_id=course.id %}{% if course.semestre_matricula_obj %}?semestre_id={{ course.semestre_matricula_obj.id }}{% endif %}"
                             class="glass-action-button glass-action-success flex-1">
                             <span class="fa material-icons mr-1">assignment</span>
-                            Ver Notas
+                            Notas{% if course.semestre_matricula_obj %} Sem. {{ course.semestre_matricula_obj.numero_semestre }}{% endif %}
                         </a>
+
+                        <!-- Semestres anteriores archivados del mismo curso (ej. sem 1 archivado + sem 3 activo) -->
+                        {% for sem_arch in course.semestres_archivados_estudiante %}
+                        <a href="{% url 'principal:student_course_attendances' student_id=user.id course_id=course.id %}?semestre_archivado_id={{ sem_arch.id }}"
+                            class="glass-action-button glass-action-info">
+                            <span class="fa material-icons mr-1">event</span>
+                            Asistencias Sem. {{ sem_arch.numero_semestre }}
+                        </a>
+                        <a href="{% url 'principal:student_course_notes' student_id=user.id course_id=course.id %}?semestre_archivado_id={{ sem_arch.id }}"
+                            class="glass-action-button glass-action-success">
+                            <span class="fa material-icons mr-1">assignment</span>
+                            Notas Sem. {{ sem_arch.numero_semestre }}
+                        </a>
+                        {% endfor %}
 
                         {% if course.id in cursos_con_evaluaciones %}
                         <a href="{% url 'evaluaciones:mis_evaluaciones' curso_id=course.id %}"
@@ -196,6 +218,80 @@
                                         <span class="fa material-icons mr-1">info</span></i>
                                         Esperando respuesta del profesor
                                     </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Cursos Finalizados del Año Académico Activo -->
+    {% if cursos_finalizados_ano_activo %}
+    <div class="glass-card">
+        <div class="glass-content">
+            <h5 class="text-xl font-bold text-gray-800 mb-2 flex items-center">
+                <span class="fa material-icons mr-2">flag</span>
+                Cursos Finalizados
+            </h5>
+            <p class="text-sm text-gray-600 mb-4">Cursos del año académico actual que han finalizado</p>
+            <div class="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent mb-4"></div>
+
+            <div class="space-y-4">
+                {% for course in cursos_finalizados_ano_activo %}
+                <div class="glass-course-wrapper">
+                    <div class="glass-course-item">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="md:col-span-2">
+                                <h6 class="text-lg font-bold text-gray-800 mb-2">{{ course.name }}</h6>
+                                <div class="flex items-center gap-2 mb-3">
+                                    <span class="text-sm text-gray-600">Estado del curso:</span>
+                                    <span class="glass-badge-status glass-badge-red">Finalizado</span>
+                                </div>
+                                <div class="flex flex-row flex-wrap gap-2">
+                                    <button disabled class="glass-action-button glass-action-disabled cursor-not-allowed">
+                                        <span class="fa material-icons mr-1">folder_off</span>
+                                        Documentos
+                                    </button>
+                                    {% if course.semestre_actual_obj %}
+                                    <a href="{% url 'principal:student_course_attendances' student_id=user.id course_id=course.id %}?semestre_id={{ course.semestre_actual_obj.id }}"
+                                        class="glass-action-button glass-action-info">
+                                        <span class="fa material-icons mr-1">event</span>
+                                        Asistencias Sem. {{ course.semestre_actual_obj.numero_semestre }}
+                                    </a>
+                                    <a href="{% url 'principal:student_course_notes' student_id=user.id course_id=course.id %}?semestre_id={{ course.semestre_actual_obj.id }}"
+                                        class="glass-action-button glass-action-success">
+                                        <span class="fa material-icons mr-1">assignment</span>
+                                        Notas Sem. {{ course.semestre_actual_obj.numero_semestre }}
+                                    </a>
+                                    {% endif %}
+                                    {% for sem in course.semestres_archivados_estudiante %}
+                                    <a href="{% url 'principal:student_course_attendances' student_id=user.id course_id=course.id %}?semestre_archivado_id={{ sem.id }}"
+                                        class="glass-action-button glass-action-info">
+                                        <span class="fa material-icons mr-1">event</span>
+                                        Asistencias Sem. {{ sem.numero_semestre }}
+                                    </a>
+                                    <a href="{% url 'principal:student_course_notes' student_id=user.id course_id=course.id %}?semestre_archivado_id={{ sem.id }}"
+                                        class="glass-action-button glass-action-success">
+                                        <span class="fa material-icons mr-1">assignment</span>
+                                        Notas Sem. {{ sem.numero_semestre }}
+                                    </a>
+                                    {% endfor %}
+                                    {% if not course.semestre_actual_obj and not course.semestres_archivados_estudiante %}
+                                    <a href="{% url 'principal:student_course_attendances' student_id=user.id course_id=course.id %}"
+                                        class="glass-action-button glass-action-info">
+                                        <span class="fa material-icons mr-1">event</span>
+                                        Ver asistencias
+                                    </a>
+                                    <a href="{% url 'principal:student_course_notes' student_id=user.id course_id=course.id %}"
+                                        class="glass-action-button glass-action-success">
+                                        <span class="fa material-icons mr-1">assignment</span>
+                                        Ver Notas
+                                    </a>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -295,6 +391,10 @@
         box-shadow: none;
     }
 
+    .glass-action-disabled::before {
+        display: none;
+    }
+
     /* Glass Badge Status */
     .glass-badge-status {
         display: inline-block;
@@ -392,13 +492,31 @@
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.2);
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         white-space: nowrap;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+    }
+
+    .glass-action-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .glass-action-button:hover::before {
+        left: 100%;
     }
 
     .glass-action-button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     }
 
     .glass-action-info {
@@ -492,5 +610,46 @@
     .glass-alert-info {
         background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
         color: #1e3a8a;
+    }
+
+    /* Botón historial — mismo efecto shimmer que el botón de cerrar sesión */
+    .glass-btn-historial {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        border-radius: 12px;
+        font-size: 0.825rem;
+        font-weight: 500;
+        text-decoration: none;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+        color: #1e3a8a;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+
+    .glass-btn-historial::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .glass-btn-historial:hover::before {
+        left: 100%;
+    }
+
+    .glass-btn-historial:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.4), rgba(37, 99, 235, 0.3));
     }
 </style>

@@ -35,6 +35,7 @@ urlpatterns = [
     path('cursos/<int:course_id>/asistencias/', views.AsistenciaView.as_view(), name='asistencias'),
     path('student/<int:student_id>/course/<int:course_id>/attendances/', views.StudentCourseAttendanceView.as_view(), name='student_course_attendances'),
     path('student/<int:student_id>/course/<int:course_id>/notes/', views.StudentCourseNotesView.as_view(), name='student_course_notes'),
+    path('student/historial-anos-anteriores/', views.StudentHistorialAnosAnterioresView.as_view(), name='student_historial_anos_anteriores'),
     path('matriculas/', views.MatriculasListView.as_view(), name='matriculas'),
     path('calificaciones/', views.CalificacionesListView.as_view(), name='calificaciones'),
     path('calificaciones/estudiante/<int:student_id>/curso/<int:course_id>/', views.CalificacionDetalleEstudianteView.as_view(), name='calificacion_detalle_estudiante'),
