@@ -123,11 +123,18 @@
                                 </td>
                                 <td class="acciones-col">
                                     {% if data.matricula_activa %}
-                                    <a href="{% url 'principal:add_nota' matricula_id=data.matricula_id %}" 
-                                       class="glass-button glass-button-primary text-xs px-3 py-1" style="white-space:nowrap;">
-                                        <span class="fa material-icons mr-1">add_circle</span></i>
-                                        Agregar/Editar
-                                    </a>
+                                        {% if course.get_dynamic_status == 'F' %}
+                                        <span class="badge-inactivo-accion" title="El curso está finalizado">
+                                            <span class="fa material-icons" style="font-size:0.85rem;vertical-align:middle;">lock</span>
+                                            Agregar/Editar
+                                        </span>
+                                        {% else %}
+                                        <a href="{% url 'principal:add_nota' matricula_id=data.matricula_id %}" 
+                                           class="glass-button glass-button-primary text-xs px-3 py-1" style="white-space:nowrap;">
+                                            <span class="fa material-icons mr-1">add_circle</span></i>
+                                            Agregar/Editar
+                                        </a>
+                                        {% endif %}
                                     {% else %}
                                     <span class="badge-inactivo-accion">Sin acceso</span>
                                     {% endif %}

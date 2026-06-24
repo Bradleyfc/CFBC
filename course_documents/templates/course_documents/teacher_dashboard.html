@@ -71,6 +71,21 @@
         <!-- Action Buttons -->
         <div class="mb-8">
             <div class="flex flex-wrap gap-4">
+                {% if curso.get_dynamic_status == 'F' %}
+                <button type="button" class="inline-flex items-center gap-3 px-6 py-3 bg-gray-400/50 border border-gray-300/30 text-white font-semibold cursor-not-allowed pointer-events-none opacity-40 group" disabled title="El curso está finalizado" style="border-radius: 20px;">
+                    <div class="w-8 h-8 bg-white/20 flex items-center justify-center" style="border-radius: 12px;">
+                        <i class="bi bi-lock text-lg"></i>
+                    </div>
+                    <span>Nueva Carpeta</span>
+                </button>
+                
+                <button type="button" class="inline-flex items-center gap-3 px-6 py-3 bg-gray-400/50 border border-gray-300/30 text-white font-semibold cursor-not-allowed pointer-events-none opacity-40 group" disabled title="El curso está finalizado" style="border-radius: 20px;">
+                    <div class="w-8 h-8 bg-white/20 flex items-center justify-center" style="border-radius: 12px;">
+                        <i class="bi bi-lock text-lg"></i>
+                    </div>
+                    <span>Subir Documento</span>
+                </button>
+                {% else %}
                 <button type="button" class="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-500/80 to-indigo-600/80 backdrop-blur-sm border border-blue-300/30 hover:from-blue-400/90 hover:to-indigo-500/90 hover:border-blue-400/50 text-white font-semibold transition-all duration-500 ease-out hover:shadow-xl hover:shadow-blue-500/30 hover:scale-105 hover:-translate-y-1 group" data-bs-toggle="modal" data-bs-target="#createFolderModal" style="border-radius: 20px;">
                     <div class="w-8 h-8 bg-white/20 flex items-center justify-center transition-all duration-300 group-hover:bg-white/30 group-hover:scale-110 group-hover:rotate-12" style="border-radius: 12px;">
                         <i class="bi bi-plus text-lg transition-transform duration-300"></i>
@@ -84,6 +99,7 @@
                     </div>
                     <span class="transition-all duration-300">Subir Documento</span>
                 </button>
+                {% endif %}
                 
                 {% if folders %}
                 <button type="button" class="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-amber-500/80 to-orange-600/80 backdrop-blur-sm border border-amber-300/30 hover:from-amber-400/90 hover:to-orange-500/90 hover:border-amber-400/50 text-white font-semibold transition-all duration-500 ease-out hover:shadow-xl hover:shadow-amber-500/30 hover:scale-105 hover:-translate-y-1 group" data-bs-toggle="modal" data-bs-target="#statsModal" style="border-radius: 20px;">
@@ -169,10 +185,14 @@
                                                     class="upload-to-folder-btn" 
                                                     data-folder-id="{{ folder.id }}" 
                                                     data-folder-name="{{ folder.name }}"
-                                                    style="width: 100%; display: flex; align-items: center; gap: 6px; padding: 6px 8px; border: none; background: none; text-align: left; color: #374151; cursor: pointer; border-radius: 4px; font-size: 14px;"
+                                                    {% if curso.get_dynamic_status == 'F' %}disabled title="El curso está finalizado" style="width: 100%; display: flex; align-items: center; gap: 6px; padding: 6px 8px; border: none; background: none; text-align: left; color: #9ca3af; cursor: not-allowed; border-radius: 4px; font-size: 14px; opacity: 0.5;"{% else %}style="width: 100%; display: flex; align-items: center; gap: 6px; padding: 6px 8px; border: none; background: none; text-align: left; color: #374151; cursor: pointer; border-radius: 4px; font-size: 14px;"
                                                     onmouseover="this.style.backgroundColor='#f3f4f6'"
-                                                    onmouseout="this.style.backgroundColor='transparent'">
+                                                    onmouseout="this.style.backgroundColor='transparent'"{% endif %}>
+                                                {% if curso.get_dynamic_status == 'F' %}
+                                                <i class="bi bi-lock" style="color: #9ca3af; font-size: 14px;"></i>
+                                                {% else %}
                                                 <i class="bi bi-upload" style="color: #059669; font-size: 14px;"></i>
+                                                {% endif %}
                                                 <span>Subir</span>
                                             </button>
                                             
@@ -266,10 +286,17 @@
                         </div>
                         <h3 class="text-2xl font-bold text-gray-800 mb-4 transition-colors duration-300 hover:text-gray-900">¡Comienza a organizar!</h3>
                         <p class="text-gray-600 text-lg mb-6 max-w-md mx-auto">Crea tu primera carpeta para comenzar a organizar los documentos del curso de manera eficiente.</p>
+                        {% if curso.get_dynamic_status == 'F' %}
+                        <button type="button" class="inline-flex items-center gap-2 px-6 py-3 bg-gray-400/50 text-white font-semibold rounded-lg cursor-not-allowed opacity-40" disabled title="El curso está finalizado">
+                            <i class="bi bi-lock"></i>
+                            Crear Primera Carpeta
+                        </button>
+                        {% else %}
                         <button type="button" class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600/90 hover:bg-blue-700/95 text-white font-semibold rounded-lg transition-all duration-300 ease-out hover:shadow-lg hover:scale-110 hover:-translate-y-0.5 backdrop-blur-sm group" data-bs-toggle="modal" data-bs-target="#createFolderModal">
                             <i class="bi bi-plus transition-transform duration-300 group-hover:scale-110"></i>
                             Crear Primera Carpeta
                         </button>
+                        {% endif %}
                         <div class="mt-8 max-w-lg mx-auto">
                             <div class="bg-blue-50/50 backdrop-blur-sm border border-blue-200/30 rounded-xl p-6 transition-all duration-300 hover:bg-blue-50/70 hover:border-blue-300/50 hover:shadow-md">
                                 <div class="flex items-start gap-3">

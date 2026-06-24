@@ -81,6 +81,19 @@
                 </span>
                 <div class="glass-btn-glow"></div>
             </a>
+            {% if curso.get_dynamic_status == 'F' %}
+            <button type="button" 
+                    class="glass-btn glass-btn-primary"
+                    disabled
+                    title="El curso está finalizado"
+                    style="opacity:0.4;cursor:not-allowed;pointer-events:none;">
+                <span class="glass-btn-content">
+                    <span class="material-icons mr-2">lock</span>
+                    Nueva Carpeta
+                </span>
+                <div class="glass-btn-glow"></div>
+            </button>
+            {% else %}
             <button type="button" 
                     class="glass-btn glass-btn-primary"
                     onclick="showCreateFolderModal()">
@@ -90,6 +103,7 @@
                 </span>
                 <div class="glass-btn-glow"></div>
             </button>
+            {% endif %}
         </div>
         {% endif %}
 
@@ -110,6 +124,18 @@
                         </div>
                         
                         <div class="flex justify-center gap-1">
+                            {% if curso.get_dynamic_status == 'F' %}
+                            <button type="button" 
+                                    class="glass-btn glass-btn-success glass-btn-xs"
+                                    title="El curso está finalizado"
+                                    disabled
+                                    style="opacity:0.35;cursor:not-allowed;pointer-events:none;">
+                                <span class="glass-btn-content">
+                                    <span class="material-icons">lock</span>
+                                </span>
+                                <div class="glass-btn-glow"></div>
+                            </button>
+                            {% else %}
                             <button type="button" 
                                     class="glass-btn glass-btn-success glass-btn-xs"
                                     title="Subir documento"
@@ -119,6 +145,7 @@
                                 </span>
                                 <div class="glass-btn-glow"></div>
                             </button>
+                            {% endif %}
                             
                             <a href="{% url 'course_documents:folder_detail' curso_id=curso.id folder_id=folder.id %}" 
                                title="Abrir"
@@ -163,6 +190,17 @@
                             </span>
                             <div class="glass-btn-glow"></div>
                         </a>
+                        {% if curso.get_dynamic_status == 'F' %}
+                        <button type="button" 
+                                class="glass-btn glass-btn-primary"
+                                disabled
+                                title="El curso está finalizado"
+                                style="opacity:0.4;cursor:not-allowed;pointer-events:none;">
+                            <span class="glass-btn-content">
+                                <span class="material-icons mr-2">lock</span> Crear Primera Carpeta
+                            </span>
+                        </button>
+                        {% else %}
                         <button type="button" 
                                 class="glass-btn glass-btn-primary"
                                 onclick="showCreateFolderModal()">
@@ -171,6 +209,7 @@
                             </span>
                             <div class="glass-btn-glow"></div>
                         </button>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="glass-card-glow glass-glow-neutral"></div>

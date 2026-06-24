@@ -44,6 +44,14 @@
                 
                 <div class="flex gap-3">
                     <div class="relative group/upload-btn">
+                        {% if curso.get_dynamic_status == 'F' %}
+                        <!-- Botón Subir deshabilitado - curso finalizado -->
+                        <div class="absolute inset-0 bg-gray-400/50 backdrop-blur-md rounded-xl border border-gray-300/40 shadow-lg"></div>
+                        <button type="button" class="relative inline-flex items-center gap-1 px-2 py-1.5 text-white font-semibold rounded-lg text-sm opacity-40 cursor-not-allowed" disabled title="El curso está finalizado">
+                            <i class="bi bi-lock text-sm"></i>
+                            <span>Subir Documento</span>
+                        </button>
+                        {% else %}
                         <!-- Fondo glassmorphism del botón subir -->
                         <div class="absolute inset-0 bg-gradient-to-r from-green-500/80 via-emerald-600/90 to-green-700/80 backdrop-blur-md rounded-xl border border-green-300/40 shadow-lg transition-all duration-700 ease-out group-hover/upload-btn:from-green-400/90 group-hover/upload-btn:via-emerald-500/95 group-hover/upload-btn:to-green-600/90 group-hover/upload-btn:backdrop-blur-xl group-hover/upload-btn:border-green-400/60 group-hover/upload-btn:shadow-2xl group-hover/upload-btn:shadow-green-500/30 group-hover/upload-btn:scale-105 group-hover/upload-btn:-translate-y-1"></div>
                         
@@ -51,6 +59,7 @@
                             <i class="bi bi-upload transition-transform duration-300 group-hover/upload-btn:scale-110 text-sm"></i>
                             <span>Subir Documento</span>
                         </button>
+                        {% endif %}
                     </div>
                     
                     <div class="relative group/back-btn">
@@ -284,6 +293,14 @@
                     <p class="text-gray-600 text-lg mb-6 max-w-md mx-auto">Sube tu primer documento para comenzar a compartir materiales con tus estudiantes.</p>
                     
                     <div class="relative group/upload-first-btn inline-block">
+                        {% if curso.get_dynamic_status == 'F' %}
+                        <!-- Botón deshabilitado - curso finalizado -->
+                        <div class="absolute inset-0 bg-gray-400/50 backdrop-blur-md rounded-xl border border-gray-300/40 shadow-lg"></div>
+                        <button type="button" class="relative inline-flex items-center gap-2 px-6 py-3 text-white font-semibold rounded-xl opacity-40 cursor-not-allowed" disabled title="El curso está finalizado">
+                            <i class="bi bi-lock"></i>
+                            <span>Subir Primer Documento</span>
+                        </button>
+                        {% else %}
                         <!-- Fondo glassmorphism del botón -->
                         <div class="absolute inset-0 bg-gradient-to-r from-green-500/80 via-emerald-600/90 to-green-700/80 backdrop-blur-md rounded-xl border border-green-300/40 shadow-lg transition-all duration-700 ease-out group-hover/upload-first-btn:from-green-400/90 group-hover/upload-first-btn:via-emerald-500/95 group-hover/upload-first-btn:to-green-600/90 group-hover/upload-first-btn:backdrop-blur-xl group-hover/upload-first-btn:border-green-400/60 group-hover/upload-first-btn:shadow-2xl group-hover/upload-first-btn:shadow-green-500/30 group-hover/upload-first-btn:scale-110 group-hover/upload-first-btn:-translate-y-1"></div>
                         
@@ -291,6 +308,7 @@
                             <i class="bi bi-upload transition-transform duration-300 group-hover/upload-first-btn:scale-110"></i>
                             <span>Subir Primer Documento</span>
                         </button>
+                        {% endif %}
                     </div>
                 </div>
             {% endif %}

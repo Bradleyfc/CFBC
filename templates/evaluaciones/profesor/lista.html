@@ -32,10 +32,17 @@
               {{ total_pendientes }} pendiente{{ total_pendientes|pluralize }}
             </span>
             {% endif %}
+            {% if curso.get_dynamic_status == 'F' %}
+            <span class="glass-button" style="opacity:0.4;cursor:not-allowed;pointer-events:none;background:linear-gradient(135deg,rgba(156,163,175,0.2),rgba(107,114,128,0.1));color:#9ca3af;border-color:rgba(156,163,175,0.2);" title="El curso está finalizado">
+              <span class="fa material-icons mr-2">lock</span>
+              Nueva Evaluación
+            </span>
+            {% else %}
             <a href="{% url 'evaluaciones:crear' curso_id=curso.id %}" class="glass-button glass-button-success">
               <span class="fa material-icons mr-2">add_circle</span>
               Nueva Evaluación
             </a>
+            {% endif %}
           </div>
         </div>
       </div>
