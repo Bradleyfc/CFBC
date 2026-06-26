@@ -198,9 +198,22 @@
         font-size: 0.875rem;
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255,255,255,0.2);
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         text-decoration: none;
+        position: relative;
+        overflow: hidden;
     }
+    .glass-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: left 0.5s ease;
+    }
+    .glass-button:hover::before { left: 100%; }
     .glass-button:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
     .glass-button-secondary {
         background: linear-gradient(135deg, rgba(156,163,175,0.3), rgba(107,114,128,0.2));
