@@ -253,8 +253,19 @@
     padding: 0.55rem 1.2rem; border-radius: 10px;
     font-weight: 500; font-size: 0.875rem; text-decoration: none;
     backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.25);
-    transition: all 0.3s ease; cursor: pointer; white-space: nowrap;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer; white-space: nowrap;
+    position: relative; overflow: hidden;
   }
+  .glass-button::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s ease;
+  }
+  .glass-button:hover::before { left: 100%; }
   .glass-button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); text-decoration: none; }
   .glass-button-secondary { background: linear-gradient(135deg, rgba(156,163,175,0.3), rgba(107,114,128,0.2)); color: #374151; }
   .glass-button-success   { background: linear-gradient(135deg, rgba(34,197,94,0.3), rgba(22,163,74,0.2)); color: #14532d; }
