@@ -27,9 +27,13 @@
                         <div class="flex-1 min-w-48">
                             <label for="curso_academico" class="block text-xs font-medium text-gray-600 mb-1">Curso Académico:</label>
                             <select class="glass-select-compact" id="curso_academico" name="curso_academico">
-                                <option value="">Todos</option>
                                 {% for ca in cursos_academicos %}
-                                <option value="{{ ca.id }}" {% if request.GET.curso_academico == ca.id|stringformat:"s" %}selected{% endif %}>{{ ca.nombre }}</option>
+                                <option value="{{ ca.id }}"
+                                    {% if request.GET.curso_academico == ca.id|stringformat:"s" %}selected
+                                    {% elif not request.GET.curso_academico and ca.id == ca_activo_id %}selected
+                                    {% endif %}>
+                                    {{ ca.nombre }}{% if ca.activo %} (Activo){% elif ca.archivado %} (Archivado){% endif %}
+                                </option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -153,8 +157,8 @@
                                 {% endif %}
                             </td>
                             <td>
-                                {% if viendo_semestre_archivado %}
-                                <a href="{% url 'principal:calificacion_detalle_archivado' student_id=calificacion.student.id course_id=calificacion.course.id %}"
+                                {% if viendo_semestre_archivado or es_ca_archivado %}
+                                <a href="{% url 'principal:calificacion_detalle_estudiante' student_id=calificacion.student.id_original course_id=calificacion.course.id_original %}"
                                    class="glass-button glass-button-primary text-xs px-3 py-1">
                                     <span class="fa material-icons mr-1">visibility</span></i>
                                     Ver

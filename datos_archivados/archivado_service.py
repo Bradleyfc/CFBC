@@ -516,16 +516,22 @@ def _archivar_semestres_pendientes(curso_academico, contadores):
     """
     Se llama cuando el CursoAcademicoArchivado ya existe (creado previamente
     por terminar_semestre). Archiva los SemestreCurso que aún no tienen
-    SemestreCursoArchivado (los cerrados con "finalizar_curso") y luego
-    elimina los Curso y SemestreCurso pendientes de principal.
+    SemestreCursoArchivado (incluido el semestre activo / último semestre) y
+    luego elimina los Curso y SemestreCurso pendientes de principal.
 
-    También elimina los Curso que siguen en principal con status='F'
-    (finalizados individualmente) ya que su CursoArchivado ya existe.
+    El semestre activo al momento del archivado (ej. semestre 3) nunca pasó
+    por terminar_semestre, por lo que sus matrículas, calificaciones y
+    asistencias deben archivarse aquí antes de eliminarlas.
     """
     from datos_archivados.models import (
         CursoAcademicoArchivado,
         CursoArchivado,
         SemestreCursoArchivado,
+        UsuarioArchivado,
+        MatriculaArchivada,
+        CalificacionArchivada,
+        NotaIndividualArchivada,
+        AsistenciaArchivada,
     )
     from principal.models import (
         Curso, SemestreCurso,
@@ -546,6 +552,46 @@ def _archivar_semestres_pendientes(curso_academico, contadores):
 
     fecha_archivado = timezone.now().date()
 
+    # Helper de usuario archivado (reutilizable dentro de la transacción)
+    usuarios_archivados_map = {}
+
+    def obtener_o_crear_usuario_archivado(user):
+        if user.pk in usuarios_archivados_map:
+            return usuarios_archivados_map[user.pk]
+        existente = UsuarioArchivado.objects.filter(
+            id_original=user.pk,
+            usuario_actual=user
+        ).first()
+        if existente:
+            usuarios_archivados_map[user.pk] = existente
+            return existente
+        perfil = getattr(user, 'registro', None)
+        ua = UsuarioArchivado.objects.create(
+            id_original=user.pk,
+            username=user.username,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            email=user.email,
+            date_joined=user.date_joined,
+            is_active=user.is_active,
+            nacionalidad=getattr(perfil, 'nacionalidad', None) if perfil else None,
+            carnet=getattr(perfil, 'carnet', None) if perfil else None,
+            sexo=getattr(perfil, 'sexo', 'M') if perfil else 'M',
+            address=getattr(perfil, 'address', None) if perfil else None,
+            location=getattr(perfil, 'location', None) if perfil else None,
+            provincia=getattr(perfil, 'provincia', None) if perfil else None,
+            telephone=getattr(perfil, 'telephone', None) if perfil else None,
+            movil=getattr(perfil, 'movil', None) if perfil else None,
+            grado=getattr(perfil, 'grado', 'grado1') if perfil else 'grado1',
+            ocupacion=getattr(perfil, 'ocupacion', 'ocupacion1') if perfil else 'ocupacion1',
+            titulo=getattr(perfil, 'titulo', None) if perfil else None,
+            grupo=', '.join(user.groups.values_list('name', flat=True)),
+            usuario_actual=user,
+        )
+        contadores['usuarios'] += 1
+        usuarios_archivados_map[user.pk] = ua
+        return ua
+
     try:
         with transaction.atomic():
 
@@ -554,6 +600,11 @@ def _archivar_semestres_pendientes(curso_academico, contadores):
                 Curso.objects.filter(curso_academico=curso_academico).select_related('teacher')
             )
             cursos_ids = [c.pk for c in cursos_pendientes]
+
+            # Mapa curso.pk → CursoArchivado (para vincular matrículas/calificaciones/asistencias)
+            cursos_archivados_map = {}
+            # Mapa semestre.pk → SemestreCursoArchivado (para semestres que se crean en este paso)
+            semestres_archivados_nuevos_map = {}
 
             for curso in cursos_pendientes:
                 # Buscar el CursoArchivado ya existente para este curso
@@ -585,7 +636,11 @@ def _archivar_semestres_pendientes(curso_academico, contadores):
                     )
                     contadores['cursos'] += 1
 
-                # Archivar SemestreCurso pendientes (los que no tienen SemestreCursoArchivado)
+                cursos_archivados_map[curso.pk] = curso_archivado
+
+                # ── Archivar SemestreCurso pendientes ─────────────────────────
+                # Incluye el semestre activo (último semestre, ej. semestre 3)
+                # que nunca pasó por terminar_semestre.
                 semestres = SemestreCurso.objects.filter(
                     curso=curso
                 ).order_by('numero_semestre')
@@ -598,7 +653,13 @@ def _archivar_semestres_pendientes(curso_academico, contadores):
 
                 for semestre in semestres:
                     # Saltar si ya existe un SemestreCursoArchivado para este id_original
-                    if SemestreCursoArchivado.objects.filter(id_original=semestre.pk).exists():
+                    existente_arch = SemestreCursoArchivado.objects.filter(
+                        id_original=semestre.pk
+                    ).first()
+                    if existente_arch:
+                        # Ya archivado (por terminar_semestre previo), registrar en el mapa
+                        semestres_archivados_nuevos_map[semestre.pk] = existente_arch
+                        numeros_ya_archivados.add(semestre.numero_semestre)
                         continue
                     # Saltar si ya existe uno con el mismo número de semestre para ese curso
                     if semestre.numero_semestre in numeros_ya_archivados:
@@ -609,7 +670,7 @@ def _archivar_semestres_pendientes(curso_academico, contadores):
                         continue
 
                     fecha_cierre = semestre.fecha_cierre or fecha_archivado
-                    SemestreCursoArchivado.objects.create(
+                    nuevo_sa = SemestreCursoArchivado.objects.create(
                         id_original=semestre.pk,
                         curso_archivado=curso_archivado,
                         numero_semestre=semestre.numero_semestre,
@@ -619,15 +680,178 @@ def _archivar_semestres_pendientes(curso_academico, contadores):
                         fecha_cierre=fecha_cierre,
                         fecha_creacion=semestre.fecha_creacion,
                     )
+                    semestres_archivados_nuevos_map[semestre.pk] = nuevo_sa
                     numeros_ya_archivados.add(semestre.numero_semestre)
                     logger.info(
                         f"SemestreCursoArchivado creado: semestre {semestre.numero_semestre} "
                         f"de '{curso.name}' (id_original={semestre.pk})."
                     )
 
-            # Limpiar datos de principal para estos cursos
-            # (matrículas, calificaciones, asistencias ya fueron archivadas
-            #  por terminar_semestre; aquí limpiamos los restos y los Curso mismos)
+            # ── Archivar Matrículas pendientes (semestre activo) ──────────────
+            # Las matrículas que quedaron en principal sin archivar pertenecen
+            # al semestre activo (último semestre). Se archivan ahora antes de
+            # eliminarlas.
+            matriculas_pendientes = Matriculas.objects.filter(
+                course__pk__in=cursos_ids
+            ).select_related('student', 'course', 'semestre')
+
+            matriculas_archivadas_map = {}
+
+            for matricula in matriculas_pendientes:
+                # Evitar duplicado si ya fue archivada (no debería, pero por seguridad)
+                if MatriculaArchivada.objects.filter(id_original=matricula.pk).exists():
+                    continue
+
+                curso_archivado = cursos_archivados_map.get(matricula.course.pk)
+                if not curso_archivado:
+                    curso_archivado = CursoArchivado.objects.filter(
+                        id_original=matricula.course.pk
+                    ).first()
+                if not curso_archivado:
+                    logger.warning(
+                        f"No se encontró CursoArchivado para course.pk={matricula.course.pk}. "
+                        f"Se omite matrícula id={matricula.pk}."
+                    )
+                    continue
+
+                estudiante_archivado = obtener_o_crear_usuario_archivado(matricula.student)
+
+                semestre_arch = None
+                if matricula.semestre_id:
+                    semestre_arch = semestres_archivados_nuevos_map.get(matricula.semestre_id)
+                    if semestre_arch is None:
+                        semestre_arch = SemestreCursoArchivado.objects.filter(
+                            id_original=matricula.semestre_id
+                        ).first()
+
+                ma = MatriculaArchivada.objects.create(
+                    id_original=matricula.pk,
+                    course=curso_archivado,
+                    student=estudiante_archivado,
+                    semestre_archivado=semestre_arch,
+                    activo=matricula.activo,
+                    fecha_matricula=matricula.fecha_matricula,
+                    estado=matricula.estado,
+                )
+                matriculas_archivadas_map[matricula.pk] = ma
+                contadores['matriculas'] += 1
+
+            # ── Archivar Calificaciones y Notas pendientes ────────────────────
+            calificaciones_pendientes = Calificaciones.objects.filter(
+                course__pk__in=cursos_ids
+            ).select_related('student', 'course', 'matricula', 'semestre').prefetch_related('notas')
+
+            for calificacion in calificaciones_pendientes:
+                if CalificacionArchivada.objects.filter(id_original=calificacion.pk).exists():
+                    continue
+
+                curso_archivado = cursos_archivados_map.get(calificacion.course.pk)
+                if not curso_archivado:
+                    curso_archivado = CursoArchivado.objects.filter(
+                        id_original=calificacion.course.pk
+                    ).first()
+                if not curso_archivado:
+                    logger.warning(
+                        f"No se encontró CursoArchivado para course.pk={calificacion.course.pk}. "
+                        f"Se omite calificación id={calificacion.pk}."
+                    )
+                    continue
+
+                estudiante_archivado = obtener_o_crear_usuario_archivado(calificacion.student)
+
+                matricula_archivada = None
+                if calificacion.matricula_id:
+                    matricula_archivada = matriculas_archivadas_map.get(calificacion.matricula_id)
+                    if not matricula_archivada:
+                        matricula_archivada = MatriculaArchivada.objects.filter(
+                            id_original=calificacion.matricula_id
+                        ).first()
+
+                if not matricula_archivada:
+                    matricula_archivada = MatriculaArchivada.objects.create(
+                        id_original=calificacion.pk * -1,
+                        course=curso_archivado,
+                        student=estudiante_archivado,
+                        activo=True,
+                        fecha_matricula=calificacion.course.start_date or fecha_archivado,
+                        estado='P',
+                    )
+                    contadores['matriculas'] += 1
+
+                semestre_arch = None
+                if calificacion.semestre_id:
+                    semestre_arch = semestres_archivados_nuevos_map.get(calificacion.semestre_id)
+                    if semestre_arch is None:
+                        semestre_arch = SemestreCursoArchivado.objects.filter(
+                            id_original=calificacion.semestre_id
+                        ).first()
+
+                calificacion_archivada = CalificacionArchivada.objects.create(
+                    id_original=calificacion.pk,
+                    matricula=matricula_archivada,
+                    course=curso_archivado,
+                    student=estudiante_archivado,
+                    semestre_archivado=semestre_arch,
+                    average=calificacion.average,
+                )
+                contadores['calificaciones'] += 1
+
+                for nota in calificacion.notas.all():
+                    if not NotaIndividualArchivada.objects.filter(id_original=nota.pk).exists():
+                        NotaIndividualArchivada.objects.create(
+                            id_original=nota.pk,
+                            calificacion=calificacion_archivada,
+                            valor=nota.valor if nota.valor is not None else 0,
+                            fecha_creacion=nota.fecha_creacion,
+                        )
+                        contadores['notas'] += 1
+
+            # ── Archivar Asistencias pendientes ───────────────────────────────
+            asistencias_pendientes = Asistencia.objects.filter(
+                course__pk__in=cursos_ids
+            ).select_related('student', 'course', 'semestre')
+
+            for asistencia in asistencias_pendientes:
+                if AsistenciaArchivada.objects.filter(id_original=asistencia.pk).exists():
+                    continue
+
+                curso_archivado = cursos_archivados_map.get(asistencia.course.pk)
+                if not curso_archivado:
+                    curso_archivado = CursoArchivado.objects.filter(
+                        id_original=asistencia.course.pk
+                    ).first()
+                if not curso_archivado:
+                    continue
+
+                estudiante_archivado = obtener_o_crear_usuario_archivado(asistencia.student)
+
+                semestre_arch = None
+                if asistencia.semestre_id:
+                    semestre_arch = semestres_archivados_nuevos_map.get(asistencia.semestre_id)
+                    if semestre_arch is None:
+                        semestre_arch = SemestreCursoArchivado.objects.filter(
+                            id_original=asistencia.semestre_id
+                        ).first()
+
+                AsistenciaArchivada.objects.create(
+                    id_original=asistencia.pk,
+                    course=curso_archivado,
+                    student=estudiante_archivado,
+                    semestre_archivado=semestre_arch,
+                    presente=asistencia.presente,
+                    date=asistencia.date,
+                )
+                contadores['asistencias'] += 1
+
+            logger.info(
+                f"_archivar_semestres_pendientes: datos del semestre activo archivados para "
+                f"'{curso_academico.nombre}': {contadores['matriculas']} matrículas, "
+                f"{contadores['calificaciones']} calificaciones, "
+                f"{contadores.get('notas', 0)} notas, "
+                f"{contadores['asistencias']} asistencias."
+            )
+
+            # ── Limpiar datos de principal para estos cursos ──────────────────
 
             # Solicitudes de inscripción
             solicitudes_qs = SolicitudInscripcion.objects.filter(curso__pk__in=cursos_ids)

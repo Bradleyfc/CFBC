@@ -65,7 +65,7 @@ def crear_semestre_inicial(curso):
     return semestre
 
 
-def terminar_semestre(curso):
+def terminar_semestre(curso, finalizar=False):
     """
     Ejecuta el proceso completo de cierre de semestre dentro de transaction.atomic().
 
@@ -76,11 +76,14 @@ def terminar_semestre(curso):
       4. Archivar Matriculas, Calificaciones, NotaIndividual, Asistencia.
       5. Eliminar esos datos de principal.
       6. Marcar SemestreCurso actual como activo=False.
-      7. Crear nuevo SemestreCurso con numero_semestre = anterior + 1.
-      8. Cambiar Curso.status = 'I'.
+      7. Si finalizar=False: Crear nuevo SemestreCurso con numero_semestre = anterior + 1
+         y reiniciar Curso.status = 'I'.
+         Si finalizar=True: marcar Curso.status = 'F' (el curso queda cerrado).
 
     Parámetros:
         curso: instancia de principal.Curso.
+        finalizar: si True, el curso se marca como finalizado ('F') en lugar de
+                   crear un nuevo semestre y reiniciarlo a 'I'.
 
     Retorna:
         dict con contadores {semestre_num, matriculas, calificaciones, notas, asistencias}.
@@ -371,29 +374,40 @@ def terminar_semestre(curso):
                 semestre_activo.fecha_cierre = timezone.now().date()
                 semestre_activo.save(update_fields=['activo', 'fecha_cierre'])
 
-            # ── 9. Crear nuevo SemestreCurso ──────────────────────────────────
-            nuevo_numero = numero_semestre_actual + 1
-            # El nuevo semestre hereda el mismo CursoAcademico del semestre que se cierra,
-            # no el CA "activo global". Así el curso permanece vinculado a su CA original
-            # aunque se use el modal después de que ese CA haya sido archivado.
-            ca_nuevo_semestre = semestre_activo.curso_academico if semestre_activo else curso_academico_activo
-            SemestreCurso.objects.create(
-                curso=curso,
-                numero_semestre=nuevo_numero,
-                activo=True,
-                curso_academico=ca_nuevo_semestre,
-                fecha_inicio=timezone.now().date(),
-            )
+            # ── 9. Crear nuevo SemestreCurso o finalizar el Curso ────────────
+            if finalizar:
+                # Modo finalizar: el curso queda cerrado, no se crea nuevo semestre
+                from principal.models import Curso as CursoModel
+                CursoModel.objects.filter(pk=curso.pk).update(status='F')
+                curso.status = 'F'
+                logger.info(
+                    f"Semestre {numero_semestre_actual} archivado y curso '{curso.name}' "
+                    f"finalizado (status='F')."
+                )
+            else:
+                # Modo normal: crear siguiente semestre y reiniciar el curso
+                nuevo_numero = numero_semestre_actual + 1
+                # El nuevo semestre hereda el mismo CursoAcademico del semestre que se cierra,
+                # no el CA "activo global". Así el curso permanece vinculado a su CA original
+                # aunque se use el modal después de que ese CA haya sido archivado.
+                ca_nuevo_semestre = semestre_activo.curso_academico if semestre_activo else curso_academico_activo
+                SemestreCurso.objects.create(
+                    curso=curso,
+                    numero_semestre=nuevo_numero,
+                    activo=True,
+                    curso_academico=ca_nuevo_semestre,
+                    fecha_inicio=timezone.now().date(),
+                )
 
-            # ── 10. Reiniciar estado del Curso ────────────────────────────────
-            from principal.models import Curso as CursoModel
-            CursoModel.objects.filter(pk=curso.pk).update(status='I')
-            curso.status = 'I'
+                # ── 10. Reiniciar estado del Curso ────────────────────────────
+                from principal.models import Curso as CursoModel
+                CursoModel.objects.filter(pk=curso.pk).update(status='I')
+                curso.status = 'I'
 
-            logger.info(
-                f"Semestre {numero_semestre_actual} terminado para '{curso.name}'. "
-                f"Nuevo semestre: {nuevo_numero}. Curso reiniciado a estado 'I'."
-            )
+                logger.info(
+                    f"Semestre {numero_semestre_actual} terminado para '{curso.name}'. "
+                    f"Nuevo semestre: {nuevo_numero}. Curso reiniciado a estado 'I'."
+                )
 
     except SemestreError:
         raise

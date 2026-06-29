@@ -124,13 +124,14 @@
                         {% endif %}
 
                         <!-- Semestre actual (datos en principal) -->
+                        <div class="sem-btn-group w-full">
                         <a href="{% url 'principal:student_course_attendances' student_id=user.id course_id=course.id %}{% if course.semestre_matricula_obj %}?semestre_id={{ course.semestre_matricula_obj.id }}{% endif %}"
-                            class="glass-action-button glass-action-info flex-1">
+                            class="glass-action-button glass-action-info">
                             <span class="fa material-icons mr-1">event</span>
-                            Asistencias{% if course.semestre_matricula_obj %} Sem. {{ course.semestre_matricula_obj.numero_semestre }}{% endif %}
+                            Asist.{% if course.semestre_matricula_obj %} Sem. {{ course.semestre_matricula_obj.numero_semestre }}{% endif %}
                         </a>
                         <a href="{% url 'principal:student_course_notes' student_id=user.id course_id=course.id %}{% if course.semestre_matricula_obj %}?semestre_id={{ course.semestre_matricula_obj.id }}{% endif %}"
-                            class="glass-action-button glass-action-success flex-1">
+                            class="glass-action-button glass-action-success">
                             <span class="fa material-icons mr-1">assignment</span>
                             Notas{% if course.semestre_matricula_obj %} Sem. {{ course.semestre_matricula_obj.numero_semestre }}{% endif %}
                         </a>
@@ -140,7 +141,7 @@
                         <a href="{% url 'principal:student_course_attendances' student_id=user.id course_id=course.id %}?semestre_archivado_id={{ sem_arch.id }}"
                             class="glass-action-button glass-action-info">
                             <span class="fa material-icons mr-1">event</span>
-                            Asistencias Sem. {{ sem_arch.numero_semestre }}
+                            Asist. Sem. {{ sem_arch.numero_semestre }}
                         </a>
                         <a href="{% url 'principal:student_course_notes' student_id=user.id course_id=course.id %}?semestre_archivado_id={{ sem_arch.id }}"
                             class="glass-action-button glass-action-success">
@@ -148,6 +149,7 @@
                             Notas Sem. {{ sem_arch.numero_semestre }}
                         </a>
                         {% endfor %}
+                        </div>
 
                         {% if course.id in cursos_con_evaluaciones %}
                         <a href="{% url 'evaluaciones:mis_evaluaciones' curso_id=course.id %}"
@@ -256,11 +258,12 @@
                                         <span class="fa material-icons mr-1">folder_off</span>
                                         Documentos
                                     </button>
+                                    <div class="sem-btn-group">
                                     {% if course.semestre_actual_obj %}
                                     <a href="{% url 'principal:student_course_attendances' student_id=user.id course_id=course.id %}?semestre_id={{ course.semestre_actual_obj.id }}"
                                         class="glass-action-button glass-action-info">
                                         <span class="fa material-icons mr-1">event</span>
-                                        Asistencias Sem. {{ course.semestre_actual_obj.numero_semestre }}
+                                        Asist. Sem. {{ course.semestre_actual_obj.numero_semestre }}
                                     </a>
                                     <a href="{% url 'principal:student_course_notes' student_id=user.id course_id=course.id %}?semestre_id={{ course.semestre_actual_obj.id }}"
                                         class="glass-action-button glass-action-success">
@@ -272,7 +275,7 @@
                                     <a href="{% url 'principal:student_course_attendances' student_id=user.id course_id=course.id %}?semestre_archivado_id={{ sem.id }}"
                                         class="glass-action-button glass-action-info">
                                         <span class="fa material-icons mr-1">event</span>
-                                        Asistencias Sem. {{ sem.numero_semestre }}
+                                        Asist. Sem. {{ sem.numero_semestre }}
                                     </a>
                                     <a href="{% url 'principal:student_course_notes' student_id=user.id course_id=course.id %}?semestre_archivado_id={{ sem.id }}"
                                         class="glass-action-button glass-action-success">
@@ -292,6 +295,7 @@
                                         Ver Notas
                                     </a>
                                     {% endif %}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -497,6 +501,31 @@
         position: relative;
         overflow: hidden;
         cursor: pointer;
+        /* Permite encogerse cuando no hay espacio suficiente */
+        flex-shrink: 1;
+        min-width: 0;
+    }
+
+    /* Contenedor de botones de semestre: wrap automático en tantas filas como haga falta */
+    .sem-btn-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        align-items: center;
+    }
+    .sem-btn-group > a,
+    .sem-btn-group > button {
+        flex: 0 1 auto;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.82rem;
+        padding: 0.45rem 0.65rem;
+    }
+    .sem-btn-group > a .fa,
+    .sem-btn-group > button .fa {
+        font-size: 0.9rem;
     }
 
     .glass-action-button::before {
