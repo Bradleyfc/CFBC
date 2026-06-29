@@ -207,11 +207,13 @@
               <span class="glass-tag-mini glass-tag-secondary text-sm">
                 {{ course.get_tipo_display }}
               </span>
+              {% if course.get_dynamic_status != 'F' %}
               {% with semestre_num=course.semestre_activo_numero %}
               <span class="glass-tag-mini glass-tag-indigo text-sm">
                 Semestre {{ semestre_num|default:1 }}
               </span>
               {% endwith %}
+              {% endif %}
               {% if group_name == 'Estudiantes' %}
                 {% tiene_solicitud_pendiente user.id course.id as tiene_solicitud_pendiente %}
                 {% tiene_solicitud_rechazada user.id course.id as tiene_solicitud_rechazada %}
