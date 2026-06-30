@@ -1,0 +1,93 @@
+<div class="glass-card h-full">
+    <div class="glass-header">
+        <h2 class="text-2xl font-bold text-center text-gray-800">Perfil de Editor</h2>
+    </div>
+    <div class="glass-content">
+        <div class="flex flex-col space-y-3">
+            <a href="{% url 'blog:panel_editores' %}" class="glass-link glass-link-primary">
+                <div class="glass-link-icon glass-icon-primary">
+                    <span class="fa material-icons">dashboard</span></i>
+                </div>
+                <span class="glass-link-text">Panel de Editor</span>
+            </a>
+
+            <a href="{% url 'blog:mis_noticias' %}" class="glass-link glass-link-success">
+                <div class="glass-link-icon glass-icon-success">
+                    <span class="fa material-icons">article</span></i>
+                </div>
+                <span class="glass-link-text">Mis Noticias</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .glass-header {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .glass-content .glass-link {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 1rem;
+        padding: 1.25rem 1.5rem 1.25rem 16rem !important;
+        border-radius: 20px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.05) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-top: 1px solid rgba(255,255,255,0.8);
+        border-left: 1px solid rgba(255,255,255,0.8);
+        border-right: 1px solid rgba(255,255,255,0.2);
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+        box-shadow: 0 8px 32px 0 rgba(31,38,135,0.15), inset 0 0 0 1px rgba(255,255,255,0.1);
+        transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        text-decoration: none;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .glass-content .glass-link:hover {
+        padding-left: 12rem !important;
+        background: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.15) 100%);
+        box-shadow: 0 15px 45px 0 rgba(31,38,135,0.25), inset 0 0 0 1px rgba(255,255,255,0.4);
+        transform: translateY(-2px);
+    }
+
+    .glass-content .glass-link-icon {
+        width: 2.5rem !important;
+        min-width: 2.5rem !important;
+        max-width: 2.5rem !important;
+        height: 2.5rem;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        border: 1px solid rgba(255,255,255,0.3);
+        flex-shrink: 0;
+    }
+
+    .glass-content .glass-icon-primary {
+        background: linear-gradient(135deg, rgba(59,130,246,0.3), rgba(37,99,235,0.2));
+        color: #1e40af;
+    }
+
+    .glass-content .glass-icon-success {
+        background: linear-gradient(135deg, rgba(34,197,94,0.3), rgba(22,163,74,0.2));
+        color: #14532d;
+    }
+
+    .glass-content .glass-link-text {
+        font-weight: 600;
+        font-size: 1.15rem;
+    }
+
+    .glass-content .glass-link-primary .glass-link-text { color: #1e40af; }
+    .glass-content .glass-link-success .glass-link-text { color: #14532d; }
+</style>
