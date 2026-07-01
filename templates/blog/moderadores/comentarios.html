@@ -1,0 +1,181 @@
+{% extends 'blog/moderadores/base_moderadores.html' %}
+
+{% block titulo_pagina %}Gestión de Comentarios{% endblock %}
+
+{% block botones_accion %}
+<a href="{% url 'blog:mod_comentarios' %}" class="text-sm text-gray-500 hover:text-gray-700">
+    <span class="material-icons align-middle" style="font-size:1rem;">refresh</span> Actualizar
+</a>
+{% endblock %}
+
+{% block contenido_moderadores %}
+<!-- Filtros -->
+<form method="get" class="glass-card p-4 mb-6 flex flex-wrap gap-3 items-end">
+    <div>
+        <label class="block text-xs text-gray-500 mb-1">Noticia</label>
+        <select name="noticia" class="border border-gray-200 rounded-lg px-3 py-2 text-sm">
+            <option value="">Todas</option>
+            {% for n in noticias %}
+            <option value="{{ n.pk }}" {% if request.GET.noticia == n.pk|stringformat:'s' %}selected{% endif %}>{{ n.titulo|truncatechars:40 }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <label class="block text-xs text-gray-500 mb-1">Estado</label>
+        <select name="activo" class="border border-gray-200 rounded-lg px-3 py-2 text-sm">
+            <option value="">Todos</option>
+            <option value="true"  {% if request.GET.activo == 'true' %}selected{% endif %}>Visibles</option>
+            <option value="false" {% if request.GET.activo == 'false' %}selected{% endif %}>Ocultos</option>
+        </select>
+    </div>
+    <div>
+        <label class="block text-xs text-gray-500 mb-1">Autor</label>
+        <input type="text" name="autor" value="{{ request.GET.autor }}" placeholder="username…"
+               class="border border-gray-200 rounded-lg px-3 py-2 text-sm">
+    </div>
+    <button type="submit" class="px-4 py-2 rounded-lg text-sm text-white" style="background:#ea580c;">Filtrar</button>
+    <a href="{% url 'blog:mod_comentarios' %}" class="px-4 py-2 rounded-lg text-sm text-gray-600 border border-gray-200">Limpiar</a>
+</form>
+
+<!-- Tabla -->
+{% if page_obj %}
+<div class="overflow-x-auto rounded-xl border border-gray-200">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Autor</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contenido</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Noticia</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-100">
+            {% for comentario in page_obj %}
+            <tr class="hover:bg-gray-50">
+                <td class="px-4 py-3 text-gray-500">#{{ comentario.pk }}</td>
+                <td class="px-4 py-3 font-medium text-gray-900">{{ comentario.autor.username }}</td>
+                <td class="px-4 py-3 text-gray-700 max-w-xs truncate">{{ comentario.contenido|truncatechars:80 }}</td>
+                <td class="px-4 py-3 text-gray-600">
+                    <a href="{{ comentario.noticia.get_absolute_url }}" class="hover:underline text-blue-600" target="_blank">
+                        {{ comentario.noticia.titulo|truncatechars:35 }}
+                    </a>
+                </td>
+                <td class="px-4 py-3">
+                    {% if comentario.activo %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700">Visible</span>
+                    {% else %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-700">Oculto</span>
+                    {% endif %}
+                </td>
+                <td class="px-4 py-3 text-gray-500 whitespace-nowrap">{{ comentario.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                <td class="px-4 py-3">
+                    <div class="flex items-center gap-2">
+                        <!-- Ocultar/Mostrar -->
+                        <form method="post" action="{% url 'blog:mod_editar_comentario' comentario.pk %}">
+                            {% csrf_token %}
+                            {% if comentario.activo %}
+                                <input type="hidden" name="activo" value="false">
+                                <button type="submit" title="Ocultar" class="text-red-500 hover:text-red-700">
+                                    <span class="material-icons" style="font-size:1.2rem;">visibility_off</span>
+                                </button>
+                            {% else %}
+                                <input type="hidden" name="activo" value="true">
+                                <button type="submit" title="Mostrar" class="text-green-500 hover:text-green-700">
+                                    <span class="material-icons" style="font-size:1.2rem;">visibility</span>
+                                </button>
+                            {% endif %}
+                        </form>
+                        <!-- Fijar/Desfijar -->
+                        {% if comentario.activo %}
+                        {% if comentario.fijado %}
+                            <form method="post" action="{% url 'blog:mod_desfijar' comentario.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" title="Desfijar" class="text-blue-500 hover:text-blue-700">
+                                    <span class="material-icons" style="font-size:1.2rem;">push_pin</span>
+                                </button>
+                            </form>
+                        {% else %}
+                            <form method="post" action="{% url 'blog:mod_fijar' comentario.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" title="Fijar" class="text-gray-400 hover:text-blue-500">
+                                    <span class="material-icons" style="font-size:1.2rem;">push_pin</span>
+                                </button>
+                            </form>
+                        {% endif %}
+                        {% endif %}
+                        <!-- Mover -->
+                        <button onclick="abrirModalMover({{ comentario.pk }})" title="Mover a otra noticia" class="text-orange-400 hover:text-orange-600">
+                            <span class="material-icons" style="font-size:1.2rem;">open_with</span>
+                        </button>
+                        <!-- Sancionar autor -->
+                        <a href="{% url 'blog:mod_sancionar' comentario.autor.pk %}" title="Sancionar a {{ comentario.autor.username }}" class="text-red-400 hover:text-red-600">
+                            <span class="material-icons" style="font-size:1.2rem;">gavel</span>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Paginación -->
+{% if page_obj.has_other_pages %}
+<div class="flex justify-center gap-2 mt-6">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"
+       class="px-3 py-1 rounded border border-gray-200 text-sm hover:bg-gray-50">‹ Anterior</a>
+    {% endif %}
+    <span class="px-3 py-1 text-sm text-gray-600">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"
+       class="px-3 py-1 rounded border border-gray-200 text-sm hover:bg-gray-50">Siguiente ›</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="text-center py-16 text-gray-400">
+    <span class="material-icons text-5xl mb-3">comment</span>
+    <p>No hay comentarios con los filtros aplicados.</p>
+</div>
+{% endif %}
+
+<!-- Modal mover comentario -->
+<div id="modal-mover" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md mx-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Mover comentario a otra noticia</h3>
+        <form id="form-mover" method="post">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label class="block text-sm text-gray-700 mb-1">Noticia destino</label>
+                <select name="noticia_destino" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" required>
+                    {% for n in noticias %}
+                    <option value="{{ n.pk }}">{{ n.titulo|truncatechars:60 }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex gap-3 justify-end">
+                <button type="button" onclick="cerrarModalMover()" class="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600">Cancelar</button>
+                <button type="submit" class="px-4 py-2 rounded-lg text-sm text-white" style="background:#ea580c;">Mover</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+function abrirModalMover(pk) {
+    document.getElementById('form-mover').action = '/blog/moderadores/comentarios/' + pk + '/mover/';
+    const modal = document.getElementById('modal-mover');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+function cerrarModalMover() {
+    const modal = document.getElementById('modal-mover');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+</script>
+{% endblock %}

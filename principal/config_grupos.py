@@ -27,11 +27,17 @@ GRUPOS_SISTEMA = [
     },
     {
         'nombre': 'Blog Moderador',
-        'descripcion': 'Moderadores del blog con permisos de moderación',
-        'permisos_modelos': {
-            'blog': ['noticia', 'comentario'],
-        },
-        'acciones': ['add', 'change', 'delete', 'view']
+        'descripcion': 'Moderadores del blog: gestionan comentarios, reportes y sanciones',
+        'permisos_por_modelo': {
+            'blog': {
+                'comentario':        ['view', 'add', 'change'],
+                'noticia':           ['change'],
+                'reportecomentario': ['view', 'add', 'change'],
+                'sancionusuario':    ['view', 'add', 'change'],
+                'comentariofijado':  ['view', 'add', 'change', 'delete'],
+                'metricacomunidad':  ['view'],
+            }
+        }
     },
     {
         'nombre': 'Editor',
@@ -81,17 +87,39 @@ def obtener_config_grupo(nombre_grupo):
 
 def configurar_permisos_grupo(grupo, config_grupo):
     """
-    Configura los permisos para un grupo específico
+    Configura los permisos para un grupo específico.
+    Soporta dos estructuras:
+    - Nueva: {'permisos_por_modelo': {app: {modelo: [acciones]}}}
+    - Legacy: {'permisos_modelos': {app: [modelos]}, 'acciones': [...]}
     """
     try:
         permisos_asignados = 0
-        
-        # Iterar por cada app y sus modelos
+
+        # Nueva estructura granular por modelo
+        for app_label, modelos_acciones in config_grupo.get('permisos_por_modelo', {}).items():
+            for modelo, acciones in modelos_acciones.items():
+                try:
+                    content_type = ContentType.objects.get(app_label=app_label, model=modelo)
+                    for accion in acciones:
+                        codename = f"{accion}_{modelo}"
+                        try:
+                            permiso = Permission.objects.get(
+                                content_type=content_type,
+                                codename=codename
+                            )
+                            grupo.permissions.add(permiso)
+                            permisos_asignados += 1
+                        except Permission.DoesNotExist:
+                            logger.warning(f"Permiso no encontrado: {codename}")
+                except ContentType.DoesNotExist:
+                    logger.warning(f"ContentType no encontrado: {app_label}.{modelo}")
+
+        # Estructura legacy (para los demás grupos — sin cambios)
         for app_label, modelos in config_grupo.get('permisos_modelos', {}).items():
             for modelo in modelos:
                 try:
                     content_type = ContentType.objects.get(app_label=app_label, model=modelo)
-                    
+
                     # Asignar cada acción permitida
                     for accion in config_grupo.get('acciones', []):
                         codename = f"{accion}_{modelo}"
@@ -105,14 +133,14 @@ def configurar_permisos_grupo(grupo, config_grupo):
                         except Permission.DoesNotExist:
                             # No mostrar warning para evitar spam en logs
                             pass
-                            
+
                 except ContentType.DoesNotExist:
                     # No mostrar warning para evitar spam en logs
                     pass
-        
+
         if permisos_asignados > 0:
             logger.info(f"  → {permisos_asignados} permisos asignados al grupo {grupo.name}")
-            
+
     except Exception as e:
         logger.error(f"Error configurando permisos para grupo {grupo.name}: {e}")
 

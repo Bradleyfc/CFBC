@@ -85,6 +85,8 @@
         {% include 'profile/secretaria.html' %}
         {% elif group_name == 'Editor' %}
         {% include 'profile/editor.html' %}
+        {% elif group_name == 'Blog Moderador' %}
+        {% include 'profile/blog_moderador.html' %}
         {% endif %}
       </div>
 
@@ -230,6 +232,16 @@
 
   .glass-button-danger:hover {
     background: linear-gradient(135deg, rgba(239, 68, 68, 0.4), rgba(220, 38, 38, 0.3));
+  }
+
+  .glass-button-moderador {
+    background: linear-gradient(135deg, rgba(234, 88, 12, 0.3), rgba(194, 65, 12, 0.2));
+    color: #7c2d12;
+  }
+
+  .glass-button-moderador:hover {
+    background: linear-gradient(135deg, rgba(234, 88, 12, 0.45), rgba(194, 65, 12, 0.3));
+    color: #7c2d12;
   }
 </style>
 

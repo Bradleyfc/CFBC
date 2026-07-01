@@ -1,0 +1,47 @@
+{% extends 'blog/moderadores/base_moderadores.html' %}
+
+{% block titulo_pagina %}Sancionar usuario: {{ usuario.username }}{% endblock %}
+
+{% block contenido_moderadores %}
+<div class="glass-card p-6 max-w-lg">
+    <div class="flex items-center gap-3 mb-6 p-4 rounded-xl bg-gray-50 border border-gray-200">
+        <span class="material-icons text-gray-500">person</span>
+        <div>
+            <p class="font-semibold text-gray-800">{{ usuario.get_full_name|default:usuario.username }}</p>
+            <p class="text-sm text-gray-500">{{ usuario.email }}</p>
+        </div>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de sanción</label>
+            <select name="tipo_sancion" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" required>
+                <option value="silencio">🔇 Silencio temporal (no puede comentar)</option>
+                <option value="baneo_temporal">⏳ Baneo temporal</option>
+                <option value="baneo_permanente">🚫 Baneo permanente</option>
+            </select>
+        </div>
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de fin (dejar vacío = permanente)</label>
+            <input type="datetime-local" name="fecha_fin"
+                   class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Motivo <span class="text-red-500">*</span></label>
+            <textarea name="motivo" rows="3" maxlength="1000" required
+                      placeholder="Describe el motivo de la sanción…"
+                      class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none"></textarea>
+        </div>
+        <div class="flex gap-3 justify-end">
+            <a href="{% url 'blog:panel_moderadores' %}" class="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600">Cancelar</a>
+            <button type="submit" class="px-5 py-2 rounded-lg text-sm text-white font-medium"
+                    style="background:#dc2626;"
+                    onclick="return confirm('¿Confirmas aplicar esta sanción a {{ usuario.username }}?')">
+                <span class="material-icons align-middle text-sm mr-1">gavel</span>
+                Aplicar sanción
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

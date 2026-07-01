@@ -1,0 +1,82 @@
+{% extends 'blog/moderadores/base_moderadores.html' %}
+
+{% block titulo_pagina %}Bandeja de Reportes{% endblock %}
+
+{% block contenido_moderadores %}
+{% if page_obj %}
+<div class="overflow-x-auto rounded-xl border border-gray-200">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Comentario</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reportado por</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Motivo</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Noticia</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-100">
+            {% for reporte in page_obj %}
+            <tr class="hover:bg-orange-50">
+                <td class="px-4 py-3 text-gray-700 max-w-xs">
+                    <p class="truncate text-gray-800">{{ reporte.comentario.contenido|truncatechars:70 }}</p>
+                    <span class="text-xs text-gray-400">por {{ reporte.comentario.autor.username }}</span>
+                </td>
+                <td class="px-4 py-3 font-medium text-gray-900">{{ reporte.reportado_por.username }}</td>
+                <td class="px-4 py-3 text-gray-600 max-w-xs truncate">{{ reporte.motivo|truncatechars:60 }}</td>
+                <td class="px-4 py-3">
+                    <a href="{{ reporte.comentario.noticia.get_absolute_url }}" class="text-blue-600 hover:underline text-xs" target="_blank">
+                        {{ reporte.comentario.noticia.titulo|truncatechars:35 }}
+                    </a>
+                </td>
+                <td class="px-4 py-3 text-gray-500 whitespace-nowrap">{{ reporte.fecha_reporte|date:"d/m/Y H:i" }}</td>
+                <td class="px-4 py-3">
+                    <div class="flex gap-2">
+                        <form method="post" action="{% url 'blog:mod_resolver_reporte' reporte.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="estado" value="resuelto_retirado">
+                            <button type="submit" title="Retirar comentario"
+                                    class="px-3 py-1 rounded-lg text-xs text-white" style="background:#dc2626;"
+                                    onclick="return confirm('¿Retirar este comentario?')">
+                                <span class="material-icons align-middle" style="font-size:0.9rem;">remove_circle</span>
+                                Retirar
+                            </button>
+                        </form>
+                        <form method="post" action="{% url 'blog:mod_resolver_reporte' reporte.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="estado" value="resuelto_mantenido">
+                            <button type="submit" title="Mantener comentario"
+                                    class="px-3 py-1 rounded-lg text-xs text-white" style="background:#16a34a;">
+                                <span class="material-icons align-middle" style="font-size:0.9rem;">check_circle</span>
+                                Mantener
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="flex justify-center gap-2 mt-6">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 rounded border border-gray-200 text-sm hover:bg-gray-50">‹ Anterior</a>
+    {% endif %}
+    <span class="px-3 py-1 text-sm text-gray-600">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 rounded border border-gray-200 text-sm hover:bg-gray-50">Siguiente ›</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="text-center py-16 text-gray-400">
+    <span class="material-icons text-5xl mb-3">flag</span>
+    <p class="text-lg font-medium text-gray-600 mb-2">¡Sin reportes pendientes!</p>
+    <p class="text-sm">La comunidad está tranquila por ahora.</p>
+</div>
+{% endif %}
+{% endblock %}

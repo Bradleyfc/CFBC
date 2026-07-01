@@ -1,0 +1,120 @@
+{% extends 'blog/base_blog.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .mod-layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    @media (min-width: 768px) {
+        .mod-layout { grid-template-columns: 1fr 3fr; }
+    }
+    .glass-sidebar {
+        background: linear-gradient(135deg, rgba(249,250,251,0.9), rgba(243,244,246,0.8));
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(209,213,219,0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        min-height: calc(100vh - 200px);
+    }
+    .glass-nav-item {
+        background: rgba(255,255,255,0.7);
+        border: 1px solid rgba(209,213,219,0.3);
+        border-radius: 12px;
+        transition: all 0.3s;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        color: #374151;
+        text-decoration: none;
+    }
+    .glass-nav-item:hover {
+        background: rgba(234,88,12,0.1);
+        border-color: rgba(234,88,12,0.3);
+        transform: translateY(-2px);
+    }
+    .glass-nav-item.active {
+        background: linear-gradient(135deg, rgba(234,88,12,0.2), rgba(194,65,12,0.1));
+        border-color: rgba(234,88,12,0.4);
+    }
+    .glass-mod-container {
+        background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(249,250,251,0.8));
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(209,213,219,0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+    .glass-card {
+        background: rgba(255,255,255,0.9);
+        border: 1px solid rgba(209,213,219,0.3);
+        border-radius: 16px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        transition: all 0.3s;
+    }
+    .glass-card:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
+    .badge-pendiente { background: #fef3c7; color: #92400e; border-radius: 9999px; padding: 2px 10px; font-size: 0.75rem; }
+    .badge-retirado  { background: #fee2e2; color: #991b1b; border-radius: 9999px; padding: 2px 10px; font-size: 0.75rem; }
+    .badge-mantenido { background: #dcfce7; color: #166534; border-radius: 9999px; padding: 2px 10px; font-size: 0.75rem; }
+    .badge-sancion   { background: #fef3c7; color: #92400e; border-radius: 9999px; padding: 2px 10px; font-size: 0.75rem; }
+</style>
+{% endblock %}
+
+{% block main_class %}py-0 px-0{% endblock %}
+
+{% block content %}
+<div class="min-h-screen py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mod-layout">
+            <!-- Sidebar -->
+            <div>
+                <div class="glass-sidebar p-6">
+                    <h5 class="flex items-center text-lg font-semibold text-gray-800 mb-6">
+                        <span class="material-icons mr-2" style="color:#ea580c;">shield</span>
+                        Panel Moderador
+                    </h5>
+                    <nav>
+                        <a class="glass-nav-item {% if request.resolver_match.url_name == 'panel_moderadores' %}active{% endif %}"
+                           href="{% url 'blog:panel_moderadores' %}">
+                            <span class="material-icons mr-3" style="font-size:1.2rem;">dashboard</span>
+                            Dashboard
+                        </a>
+                        <a class="glass-nav-item {% if request.resolver_match.url_name == 'mod_comentarios' %}active{% endif %}"
+                           href="{% url 'blog:mod_comentarios' %}">
+                            <span class="material-icons mr-3" style="font-size:1.2rem;">comment</span>
+                            Comentarios
+                        </a>
+                        <a class="glass-nav-item {% if request.resolver_match.url_name == 'mod_reportes' %}active{% endif %}"
+                           href="{% url 'blog:mod_reportes' %}">
+                            <span class="material-icons mr-3" style="font-size:1.2rem;">flag</span>
+                            Bandeja de Reportes
+                        </a>
+                        <a class="glass-nav-item {% if request.resolver_match.url_name == 'mod_metricas' %}active{% endif %}"
+                           href="{% url 'blog:mod_metricas' %}">
+                            <span class="material-icons mr-3" style="font-size:1.2rem;">bar_chart</span>
+                            Métricas
+                        </a>
+                        <hr class="border-gray-300 my-4">
+                        <a class="glass-nav-item" href="{% url 'blog:lista_noticias' %}">
+                            <span class="material-icons mr-3" style="font-size:1.2rem;">visibility</span>
+                            Ver Sitio Público
+                        </a>
+                    </nav>
+                </div>
+            </div>
+            <!-- Contenido principal -->
+            <div>
+                <div class="glass-mod-container p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">{% block titulo_pagina %}Moderación{% endblock %}</h2>
+                        <div class="flex space-x-3">{% block botones_accion %}{% endblock %}</div>
+                    </div>
+                    {% block contenido_moderadores %}{% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

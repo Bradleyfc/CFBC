@@ -1,12 +1,15 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required, user_passes_test, permission_required
 from django.contrib import messages
 from django.db.models import Q
+from django.http import HttpResponseForbidden
+from django.utils import timezone
+from django.utils.timezone import now
 from django.utils.decorators import method_decorator
 from django.views.generic import CreateView, UpdateView, DeleteView, ListView
 from django.urls import reverse_lazy
-from .models import Noticia, Categoria, Comentario
+from .models import Noticia, Categoria, Comentario, SancionUsuario, ReporteComentario, ComentarioFijado, MetricaComunidad
 from .forms import ComentarioForm, NoticiaForm
 
 def lista_noticias(request):
@@ -50,6 +53,7 @@ def lista_noticias(request):
     categorias = Categoria.objects.all()[:10]
     
     is_editor = request.user.is_authenticated and request.user.groups.filter(name='Editor').exists()
+    is_moderador = request.user.is_authenticated and es_moderador(request.user)
     context = {
         'page_obj': page_obj,
         'noticias_destacadas': noticias_destacadas,
@@ -57,6 +61,7 @@ def lista_noticias(request):
         'busqueda': busqueda,
         'categoria_actual': categoria_slug,
         'is_editor': is_editor,
+        'is_moderador': is_moderador,
     }
     
     return render(request, 'blog/lista_noticias.html', context)
@@ -74,8 +79,21 @@ def detalle_noticia(request, slug):
         from django.contrib.auth.views import redirect_to_login
         return redirect_to_login(request.get_full_path())
     
-    # Comentarios de la noticia
-    comentarios = noticia.comentarios.filter(activo=True).select_related('autor')
+    # Comentarios fijados (activos) ordenados por su posición
+    fijados_ids = ComentarioFijado.objects.filter(
+        noticia=noticia
+    ).values_list('comentario_id', flat=True)
+
+    comentarios_fijados = noticia.comentarios.filter(
+        id__in=fijados_ids, activo=True
+    ).select_related('autor').order_by('fijado__orden')
+
+    comentarios_normales = noticia.comentarios.filter(
+        activo=True
+    ).exclude(id__in=fijados_ids).select_related('autor').order_by('fecha_creacion')
+
+    # Combinar para el contexto
+    comentarios = list(comentarios_fijados) + list(comentarios_normales)
     
     # Formulario para nuevos comentarios (solo si la noticia permite comentarios)
     comentario_form = ComentarioForm() if noticia.permitir_comentarios else None
@@ -90,15 +108,28 @@ def detalle_noticia(request, slug):
     noticias_relacionadas = noticias_relacionadas_qs[:4]
     
     is_editor = request.user.is_authenticated and request.user.groups.filter(name='Editor').exists()
+    is_moderador = request.user.is_authenticated and es_moderador(request.user)
     context = {
         'noticia': noticia,
         'comentarios': comentarios,
+        'comentarios_fijados_ids': list(fijados_ids),
         'comentario_form': comentario_form,
         'noticias_relacionadas': noticias_relacionadas,
         'is_editor': is_editor,
+        'is_moderador': is_moderador,
     }
     
     return render(request, 'blog/detalle_noticia.html', context)
+
+def usuario_sancionado(user):
+    """Retorna True si el usuario tiene una sanción activa vigente."""
+    return SancionUsuario.objects.filter(
+        usuario=user,
+        activa=True
+    ).filter(
+        Q(fecha_fin__isnull=True) | Q(fecha_fin__gt=timezone.now())
+    ).exists()
+
 
 @login_required
 def agregar_comentario(request, slug):
@@ -108,7 +139,11 @@ def agregar_comentario(request, slug):
     if not noticia.permitir_comentarios:
         messages.error(request, 'Esta noticia no permite comentarios.')
         return redirect('blog:detalle_noticia', slug=slug)
-    
+
+    if usuario_sancionado(request.user):
+        messages.error(request, 'Tu cuenta tiene una sanción activa que impide comentar.')
+        return redirect('blog:detalle_noticia', slug=slug)
+
     if request.method == 'POST':
         form = ComentarioForm(request.POST)
         if form.is_valid():
@@ -151,6 +186,7 @@ def noticias_por_categoria(request, slug):
     categorias = Categoria.objects.all()[:10]
 
     is_editor = request.user.is_authenticated and request.user.groups.filter(name='Editor').exists()
+    is_moderador = request.user.is_authenticated and es_moderador(request.user)
     context = {
         'categoria': categoria,
         'page_obj': page_obj,
@@ -158,6 +194,7 @@ def noticias_por_categoria(request, slug):
         'categorias': categorias,
         'categoria_actual': slug,
         'is_editor': is_editor,
+        'is_moderador': is_moderador,
     }
 
     return render(request, 'blog/lista_noticias.html', context)
@@ -341,3 +378,214 @@ def gestionar_categorias(request):
         return redirect('blog:gestionar_categorias')
     
     return render(request, 'blog/editores/categorias.html', {'categorias': categorias})
+
+
+# ── MODERACIÓN ─────────────────────────────────────────────────────────────
+
+def es_moderador(user):
+    return user.is_authenticated and (
+        user.groups.filter(name='Blog Moderador').exists() or
+        user.is_staff or user.is_superuser
+    )
+
+@user_passes_test(es_moderador)
+def panel_moderadores(request):
+    """Panel principal del moderador con resumen de actividad."""
+    context = {
+        'total_reportes_pendientes': ReporteComentario.objects.filter(estado='pendiente').count(),
+        'total_sanciones_activas': SancionUsuario.objects.filter(activa=True).filter(
+            Q(fecha_fin__isnull=True) | Q(fecha_fin__gt=timezone.now())
+        ).count(),
+        'total_comentarios_ocultos': Comentario.objects.filter(activo=False).count(),
+    }
+    return render(request, 'blog/moderadores/panel.html', context)
+
+@permission_required('blog.change_comentario', raise_exception=True)
+def mod_gestionar_comentarios(request):
+    """Lista todos los comentarios con filtros para moderación."""
+    comentarios = Comentario.objects.all().select_related('autor', 'noticia').order_by('-fecha_creacion')
+    noticia_id = request.GET.get('noticia')
+    activo = request.GET.get('activo')
+    autor = request.GET.get('autor')
+    if noticia_id:
+        comentarios = comentarios.filter(noticia_id=noticia_id)
+    if activo is not None and activo != '':
+        comentarios = comentarios.filter(activo=(activo == 'true'))
+    if autor:
+        comentarios = comentarios.filter(autor__username__icontains=autor)
+    paginator = Paginator(comentarios, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    noticias = Noticia.objects.filter(estado='publicado').order_by('titulo')
+    return render(request, 'blog/moderadores/comentarios.html', {
+        'page_obj': page_obj,
+        'noticias': noticias,
+    })
+
+@permission_required('blog.change_comentario', raise_exception=True)
+def mod_editar_comentario(request, pk):
+    """Edita contenido o estado activo de un comentario."""
+    comentario = get_object_or_404(Comentario, pk=pk)
+    if request.method == 'POST':
+        campos_permitidos = []
+        if 'contenido' in request.POST:
+            comentario.contenido = request.POST['contenido']
+            campos_permitidos.append('contenido')
+        if 'activo' in request.POST:
+            comentario.activo = request.POST['activo'] == 'true'
+            campos_permitidos.append('activo')
+        if campos_permitidos:
+            comentario.save(update_fields=campos_permitidos)
+            messages.success(request, 'Comentario actualizado.')
+        return redirect('blog:mod_comentarios')
+    return redirect('blog:mod_comentarios')
+
+@permission_required('blog.change_comentario', raise_exception=True)
+def mod_mover_comentario(request, pk):
+    """Mueve un comentario a otra noticia."""
+    comentario = get_object_or_404(Comentario, pk=pk)
+    if request.method == 'POST':
+        noticia_destino_id = request.POST.get('noticia_destino')
+        try:
+            noticia_destino = Noticia.objects.get(pk=noticia_destino_id)
+        except Noticia.DoesNotExist:
+            messages.error(request, 'La noticia destino no existe.')
+            return redirect('blog:mod_comentarios')
+        if noticia_destino.id == comentario.noticia.id:
+            messages.error(request, 'El comentario ya pertenece a esa noticia.')
+            return redirect('blog:mod_comentarios')
+        if not noticia_destino.permitir_comentarios:
+            messages.error(request, 'El hilo de destino está cerrado.')
+            return redirect('blog:mod_comentarios')
+        noticia_origen_id = comentario.noticia.id
+        comentario.noticia = noticia_destino
+        comentario.nota_moderacion = (
+            comentario.nota_moderacion +
+            f'\n[Movido desde noticia #{noticia_origen_id} el {timezone.now().strftime("%Y-%m-%d %H:%M:%S UTC")} por {request.user.username}]'
+        ).strip()
+        comentario.save(update_fields=['noticia', 'nota_moderacion'])
+        messages.success(request, f'Comentario movido a "{noticia_destino.titulo}".')
+    return redirect('blog:mod_comentarios')
+
+@permission_required('blog.change_reportecomentario', raise_exception=True)
+def mod_bandeja_reportes(request):
+    """Bandeja de reportes pendientes."""
+    reportes = ReporteComentario.objects.filter(
+        estado='pendiente'
+    ).select_related('comentario', 'reportado_por', 'comentario__noticia', 'comentario__autor').order_by('-fecha_reporte')
+    paginator = Paginator(reportes, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    return render(request, 'blog/moderadores/reportes.html', {'page_obj': page_obj})
+
+@permission_required('blog.change_reportecomentario', raise_exception=True)
+def mod_resolver_reporte(request, pk):
+    """Resuelve un reporte como retirado o mantenido."""
+    reporte = get_object_or_404(ReporteComentario, pk=pk)
+    if request.method == 'POST':
+        estado = request.POST.get('estado')
+        if estado not in ['resuelto_retirado', 'resuelto_mantenido']:
+            messages.error(request, 'Estado de resolución inválido.')
+            return redirect('blog:mod_reportes')
+        reporte.estado = estado
+        reporte.resuelto_por = request.user
+        reporte.fecha_resolucion = timezone.now()
+        reporte.save(update_fields=['estado', 'resuelto_por', 'fecha_resolucion'])
+        if estado == 'resuelto_retirado':
+            comentario = reporte.comentario
+            comentario.activo = False
+            comentario.save(update_fields=['activo'])
+        messages.success(request, f'Reporte resuelto como "{reporte.get_estado_display()}".')
+    return redirect('blog:mod_reportes')
+
+@permission_required('blog.add_sancionusuario', raise_exception=True)
+def mod_sancionar_usuario(request, user_id):
+    """Aplica una sanción a un usuario."""
+    from django.contrib.auth.models import User as AuthUser
+    usuario = get_object_or_404(AuthUser, pk=user_id)
+    if request.method == 'POST':
+        tipo = request.POST.get('tipo_sancion')
+        motivo = request.POST.get('motivo', '')
+        fecha_fin_str = request.POST.get('fecha_fin', '')
+        if tipo not in ['silencio', 'baneo_temporal', 'baneo_permanente']:
+            messages.error(request, 'Tipo de sanción inválido.')
+            return redirect('blog:panel_moderadores')
+        fecha_fin = None
+        if fecha_fin_str:
+            from django.utils.dateparse import parse_datetime
+            fecha_fin = parse_datetime(fecha_fin_str)
+        SancionUsuario.objects.create(
+            usuario=usuario,
+            tipo_sancion=tipo,
+            motivo=motivo,
+            fecha_fin=fecha_fin,
+            aplicada_por=request.user,
+        )
+        messages.success(request, f'Sanción aplicada a {usuario.username}.')
+        return redirect('blog:panel_moderadores')
+    return render(request, 'blog/moderadores/sancionar.html', {'usuario': usuario})
+
+@permission_required('blog.change_sancionusuario', raise_exception=True)
+def mod_levantar_sancion(request, sancion_id):
+    """Levanta una sanción existente."""
+    sancion = get_object_or_404(SancionUsuario, pk=sancion_id)
+    if request.method == 'POST':
+        sancion.activa = False
+        sancion.levantada_por = request.user
+        sancion.fecha_levantamiento = timezone.now()
+        sancion.save(update_fields=['activa', 'levantada_por', 'fecha_levantamiento'])
+        messages.success(request, f'Sanción levantada para {sancion.usuario.username}.')
+    return redirect('blog:panel_moderadores')
+
+@permission_required('blog.change_noticia', raise_exception=True)
+def mod_toggle_comentarios(request, pk):
+    """Activa o desactiva la caja de comentarios de una noticia."""
+    noticia = get_object_or_404(Noticia, pk=pk)
+    if request.method == 'POST':
+        # Solo permitir el campo permitir_comentarios
+        campos_extra = set(request.POST.keys()) - {'csrfmiddlewaretoken', 'permitir_comentarios'}
+        if campos_extra:
+            messages.error(request, 'No tienes permisos para modificar esos campos.')
+            return HttpResponseForbidden('Solo se puede modificar permitir_comentarios.')
+        nuevo_valor = request.POST.get('permitir_comentarios', 'false') == 'true'
+        noticia.permitir_comentarios = nuevo_valor
+        noticia.save(update_fields=['permitir_comentarios'])
+        estado = 'abierto' if nuevo_valor else 'cerrado'
+        messages.success(request, f'Hilo de comentarios {estado} para "{noticia.titulo}".')
+    return redirect('blog:detalle_noticia', slug=noticia.slug)
+
+@permission_required('blog.add_comentariofijado', raise_exception=True)
+def mod_fijar_comentario(request, pk):
+    """Fija un comentario al inicio del hilo."""
+    comentario = get_object_or_404(Comentario, pk=pk)
+    if request.method == 'POST':
+        if not comentario.activo:
+            messages.error(request, 'No se puede fijar un comentario oculto.')
+            return redirect('blog:mod_comentarios')
+        if ComentarioFijado.objects.filter(comentario=comentario).exists():
+            messages.error(request, 'Este comentario ya está fijado.')
+            return redirect('blog:mod_comentarios')
+        orden_max = ComentarioFijado.objects.filter(noticia=comentario.noticia).count()
+        ComentarioFijado.objects.create(
+            comentario=comentario,
+            noticia=comentario.noticia,
+            fijado_por=request.user,
+            orden=orden_max,
+        )
+        messages.success(request, 'Comentario fijado.')
+    return redirect('blog:mod_comentarios')
+
+@permission_required('blog.delete_comentariofijado', raise_exception=True)
+def mod_desfijar_comentario(request, pk):
+    """Desfija un comentario."""
+    comentario = get_object_or_404(Comentario, pk=pk)
+    if request.method == 'POST':
+        ComentarioFijado.objects.filter(comentario=comentario).delete()
+        messages.success(request, 'Comentario desfijado.')
+    return redirect('blog:mod_comentarios')
+
+@permission_required('blog.view_metricacomunidad', raise_exception=True)
+def mod_metricas(request):
+    """Vista de métricas de comunidad (solo lectura)."""
+    metricas = MetricaComunidad.objects.all().order_by('-fecha')
+    paginator = Paginator(metricas, 30)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    return render(request, 'blog/moderadores/metricas.html', {'page_obj': page_obj})

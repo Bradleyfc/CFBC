@@ -380,6 +380,17 @@
                 <a href="{% url 'principal:home' %}" class="glass-nav-link">
                     Inicio
                 </a>
+                {% if is_moderador %}
+                <a href="{% url 'blog:panel_moderadores' %}" class="glass-button-oval flex items-center">
+                    <span class="material-icons mr-1" style="font-size:1rem;">shield</span>
+                    Panel de Moderación
+                </a>
+                {% elif is_editor %}
+                <a href="{% url 'blog:panel_editores' %}" class="glass-button-oval flex items-center">
+                    <span class="material-icons mr-1" style="font-size:1rem;">edit</span>
+                    Panel de Editores
+                </a>
+                {% endif %}
             </div>
 
             <!-- Center Navigation -->
@@ -411,25 +422,24 @@
                 <!-- User Menu -->
                 {% if user.is_authenticated %}
                     {% if is_editor %}
-                    <a href="{% url 'blog:panel_editores' %}" class="glass-nav-link" style="background: rgba(99,102,241,0.3); border-color: rgba(165,180,252,0.4);">
+                    <a href="{% url 'blog:panel_editores' %}" class="glass-button-oval flex items-center">
                         <span class="material-icons mr-1" style="font-size:1rem;">edit</span>
-                        Panel de Editor
+                        Panel de Editores
+                    </a>
+                    {% endif %}
+                    {% if is_moderador %}
+                    <a href="{% url 'blog:panel_moderadores' %}" class="glass-button-oval flex items-center">
+                        <span class="material-icons mr-1" style="font-size:1rem;">shield</span>
+                        Panel de Moderación
                     </a>
                     {% endif %}
                     <div class="dropdown-container" style="position: relative;">
-                        <button class="glass-nav-link flex items-center" id="user-menu-button">
+                        <a href="{% url 'principal:profile' %}" class="glass-button-oval flex items-center">
                             <span class="material-icons mr-1">person</span>
                             {{ user.username }}
-                            <span class="material-icons ml-1">arrow_drop_down</span>
-                        </button>
+                        </a>
                         <div class="glass-dropdown" id="user-dropdown" style="width: 200px !important; position: absolute !important; right: 0 !important; left: auto !important;">
                             <div class="py-1" style="width: 200px;">
-                                {% if is_editor %}
-                                            <a href="{% url 'blog:panel_editores' %}">
-                                                <span class="material-icons mr-2 text-sm">edit</span>
-                                                Panel de Editor
-                                            </a>
-                                {% endif %}
                                 {% if user.is_staff %}
                                 <a href="{% url 'admin:index' %}">
                                     <span class="material-icons mr-2 text-sm">settings</span>
@@ -458,9 +468,9 @@
             <!-- Mobile menu button -->
             <div class="md:hidden flex items-center gap-2">
                 {% if user.is_authenticated %}
-                <span class="glass-nav-link text-sm" style="pointer-events:none;">
-                    <span class="material-icons" style="font-size:1rem;">person</span>&nbsp;{{ user.username }}
-                </span>
+                <a href="{% url 'principal:profile' %}" class="glass-button-oval flex items-center text-sm">
+                    <span class="material-icons mr-1" style="font-size:1rem;">person</span>{{ user.username }}
+                </a>
                 {% endif %}
                 <div class="relative">
                 <button type="button" class="glass-nav-link" onclick="toggleMobileMenu()" id="mobile-menu-button">
@@ -494,17 +504,23 @@
                         {% if user.is_authenticated %}
                             <div class="border-t border-blue-500 border-opacity-30 pt-3 mt-3">
                                 <div class="text-center mb-3">
-                                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-blue-500 bg-opacity-30 text-blue-100">
-                                        <span class="material-icons text-sm mr-1.5">person</span>
+                                    <a href="{% url 'principal:profile' %}" class="glass-button-oval inline-flex items-center justify-center">
+                                        <span class="material-icons mr-1">person</span>
                                         {{ user.username }}
-                                    </span>
+                                    </a>
                                 </div>
                                 
                                 <div class="flex flex-col items-center gap-2">
                                     {% if is_editor %}
-                                                <a href="{% url 'blog:panel_editores' %}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium bg-blue-500 bg-opacity-70 text-white hover:bg-opacity-90 transition-all shadow-sm">
-                                                    <span class="material-icons text-base leading-none">edit</span>
+                                                <a href="{% url 'blog:panel_editores' %}" class="glass-button-oval flex items-center justify-center w-full">
+                                                    <span class="material-icons mr-1">edit</span>
                                                     Panel de Editor
+                                                </a>
+                                    {% endif %}
+                                    {% if is_moderador %}
+                                                <a href="{% url 'blog:panel_moderadores' %}" class="glass-button-oval flex items-center justify-center w-full">
+                                                    <span class="material-icons mr-1">shield</span>
+                                                    Panel de Moderación
                                                 </a>
                                     {% endif %}
                                     {% if user.is_staff %}

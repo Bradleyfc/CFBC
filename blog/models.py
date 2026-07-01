@@ -82,6 +82,11 @@ class Comentario(models.Model):
     contenido = models.TextField()
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     activo = models.BooleanField(default=True)
+    nota_moderacion = models.TextField(
+        blank=True,
+        default='',
+        help_text="Notas internas del moderador (movimientos, auditoría)"
+    )
     
     class Meta:
         verbose_name = "Comentario"
@@ -90,3 +95,138 @@ class Comentario(models.Model):
     
     def __str__(self):
         return f'Comentario de {self.autor.username} en {self.noticia.titulo}'
+
+
+class ReporteComentario(models.Model):
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('resuelto_retirado', 'Resuelto - Retirado'),
+        ('resuelto_mantenido', 'Resuelto - Mantenido'),
+    ]
+
+    comentario = models.ForeignKey(
+        Comentario,
+        on_delete=models.CASCADE,
+        related_name='reportes'
+    )
+    reportado_por = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='reportes_enviados'
+    )
+    motivo = models.CharField(max_length=1000)
+    fecha_reporte = models.DateTimeField(auto_now_add=True)
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADO_CHOICES,
+        default='pendiente'
+    )
+    resuelto_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reportes_resueltos'
+    )
+    fecha_resolucion = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Reporte de comentario"
+        verbose_name_plural = "Reportes de comentarios"
+        ordering = ['-fecha_reporte']
+
+    def __str__(self):
+        return f'Reporte de {self.reportado_por.username} sobre comentario #{self.comentario.id} ({self.estado})'
+
+
+class SancionUsuario(models.Model):
+    TIPO_CHOICES = [
+        ('silencio', 'Silencio temporal'),
+        ('baneo_temporal', 'Baneo temporal'),
+        ('baneo_permanente', 'Baneo permanente'),
+    ]
+
+    usuario = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='sanciones'
+    )
+    tipo_sancion = models.CharField(max_length=20, choices=TIPO_CHOICES)
+    motivo = models.CharField(max_length=1000)
+    fecha_inicio = models.DateTimeField(auto_now_add=True)
+    fecha_fin = models.DateTimeField(null=True, blank=True)
+    aplicada_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='sanciones_aplicadas'
+    )
+    activa = models.BooleanField(default=True)
+    fecha_levantamiento = models.DateTimeField(null=True, blank=True)
+    levantada_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='sanciones_levantadas'
+    )
+
+    class Meta:
+        verbose_name = "Sanción de usuario"
+        verbose_name_plural = "Sanciones de usuarios"
+        ordering = ['-fecha_inicio']
+
+    def __str__(self):
+        return f'Sanción {self.tipo_sancion} a {self.usuario.username} ({"activa" if self.activa else "inactiva"})'
+
+
+class ComentarioFijado(models.Model):
+    comentario = models.OneToOneField(
+        Comentario,
+        on_delete=models.CASCADE,
+        related_name='fijado'
+    )
+    noticia = models.ForeignKey(
+        Noticia,
+        on_delete=models.CASCADE,
+        related_name='comentarios_fijados'
+    )
+    fijado_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='comentarios_fijados'
+    )
+    fecha_fijado = models.DateTimeField(auto_now_add=True)
+    orden = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        verbose_name = "Comentario fijado"
+        verbose_name_plural = "Comentarios fijados"
+        ordering = ['orden']
+
+    def __str__(self):
+        return f'Comentario #{self.comentario.id} fijado en "{self.noticia.titulo}" (orden {self.orden})'
+
+
+class MetricaComunidad(models.Model):
+    fecha = models.DateField(unique=True)
+    total_reportes = models.PositiveIntegerField(default=0)
+    total_comentarios = models.PositiveIntegerField(default=0)
+    total_sanciones = models.PositiveIntegerField(default=0)
+    usuario_mas_activo = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    pico_toxicidad = models.FloatField(null=True, blank=True)
+    generada_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Métrica de comunidad"
+        verbose_name_plural = "Métricas de comunidad"
+        ordering = ['-fecha']
+
+    def __str__(self):
+        return f'Métricas del {self.fecha} (reportes: {self.total_reportes}, sanciones: {self.total_sanciones})'

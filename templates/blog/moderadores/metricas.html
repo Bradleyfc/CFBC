@@ -1,0 +1,72 @@
+{% extends 'blog/moderadores/base_moderadores.html' %}
+
+{% block titulo_pagina %}Métricas de Comunidad{% endblock %}
+
+{% block contenido_moderadores %}
+<p class="text-sm text-gray-500 mb-6">Vista de solo lectura. Las métricas se generan automáticamente cada día.</p>
+
+{% if page_obj %}
+<div class="overflow-x-auto rounded-xl border border-gray-200">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Reportes</th>
+                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Comentarios</th>
+                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Sanciones</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usuario más activo</th>
+                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Toxicidad</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-100">
+            {% for m in page_obj %}
+            <tr class="hover:bg-gray-50">
+                <td class="px-4 py-3 font-medium text-gray-800">{{ m.fecha|date:"d/m/Y" }}</td>
+                <td class="px-4 py-3 text-center">
+                    {% if m.total_reportes > 0 %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-orange-100 text-orange-700">{{ m.total_reportes }}</span>
+                    {% else %}<span class="text-gray-400">0</span>{% endif %}
+                </td>
+                <td class="px-4 py-3 text-center text-gray-700">{{ m.total_comentarios }}</td>
+                <td class="px-4 py-3 text-center">
+                    {% if m.total_sanciones > 0 %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-700">{{ m.total_sanciones }}</span>
+                    {% else %}<span class="text-gray-400">0</span>{% endif %}
+                </td>
+                <td class="px-4 py-3 text-gray-600">{{ m.usuario_mas_activo.username|default:"—" }}</td>
+                <td class="px-4 py-3 text-center">
+                    {% if m.pico_toxicidad is not None %}
+                        {% if m.pico_toxicidad > 0.7 %}
+                        <span class="inline-flex px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-700">{{ m.pico_toxicidad|floatformat:2 }}</span>
+                        {% elif m.pico_toxicidad > 0.4 %}
+                        <span class="inline-flex px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-700">{{ m.pico_toxicidad|floatformat:2 }}</span>
+                        {% else %}
+                        <span class="inline-flex px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700">{{ m.pico_toxicidad|floatformat:2 }}</span>
+                        {% endif %}
+                    {% else %}<span class="text-gray-400">—</span>{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="flex justify-center gap-2 mt-6">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 rounded border border-gray-200 text-sm hover:bg-gray-50">‹ Anterior</a>
+    {% endif %}
+    <span class="px-3 py-1 text-sm text-gray-600">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 rounded border border-gray-200 text-sm hover:bg-gray-50">Siguiente ›</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="text-center py-16 text-gray-400">
+    <span class="material-icons text-5xl mb-3">bar_chart</span>
+    <p>Aún no hay métricas generadas.</p>
+</div>
+{% endif %}
+{% endblock %}

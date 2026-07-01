@@ -1,0 +1,129 @@
+<div class="glass-card h-full">
+    <div class="glass-header" style="background: linear-gradient(135deg, rgba(234,88,12,0.2), rgba(194,65,12,0.1));">
+        <h2 class="text-2xl font-bold text-center text-gray-800">Perfil de Moderador</h2>
+    </div>
+    <div class="glass-content">
+        <div class="flex flex-col space-y-3">
+            <a href="{% url 'blog:panel_moderadores' %}" class="glass-link glass-link-moderador">
+                <div class="glass-link-icon glass-icon-moderador">
+                    <span class="material-icons">shield</span>
+                </div>
+                <span class="glass-link-text">Panel de Moderación</span>
+            </a>
+
+            <a href="{% url 'blog:mod_comentarios' %}" class="glass-link glass-link-comentarios">
+                <div class="glass-link-icon glass-icon-comentarios">
+                    <span class="material-icons">comment</span>
+                </div>
+                <span class="glass-link-text">Gestionar Comentarios</span>
+            </a>
+
+            <a href="{% url 'blog:mod_reportes' %}" class="glass-link glass-link-reportes">
+                <div class="glass-link-icon glass-icon-reportes">
+                    <span class="material-icons">flag</span>
+                </div>
+                <span class="glass-link-text">Bandeja de Reportes</span>
+            </a>
+
+            <a href="{% url 'blog:mod_metricas' %}" class="glass-link glass-link-metricas">
+                <div class="glass-link-icon glass-icon-metricas">
+                    <span class="material-icons">bar_chart</span>
+                </div>
+                <span class="glass-link-text">Métricas de Comunidad</span>
+            </a>
+
+            <a href="{% url 'blog:lista_noticias' %}" class="glass-link glass-link-blog">
+                <div class="glass-link-icon glass-icon-blog">
+                    <span class="material-icons">article</span>
+                </div>
+                <span class="glass-link-text">Ver Blog Público</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .glass-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .glass-content .glass-link {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 1rem;
+        padding: 1.25rem 1.5rem 1.25rem 16rem !important;
+        border-radius: 20px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.05) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-top: 1px solid rgba(255,255,255,0.8);
+        border-left: 1px solid rgba(255,255,255,0.8);
+        border-right: 1px solid rgba(255,255,255,0.2);
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+        box-shadow: 0 8px 32px 0 rgba(31,38,135,0.15), inset 0 0 0 1px rgba(255,255,255,0.1);
+        transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        text-decoration: none;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .glass-content .glass-link:hover {
+        padding-left: 12rem !important;
+        background: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.15) 100%);
+        box-shadow: 0 15px 45px 0 rgba(31,38,135,0.25), inset 0 0 0 1px rgba(255,255,255,0.4);
+        transform: translateY(-2px);
+    }
+
+    .glass-content .glass-link-icon {
+        width: 2.5rem !important;
+        min-width: 2.5rem !important;
+        max-width: 2.5rem !important;
+        height: 2.5rem;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        border: 1px solid rgba(255,255,255,0.3);
+        flex-shrink: 0;
+    }
+
+    /* Iconos por sección */
+    .glass-content .glass-icon-moderador {
+        background: linear-gradient(135deg, rgba(234,88,12,0.35), rgba(194,65,12,0.2));
+        color: #7c2d12;
+    }
+    .glass-content .glass-icon-comentarios {
+        background: linear-gradient(135deg, rgba(59,130,246,0.3), rgba(37,99,235,0.2));
+        color: #1e40af;
+    }
+    .glass-content .glass-icon-reportes {
+        background: linear-gradient(135deg, rgba(239,68,68,0.3), rgba(220,38,38,0.2));
+        color: #7f1d1d;
+    }
+    .glass-content .glass-icon-metricas {
+        background: linear-gradient(135deg, rgba(139,92,246,0.3), rgba(109,40,217,0.2));
+        color: #4c1d95;
+    }
+    .glass-content .glass-icon-blog {
+        background: linear-gradient(135deg, rgba(34,197,94,0.3), rgba(22,163,74,0.2));
+        color: #14532d;
+    }
+
+    /* Textos por sección */
+    .glass-content .glass-link-text {
+        font-weight: 600;
+        font-size: 1.15rem;
+    }
+
+    .glass-content .glass-link-moderador   .glass-link-text { color: #7c2d12; }
+    .glass-content .glass-link-comentarios .glass-link-text { color: #1e40af; }
+    .glass-content .glass-link-reportes    .glass-link-text { color: #7f1d1d; }
+    .glass-content .glass-link-metricas    .glass-link-text { color: #4c1d95; }
+    .glass-content .glass-link-blog        .glass-link-text { color: #14532d; }
+</style>
