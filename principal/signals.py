@@ -41,19 +41,19 @@ def crear_grupos_por_defecto(sender, **kwargs):
             nombre_grupo = config_grupo['nombre']
             
             try:
-                # Verificar si el grupo ya existe
-                if Group.objects.filter(name=nombre_grupo).exists():
+                # Crear o recuperar el grupo
+                grupo, created = Group.objects.get_or_create(name=nombre_grupo)
+                
+                if created:
+                    grupos_creados += 1
+                    logger.info(f"✓ Grupo '{nombre_grupo}' creado")
+                else:
                     grupos_existentes += 1
-                    logger.info(f"○ Grupo '{nombre_grupo}' ya existe")
-                    continue
-                
-                # Crear el grupo
-                grupo = Group.objects.create(name=nombre_grupo)
-                grupos_creados += 1
-                logger.info(f"✓ Grupo '{nombre_grupo}' creado")
-                
-                # Configurar permisos (con manejo de errores)
+                    logger.info(f"○ Grupo '{nombre_grupo}' ya existe — sincronizando permisos")
+
+                # Siempre sincronizar permisos: limpiar y reasignar
                 try:
+                    grupo.permissions.clear()
                     configurar_permisos_grupo(grupo, config_grupo)
                 except Exception as e:
                     logger.warning(f"Error configurando permisos para {nombre_grupo}: {e}")
