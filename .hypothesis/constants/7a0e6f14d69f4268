@@ -1,4 +1,0 @@
-# file: /home/bradley/CFBC/accounts/migrations/0005_remove_registro_correo_alter_registro_address_and_more.py
-# hypothesis_version: 6.155.7
-
-[150, 'Dirección', 'F', 'Femenino', 'Imagen de perfil', 'M', 'Masculino', 'Móvil', 'Sexo', 'Teléfono', 'Título', 'accounts', 'address', 'correo', 'image', 'movil', 'plantilla.png', 'registro', 'sexo', 'telephone', 'titulo', 'users/']

@@ -1,4 +1,0 @@
-# file: /home/bradley/CFBC/accounts/migrations/0009_registro_foto_carnet_registro_foto_titulo.py
-# hypothesis_version: 6.155.7
-
-['Foto del Carnet', 'Foto del Título', 'accounts', 'documentos/carnets/', 'documentos/titulos/', 'foto_carnet', 'foto_titulo', 'registro']

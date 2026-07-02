@@ -1,4 +1,0 @@
-# file: /home/bradley/CFBC/principal/migrations/0015_alter_preguntaformulario_tipo.py
-# hypothesis_version: 6.155.7
-
-['Escritura Libre', 'Selección Múltiple', 'Selección Única', 'Tipo de pregunta', 'escritura_libre', 'preguntaformulario', 'principal', 'seleccion_multiple', 'seleccion_unica', 'tipo']

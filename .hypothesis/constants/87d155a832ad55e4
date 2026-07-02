@@ -1,4 +1,0 @@
-# file: /home/bradley/CFBC/accounts/migrations/0001_initial.py
-# hypothesis_version: 6.155.7
-
-[150, '-id', 'Direccion', 'ID', 'Imagen de perfil', 'Localidad', 'Rol', 'Telefono', 'Usuario', 'address', 'id', 'image', 'location', 'ordering', 'rol', 'roles', 'telephone', 'user', 'users/', 'verbose_name', 'verbose_name_plural']
