@@ -330,6 +330,14 @@
                             <span class="material-icons mr-3">category</span>
                             Categorías
                         </a>
+                        <a class="glass-nav-item flex items-center px-4 py-3 text-gray-700 transition-colors {% if request.resolver_match.url_name == 'bandeja_revision' %}active{% endif %}" 
+                           href="{% url 'blog:bandeja_revision' %}">
+                            <span class="material-icons mr-3">inbox</span>
+                            Pendientes de revisión
+                            {% if pendientes_count > 0 %}
+                            <span class="ml-auto inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-blue-500 rounded-full">{{ pendientes_count }}</span>
+                            {% endif %}
+                        </a>
                         <hr class="border-gray-300 border-opacity-50 my-4">
                         <a class="glass-nav-item flex items-center px-4 py-3 text-gray-700 transition-colors" 
                            href="{% url 'blog:lista_noticias' %}">

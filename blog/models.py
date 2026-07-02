@@ -25,6 +25,7 @@ class Categoria(models.Model):
 class Noticia(models.Model):
     ESTADO_CHOICES = [
         ('borrador', 'Borrador'),
+        ('pendiente_revision', 'Pendiente de revisión'),
         ('publicado', 'Publicado'),
         ('archivado', 'Archivado'),
     ]
@@ -59,6 +60,9 @@ class Noticia(models.Model):
     
     # SEO
     meta_descripcion = models.CharField(max_length=160, blank=True, help_text="Descripción para SEO")
+    
+    # Flujo editorial
+    notas_editor = models.TextField(blank=True, default='', max_length=1000, help_text='Notas del editor al devolver un artículo al autor')
     
     class Meta:
         verbose_name = "Noticia"

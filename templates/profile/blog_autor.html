@@ -1,0 +1,143 @@
+<div class="glass-card h-full">
+    <div class="glass-header" style="background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(37,99,235,0.1));">
+        <h2 class="text-2xl font-bold text-center text-gray-800">Perfil de Blog Autor</h2>
+    </div>
+    <div class="glass-content">
+        <div class="flex flex-col space-y-3">
+
+            <a href="{% url 'blog:panel_autores' %}" class="glass-link glass-link-autor-panel">
+                <div class="glass-link-icon glass-icon-autor-panel">
+                    <span class="material-icons">create</span>
+                </div>
+                <span class="glass-link-text">Panel de Autor</span>
+            </a>
+
+            <a href="{% url 'blog:mis_noticias_autor' %}" class="glass-link glass-link-autor-noticias">
+                <div class="glass-link-icon glass-icon-autor-noticias">
+                    <span class="material-icons">article</span>
+                </div>
+                <span class="glass-link-text">Mis Noticias</span>
+            </a>
+
+            <a href="{% url 'blog:crear_noticia_autor' %}" class="glass-link glass-link-autor-crear">
+                <div class="glass-link-icon glass-icon-autor-crear">
+                    <span class="material-icons">add_circle</span>
+                </div>
+                <span class="glass-link-text">Nueva Noticia</span>
+            </a>
+
+            <a href="{% url 'blog:mis_noticias_autor' %}?estado=pendiente_revision" class="glass-link glass-link-autor-revision">
+                <div class="glass-link-icon glass-icon-autor-revision">
+                    <span class="material-icons">pending</span>
+                </div>
+                <span class="glass-link-text">En Revisión</span>
+            </a>
+
+            <a href="{% url 'blog:mis_noticias_autor' %}?estado=publicado" class="glass-link glass-link-autor-publicadas">
+                <div class="glass-link-icon glass-icon-autor-publicadas">
+                    <span class="material-icons">check_circle</span>
+                </div>
+                <span class="glass-link-text">Publicadas</span>
+            </a>
+
+            <a href="{% url 'blog:lista_noticias' %}" class="glass-link glass-link-autor-blog">
+                <div class="glass-link-icon glass-icon-autor-blog">
+                    <span class="material-icons">visibility</span>
+                </div>
+                <span class="glass-link-text">Ver Blog Público</span>
+            </a>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    .glass-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .glass-content .glass-link {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 1rem;
+        padding: 1.25rem 1.5rem 1.25rem 16rem !important;
+        border-radius: 20px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.05) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-top: 1px solid rgba(255,255,255,0.8);
+        border-left: 1px solid rgba(255,255,255,0.8);
+        border-right: 1px solid rgba(255,255,255,0.2);
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+        box-shadow: 0 8px 32px 0 rgba(31,38,135,0.15), inset 0 0 0 1px rgba(255,255,255,0.1);
+        transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        text-decoration: none;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .glass-content .glass-link:hover {
+        padding-left: 12rem !important;
+        background: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.15) 100%);
+        box-shadow: 0 15px 45px 0 rgba(31,38,135,0.25), inset 0 0 0 1px rgba(255,255,255,0.4);
+        transform: translateY(-2px);
+    }
+
+    .glass-content .glass-link-icon {
+        width: 2.5rem !important;
+        min-width: 2.5rem !important;
+        max-width: 2.5rem !important;
+        height: 2.5rem;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        border: 1px solid rgba(255,255,255,0.3);
+        flex-shrink: 0;
+    }
+
+    /* Iconos */
+    .glass-content .glass-icon-autor-panel {
+        background: linear-gradient(135deg, rgba(59,130,246,0.35), rgba(37,99,235,0.2));
+        color: #1e40af;
+    }
+    .glass-content .glass-icon-autor-noticias {
+        background: linear-gradient(135deg, rgba(16,185,129,0.35), rgba(5,150,105,0.2));
+        color: #065f46;
+    }
+    .glass-content .glass-icon-autor-crear {
+        background: linear-gradient(135deg, rgba(139,92,246,0.35), rgba(109,40,217,0.2));
+        color: #4c1d95;
+    }
+    .glass-content .glass-icon-autor-revision {
+        background: linear-gradient(135deg, rgba(245,158,11,0.35), rgba(217,119,6,0.2));
+        color: #78350f;
+    }
+    .glass-content .glass-icon-autor-publicadas {
+        background: linear-gradient(135deg, rgba(34,197,94,0.35), rgba(22,163,74,0.2));
+        color: #14532d;
+    }
+    .glass-content .glass-icon-autor-blog {
+        background: linear-gradient(135deg, rgba(99,102,241,0.35), rgba(79,70,229,0.2));
+        color: #312e81;
+    }
+
+    /* Textos */
+    .glass-content .glass-link-text {
+        font-weight: 600;
+        font-size: 1.15rem;
+    }
+
+    .glass-content .glass-link-autor-panel      .glass-link-text { color: #1e40af; }
+    .glass-content .glass-link-autor-noticias   .glass-link-text { color: #065f46; }
+    .glass-content .glass-link-autor-crear      .glass-link-text { color: #4c1d95; }
+    .glass-content .glass-link-autor-revision   .glass-link-text { color: #78350f; }
+    .glass-content .glass-link-autor-publicadas .glass-link-text { color: #14532d; }
+    .glass-content .glass-link-autor-blog       .glass-link-text { color: #312e81; }
+</style>

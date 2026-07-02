@@ -1,0 +1,424 @@
+{% extends 'blog/autores/base_autores.html' %}
+
+{% block titulo_pagina %}Mis Noticias{% endblock %}
+
+{% block botones_accion %}
+<a href="{% url 'blog:crear_noticia_autor' %}"
+   class="glass-button glass-button-primary inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all">
+    <span class="material-icons mr-2 text-sm">add</span>
+    Nueva Noticia
+</a>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* Modal de eliminación */
+    .delete-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100vw;
+        height: 100vh;
+        top: 0;
+        left: 0;
+    }
+
+    .delete-modal.hidden {
+        display: none;
+    }
+
+    .delete-modal-overlay {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(8, 15, 40, 0.60);
+        backdrop-filter: blur(8px) saturate(120%);
+        -webkit-backdrop-filter: blur(8px) saturate(120%);
+    }
+
+    .delete-modal-content {
+        position: relative;
+        z-index: 1;
+        background: rgba(255, 255, 255, 0.72);
+        backdrop-filter: blur(28px) saturate(180%);
+        -webkit-backdrop-filter: blur(28px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.85);
+        border-bottom-color: rgba(200, 210, 230, 0.4);
+        border-radius: 24px;
+        box-shadow:
+            0 2px 0   rgba(255, 255, 255, 0.9),
+            0 8px 24px  rgba(0, 0, 0, 0.18),
+            0 32px 64px rgba(0, 0, 0, 0.22),
+            inset 0 1px 0 rgba(255, 255, 255, 1),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.04);
+        width: 90%;
+        max-width: 460px;
+        padding: 2rem;
+        overflow: hidden;
+        animation: modalIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    .delete-modal-content::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 45%;
+        background: linear-gradient(180deg, rgba(255,255,255,0.45) 0%, transparent 100%);
+        border-radius: 24px 24px 0 0;
+        pointer-events: none;
+    }
+
+    @keyframes modalIn {
+        from { opacity: 0; transform: scale(0.92) translateY(12px); }
+        to   { opacity: 1; transform: scale(1)    translateY(0); }
+    }
+
+    .delete-modal-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: rgba(239, 68, 68, 0.12);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1.5px solid rgba(239, 68, 68, 0.35);
+        box-shadow:
+            0 4px 16px rgba(239, 68, 68, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .delete-modal-content h3,
+    .delete-modal-content p {
+        position: relative;
+        z-index: 1;
+    }
+
+    .delete-modal-btn-cancel {
+        position: relative;
+        z-index: 1;
+        background: rgba(255, 255, 255, 0.65);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(0, 0, 0, 0.10);
+        color: #374151;
+        padding: 0.6rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 500;
+        transition: all 0.25s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9);
+    }
+
+    .delete-modal-btn-cancel:hover {
+        background: rgba(59, 130, 246, 0.10);
+        border-color: rgba(59, 130, 246, 0.30);
+        color: #1e40af;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(59,130,246,0.15), inset 0 1px 0 rgba(255,255,255,0.9);
+    }
+
+    .delete-modal-btn-confirm {
+        position: relative;
+        z-index: 1;
+        background: linear-gradient(135deg, rgba(239,68,68,0.82), rgba(220,38,38,0.90));
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(252, 165, 165, 0.45);
+        color: white;
+        padding: 0.6rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.25s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        box-shadow:
+            0 4px 16px rgba(239,68,68,0.30),
+            inset 0 1px 0 rgba(255,255,255,0.25);
+    }
+
+    .delete-modal-btn-confirm:hover {
+        background: linear-gradient(135deg, rgba(239,68,68,1), rgba(220,38,38,1));
+        box-shadow: 0 8px 28px rgba(239,68,68,0.45), inset 0 1px 0 rgba(255,255,255,0.3);
+        transform: translateY(-1px);
+    }
+
+    /* Tarjetas de noticias */
+    .noticia-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(249, 250, 251, 0.8));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(209, 213, 219, 0.3);
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .noticia-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block contenido_autores %}
+<!-- Filtros -->
+<div class="glass-card p-6 mb-6">
+    <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+            <select name="estado" class="glass-input w-full px-3 py-2">
+                <option value="">Todos los estados</option>
+                <option value="borrador" {% if estado_actual == 'borrador' %}selected{% endif %}>Borrador</option>
+                <option value="pendiente_revision" {% if estado_actual == 'pendiente_revision' %}selected{% endif %}>En revisión</option>
+                <option value="publicado" {% if estado_actual == 'publicado' %}selected{% endif %}>Publicado</option>
+                <option value="archivado" {% if estado_actual == 'archivado' %}selected{% endif %}>Archivado</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
+            <select name="categoria" class="glass-input w-full px-3 py-2">
+                <option value="">Todas las categorías</option>
+                {% for categoria in categorias %}
+                    <option value="{{ categoria.id }}" {% if categoria_actual == categoria.id|stringformat:"s" %}selected{% endif %}>
+                        {{ categoria.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">&nbsp;</label>
+            <div class="flex space-x-4">
+                <button type="submit"
+                        class="glass-button glass-button-primary inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all">
+                    <span class="material-icons mr-2 text-sm">filter_list</span>
+                    Filtrar
+                </button>
+                <a href="{% url 'blog:mis_noticias_autor' %}"
+                   class="glass-button inline-flex items-center px-4 py-2 text-gray-700 text-sm font-medium rounded-lg transition-all">
+                    <span class="material-icons mr-2 text-sm">clear</span>
+                    Limpiar
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Lista de noticias -->
+{% if page_obj %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for noticia in page_obj %}
+            <div class="noticia-card">
+                <!-- Imagen -->
+                {% if noticia.imagen_principal %}
+                    <div class="relative overflow-hidden" style="height:160px; min-height:160px; max-height:160px;">
+                        <img src="{{ noticia.imagen_principal.url }}"
+                             class="w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                             style="height:160px !important; min-height:160px !important; max-height:160px !important; object-fit:cover;"
+                             alt="{{ noticia.titulo }}">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                    </div>
+                {% else %}
+                    <div class="flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200" style="height:160px;">
+                        <span class="material-icons text-gray-400 text-4xl">image</span>
+                    </div>
+                {% endif %}
+
+                <!-- Contenido -->
+                <div class="p-4 flex flex-col flex-1">
+                    <!-- Badges -->
+                    <div class="flex flex-wrap gap-1.5 mb-2">
+                        {% if noticia.estado == 'publicado' %}
+                            <span class="glass-badge glass-badge-success inline-flex items-center px-2 py-0.5 text-xs font-medium">Publicado</span>
+                        {% elif noticia.estado == 'borrador' %}
+                            <span class="glass-badge glass-badge-warning inline-flex items-center px-2 py-0.5 text-xs font-medium">Borrador</span>
+                        {% elif noticia.estado == 'pendiente_revision' %}
+                            <span class="glass-badge glass-badge-info inline-flex items-center px-2 py-0.5 text-xs font-medium">En revisión</span>
+                        {% else %}
+                            <span class="glass-badge glass-badge-secondary inline-flex items-center px-2 py-0.5 text-xs font-medium">Archivado</span>
+                        {% endif %}
+                        <span class="glass-badge inline-flex items-center px-2 py-0.5 text-xs font-medium text-gray-600">
+                            {{ noticia.categoria.nombre }}
+                        </span>
+                    </div>
+
+                    <!-- Título -->
+                    <h5 class="text-base font-semibold text-gray-800 mb-1 line-clamp-2">{{ noticia.titulo }}</h5>
+                    <p class="text-gray-500 text-xs mb-2 line-clamp-2 flex-1">{{ noticia.resumen|truncatechars:80 }}</p>
+
+                    <!-- Fecha -->
+                    <div class="flex items-center text-xs text-gray-400 mb-3">
+                        <span class="material-icons mr-1" style="font-size:13px;">event</span>
+                        {{ noticia.fecha_creacion|date:"d/m/Y H:i" }}
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="mt-auto flex gap-2 flex-wrap">
+                        {% if noticia.estado == 'borrador' %}
+                            <a href="{% url 'blog:editar_noticia_autor' noticia.pk %}"
+                               class="glass-button flex-1 inline-flex items-center justify-center px-3 py-2 text-gray-700 rounded-lg transition-all"
+                               title="Editar noticia">
+                                <span class="material-icons text-sm">edit</span>
+                            </a>
+                            <form method="post" action="{% url 'blog:enviar_revision' noticia.pk %}" class="flex-1">
+                                {% csrf_token %}
+                                <button type="submit"
+                                        class="glass-button glass-badge-info w-full inline-flex items-center justify-center px-3 py-2 rounded-lg transition-all"
+                                        title="Enviar a revisión">
+                                    <span class="material-icons text-sm">send</span>
+                                </button>
+                            </form>
+                            <button type="button"
+                               onclick="showDeleteModal('{{ noticia.pk }}', '{{ noticia.titulo|escapejs }}')"
+                               class="glass-button glass-button-danger flex-1 inline-flex items-center justify-center px-3 py-2 rounded-lg transition-all"
+                               title="Eliminar noticia">
+                                <span class="material-icons text-sm">delete</span>
+                            </button>
+                        {% endif %}
+                        {% if noticia.estado == 'publicado' %}
+                            <a href="{{ noticia.get_absolute_url }}"
+                               class="glass-button glass-button-success flex-1 inline-flex items-center justify-center px-3 py-2 rounded-lg transition-all"
+                               target="_blank" title="Ver noticia publicada">
+                                <span class="material-icons text-sm">visibility</span>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Paginación -->
+    {% if page_obj.has_other_pages %}
+        <nav aria-label="Paginación de noticias" class="mt-8">
+            <div class="flex justify-center">
+                <div class="glass-card p-2">
+                    <div class="flex space-x-1">
+                        {% if page_obj.has_previous %}
+                            <a href="?page=1{% if estado_actual %}&estado={{ estado_actual }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}"
+                               class="glass-button px-3 py-2 text-sm font-medium text-gray-700 rounded-lg">
+                                <span class="material-icons text-sm">first_page</span>
+                            </a>
+                            <a href="?page={{ page_obj.previous_page_number }}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}"
+                               class="glass-button px-3 py-2 text-sm font-medium text-gray-700 rounded-lg">
+                                <span class="material-icons text-sm">chevron_left</span>
+                            </a>
+                        {% endif %}
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <span class="glass-button glass-button-primary px-3 py-2 text-sm font-medium rounded-lg">{{ num }}</span>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <a href="?page={{ num }}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}"
+                                   class="glass-button px-3 py-2 text-sm font-medium text-gray-700 rounded-lg">{{ num }}</a>
+                            {% endif %}
+                        {% endfor %}
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}"
+                               class="glass-button px-3 py-2 text-sm font-medium text-gray-700 rounded-lg">
+                                <span class="material-icons text-sm">chevron_right</span>
+                            </a>
+                            <a href="?page={{ page_obj.paginator.num_pages }}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}"
+                               class="glass-button px-3 py-2 text-sm font-medium text-gray-700 rounded-lg">
+                                <span class="material-icons text-sm">last_page</span>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </nav>
+    {% endif %}
+
+{% else %}
+    <div class="glass-card">
+        <div class="p-12 text-center">
+            <div class="flex items-center justify-center w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-r from-blue-400 to-purple-600">
+                <span class="material-icons text-white text-3xl">article</span>
+            </div>
+            <h4 class="text-2xl font-semibold text-gray-800 mb-3">No tienes noticias aún</h4>
+            <p class="text-gray-600 mb-8">¡Comienza creando tu primera noticia!</p>
+            <a href="{% url 'blog:crear_noticia_autor' %}"
+               class="glass-button glass-button-primary inline-flex items-center px-8 py-4 text-lg font-medium rounded-lg transition-all">
+                <span class="material-icons mr-3">add</span>
+                Crear Primera Noticia
+            </a>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Modal de Eliminación -->
+<div id="deleteModal" class="delete-modal hidden">
+    <div class="delete-modal-overlay" onclick="hideDeleteModal()"></div>
+    <div class="delete-modal-content">
+        <div class="delete-modal-icon">
+            <span class="material-icons text-red-500 text-3xl">warning</span>
+        </div>
+        <h3 class="text-xl font-bold text-gray-800 text-center mb-2">Confirmar Eliminación</h3>
+        <p class="text-gray-600 text-center mb-1">¿Estás seguro de que deseas eliminar la noticia:</p>
+        <p class="text-gray-800 font-semibold text-center mb-4" id="noticiaNameToDelete"></p>
+        <p class="text-red-600 text-sm text-center mb-6">Esta acción no se puede deshacer.</p>
+        <div class="flex justify-between gap-3">
+            <button type="button" class="delete-modal-btn-cancel" onclick="hideDeleteModal()">
+                <span class="material-icons text-sm">cancel</span>
+                Cancelar
+            </button>
+            <form id="deleteForm" method="post" action="">
+                {% csrf_token %}
+                <button type="submit" class="delete-modal-btn-confirm">
+                    <span class="material-icons text-sm">delete</span>
+                    Sí, Eliminar
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('deleteModal');
+        if (modal && modal.parentElement !== document.body) {
+            document.body.appendChild(modal);
+        }
+    });
+
+    function showDeleteModal(pk, titulo) {
+        document.getElementById('noticiaNameToDelete').textContent = titulo;
+        document.getElementById('deleteForm').action = '/noticias/autores/eliminar/' + pk + '/';
+        const modal = document.getElementById('deleteModal');
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function hideDeleteModal() {
+        document.getElementById('deleteModal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') hideDeleteModal();
+    });
+</script>
+{% endblock %}

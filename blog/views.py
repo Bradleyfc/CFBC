@@ -10,7 +10,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import CreateView, UpdateView, DeleteView, ListView
 from django.urls import reverse_lazy
 from .models import Noticia, Categoria, Comentario, SancionUsuario, ReporteComentario, ComentarioFijado, MetricaComunidad
-from .forms import ComentarioForm, NoticiaForm
+from .forms import ComentarioForm, NoticiaForm, EditorRevisionForm, AutorNoticiaForm
 
 def lista_noticias(request):
     """Vista para mostrar todas las noticias publicadas"""
@@ -54,6 +54,7 @@ def lista_noticias(request):
     
     is_editor = request.user.is_authenticated and request.user.groups.filter(name='Editor').exists()
     is_moderador = request.user.is_authenticated and es_moderador(request.user)
+    is_autor = request.user.is_authenticated and es_autor(request.user)
     context = {
         'page_obj': page_obj,
         'noticias_destacadas': noticias_destacadas,
@@ -62,6 +63,7 @@ def lista_noticias(request):
         'categoria_actual': categoria_slug,
         'is_editor': is_editor,
         'is_moderador': is_moderador,
+        'is_autor': is_autor,
     }
     
     return render(request, 'blog/lista_noticias.html', context)
@@ -109,6 +111,7 @@ def detalle_noticia(request, slug):
     
     is_editor = request.user.is_authenticated and request.user.groups.filter(name='Editor').exists()
     is_moderador = request.user.is_authenticated and es_moderador(request.user)
+    is_autor = request.user.is_authenticated and es_autor(request.user)
     context = {
         'noticia': noticia,
         'comentarios': comentarios,
@@ -117,6 +120,7 @@ def detalle_noticia(request, slug):
         'noticias_relacionadas': noticias_relacionadas,
         'is_editor': is_editor,
         'is_moderador': is_moderador,
+        'is_autor': is_autor,
     }
     
     return render(request, 'blog/detalle_noticia.html', context)
@@ -187,6 +191,7 @@ def noticias_por_categoria(request, slug):
 
     is_editor = request.user.is_authenticated and request.user.groups.filter(name='Editor').exists()
     is_moderador = request.user.is_authenticated and es_moderador(request.user)
+    is_autor = request.user.is_authenticated and es_autor(request.user)
     context = {
         'categoria': categoria,
         'page_obj': page_obj,
@@ -195,9 +200,176 @@ def noticias_por_categoria(request, slug):
         'categoria_actual': slug,
         'is_editor': is_editor,
         'is_moderador': is_moderador,
+        'is_autor': is_autor,
     }
 
     return render(request, 'blog/lista_noticias.html', context)
+
+# ── PANEL AUTOR ────────────────────────────────────────────────────────────
+
+def es_autor(user):
+    return user.is_authenticated and (
+        user.groups.filter(name='Blog Autor').exists() or
+        user.is_staff or
+        user.is_superuser
+    )
+
+
+@user_passes_test(es_autor)
+def panel_autores(request):
+    """Panel principal del autor con estadísticas propias."""
+    mis_total = Noticia.objects.filter(autor=request.user).count()
+    mis_publicadas = Noticia.objects.filter(autor=request.user, estado='publicado').count()
+    mis_borradores = Noticia.objects.filter(autor=request.user, estado='borrador').count()
+    mis_en_revision = Noticia.objects.filter(autor=request.user, estado='pendiente_revision').count()
+    mis_comentarios = Comentario.objects.filter(
+        noticia__autor=request.user, activo=True
+    ).count()
+    ultima_publicacion = (
+        Noticia.objects
+        .filter(autor=request.user, estado='publicado')
+        .order_by('-fecha_publicacion')
+        .first()
+    )
+    ultimas_noticias = (
+        Noticia.objects
+        .filter(autor=request.user)
+        .order_by('-fecha_creacion')[:5]
+    )
+
+    context = {
+        'mis_total': mis_total,
+        'mis_publicadas': mis_publicadas,
+        'mis_borradores': mis_borradores,
+        'mis_en_revision': mis_en_revision,
+        'mis_comentarios': mis_comentarios,
+        'ultima_publicacion': ultima_publicacion,
+        'ultimas_noticias': ultimas_noticias,
+    }
+    return render(request, 'blog/autores/panel.html', context)
+
+
+@user_passes_test(es_autor)
+def mis_noticias_autor(request):
+    """Lista de noticias propias del autor con filtros y paginación."""
+    noticias = Noticia.objects.filter(autor=request.user).order_by('-fecha_creacion')
+
+    estado = request.GET.get('estado')
+    estados_validos = ('borrador', 'pendiente_revision', 'publicado', 'archivado')
+    if estado in estados_validos:
+        noticias = noticias.filter(estado=estado)
+
+    categoria_id = request.GET.get('categoria')
+    if categoria_id:
+        noticias = noticias.filter(categoria_id=categoria_id)
+
+    paginator = Paginator(noticias, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    categorias = Categoria.objects.all()
+
+    context = {
+        'page_obj': page_obj,
+        'categorias': categorias,
+        'estado_actual': estado,
+        'categoria_actual': categoria_id,
+    }
+    return render(request, 'blog/autores/mis_noticias.html', context)
+
+
+@user_passes_test(es_autor)
+def crear_noticia_autor(request):
+    """Crea un nuevo borrador para el autor."""
+    if request.method == 'POST':
+        form = AutorNoticiaForm(request.POST, request.FILES)
+        if form.is_valid():
+            noticia = form.save(commit=False)
+            noticia.autor = request.user
+            noticia.estado = 'borrador'
+            noticia.save()
+            messages.success(request, 'Borrador creado exitosamente.')
+            return redirect('blog:editar_noticia_autor', pk=noticia.pk)
+    else:
+        form = AutorNoticiaForm()
+
+    return render(request, 'blog/autores/crear_noticia.html', {'form': form})
+
+
+@user_passes_test(es_autor)
+def editar_noticia_autor(request, pk):
+    """Edita un borrador propio del autor."""
+    noticia = get_object_or_404(Noticia, pk=pk)
+
+    if noticia.autor != request.user:
+        messages.error(request, 'No tienes permisos para editar esta noticia.')
+        return redirect('blog:mis_noticias_autor')
+
+    if request.method == 'POST':
+        if noticia.estado != 'borrador':
+            messages.error(request, 'Solo puedes editar borradores.')
+            return redirect('blog:mis_noticias_autor')
+
+        form = AutorNoticiaForm(request.POST, request.FILES, instance=noticia)
+        if form.is_valid():
+            if 'imagen_principal' in form.changed_data and noticia.imagen_principal:
+                noticia.imagen_principal.delete(save=False)
+            noticia_actualizada = form.save(commit=False)
+            noticia_actualizada.estado = 'borrador'
+            noticia_actualizada.save()
+            messages.success(request, 'Borrador actualizado.')
+            return redirect('blog:editar_noticia_autor', pk=pk)
+    else:
+        form = AutorNoticiaForm(instance=noticia)
+
+    return render(request, 'blog/autores/editar_noticia.html', {
+        'form': form,
+        'noticia': noticia,
+    })
+
+
+@user_passes_test(es_autor)
+def eliminar_noticia_autor(request, pk):
+    """Elimina un borrador propio del autor."""
+    noticia = get_object_or_404(Noticia, pk=pk)
+
+    if noticia.autor != request.user:
+        messages.error(request, 'No tienes permisos para eliminar esta noticia.')
+        return redirect('blog:mis_noticias_autor')
+
+    if noticia.estado != 'borrador':
+        messages.error(request, 'Solo puedes eliminar borradores.')
+        return redirect('blog:mis_noticias_autor')
+
+    if request.method == 'POST':
+        noticia.delete()
+        messages.success(request, 'Borrador eliminado exitosamente.')
+        return redirect('blog:mis_noticias_autor')
+
+    return render(request, 'blog/autores/eliminar_noticia.html', {'noticia': noticia})
+
+
+@user_passes_test(es_autor)
+def enviar_revision(request, pk):
+    """Envía un borrador propio a revisión del editor."""
+    noticia = get_object_or_404(Noticia, pk=pk)
+
+    if noticia.autor != request.user:
+        messages.error(request, 'No tienes permisos para enviar esta noticia a revisión.')
+        return redirect('blog:mis_noticias_autor')
+
+    if noticia.estado != 'borrador':
+        messages.error(
+            request,
+            'Esta noticia ya fue enviada a revisión o no es un borrador.'
+        )
+        return redirect('blog:mis_noticias_autor')
+
+    noticia.estado = 'pendiente_revision'
+    noticia.save(update_fields=['estado'])
+    messages.success(request, f'"{noticia.titulo}" enviada a revisión correctamente.')
+    return redirect('blog:mis_noticias_autor')
+
 
 # Función para verificar si el usuario es editor
 def es_editor(user):
@@ -226,6 +398,7 @@ def panel_editores(request):
         'noticias_borrador': noticias_borrador,
         'mis_noticias': mis_noticias,
         'ultimas_noticias': ultimas_noticias,
+        'pendientes_count': Noticia.objects.filter(estado='pendiente_revision').count(),
     }
     
     return render(request, 'blog/editores/panel.html', context)
@@ -378,6 +551,77 @@ def gestionar_categorias(request):
         return redirect('blog:gestionar_categorias')
     
     return render(request, 'blog/editores/categorias.html', {'categorias': categorias})
+
+
+# Vista de bandeja de revisión (noticias pendientes de revisión)
+@user_passes_test(es_editor)
+def bandeja_revision(request):
+    """Bandeja de noticias pendientes de revisión para el editor"""
+    noticias_pendientes = (
+        Noticia.objects
+        .filter(estado='pendiente_revision')
+        .select_related('autor', 'categoria')
+        .order_by('-fecha_actualizacion')
+    )
+
+    pendientes_count = noticias_pendientes.count()
+
+    paginator = Paginator(noticias_pendientes, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_obj': page_obj,
+        'pendientes_count': pendientes_count,
+    }
+
+    return render(request, 'blog/editores/bandeja_revision.html', context)
+
+
+# Vista para revisar una noticia pendiente (publicar o devolver)
+@user_passes_test(es_editor)
+def revisar_noticia(request, pk):
+    """Revisar una noticia pendiente: publicar o devolver con notas"""
+    noticia = get_object_or_404(Noticia, pk=pk, estado='pendiente_revision')
+
+    if request.method == 'POST':
+        accion = request.POST.get('accion')
+
+        if accion == 'publicar':
+            noticia.estado = 'publicado'
+            noticia.fecha_publicacion = timezone.now()
+            noticia.notas_editor = ''
+            noticia.save(update_fields=['estado', 'fecha_publicacion', 'notas_editor'])
+            messages.success(request, f'La noticia "{noticia.titulo}" ha sido publicada.')
+            return redirect('blog:bandeja_revision')
+
+        elif accion == 'devolver':
+            notas_editor = request.POST.get('notas_editor', '').strip()
+            if len(notas_editor) < 10:
+                messages.error(
+                    request,
+                    'Las notas al autor deben tener al menos 10 caracteres.'
+                )
+                form = EditorRevisionForm(request.POST)
+                return render(request, 'blog/editores/revisar_noticia.html', {
+                    'noticia': noticia,
+                    'form': form,
+                })
+            noticia.estado = 'borrador'
+            noticia.notas_editor = notas_editor
+            noticia.save(update_fields=['estado', 'notas_editor'])
+            messages.success(
+                request,
+                f'La noticia "{noticia.titulo}" ha sido devuelta al autor con notas.'
+            )
+            return redirect('blog:bandeja_revision')
+
+    # GET
+    form = EditorRevisionForm()
+    return render(request, 'blog/editores/revisar_noticia.html', {
+        'noticia': noticia,
+        'form': form,
+    })
 
 
 # ── MODERACIÓN ─────────────────────────────────────────────────────────────

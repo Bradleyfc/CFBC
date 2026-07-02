@@ -19,6 +19,16 @@ urlpatterns = [
     path('editores/comentarios/<int:pk>/', views.gestionar_comentarios, name='gestionar_comentarios'),
     path('editores/comentarios/eliminar/<int:pk>/', views.eliminar_comentario, name='eliminar_comentario'),
     path('editores/categorias/', views.gestionar_categorias, name='gestionar_categorias'),
+    path('editores/bandeja-revision/', views.bandeja_revision, name='bandeja_revision'),
+    path('editores/revisar/<int:pk>/', views.revisar_noticia, name='revisar_noticia'),
+
+    # URLs para autores
+    path('autores/', views.panel_autores, name='panel_autores'),
+    path('autores/mis-noticias/', views.mis_noticias_autor, name='mis_noticias_autor'),
+    path('autores/crear/', views.crear_noticia_autor, name='crear_noticia_autor'),
+    path('autores/editar/<int:pk>/', views.editar_noticia_autor, name='editar_noticia_autor'),
+    path('autores/eliminar/<int:pk>/', views.eliminar_noticia_autor, name='eliminar_noticia_autor'),
+    path('autores/enviar-revision/<int:pk>/', views.enviar_revision, name='enviar_revision'),
 
     # URLs para moderadores
     path('moderadores/', views.panel_moderadores, name='panel_moderadores'),

@@ -1,0 +1,121 @@
+{% extends 'blog/editores/base_editores.html' %}
+
+{% block titulo_pagina %}Revisar: {{ noticia.titulo|truncatechars:40 }}{% endblock %}
+
+{% block contenido_editores %}
+
+<!-- Breadcrumb -->
+<div class="mb-6">
+    <a href="{% url 'blog:bandeja_revision' %}"
+       class="glass-button inline-flex items-center px-4 py-2 text-sm text-gray-700 rounded-lg">
+        <span class="material-icons text-sm mr-1">arrow_back</span>
+        ← Bandeja de revisión
+    </a>
+</div>
+
+<!-- Contenido de la noticia -->
+<div class="glass-card p-6 mb-6">
+    <h3 class="flex items-center text-lg font-semibold text-gray-800 mb-4">
+        <span class="material-icons mr-2">article</span>
+        Contenido del artículo
+    </h3>
+
+    {% if noticia.imagen_principal %}
+    <div class="mb-6">
+        <img src="{{ noticia.imagen_principal.url }}"
+             alt="{{ noticia.titulo }}"
+             class="w-full max-h-72 object-cover rounded-xl border border-gray-200">
+    </div>
+    {% endif %}
+
+    <h2 class="text-2xl font-bold text-gray-900 mb-3">{{ noticia.titulo }}</h2>
+
+    <div class="flex flex-wrap gap-4 text-sm text-gray-500 mb-4">
+        <span class="inline-flex items-center">
+            <span class="material-icons text-sm mr-1">person</span>
+            {{ noticia.autor.username }}
+        </span>
+        <span class="inline-flex items-center">
+            <span class="material-icons text-sm mr-1">category</span>
+            {{ noticia.categoria.nombre }}
+        </span>
+        <span class="inline-flex items-center">
+            <span class="material-icons text-sm mr-1">schedule</span>
+            {{ noticia.fecha_actualizacion|date:"d/m/Y H:i" }}
+        </span>
+    </div>
+
+    {% if noticia.resumen %}
+    <div class="glass-card p-4 mb-4" style="background: rgba(243,244,246,0.7);">
+        <p class="text-gray-500 text-sm italic">{{ noticia.resumen }}</p>
+    </div>
+    {% endif %}
+
+    <div class="prose max-w-none text-gray-800">
+        {{ noticia.contenido|safe }}
+    </div>
+</div>
+
+<!-- Acción del editor -->
+<div class="glass-card p-6">
+    <h3 class="flex items-center text-lg font-semibold text-gray-800 mb-4">
+        <span class="material-icons mr-2">rate_review</span>
+        Acción del editor
+    </h3>
+
+    <form method="post" action="">
+        {% csrf_token %}
+
+        <div class="mb-4">
+            <label for="notas_editor" class="block text-sm font-medium text-gray-700 mb-2">
+                Notas para el autor <span class="text-gray-400 font-normal">(obligatorio al devolver, mínimo 10 caracteres)</span>
+            </label>
+            <textarea name="notas_editor"
+                      id="notas_editor"
+                      class="glass-input w-full px-3 py-2 rounded-md"
+                      rows="4"
+                      placeholder="Escribe las correcciones...">{{ form.notas_editor.value|default:'' }}</textarea>
+
+            {% if form.notas_editor.errors %}
+            <div class="mt-2">
+                {% for error in form.notas_editor.errors %}
+                <p class="text-sm text-red-600 flex items-center">
+                    <span class="material-icons text-sm mr-1">error</span>
+                    {{ error }}
+                </p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if form.non_field_errors %}
+            <div class="mt-2">
+                {% for error in form.non_field_errors %}
+                <p class="text-sm text-red-600 flex items-center">
+                    <span class="material-icons text-sm mr-1">error</span>
+                    {{ error }}
+                </p>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="flex flex-wrap gap-4 mt-6">
+            <button type="submit"
+                    name="accion"
+                    value="publicar"
+                    class="glass-button glass-button-success inline-flex items-center px-6 py-3 text-sm font-medium rounded-lg">
+                <span class="material-icons mr-2">check_circle</span>
+                Publicar
+            </button>
+            <button type="submit"
+                    name="accion"
+                    value="devolver"
+                    class="glass-button glass-button-danger inline-flex items-center px-6 py-3 text-sm font-medium rounded-lg">
+                <span class="material-icons mr-2">reply</span>
+                Devolver con correcciones
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

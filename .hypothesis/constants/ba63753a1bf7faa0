@@ -1,4 +1,4 @@
-# file: D:\Trabajos de Programacion\Lab\proyecto\datos_archivados\migrations\0003_migracionlog_tablas_con_datos_and_more.py
-# hypothesis_version: 6.148.7
+# file: /home/bradley/CFBC/datos_archivados/migrations/0003_migracionlog_tablas_con_datos_and_more.py
+# hypothesis_version: 6.155.7
 
 ['Registros Migrados', 'Tablas Vacías', 'Tablas con Datos', 'datos_archivados', 'migracionlog', 'tablas_con_datos', 'tablas_vacias', 'usuarios_migrados']

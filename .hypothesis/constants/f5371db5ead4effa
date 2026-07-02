@@ -1,4 +1,4 @@
-# file: D:\Trabajos de Programacion\Lab\proyecto\principal\migrations\0004_alter_curso_status.py
-# hypothesis_version: 6.148.7
+# file: /home/bradley/CFBC/principal/migrations/0004_alter_curso_status.py
+# hypothesis_version: 6.155.7
 
 ['En progreso', 'Estado', 'F', 'Finalizado', 'I', 'P', 'curso', 'principal', 'status']

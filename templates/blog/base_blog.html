@@ -390,6 +390,11 @@
                     <span class="material-icons mr-1" style="font-size:1rem;">edit</span>
                     Panel de Editores
                 </a>
+                {% elif is_autor %}
+                <a href="{% url 'blog:panel_autores' %}" class="glass-button-oval flex items-center">
+                    <span class="material-icons mr-1" style="font-size:1rem;">create</span>
+                    Panel de Autor
+                </a>
                 {% endif %}
             </div>
 
@@ -431,6 +436,12 @@
                     <a href="{% url 'blog:panel_moderadores' %}" class="glass-button-oval flex items-center">
                         <span class="material-icons mr-1" style="font-size:1rem;">shield</span>
                         Panel de Moderación
+                    </a>
+                    {% endif %}
+                    {% if is_autor and not is_editor and not is_moderador %}
+                    <a href="{% url 'blog:panel_autores' %}" class="glass-button-oval flex items-center">
+                        <span class="material-icons mr-1" style="font-size:1rem;">create</span>
+                        Panel de Autor
                     </a>
                     {% endif %}
                     <div class="dropdown-container" style="position: relative;">
@@ -521,6 +532,12 @@
                                                 <a href="{% url 'blog:panel_moderadores' %}" class="glass-button-oval flex items-center justify-center w-full">
                                                     <span class="material-icons mr-1">shield</span>
                                                     Panel de Moderación
+                                                </a>
+                                    {% endif %}
+                                    {% if is_autor and not is_editor and not is_moderador %}
+                                                <a href="{% url 'blog:panel_autores' %}" class="glass-button-oval flex items-center justify-center w-full">
+                                                    <span class="material-icons mr-1">create</span>
+                                                    Panel de Autor
                                                 </a>
                                     {% endif %}
                                     {% if user.is_staff %}
