@@ -494,6 +494,88 @@ def eliminar_noticia(request, pk):
     
     return render(request, 'blog/editores/eliminar_noticia.html', {'noticia': noticia})
 
+
+@user_passes_test(es_editor)
+def todas_las_noticias(request):
+    """Lista todas las noticias del sistema (cualquier autor) para el editor."""
+    noticias = Noticia.objects.select_related('autor', 'categoria').order_by('-fecha_creacion')
+
+    # Filtros
+    estado = request.GET.get('estado')
+    estados_validos = ('borrador', 'pendiente_revision', 'publicado', 'archivado')
+    if estado in estados_validos:
+        noticias = noticias.filter(estado=estado)
+
+    categoria_id = request.GET.get('categoria')
+    if categoria_id:
+        noticias = noticias.filter(categoria_id=categoria_id)
+
+    busqueda = request.GET.get('q', '').strip()
+    if busqueda:
+        noticias = noticias.filter(
+            Q(titulo__icontains=busqueda) |
+            Q(autor__username__icontains=busqueda) |
+            Q(resumen__icontains=busqueda)
+        )
+
+    # Paginación
+    paginator = Paginator(noticias, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    categorias = Categoria.objects.all()
+
+    context = {
+        'page_obj': page_obj,
+        'categorias': categorias,
+        'estado_actual': estado,
+        'categoria_actual': categoria_id,
+        'busqueda': busqueda,
+        'total_noticias': noticias.count(),
+    }
+    return render(request, 'blog/editores/todas_las_noticias.html', context)
+
+
+@user_passes_test(es_editor)
+def editar_noticia_editor(request, pk):
+    """Edita cualquier noticia (acceso de editor sin restricción de autoría).
+    Redirige de vuelta a todas_las_noticias al guardar."""
+    noticia = get_object_or_404(Noticia, pk=pk)
+    autor_original = noticia.autor  # preservar autor antes de cualquier operación
+
+    if request.method == 'POST':
+        form = NoticiaForm(request.POST, request.FILES, instance=noticia)
+        if form.is_valid():
+            noticia_guardada = form.save(commit=False)
+            noticia_guardada.autor = autor_original  # nunca sobreescribir el autor
+            noticia_guardada.save()
+            messages.success(request, f'Noticia "{noticia_guardada.titulo}" actualizada exitosamente.')
+            return redirect('blog:todas_las_noticias')
+    else:
+        form = NoticiaForm(instance=noticia)
+
+    return render(request, 'blog/editores/editar_noticia_editor.html', {
+        'form': form,
+        'noticia': noticia,
+    })
+
+
+@user_passes_test(es_editor)
+def eliminar_noticia_editor(request, pk):
+    """Elimina cualquier noticia (acceso de editor sin restricción de autoría).
+    Redirige de vuelta a todas_las_noticias tras eliminar."""
+    noticia = get_object_or_404(Noticia, pk=pk)
+
+    if request.method == 'POST':
+        noticia.delete()
+        messages.success(request, f'Noticia "{noticia.titulo}" eliminada exitosamente.')
+        return redirect('blog:todas_las_noticias')
+
+    return render(request, 'blog/editores/eliminar_noticia.html', {
+        'noticia': noticia,
+        'cancelar_url': 'todas_las_noticias',
+    })
+
 # Vista para gestionar comentarios de una noticia
 @user_passes_test(es_editor)
 def gestionar_comentarios(request, pk):

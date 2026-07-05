@@ -338,6 +338,11 @@
                             <span class="ml-auto inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-blue-500 rounded-full">{{ pendientes_count }}</span>
                             {% endif %}
                         </a>
+                        <a class="glass-nav-item flex items-center px-4 py-3 text-gray-700 transition-colors {% if request.resolver_match.url_name == 'todas_las_noticias' %}active{% endif %}" 
+                           href="{% url 'blog:todas_las_noticias' %}">
+                            <span class="material-icons mr-3">list_alt</span>
+                            Todas las Noticias
+                        </a>
                         <hr class="border-gray-300 border-opacity-50 my-4">
                         <a class="glass-nav-item flex items-center px-4 py-3 text-gray-700 transition-colors" 
                            href="{% url 'blog:lista_noticias' %}">

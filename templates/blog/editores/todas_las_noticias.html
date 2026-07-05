@@ -1,0 +1,419 @@
+{% extends 'blog/editores/base_editores.html' %}
+
+{% block titulo_pagina %}Todas las Noticias{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .badge-publicado {
+        background: linear-gradient(135deg, rgba(34,197,94,0.2), rgba(22,163,74,0.1));
+        border: 1px solid rgba(34,197,94,0.4);
+        color: rgb(22,163,74);
+    }
+    .badge-borrador {
+        background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(217,119,6,0.1));
+        border: 1px solid rgba(245,158,11,0.4);
+        color: rgb(180,100,0);
+    }
+    .badge-pendiente {
+        background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(79,70,229,0.1));
+        border: 1px solid rgba(99,102,241,0.4);
+        color: rgb(79,70,229);
+    }
+    .badge-archivado {
+        background: linear-gradient(135deg, rgba(107,114,128,0.2), rgba(75,85,99,0.1));
+        border: 1px solid rgba(107,114,128,0.4);
+        color: rgb(75,85,99);
+    }
+
+    /* Modal de confirmación de eliminación */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(4px);
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-box {
+        background: linear-gradient(135deg, rgba(255,255,255,0.97), rgba(249,250,251,0.95));
+        border: 1px solid rgba(209,213,219,0.4);
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        max-width: 440px;
+        width: 90%;
+        padding: 2rem;
+    }
+
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    .btn-edit {
+        background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(37,99,235,0.08));
+        border-color: rgba(59,130,246,0.3);
+        color: rgb(37,99,235);
+    }
+    .btn-edit:hover {
+        background: linear-gradient(135deg, rgba(59,130,246,0.3), rgba(37,99,235,0.15));
+        transform: translateY(-1px);
+    }
+    .btn-delete {
+        background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(220,38,38,0.08));
+        border-color: rgba(239,68,68,0.3);
+        color: rgb(220,38,38);
+    }
+    .btn-delete:hover {
+        background: linear-gradient(135deg, rgba(239,68,68,0.3), rgba(220,38,38,0.15));
+        transform: translateY(-1px);
+    }
+    .btn-view {
+        background: linear-gradient(135deg, rgba(34,197,94,0.15), rgba(22,163,74,0.08));
+        border-color: rgba(34,197,94,0.3);
+        color: rgb(22,163,74);
+    }
+    .btn-view:hover {
+        background: linear-gradient(135deg, rgba(34,197,94,0.3), rgba(22,163,74,0.15));
+        transform: translateY(-1px);
+    }
+
+    /* Tabla responsive */
+    .noticias-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    .noticias-table th {
+        background: linear-gradient(135deg, rgba(249,250,251,0.9), rgba(243,244,246,0.8));
+        padding: 12px 16px;
+        text-align: left;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6b7280;
+        border-bottom: 1px solid rgba(229,231,235,0.8);
+    }
+    .noticias-table td {
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(229,231,235,0.5);
+        vertical-align: middle;
+    }
+    .noticias-table tr:last-child td { border-bottom: none; }
+    .noticias-table tbody tr:hover td {
+        background: rgba(59,130,246,0.03);
+    }
+</style>
+{% endblock %}
+
+{% block botones_accion %}
+<a href="{% url 'blog:crear_noticia' %}"
+   class="action-btn btn-edit px-4 py-2">
+    <span class="material-icons text-sm">add</span>
+    Nueva Noticia
+</a>
+{% endblock %}
+
+{% block contenido_editores %}
+
+<!-- Filtros -->
+<div class="glass-card p-4 mb-6">
+    <form method="get" class="flex flex-wrap gap-3 items-end">
+        <div class="flex-1 min-w-[180px]">
+            <label class="block text-xs font-medium text-gray-600 mb-1">Buscar</label>
+            <input type="text" name="q" value="{{ busqueda }}" placeholder="Título, autor o resumen…"
+                   class="glass-input w-full px-3 py-2 text-sm rounded-md focus:outline-none">
+        </div>
+        <div class="min-w-[140px]">
+            <label class="block text-xs font-medium text-gray-600 mb-1">Estado</label>
+            <select name="estado" class="glass-input w-full px-3 py-2 text-sm rounded-md focus:outline-none">
+                <option value="">Todos</option>
+                <option value="publicado"   {% if estado_actual == 'publicado'   %}selected{% endif %}>Publicado</option>
+                <option value="borrador"    {% if estado_actual == 'borrador'    %}selected{% endif %}>Borrador</option>
+                <option value="pendiente_revision" {% if estado_actual == 'pendiente_revision' %}selected{% endif %}>En revisión</option>
+                <option value="archivado"   {% if estado_actual == 'archivado'   %}selected{% endif %}>Archivado</option>
+            </select>
+        </div>
+        <div class="min-w-[140px]">
+            <label class="block text-xs font-medium text-gray-600 mb-1">Categoría</label>
+            <select name="categoria" class="glass-input w-full px-3 py-2 text-sm rounded-md focus:outline-none">
+                <option value="">Todas</option>
+                {% for cat in categorias %}
+                <option value="{{ cat.id }}" {% if categoria_actual == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="flex gap-2">
+            <button type="submit"
+                    class="action-btn btn-edit px-4 py-2">
+                <span class="material-icons text-sm">search</span>
+                Filtrar
+            </button>
+            {% if busqueda or estado_actual or categoria_actual %}
+            <a href="{% url 'blog:todas_las_noticias' %}"
+               class="action-btn" style="background:rgba(107,114,128,0.1);border-color:rgba(107,114,128,0.3);color:#6b7280;">
+                <span class="material-icons text-sm">clear</span>
+                Limpiar
+            </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Contador -->
+<div class="flex items-center justify-between mb-4">
+    <p class="text-sm text-gray-500">
+        <span class="font-semibold text-gray-700">{{ total_noticias }}</span> noticia{{ total_noticias|pluralize }} encontrada{{ total_noticias|pluralize }}
+        {% if busqueda %} para "<em>{{ busqueda }}</em>"{% endif %}
+    </p>
+    <p class="text-sm text-gray-500">
+        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+    </p>
+</div>
+
+<!-- Tabla -->
+{% if page_obj.object_list %}
+<div class="glass-card overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="noticias-table">
+            <thead>
+                <tr>
+                    <th>Noticia</th>
+                    <th class="hidden md:table-cell">Autor</th>
+                    <th class="hidden sm:table-cell">Categoría</th>
+                    <th>Estado</th>
+                    <th class="hidden lg:table-cell">Fecha</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for noticia in page_obj %}
+                <tr>
+                    <!-- Título + resumen -->
+                    <td>
+                        <div>
+                            <p class="font-medium text-gray-800 text-sm leading-tight">{{ noticia.titulo|truncatechars:60 }}</p>
+                            {% if noticia.resumen %}
+                            <p class="text-xs text-gray-500 mt-1 hidden sm:block">{{ noticia.resumen|truncatechars:80 }}</p>
+                            {% endif %}
+                            {% if noticia.destacada %}
+                            <span class="inline-flex items-center gap-1 text-xs text-yellow-600 mt-1">
+                                <span class="material-icons text-xs">star</span>Destacada
+                            </span>
+                            {% endif %}
+                        </div>
+                    </td>
+
+                    <!-- Autor -->
+                    <td class="hidden md:table-cell">
+                        <div class="flex items-center gap-2">
+                            <span class="material-icons text-gray-400 text-base">person</span>
+                            <span class="text-sm text-gray-700">{{ noticia.autor.get_full_name|default:noticia.autor.username }}</span>
+                        </div>
+                    </td>
+
+                    <!-- Categoría -->
+                    <td class="hidden sm:table-cell">
+                        {% if noticia.categoria %}
+                        <span class="text-sm text-gray-600">{{ noticia.categoria.nombre }}</span>
+                        {% else %}
+                        <span class="text-xs text-gray-400">—</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Estado -->
+                    <td>
+                        {% if noticia.estado == 'publicado' %}
+                        <span class="badge-publicado inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
+                            <span class="material-icons text-xs mr-1">check_circle</span>Publicado
+                        </span>
+                        {% elif noticia.estado == 'borrador' %}
+                        <span class="badge-borrador inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
+                            <span class="material-icons text-xs mr-1">edit_note</span>Borrador
+                        </span>
+                        {% elif noticia.estado == 'pendiente_revision' %}
+                        <span class="badge-pendiente inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
+                            <span class="material-icons text-xs mr-1">hourglass_empty</span>En revisión
+                        </span>
+                        {% elif noticia.estado == 'archivado' %}
+                        <span class="badge-archivado inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
+                            <span class="material-icons text-xs mr-1">archive</span>Archivado
+                        </span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Fecha -->
+                    <td class="hidden lg:table-cell">
+                        <span class="text-xs text-gray-500">{{ noticia.fecha_creacion|date:"d/m/Y" }}</span>
+                    </td>
+
+                    <!-- Acciones -->
+                    <td>
+                        <div class="flex items-center justify-center gap-2 flex-wrap">
+                            {% if noticia.estado == 'publicado' %}
+                            <a href="{{ noticia.get_absolute_url }}"
+                               class="action-btn btn-view"
+                               target="_blank"
+                               title="Ver noticia publicada">
+                                <span class="material-icons text-sm">visibility</span>
+                                <span class="hidden sm:inline">Ver</span>
+                            </a>
+                            {% endif %}
+
+                            <a href="{% url 'blog:editar_noticia_editor' noticia.pk %}"
+                               class="action-btn btn-edit"
+                               title="Editar noticia">
+                                <span class="material-icons text-sm">edit</span>
+                                <span class="hidden sm:inline">Editar</span>
+                            </a>
+
+                            <button type="button"
+                                    data-url="{% url 'blog:eliminar_noticia_editor' noticia.pk %}"
+                                    data-titulo="{{ noticia.titulo|escapejs }}"
+                                    class="action-btn btn-delete btn-confirmar-eliminar"
+                                    title="Eliminar noticia">
+                                <span class="material-icons text-sm">delete</span>
+                                <span class="hidden sm:inline">Eliminar</span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Paginación -->
+{% if page_obj.has_other_pages %}
+<div class="flex justify-center items-center gap-2 mt-6">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}"
+       class="action-btn btn-edit">
+        <span class="material-icons text-sm">chevron_left</span>
+    </a>
+    {% endif %}
+
+    {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        <span class="action-btn btn-edit font-bold">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <a href="?page={{ num }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}"
+           class="action-btn" style="background:rgba(255,255,255,0.7);border-color:rgba(209,213,219,0.4);color:#374151;">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}"
+       class="action-btn btn-edit">
+        <span class="material-icons text-sm">chevron_right</span>
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<!-- Sin resultados -->
+<div class="glass-card p-12 text-center">
+    <span class="material-icons text-6xl text-gray-300 block mb-4">article</span>
+    <h3 class="text-xl font-semibold text-gray-600 mb-2">No hay noticias</h3>
+    <p class="text-gray-500 mb-6">
+        {% if busqueda or estado_actual or categoria_actual %}
+            No se encontraron noticias con los filtros aplicados.
+        {% else %}
+            Aún no hay noticias en el sistema.
+        {% endif %}
+    </p>
+    {% if busqueda or estado_actual or categoria_actual %}
+    <a href="{% url 'blog:todas_las_noticias' %}" class="action-btn btn-edit px-6 py-2">
+        <span class="material-icons text-sm">clear</span>
+        Quitar filtros
+    </a>
+    {% else %}
+    <a href="{% url 'blog:crear_noticia' %}" class="action-btn btn-edit px-6 py-2">
+        <span class="material-icons text-sm">add</span>
+        Crear primera noticia
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Modal de confirmación de eliminación -->
+<div id="modal-eliminar" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+    <div class="modal-box">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center"
+                 style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);">
+                <span class="material-icons text-red-500">warning</span>
+            </div>
+            <div>
+                <h3 id="modal-titulo" class="text-lg font-semibold text-gray-800">Eliminar noticia</h3>
+                <p class="text-sm text-gray-500">Esta acción no se puede deshacer</p>
+            </div>
+        </div>
+
+        <p class="text-gray-700 mb-6 text-sm">
+            ¿Estás seguro de que quieres eliminar la noticia
+            <strong id="modal-titulo-noticia" class="text-gray-900"></strong>?
+        </p>
+
+        <form id="form-eliminar" method="post" action="">
+            {% csrf_token %}
+            <div class="flex gap-3 justify-end">
+                <button type="button"
+                        onclick="cerrarModal()"
+                        class="action-btn px-4 py-2"
+                        style="background:rgba(255,255,255,0.9);border-color:rgba(209,213,219,0.5);color:#374151;">
+                    <span class="material-icons text-sm">close</span>
+                    Cancelar
+                </button>
+                <button type="submit"
+                        class="action-btn btn-delete px-4 py-2">
+                    <span class="material-icons text-sm">delete_forever</span>
+                    Sí, eliminar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Delegación de eventos en los botones de eliminar
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.btn-confirmar-eliminar').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var url = this.getAttribute('data-url');
+            var titulo = this.getAttribute('data-titulo');
+            document.getElementById('modal-titulo-noticia').textContent = '"' + titulo + '"';
+            document.getElementById('form-eliminar').action = url;
+            document.getElementById('modal-eliminar').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        });
+    });
+});
+
+function cerrarModal() {
+    document.getElementById('modal-eliminar').style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+document.getElementById('modal-eliminar').addEventListener('click', function(e) {
+    if (e.target === this) cerrarModal();
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') cerrarModal();
+});
+</script>
+{% endblock %}

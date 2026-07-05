@@ -21,6 +21,9 @@ urlpatterns = [
     path('editores/categorias/', views.gestionar_categorias, name='gestionar_categorias'),
     path('editores/bandeja-revision/', views.bandeja_revision, name='bandeja_revision'),
     path('editores/revisar/<int:pk>/', views.revisar_noticia, name='revisar_noticia'),
+    path('editores/todas-las-noticias/', views.todas_las_noticias, name='todas_las_noticias'),
+    path('editores/todas-las-noticias/editar/<int:pk>/', views.editar_noticia_editor, name='editar_noticia_editor'),
+    path('editores/todas-las-noticias/eliminar/<int:pk>/', views.eliminar_noticia_editor, name='eliminar_noticia_editor'),
 
     # URLs para autores
     path('autores/', views.panel_autores, name='panel_autores'),
