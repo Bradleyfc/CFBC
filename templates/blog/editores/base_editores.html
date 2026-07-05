@@ -333,9 +333,9 @@
                         <a class="glass-nav-item flex items-center px-4 py-3 text-gray-700 transition-colors {% if request.resolver_match.url_name == 'bandeja_revision' %}active{% endif %}" 
                            href="{% url 'blog:bandeja_revision' %}">
                             <span class="material-icons mr-3">inbox</span>
-                            Pendientes de revisión
+                            <span class="flex-1">Pendientes de revisión</span>
                             {% if pendientes_count > 0 %}
-                            <span class="ml-auto inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-blue-500 rounded-full">{{ pendientes_count }}</span>
+                            <span style="display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 4px;font-size:11px;font-weight:700;color:#fff;background:#ef4444;border-radius:9999px;margin-left:8px;">{{ pendientes_count }}</span>
                             {% endif %}
                         </a>
                         <a class="glass-nav-item flex items-center px-4 py-3 text-gray-700 transition-colors {% if request.resolver_match.url_name == 'todas_las_noticias' %}active{% endif %}" 
