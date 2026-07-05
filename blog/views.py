@@ -11,6 +11,7 @@ from django.views.generic import CreateView, UpdateView, DeleteView, ListView
 from django.urls import reverse_lazy
 from .models import Noticia, Categoria, Comentario, SancionUsuario, ReporteComentario, ComentarioFijado, MetricaComunidad
 from .forms import ComentarioForm, NoticiaForm, EditorRevisionForm, AutorNoticiaForm
+from .forms import validar_imagen_autor
 
 def lista_noticias(request):
     """Vista para mostrar todas las noticias publicadas"""
@@ -322,13 +323,35 @@ def editar_noticia_autor(request, pk):
             messages.error(request, 'Solo puedes editar borradores.')
             return redirect('blog:mis_noticias_autor')
 
+        imagen_actual = noticia.imagen_principal.name if noticia.imagen_principal else ''
+
         form = AutorNoticiaForm(request.POST, request.FILES, instance=noticia)
         if form.is_valid():
-            if 'imagen_principal' in form.changed_data and noticia.imagen_principal:
-                noticia.imagen_principal.delete(save=False)
-            noticia_actualizada = form.save(commit=False)
-            noticia_actualizada.estado = 'borrador'
-            noticia_actualizada.save()
+            noticia_guardada = form.save(commit=False)
+            noticia_guardada.autor = request.user
+            noticia_guardada.estado = 'borrador'
+
+            archivo = request.FILES.get('imagen_principal')
+            if archivo:
+                try:
+                    validar_imagen_autor(archivo)
+                except Exception as e:
+                    messages.error(request, str(e))
+                    return redirect('blog:editar_noticia_autor', pk=pk)
+                # Eliminar imagen anterior
+                if imagen_actual:
+                    from django.core.files.storage import default_storage
+                    try:
+                        default_storage.delete(imagen_actual)
+                    except Exception:
+                        pass
+                # Asignar archivo nuevo directamente al campo
+                noticia_guardada.imagen_principal = archivo
+            else:
+                # Sin archivo nuevo: forzar el valor anterior antes de guardar
+                noticia_guardada.imagen_principal = imagen_actual
+
+            noticia_guardada.save()
             messages.success(request, 'Borrador actualizado.')
             return redirect('blog:editar_noticia_autor', pk=pk)
     else:
@@ -477,7 +500,14 @@ def editar_noticia(request, pk):
     if request.method == 'POST':
         form = NoticiaForm(request.POST, request.FILES, instance=noticia)
         if form.is_valid():
-            form.save()
+            noticia_guardada = form.save(commit=False)
+            # Conservar imagen existente si no se subió una nueva
+            if not request.FILES.get('imagen_principal'):
+                noticia_guardada.imagen_principal = noticia.imagen_principal
+            else:
+                if noticia.imagen_principal:
+                    noticia.imagen_principal.delete(save=False)
+            noticia_guardada.save()
             messages.success(request, 'Noticia actualizada exitosamente.')
             return redirect('blog:editar_noticia', pk=noticia.pk)
     else:
@@ -560,6 +590,12 @@ def editar_noticia_editor(request, pk):
         if form.is_valid():
             noticia_guardada = form.save(commit=False)
             noticia_guardada.autor = autor_original  # nunca sobreescribir el autor
+            # Conservar imagen existente si no se subió una nueva
+            if not request.FILES.get('imagen_principal'):
+                noticia_guardada.imagen_principal = noticia.imagen_principal
+            else:
+                if noticia.imagen_principal:
+                    noticia.imagen_principal.delete(save=False)
             noticia_guardada.save()
             messages.success(request, f'Noticia "{noticia_guardada.titulo}" actualizada exitosamente.')
             return redirect('blog:todas_las_noticias')

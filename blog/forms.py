@@ -10,6 +10,11 @@ LIMITE_BYTES = 5 * 1024 * 1024  # 5 MB
 
 
 def validar_imagen_autor(imagen):
+    # Solo validar si es un archivo recién subido (tiene content_type)
+    # Los ImageFieldFile existentes no tienen content_type
+    if not hasattr(imagen, 'content_type'):
+        return
+
     extension = imagen.name.rsplit('.', 1)[-1].lower()
     if extension not in EXTENSIONES_VALIDAS:
         raise ValidationError(
@@ -164,15 +169,8 @@ class AutorNoticiaForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Formatear la fecha para el input datetime-local
         if self.instance and self.instance.fecha_publicacion:
             self.initial['fecha_publicacion'] = self.instance.fecha_publicacion.strftime('%Y-%m-%dT%H:%M')
-
-    def clean_imagen_principal(self):
-        imagen = self.cleaned_data.get('imagen_principal')
-        if imagen and hasattr(imagen, 'name'):
-            validar_imagen_autor(imagen)
-        return imagen
 
 
 # --- 2.3: Formulario del editor para revisar noticias ---
