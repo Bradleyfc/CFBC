@@ -429,7 +429,7 @@
              class="sidebar-cat-item {% if categoria_actual == categoria.slug %}active{% endif %}">
             <span class="material-icons cat-icon">label</span>
             <span class="cat-label">{{ categoria.nombre }}</span>
-            <span class="sidebar-cat-badge">{{ categoria.noticias.count }}</span>
+            <span class="sidebar-cat-badge">{{ categoria.noticias_publicadas_count }}</span>
           </a>
         {% endfor %}
       </nav>

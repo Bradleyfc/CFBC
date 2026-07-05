@@ -356,55 +356,74 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<!-- Quill.js -->
-<link href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.js"></script>
+<!-- Quill.js - carga dinámica con fallback offline -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const textarea = document.getElementById('id_contenido');
-    const editorDiv = document.getElementById('quill-editor');
+(function() {
+    var textarea = document.getElementById('id_contenido');
+    var editorDiv = document.getElementById('quill-editor');
 
-    if (typeof Quill === 'undefined') {
-        console.warn('Quill no se pudo cargar. Usando textarea simple como editor.');
+    function mostrarTextarea() {
+        if (editorDiv) editorDiv.style.display = 'none';
+        if (textarea) {
+            textarea.style.display = 'block';
+            textarea.style.minHeight = '400px';
+        }
+    }
+
+    if (!navigator.onLine) {
+        mostrarTextarea();
         return;
     }
 
-    try {
-        const quill = new Quill('#quill-editor', {
-            theme: 'snow',
-            modules: {
-                toolbar: [
-                    [{ 'font': [] }, { 'size': ['small', false, 'large', 'huge'] }],
-                    ['bold', 'italic', 'underline', 'strike'],
-                    [{ 'color': [] }, { 'background': [] }],
-                    [{ 'align': [] }],
-                    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                    [{ 'indent': '-1' }, { 'indent': '+1' }],
-                    ['blockquote', 'code-block'],
-                    ['link', 'image'],
-                    ['clean']
-                ]
-            },
-            placeholder: 'Escribe el contenido de la noticia aquí...',
-        });
+    var cssLoaded = false;
+    var jsLoaded  = false;
+    var fallbackTimer = setTimeout(mostrarTextarea, 4000);
 
-        editorDiv.style.display = 'block';
-        textarea.style.display = 'none';
-
-        if (textarea.value) {
-            quill.root.innerHTML = textarea.value;
+    function tryInitQuill() {
+        if (!cssLoaded || !jsLoaded) return;
+        clearTimeout(fallbackTimer);
+        try {
+            var quill = new Quill('#quill-editor', {
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                        [{ font: [] }, { size: ['small', false, 'large', 'huge'] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ color: [] }, { background: [] }],
+                        [{ align: [] }],
+                        [{ list: 'ordered' }, { list: 'bullet' }],
+                        [{ indent: '-1' }, { indent: '+1' }],
+                        ['blockquote', 'code-block'],
+                        ['link', 'image'],
+                        ['clean']
+                    ]
+                },
+                placeholder: 'Escribe el contenido de la noticia aquí...',
+            });
+            editorDiv.style.display = 'block';
+            textarea.style.display  = 'none';
+            if (textarea.value) quill.root.innerHTML = textarea.value;
+            var form = textarea.closest('form');
+            if (form) form.addEventListener('submit', function() {
+                textarea.value = quill.root.innerHTML;
+            });
+        } catch(e) {
+            mostrarTextarea();
         }
-
-        const form = textarea.closest('form');
-        form.addEventListener('submit', function() {
-            textarea.value = quill.root.innerHTML;
-        });
-
-    } catch(e) {
-        console.warn('Error al inicializar Quill:', e);
-        editorDiv.style.display = 'none';
-        textarea.style.display = 'block';
     }
-});
+
+    var link = document.createElement('link');
+    link.rel  = 'stylesheet';
+    link.href = 'https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css';
+    link.onload  = function() { cssLoaded = true; tryInitQuill(); };
+    link.onerror = mostrarTextarea;
+    document.head.appendChild(link);
+
+    var script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/quill@2/dist/quill.js';
+    script.onload  = function() { jsLoaded = true; tryInitQuill(); };
+    script.onerror = mostrarTextarea;
+    document.head.appendChild(script);
+})();
 </script>
 {% endblock %}

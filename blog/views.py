@@ -40,7 +40,7 @@ def lista_noticias(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
-    # Noticias destacadas para el sidebar
+    # Noticias destacadas para el sidebar (solo publicadas)
     noticias_destacadas_qs = Noticia.objects.filter(
         estado='publicado',
         destacada=True
@@ -49,8 +49,14 @@ def lista_noticias(request):
         noticias_destacadas_qs = noticias_destacadas_qs.exclude(visibilidad='solo_registrados')
     noticias_destacadas = noticias_destacadas_qs[:10]
     
-    # Categorías para el menú (máximo 10)
-    categorias = Categoria.objects.all()[:10]
+    # Categorías con conteo de noticias publicadas
+    from django.db.models import Count
+    categorias = Categoria.objects.annotate(
+        noticias_publicadas_count=Count(
+            'noticias',
+            filter=Q(noticias__estado='publicado')
+        )
+    ).order_by('nombre')[:10]
     
     is_editor = request.user.is_authenticated and request.user.groups.filter(name='Editor').exists()
     is_moderador = request.user.is_authenticated and es_moderador(request.user)
@@ -186,8 +192,14 @@ def noticias_por_categoria(request, slug):
         noticias_destacadas_qs = noticias_destacadas_qs.exclude(visibilidad='solo_registrados')
     noticias_destacadas = noticias_destacadas_qs[:10]
 
-    # Categorías para el menú (máximo 10)
-    categorias = Categoria.objects.all()[:10]
+    # Categorías con conteo de noticias publicadas
+    from django.db.models import Count
+    categorias = Categoria.objects.annotate(
+        noticias_publicadas_count=Count(
+            'noticias',
+            filter=Q(noticias__estado='publicado')
+        )
+    ).order_by('nombre')[:10]
 
     is_editor = request.user.is_authenticated and request.user.groups.filter(name='Editor').exists()
     is_moderador = request.user.is_authenticated and es_moderador(request.user)

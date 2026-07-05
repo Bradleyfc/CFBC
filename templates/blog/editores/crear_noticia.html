@@ -431,60 +431,78 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<!-- Quill.js - Editor de texto enriquecido -->
-<link href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.js"></script>
+<!-- Quill.js - carga dinámica con fallback offline -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const textarea = document.getElementById('id_contenido');
-    const editorDiv = document.getElementById('quill-editor');
+(function() {
+    var textarea = document.getElementById('id_contenido');
+    var editorDiv = document.getElementById('quill-editor');
 
-    // Si Quill no se cargó (CDN falló), el textarea ya es visible, no hay nada que hacer
-    if (typeof Quill === 'undefined') {
-        console.warn('Quill no se pudo cargar. Usando textarea simple como editor.');
+    // Estilo del textarea fallback (igual que el campo resumen)
+    function mostrarTextarea() {
+        if (editorDiv) editorDiv.style.display = 'none';
+        if (textarea) {
+            textarea.style.display = 'block';
+            textarea.style.minHeight = '400px';
+        }
+    }
+
+    // Si no hay conexión, mostrar textarea directamente sin intentar CDN
+    if (!navigator.onLine) {
+        mostrarTextarea();
         return;
     }
 
-    try {
-        const quill = new Quill('#quill-editor', {
-            theme: 'snow',
-            modules: {
-                toolbar: [
-                    [{ 'font': [] }, { 'size': ['small', false, 'large', 'huge'] }],
-                    ['bold', 'italic', 'underline', 'strike'],
-                    [{ 'color': [] }, { 'background': [] }],
-                    [{ 'align': [] }],
-                    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                    [{ 'indent': '-1' }, { 'indent': '+1' }],
-                    ['blockquote', 'code-block'],
-                    ['link', 'image'],
-                    ['clean']
-                ]
-            },
-            placeholder: 'Escribe el contenido de la noticia aquí...',
-        });
+    // Intentar cargar Quill con timeout de 4 segundos
+    var cssLoaded = false;
+    var jsLoaded  = false;
+    var fallbackTimer = setTimeout(mostrarTextarea, 4000);
 
-        // Quill cargó bien: mostrar editor, ocultar textarea nativo
-        editorDiv.style.display = 'block';
-        textarea.style.display = 'none';
-
-        // Cargar contenido existente si hay
-        if (textarea.value) {
-            quill.root.innerHTML = textarea.value;
+    function tryInitQuill() {
+        if (!cssLoaded || !jsLoaded) return;
+        clearTimeout(fallbackTimer);
+        try {
+            var quill = new Quill('#quill-editor', {
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                        [{ font: [] }, { size: ['small', false, 'large', 'huge'] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ color: [] }, { background: [] }],
+                        [{ align: [] }],
+                        [{ list: 'ordered' }, { list: 'bullet' }],
+                        [{ indent: '-1' }, { indent: '+1' }],
+                        ['blockquote', 'code-block'],
+                        ['link', 'image'],
+                        ['clean']
+                    ]
+                },
+                placeholder: 'Escribe el contenido de la noticia aquí...',
+            });
+            editorDiv.style.display = 'block';
+            textarea.style.display  = 'none';
+            if (textarea.value) quill.root.innerHTML = textarea.value;
+            textarea.closest('form').addEventListener('submit', function() {
+                textarea.value = quill.root.innerHTML;
+            });
+        } catch(e) {
+            mostrarTextarea();
         }
-
-        // Sincronizar con el textarea al enviar el formulario
-        const form = textarea.closest('form');
-        form.addEventListener('submit', function() {
-            textarea.value = quill.root.innerHTML;
-        });
-
-    } catch(e) {
-        // Si Quill falla al inicializar, el textarea ya es visible
-        console.warn('Error al inicializar Quill:', e);
-        editorDiv.style.display = 'none';
-        textarea.style.display = 'block';
     }
-});
+
+    // CSS
+    var link = document.createElement('link');
+    link.rel  = 'stylesheet';
+    link.href = 'https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css';
+    link.onload  = function() { cssLoaded = true; tryInitQuill(); };
+    link.onerror = mostrarTextarea;
+    document.head.appendChild(link);
+
+    // JS
+    var script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/quill@2/dist/quill.js';
+    script.onload  = function() { jsLoaded = true; tryInitQuill(); };
+    script.onerror = mostrarTextarea;
+    document.head.appendChild(script);
+})();
 </script>
 {% endblock %}
