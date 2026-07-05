@@ -498,15 +498,21 @@ def editar_noticia(request, pk):
         return redirect('blog:mis_noticias')
     
     if request.method == 'POST':
+        imagen_actual = noticia.imagen_principal.name if noticia.imagen_principal else ''
         form = NoticiaForm(request.POST, request.FILES, instance=noticia)
         if form.is_valid():
             noticia_guardada = form.save(commit=False)
-            # Conservar imagen existente si no se subió una nueva
-            if not request.FILES.get('imagen_principal'):
-                noticia_guardada.imagen_principal = noticia.imagen_principal
+            archivo = request.FILES.get('imagen_principal')
+            if archivo:
+                if imagen_actual:
+                    from django.core.files.storage import default_storage
+                    try:
+                        default_storage.delete(imagen_actual)
+                    except Exception:
+                        pass
+                noticia_guardada.imagen_principal = archivo
             else:
-                if noticia.imagen_principal:
-                    noticia.imagen_principal.delete(save=False)
+                noticia_guardada.imagen_principal = imagen_actual
             noticia_guardada.save()
             messages.success(request, 'Noticia actualizada exitosamente.')
             return redirect('blog:editar_noticia', pk=noticia.pk)
@@ -586,16 +592,22 @@ def editar_noticia_editor(request, pk):
     autor_original = noticia.autor  # preservar autor antes de cualquier operación
 
     if request.method == 'POST':
+        imagen_actual = noticia.imagen_principal.name if noticia.imagen_principal else ''
         form = NoticiaForm(request.POST, request.FILES, instance=noticia)
         if form.is_valid():
             noticia_guardada = form.save(commit=False)
             noticia_guardada.autor = autor_original  # nunca sobreescribir el autor
-            # Conservar imagen existente si no se subió una nueva
-            if not request.FILES.get('imagen_principal'):
-                noticia_guardada.imagen_principal = noticia.imagen_principal
+            archivo = request.FILES.get('imagen_principal')
+            if archivo:
+                if imagen_actual:
+                    from django.core.files.storage import default_storage
+                    try:
+                        default_storage.delete(imagen_actual)
+                    except Exception:
+                        pass
+                noticia_guardada.imagen_principal = archivo
             else:
-                if noticia.imagen_principal:
-                    noticia.imagen_principal.delete(save=False)
+                noticia_guardada.imagen_principal = imagen_actual
             noticia_guardada.save()
             messages.success(request, f'Noticia "{noticia_guardada.titulo}" actualizada exitosamente.')
             return redirect('blog:todas_las_noticias')
