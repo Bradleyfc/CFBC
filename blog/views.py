@@ -695,6 +695,42 @@ def gestionar_categorias(request):
     return render(request, 'blog/editores/categorias.html', {'categorias': categorias})
 
 
+@user_passes_test(es_editor)
+def eliminar_categoria(request, pk):
+    """Elimina una categoría. Si tiene noticias, las mueve a 'Sin categoría' y las oculta."""
+    categoria = get_object_or_404(Categoria, pk=pk)
+
+    # No permitir eliminar la categoría especial 'Sin categoría'
+    if categoria.slug == 'sin-categoria':
+        messages.error(request, 'No puedes eliminar la categoría "Sin categoría".')
+        return redirect('blog:gestionar_categorias')
+
+    if request.method == 'POST':
+        noticias_count = categoria.noticias.count()
+        if noticias_count > 0:
+            # Obtener o crear la categoría "Sin categoría"
+            sin_cat, _ = Categoria.objects.get_or_create(
+                slug='sin-categoria',
+                defaults={
+                    'nombre': 'Sin categoría',
+                    'descripcion': 'Categoría para noticias sin clasificación',
+                }
+            )
+            # Mover noticias y ocultarlas (solo_registrados las hace invisibles públicamente)
+            categoria.noticias.update(
+                categoria=sin_cat,
+                visibilidad='solo_registrados',
+            )
+
+        nombre = categoria.nombre
+        categoria.delete()
+        messages.success(request, f'Categoría "{nombre}" eliminada. {noticias_count} noticia(s) movida(s) a "Sin categoría".' if noticias_count else f'Categoría "{nombre}" eliminada.')
+        return redirect('blog:gestionar_categorias')
+
+    # GET — no se usa, redirige siempre
+    return redirect('blog:gestionar_categorias')
+
+
 # Vista de bandeja de revisión (noticias pendientes de revisión)
 @user_passes_test(es_editor)
 def bandeja_revision(request):

@@ -19,6 +19,7 @@ urlpatterns = [
     path('editores/comentarios/<int:pk>/', views.gestionar_comentarios, name='gestionar_comentarios'),
     path('editores/comentarios/eliminar/<int:pk>/', views.eliminar_comentario, name='eliminar_comentario'),
     path('editores/categorias/', views.gestionar_categorias, name='gestionar_categorias'),
+    path('editores/categorias/eliminar/<int:pk>/', views.eliminar_categoria, name='eliminar_categoria'),
     path('editores/bandeja-revision/', views.bandeja_revision, name='bandeja_revision'),
     path('editores/revisar/<int:pk>/', views.revisar_noticia, name='revisar_noticia'),
     path('editores/todas-las-noticias/', views.todas_las_noticias, name='todas_las_noticias'),

@@ -227,12 +227,23 @@
                                         <code class="text-sm bg-gray-100 px-2 py-1 rounded text-gray-700">{{ categoria.slug }}</code>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div class="flex space-x-2">
+                                        <div class="flex space-x-3">
                                             <a href="{% url 'blog:categoria_noticias' categoria.slug %}" 
                                                class="glass-action-btn p-2 rounded-lg" target="_blank"
                                                title="Ver categoría">
                                                 <span class="material-icons text-sm text-blue-600">visibility</span>
                                             </a>
+                                            {% if categoria.slug != 'sin-categoria' %}
+                                            <button type="button"
+                                                    data-pk="{{ categoria.pk }}"
+                                                    data-nombre="{{ categoria.nombre|escapejs }}"
+                                                    data-count="{{ categoria.noticias.count }}"
+                                                    data-url="{% url 'blog:eliminar_categoria' categoria.pk %}"
+                                                    class="glass-action-btn p-2 rounded-lg btn-eliminar-categoria"
+                                                    title="Eliminar categoría">
+                                                <span class="material-icons text-sm text-red-600">delete</span>
+                                            </button>
+                                            {% endif %}
                                             {% if user.is_staff %}
                                                 <a href="{% url 'admin:blog_categoria_change' categoria.pk %}" 
                                                    class="glass-action-btn p-2 rounded-lg" target="_blank"
@@ -276,8 +287,12 @@
                         El slug se genera automáticamente basado en el nombre.
                     </li>
                     <li class="flex items-start">
-                        <span class="material-icons text-blue-500 mr-2 text-sm mt-0.5">check_circle</span>
-                        No puedes eliminar categorías que tengan noticias asociadas.
+                        <span class="material-icons text-orange-500 mr-2 text-sm mt-0.5">warning</span>
+                        Al eliminar una categoría con noticias, estas se mueven a "Sin categoría" y dejan de ser visibles públicamente.
+                    </li>
+                    <li class="flex items-start">
+                        <span class="material-icons text-red-500 mr-2 text-sm mt-0.5">block</span>
+                        La categoría "Sin categoría" no puede eliminarse.
                     </li>
                     {% if user.is_staff %}
                         <li class="flex items-start">
@@ -290,4 +305,112 @@
         </div>
     </div>
 </div>
+
+<!-- Modal de confirmación de eliminación de categoría -->
+<div id="modal-eliminar-cat" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);z-index:50;align-items:center;justify-content:center;" role="dialog" aria-modal="true">
+    <div style="background:linear-gradient(135deg,rgba(255,255,255,0.97),rgba(249,250,251,0.95));border:1px solid rgba(209,213,219,0.4);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,0.2);max-width:460px;width:90%;padding:2rem;">
+
+        <!-- Sin noticias -->
+        <div id="modal-sin-noticias">
+            <div class="flex items-center gap-3 mb-4">
+                <div style="flex-shrink:0;width:48px;height:48px;border-radius:9999px;display:flex;align-items:center;justify-content:center;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);">
+                    <span class="material-icons text-red-500">delete_forever</span>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">Eliminar categoría</h3>
+                    <p class="text-sm text-gray-500">Esta acción no se puede deshacer</p>
+                </div>
+            </div>
+            <p class="text-gray-700 text-sm mb-6">
+                ¿Eliminar la categoría <strong id="modal-nombre-simple" class="text-gray-900"></strong>?
+            </p>
+            <div class="flex gap-3 justify-end">
+                <button type="button" onclick="cerrarModalCat()"
+                        style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;background:rgba(255,255,255,0.9);border:1px solid rgba(209,213,219,0.5);color:#374151;font-size:14px;cursor:pointer;">
+                    <span class="material-icons text-sm">close</span>Cancelar
+                </button>
+                <form id="form-eliminar-simple" method="post" action="" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit"
+                            style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;background:linear-gradient(135deg,rgba(239,68,68,0.8),rgba(220,38,38,0.9));border:1px solid rgba(252,165,165,0.3);color:#fff;font-size:14px;cursor:pointer;">
+                        <span class="material-icons text-sm">delete_forever</span>Sí, eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Con noticias — advertencia -->
+        <div id="modal-con-noticias" style="display:none;">
+            <div class="flex items-center gap-3 mb-4">
+                <div style="flex-shrink:0;width:48px;height:48px;border-radius:9999px;display:flex;align-items:center;justify-content:center;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.4);">
+                    <span class="material-icons" style="color:#d97706;">warning</span>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">Advertencia</h3>
+                    <p class="text-sm text-gray-500">Esta categoría tiene noticias asociadas</p>
+                </div>
+            </div>
+            <div style="background:rgba(254,243,199,0.8);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#92400e;">
+                <p class="font-medium mb-1">⚠️ La categoría <strong id="modal-nombre-warn"></strong> tiene <strong id="modal-count"></strong> noticia(s) asociada(s).</p>
+                <p>Si continúas, esas noticias serán movidas a <strong>"Sin categoría"</strong> y dejarán de ser visibles en la página pública.</p>
+            </div>
+            <p class="text-gray-700 text-sm mb-6">¿Deseas continuar con la eliminación?</p>
+            <div class="flex gap-3 justify-end">
+                <button type="button" onclick="cerrarModalCat()"
+                        style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;background:rgba(255,255,255,0.9);border:1px solid rgba(209,213,219,0.5);color:#374151;font-size:14px;cursor:pointer;">
+                    <span class="material-icons text-sm">close</span>Cancelar
+                </button>
+                <form id="form-eliminar-warn" method="post" action="" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit"
+                            style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;background:linear-gradient(135deg,rgba(239,68,68,0.8),rgba(220,38,38,0.9));border:1px solid rgba(252,165,165,0.3);color:#fff;font-size:14px;cursor:pointer;">
+                        <span class="material-icons text-sm">delete_forever</span>Sí, eliminar de todas formas
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.btn-eliminar-categoria').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var url    = this.getAttribute('data-url');
+            var nombre = this.getAttribute('data-nombre');
+            var count  = parseInt(this.getAttribute('data-count'), 10);
+            var modal  = document.getElementById('modal-eliminar-cat');
+
+            if (count > 0) {
+                document.getElementById('modal-sin-noticias').style.display = 'none';
+                document.getElementById('modal-con-noticias').style.display = 'block';
+                document.getElementById('modal-nombre-warn').textContent = nombre;
+                document.getElementById('modal-count').textContent = count;
+                document.getElementById('form-eliminar-warn').action = url;
+            } else {
+                document.getElementById('modal-sin-noticias').style.display = 'block';
+                document.getElementById('modal-con-noticias').style.display = 'none';
+                document.getElementById('modal-nombre-simple').textContent = '"' + nombre + '"';
+                document.getElementById('form-eliminar-simple').action = url;
+            }
+
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        });
+    });
+});
+
+function cerrarModalCat() {
+    document.getElementById('modal-eliminar-cat').style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+document.getElementById('modal-eliminar-cat').addEventListener('click', function(e) {
+    if (e.target === this) cerrarModalCat();
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') cerrarModalCat();
+});
+</script>
 {% endblock %}
