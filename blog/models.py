@@ -146,8 +146,7 @@ class ReporteComentario(models.Model):
 class SancionUsuario(models.Model):
     TIPO_CHOICES = [
         ('silencio', 'Silencio temporal'),
-        ('baneo_temporal', 'Baneo temporal'),
-        ('baneo_permanente', 'Baneo permanente'),
+        ('silencio_permanente', 'Silencio permanente'),
     ]
 
     usuario = models.ForeignKey(

@@ -33,17 +33,13 @@
                 <td class="px-4 py-3 text-gray-500 whitespace-nowrap">{{ reporte.fecha_reporte|date:"d/m/Y H:i" }}</td>
                 <td class="px-4 py-3">
                     <div class="flex gap-2">
-                        <form method="post" action="{% url 'blog:mod_resolver_reporte' reporte.pk %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="estado" value="resuelto_retirado">
-                            <button type="submit" title="Retirar comentario"
-                                    class="px-3 py-1 rounded-lg text-xs text-white" style="background:#dc2626;"
-                                    onclick="return confirm('¿Retirar este comentario?')">
-                                <span class="material-icons align-middle" style="font-size:0.9rem;">remove_circle</span>
-                                Retirar
-                            </button>
-                        </form>
-                        <form method="post" action="{% url 'blog:mod_resolver_reporte' reporte.pk %}">
+                        <button type="button" title="Retirar comentario"
+                                class="px-3 py-1 rounded-lg text-xs text-white" style="background:#dc2626;"
+                                onclick="abrirModalRetirar('{% url 'blog:mod_resolver_reporte' reporte.pk %}')">
+                            <span class="material-icons align-middle" style="font-size:0.9rem;">remove_circle</span>
+                            Retirar
+                        </button>
+                        <form id="form-mantener-{{ reporte.pk }}" method="post" action="{% url 'blog:mod_resolver_reporte' reporte.pk %}">
                             {% csrf_token %}
                             <input type="hidden" name="estado" value="resuelto_mantenido">
                             <button type="submit" title="Mantener comentario"
@@ -79,4 +75,139 @@
     <p class="text-sm">La comunidad está tranquila por ahora.</p>
 </div>
 {% endif %}
+
+<!-- Modal de confirmación: Retirar comentario -->
+<style>
+    .retirar-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100vw; height: 100vh;
+        top: 0; left: 0;
+    }
+    .retirar-modal.hidden { display: none; }
+    .retirar-modal-overlay {
+        position: absolute;
+        inset: 0; width: 100%; height: 100%;
+        background: rgba(8, 15, 40, 0.55);
+        backdrop-filter: blur(8px) saturate(120%);
+        -webkit-backdrop-filter: blur(8px) saturate(120%);
+    }
+    .retirar-modal-content {
+        position: relative; z-index: 1;
+        background: rgba(255,255,255,0.72);
+        backdrop-filter: blur(28px) saturate(180%);
+        -webkit-backdrop-filter: blur(28px) saturate(180%);
+        border: 1px solid rgba(255,255,255,0.85);
+        border-bottom-color: rgba(200,210,230,0.4);
+        border-radius: 24px;
+        box-shadow:
+            0 2px 0 rgba(255,255,255,0.9),
+            0 8px 24px rgba(0,0,0,0.18),
+            0 32px 64px rgba(0,0,0,0.22),
+            inset 0 1px 0 rgba(255,255,255,1),
+            inset 0 -1px 0 rgba(0,0,0,0.04);
+        width: 90%; max-width: 420px; padding: 2rem;
+        overflow: hidden;
+        animation: modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    .retirar-modal-content::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 45%;
+        background: linear-gradient(180deg, rgba(255,255,255,0.45) 0%, transparent 100%);
+        border-radius: 24px 24px 0 0;
+        pointer-events: none;
+    }
+    .retirar-modal-icon {
+        width: 56px; height: 56px; border-radius: 50%;
+        background: rgba(220,38,38,0.12);
+        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        border: 1.5px solid rgba(220,38,38,0.35);
+        box-shadow: 0 4px 16px rgba(220,38,38,0.15), inset 0 1px 0 rgba(255,255,255,0.6);
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 1rem;
+        position: relative; z-index: 1;
+    }
+    .retirar-modal-content h3,
+    .retirar-modal-content p { position: relative; z-index: 1; }
+    .retirar-btn-cancel {
+        position: relative; z-index: 1;
+        background: rgba(255,255,255,0.65);
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(0,0,0,0.10); color: #374151;
+        padding: 0.6rem 1.4rem; border-radius: 12px;
+        font-weight: 500; font-size: 0.875rem; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9);
+        transition: all 0.25s ease;
+    }
+    .retirar-btn-cancel:hover { background: rgba(107,114,128,0.12); transform: translateY(-1px); }
+    .retirar-btn-confirm {
+        position: relative; z-index: 1;
+        background: linear-gradient(135deg, rgba(220,38,38,0.85), rgba(185,28,28,0.92));
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(252,165,165,0.45); color: white;
+        padding: 0.6rem 1.4rem; border-radius: 12px;
+        font-weight: 600; font-size: 0.875rem; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        box-shadow: 0 4px 16px rgba(220,38,38,0.30), inset 0 1px 0 rgba(255,255,255,0.25);
+        transition: all 0.25s ease;
+    }
+    .retirar-btn-confirm:hover {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        box-shadow: 0 8px 28px rgba(220,38,38,0.45), inset 0 1px 0 rgba(255,255,255,0.3);
+        transform: translateY(-1px);
+    }
+</style>
+
+<div id="modal-retirar-comentario" class="retirar-modal hidden">
+    <div class="retirar-modal-overlay" onclick="cerrarModalRetirar()"></div>
+    <div class="retirar-modal-content">
+        <div class="retirar-modal-icon">
+            <span class="material-icons text-red-600 text-2xl">remove_circle</span>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800 text-center mb-2">Retirar comentario</h3>
+        <p class="text-sm text-gray-600 text-center mb-6">
+            ¿Confirmas retirar este comentario?<br>
+            <span class="text-red-500 text-xs">El reporte quedará marcado como resuelto.</span>
+        </p>
+        <div class="flex justify-between gap-3">
+            <button type="button" class="retirar-btn-cancel" onclick="cerrarModalRetirar()">
+                <span class="material-icons text-sm">cancel</span>
+                Cancelar
+            </button>
+            <form id="form-retirar" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="estado" value="resuelto_retirado">
+                <button type="submit" class="retirar-btn-confirm">
+                    <span class="material-icons text-sm">remove_circle</span>
+                    Sí, retirar
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function abrirModalRetirar(actionUrl) {
+    document.getElementById('form-retirar').action = actionUrl;
+    document.getElementById('modal-retirar-comentario').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+function cerrarModalRetirar() {
+    document.getElementById('modal-retirar-comentario').classList.add('hidden');
+    document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') cerrarModalRetirar();
+});
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('modal-retirar-comentario');
+    if (modal && modal.parentElement !== document.body) document.body.appendChild(modal);
+});
+</script>
 {% endblock %}

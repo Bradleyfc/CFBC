@@ -948,13 +948,17 @@ def mod_sancionar_usuario(request, user_id):
         tipo = request.POST.get('tipo_sancion')
         motivo = request.POST.get('motivo', '')
         fecha_fin_str = request.POST.get('fecha_fin', '')
-        if tipo not in ['silencio', 'baneo_temporal', 'baneo_permanente']:
+        if tipo not in ['silencio', 'silencio_permanente']:
             messages.error(request, 'Tipo de sanción inválido.')
             return redirect('blog:panel_moderadores')
         fecha_fin = None
         if fecha_fin_str:
             from django.utils.dateparse import parse_datetime
             fecha_fin = parse_datetime(fecha_fin_str)
+        # Silencio temporal requiere fecha de fin
+        if tipo == 'silencio' and not fecha_fin:
+            messages.error(request, 'El silencio temporal requiere una fecha de fin.')
+            return render(request, 'blog/moderadores/sancionar.html', {'usuario': usuario})
         SancionUsuario.objects.create(
             usuario=usuario,
             tipo_sancion=tipo,

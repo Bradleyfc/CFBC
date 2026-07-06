@@ -12,20 +12,24 @@
         </div>
     </div>
 
-    <form method="post">
+    <form method="post" id="form-sancion">
         {% csrf_token %}
         <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de sanción</label>
-            <select name="tipo_sancion" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" required>
-                <option value="silencio">🔇 Silencio temporal (no puede comentar)</option>
-                <option value="baneo_temporal">⏳ Baneo temporal</option>
-                <option value="baneo_permanente">🚫 Baneo permanente</option>
+            <select name="tipo_sancion" id="tipo_sancion" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" required
+                    onchange="toggleFechaFin(this.value)">
+                <option value="silencio">🔇 Silencio temporal (requiere fecha de fin)</option>
+                <option value="silencio_permanente">🚫 Silencio permanente</option>
             </select>
         </div>
-        <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de fin (dejar vacío = permanente)</label>
-            <input type="datetime-local" name="fecha_fin"
-                   class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+        <div class="mb-4" id="campo-fecha-fin">
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+                Fecha de fin <span class="text-red-500">*</span>
+            </label>
+            <input type="datetime-local" name="fecha_fin" id="fecha_fin"
+                   class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                   required>
+            <p class="text-xs text-gray-400 mt-1">Obligatorio para el silencio temporal.</p>
         </div>
         <div class="mb-6">
             <label class="block text-sm font-medium text-gray-700 mb-1">Motivo <span class="text-red-500">*</span></label>
@@ -35,13 +39,179 @@
         </div>
         <div class="flex gap-3 justify-end">
             <a href="{% url 'blog:panel_moderadores' %}" class="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600">Cancelar</a>
-            <button type="submit" class="px-5 py-2 rounded-lg text-sm text-white font-medium"
+            <button type="button" class="px-5 py-2 rounded-lg text-sm text-white font-medium"
                     style="background:#dc2626;"
-                    onclick="return confirm('¿Confirmas aplicar esta sanción a {{ usuario.username }}?')">
+                    onclick="abrirModalConfirmarSancion()">
                 <span class="material-icons align-middle text-sm mr-1">gavel</span>
                 Aplicar sanción
             </button>
         </div>
     </form>
 </div>
+
+<script>
+function toggleFechaFin(tipo) {
+    const campo = document.getElementById('campo-fecha-fin');
+    const input = document.getElementById('fecha_fin');
+    if (tipo === 'silencio') {
+        campo.style.display = '';
+        input.required = true;
+    } else {
+        campo.style.display = 'none';
+        input.required = false;
+        input.value = '';
+    }
+}
+// Inicializar al cargar según el valor por defecto
+document.addEventListener('DOMContentLoaded', function() {
+    toggleFechaFin(document.getElementById('tipo_sancion').value);
+});
+</script>
+
+<!-- Modal de confirmación de sanción -->
+<style>
+    .sancion-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100vw;
+        height: 100vh;
+        top: 0; left: 0;
+    }
+    .sancion-modal.hidden { display: none; }
+    .sancion-modal-overlay {
+        position: absolute;
+        inset: 0;
+        width: 100%; height: 100%;
+        background: rgba(8, 15, 40, 0.55);
+        backdrop-filter: blur(8px) saturate(120%);
+        -webkit-backdrop-filter: blur(8px) saturate(120%);
+    }
+    .sancion-modal-content {
+        position: relative;
+        z-index: 1;
+        background: rgba(255, 255, 255, 0.72);
+        backdrop-filter: blur(28px) saturate(180%);
+        -webkit-backdrop-filter: blur(28px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.85);
+        border-bottom-color: rgba(200, 210, 230, 0.4);
+        border-radius: 24px;
+        box-shadow:
+            0 2px 0   rgba(255, 255, 255, 0.9),
+            0 8px 24px  rgba(0, 0, 0, 0.18),
+            0 32px 64px rgba(0, 0, 0, 0.22),
+            inset 0 1px 0 rgba(255, 255, 255, 1),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.04);
+        width: 90%;
+        max-width: 420px;
+        padding: 2rem;
+        overflow: hidden;
+        animation: modalIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+    .sancion-modal-content::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 45%;
+        background: linear-gradient(180deg, rgba(255,255,255,0.45) 0%, transparent 100%);
+        border-radius: 24px 24px 0 0;
+        pointer-events: none;
+    }
+    @keyframes modalIn {
+        from { opacity: 0; transform: scale(0.92) translateY(12px); }
+        to   { opacity: 1; transform: scale(1)    translateY(0); }
+    }
+    .sancion-modal-icon {
+        width: 56px; height: 56px;
+        border-radius: 50%;
+        background: rgba(220, 38, 38, 0.12);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1.5px solid rgba(220, 38, 38, 0.35);
+        box-shadow: 0 4px 16px rgba(220,38,38,0.15), inset 0 1px 0 rgba(255,255,255,0.6);
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 1rem;
+        position: relative; z-index: 1;
+    }
+    .sancion-modal-content h3,
+    .sancion-modal-content p { position: relative; z-index: 1; }
+    .sancion-btn-cancel {
+        position: relative; z-index: 1;
+        background: rgba(255,255,255,0.65);
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(0,0,0,0.10);
+        color: #374151; padding: 0.6rem 1.4rem; border-radius: 12px;
+        font-weight: 500; font-size: 0.875rem;
+        transition: all 0.25s ease; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9);
+    }
+    .sancion-btn-cancel:hover {
+        background: rgba(107,114,128,0.12);
+        transform: translateY(-1px);
+    }
+    .sancion-btn-confirm {
+        position: relative; z-index: 1;
+        background: linear-gradient(135deg, rgba(220,38,38,0.85), rgba(185,28,28,0.92));
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(252,165,165,0.45);
+        color: white; padding: 0.6rem 1.4rem; border-radius: 12px;
+        font-weight: 600; font-size: 0.875rem;
+        transition: all 0.25s ease; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        box-shadow: 0 4px 16px rgba(220,38,38,0.30), inset 0 1px 0 rgba(255,255,255,0.25);
+    }
+    .sancion-btn-confirm:hover {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        box-shadow: 0 8px 28px rgba(220,38,38,0.45), inset 0 1px 0 rgba(255,255,255,0.3);
+        transform: translateY(-1px);
+    }
+</style>
+
+<div id="modal-confirmar-sancion" class="sancion-modal hidden">
+    <div class="sancion-modal-overlay" onclick="cerrarModalConfirmarSancion()"></div>
+    <div class="sancion-modal-content">
+        <div class="sancion-modal-icon">
+            <span class="material-icons text-red-600 text-2xl">gavel</span>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800 text-center mb-2">Confirmar sanción</h3>
+        <p class="text-sm text-gray-600 text-center mb-6">
+            ¿Confirmas aplicar esta sanción a <strong class="text-gray-900">{{ usuario.username }}</strong>?<br>
+            <span class="text-red-500 text-xs">Esta acción quedará registrada en el sistema.</span>
+        </p>
+        <div class="flex justify-between gap-3">
+            <button type="button" class="sancion-btn-cancel" onclick="cerrarModalConfirmarSancion()">
+                <span class="material-icons text-sm">cancel</span>
+                Cancelar
+            </button>
+            <button type="button" class="sancion-btn-confirm" onclick="document.getElementById('form-sancion').submit()">
+                <span class="material-icons text-sm">gavel</span>
+                Sí, aplicar
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function abrirModalConfirmarSancion() {
+    const modal = document.getElementById('modal-confirmar-sancion');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+function cerrarModalConfirmarSancion() {
+    document.getElementById('modal-confirmar-sancion').classList.add('hidden');
+    document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') cerrarModalConfirmarSancion();
+});
+// Mover al <body> para evitar que transforms de padres rompan position:fixed
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('modal-confirmar-sancion');
+    if (modal && modal.parentElement !== document.body) document.body.appendChild(modal);
+});
+</script>
 {% endblock %}
