@@ -2304,6 +2304,9 @@ class LoginRedirectView(LoginRequiredMixin, TemplateView):
             if user.groups.filter(name__in=['Profesores', 'Administración', 'Secretaría']).exists():
                 return redirect('principal:profile')
 
+            if user.groups.filter(name__in=['Blog Autor', 'Blog Moderador']).exists():
+                return redirect('principal:profile')
+
             if user.groups.filter(name='Estudiantes').exists():
                 # Ir al perfil solo si tiene al menos una matrícula aprobada
                 tiene_matricula = Matriculas.objects.filter(student=user).exists()

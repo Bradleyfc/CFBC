@@ -33,6 +33,7 @@ urlpatterns = [
     path('autores/editar/<int:pk>/', views.editar_noticia_autor, name='editar_noticia_autor'),
     path('autores/eliminar/<int:pk>/', views.eliminar_noticia_autor, name='eliminar_noticia_autor'),
     path('autores/enviar-revision/<int:pk>/', views.enviar_revision, name='enviar_revision'),
+    path('autores/borradores/', views.borradores_autor, name='borradores_autor'),
 
     # URLs para moderadores
     path('moderadores/', views.panel_moderadores, name='panel_moderadores'),

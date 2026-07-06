@@ -406,6 +406,27 @@ def enviar_revision(request, pk):
     return redirect('blog:mis_noticias_autor')
 
 
+@user_passes_test(es_autor)
+def borradores_autor(request):
+    """Lista de borradores del autor, incluyendo los devueltos por el editor con notas."""
+    borradores = (
+        Noticia.objects
+        .filter(autor=request.user, estado='borrador')
+        .select_related('categoria')
+        .order_by('-fecha_actualizacion')
+    )
+
+    paginator = Paginator(borradores, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_obj': page_obj,
+        'total_borradores': borradores.count(),
+    }
+    return render(request, 'blog/autores/borradores.html', context)
+
+
 # Función para verificar si el usuario es editor
 def es_editor(user):
     return user.is_authenticated and (

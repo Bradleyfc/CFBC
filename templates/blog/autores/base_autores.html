@@ -326,6 +326,11 @@
                             <span class="material-icons mr-3">article</span>
                             Mis Noticias
                         </a>
+                        <a class="glass-nav-item flex items-center px-4 py-3 text-gray-700 transition-colors {% if request.resolver_match.url_name == 'borradores_autor' %}active{% endif %}"
+                           href="{% url 'blog:borradores_autor' %}">
+                            <span class="material-icons mr-3">drafts</span>
+                            Borradores
+                        </a>
                         <a class="glass-nav-item flex items-center px-4 py-3 text-gray-700 transition-colors {% if request.resolver_match.url_name == 'crear_noticia_autor' %}active{% endif %}"
                            href="{% url 'blog:crear_noticia_autor' %}">
                             <span class="material-icons mr-3">add</span>
