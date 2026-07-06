@@ -859,9 +859,39 @@ def mod_gestionar_comentarios(request):
     paginator = Paginator(comentarios, 20)
     page_obj = paginator.get_page(request.GET.get('page'))
     noticias = Noticia.objects.filter(estado='publicado').order_by('titulo')
+
+    # Sanciones activas vigentes para los autores en la página actual
+    autor_ids = {c.autor_id for c in page_obj}
+    sanciones_activas = SancionUsuario.objects.filter(
+        usuario_id__in=autor_ids,
+        activa=True,
+    ).filter(
+        Q(fecha_fin__isnull=True) | Q(fecha_fin__gt=timezone.now())
+    ).order_by('-fecha_inicio')
+    # dict: user_id → sanción más reciente activa
+    sancion_por_usuario = {}
+    for s in sanciones_activas:
+        if s.usuario_id not in sancion_por_usuario:
+            sancion_por_usuario[s.usuario_id] = s
+
+    # Para el template: set de user_ids sancionados y dict user_id→sancion_id
+    usuarios_sancionados = set(sancion_por_usuario.keys())
+    sancion_id_por_usuario = {uid: s.pk for uid, s in sancion_por_usuario.items()}
+    sancion_motivo_por_usuario = {uid: s.motivo for uid, s in sancion_por_usuario.items()}
+
+    import json
+    sancion_id_json = json.dumps(sancion_id_por_usuario)
+    sancion_motivo_json = json.dumps(sancion_motivo_por_usuario)
+
     return render(request, 'blog/moderadores/comentarios.html', {
         'page_obj': page_obj,
         'noticias': noticias,
+        'sancion_por_usuario': sancion_por_usuario,
+        'usuarios_sancionados_ids': list(usuarios_sancionados),
+        'sancion_id_por_usuario': sancion_id_por_usuario,
+        'sancion_motivo_por_usuario': sancion_motivo_por_usuario,
+        'sancion_id_json': sancion_id_json,
+        'sancion_motivo_json': sancion_motivo_json,
     })
 
 @permission_required('blog.change_comentario', raise_exception=True)
@@ -1014,6 +1044,9 @@ def mod_levantar_sancion(request, sancion_id):
         sancion.fecha_levantamiento = timezone.now()
         sancion.save(update_fields=['activa', 'levantada_por', 'fecha_levantamiento'])
         messages.success(request, f'Sanción levantada para {sancion.usuario.username}.')
+    next_url = request.POST.get('next') or request.GET.get('next')
+    if next_url:
+        return redirect(next_url)
     return redirect('blog:mod_sanciones')
 
 @permission_required('blog.change_noticia', raise_exception=True)

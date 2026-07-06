@@ -110,10 +110,21 @@
                         <button onclick="abrirModalMover({{ comentario.pk }})" title="Mover a otra noticia" class="text-orange-400 hover:text-orange-600">
                             <span class="material-icons" style="font-size:1.2rem;">open_with</span>
                         </button>
-                        <!-- Sancionar autor -->
-                        <a href="{% url 'blog:mod_sancionar' comentario.autor.pk %}" title="Sancionar a {{ comentario.autor.username }}" class="text-red-400 hover:text-red-600">
-                            <span class="material-icons" style="font-size:1.2rem;">gavel</span>
-                        </a>
+                        <!-- Sancionar / Levantar sanción -->
+                        {% if comentario.autor_id in sancion_por_usuario %}
+                            <button type="button"
+                                    data-usuario="{{ comentario.autor.username|escapejs }}"
+                                    data-autor-id="{{ comentario.autor_id }}"
+                                    onclick="abrirModalLevantarComentarios(this)"
+                                    title="Usuario sancionado — click para levantar sanción"
+                                    class="text-amber-500 hover:text-green-600 transition-colors">
+                                <span class="material-icons" style="font-size:1.2rem;">lock</span>
+                            </button>
+                        {% else %}
+                            <a href="{% url 'blog:mod_sancionar' comentario.autor.pk %}" title="Sancionar a {{ comentario.autor.username }}" class="text-red-400 hover:text-red-600">
+                                <span class="material-icons" style="font-size:1.2rem;">gavel</span>
+                            </a>
+                        {% endif %}
                     </div>
                 </td>
             </tr>
@@ -270,6 +281,164 @@ document.addEventListener('keydown', function(e) {
 });
 document.addEventListener('DOMContentLoaded', function() {
     const modal = document.getElementById('modal-mover');
+    if (modal && modal.parentElement !== document.body) document.body.appendChild(modal);
+});
+</script>
+
+{# Datos de sanciones para JS #}
+<script>
+const SANCION_ID_POR_USUARIO  = {{ sancion_id_json|safe }};
+const SANCION_MOTIVO_POR_USUARIO = {{ sancion_motivo_json|safe }};
+</script>
+
+<!-- Modal: Levantar sanción desde comentarios -->
+<style>
+    .levantar-com-modal {
+        position: fixed; inset: 0; z-index: 99999;
+        display: flex; align-items: center; justify-content: center;
+        width: 100vw; height: 100vh; top: 0; left: 0;
+    }
+    .levantar-com-modal.hidden { display: none; }
+    .levantar-com-overlay {
+        position: absolute; inset: 0; width: 100%; height: 100%;
+        background: rgba(8,15,40,0.55);
+        backdrop-filter: blur(8px) saturate(120%);
+        -webkit-backdrop-filter: blur(8px) saturate(120%);
+    }
+    .levantar-com-content {
+        position: relative; z-index: 1;
+        background: rgba(255,255,255,0.72);
+        backdrop-filter: blur(28px) saturate(180%);
+        -webkit-backdrop-filter: blur(28px) saturate(180%);
+        border: 1px solid rgba(255,255,255,0.85);
+        border-bottom-color: rgba(200,210,230,0.4);
+        border-radius: 24px;
+        box-shadow: 0 2px 0 rgba(255,255,255,0.9), 0 8px 24px rgba(0,0,0,0.18),
+                    0 32px 64px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,1);
+        width: 90%; max-width: 420px; padding: 2rem; overflow: hidden;
+        animation: levComIn 0.22s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    .levantar-com-content::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 45%;
+        background: linear-gradient(180deg,rgba(255,255,255,0.45) 0%,transparent 100%);
+        border-radius: 24px 24px 0 0; pointer-events: none;
+    }
+    @keyframes levComIn {
+        from { opacity:0; transform:scale(0.92) translateY(12px); }
+        to   { opacity:1; transform:scale(1) translateY(0); }
+    }
+    .levantar-com-icon {
+        width:56px; height:56px; border-radius:50%;
+        background:rgba(22,163,74,0.12); backdrop-filter:blur(8px);
+        border:1.5px solid rgba(22,163,74,0.35);
+        box-shadow:0 4px 16px rgba(22,163,74,0.15),inset 0 1px 0 rgba(255,255,255,0.6);
+        display:flex; align-items:center; justify-content:center;
+        margin:0 auto 1rem; position:relative; z-index:1;
+    }
+    .levantar-com-content h3,
+    .levantar-com-content p { position:relative; z-index:1; }
+    .levantar-com-motivo {
+        position:relative; z-index:1;
+        background:rgba(251,191,36,0.1);
+        border:1px solid rgba(251,191,36,0.3);
+        border-radius:10px; padding:0.6rem 0.8rem;
+        font-size:0.8rem; color:#92400e;
+        margin-bottom:1.25rem; max-height:80px; overflow-y:auto;
+    }
+    .levantar-com-btn-cancel {
+        position:relative; z-index:1;
+        background:rgba(255,255,255,0.65); backdrop-filter:blur(12px);
+        border:1px solid rgba(0,0,0,0.10); color:#374151;
+        padding:0.6rem 1.4rem; border-radius:12px;
+        font-weight:500; font-size:0.875rem; cursor:pointer;
+        display:inline-flex; align-items:center; gap:0.4rem;
+        box-shadow:0 2px 8px rgba(0,0,0,0.08),inset 0 1px 0 rgba(255,255,255,0.9);
+        transition:all 0.25s ease;
+    }
+    .levantar-com-btn-cancel:hover { background:rgba(107,114,128,0.12); transform:translateY(-1px); }
+    .levantar-com-btn-confirm {
+        position:relative; z-index:1;
+        background:linear-gradient(135deg,rgba(22,163,74,0.85),rgba(15,118,54,0.92));
+        backdrop-filter:blur(12px); border:1px solid rgba(134,239,172,0.45); color:white;
+        padding:0.6rem 1.4rem; border-radius:12px;
+        font-weight:600; font-size:0.875rem; cursor:pointer;
+        display:inline-flex; align-items:center; gap:0.4rem;
+        box-shadow:0 4px 16px rgba(22,163,74,0.30),inset 0 1px 0 rgba(255,255,255,0.25);
+        transition:all 0.25s ease;
+    }
+    .levantar-com-btn-confirm:hover {
+        background:linear-gradient(135deg,#22c55e,#16a34a);
+        box-shadow:0 8px 28px rgba(22,163,74,0.40),inset 0 1px 0 rgba(255,255,255,0.3);
+        transform:translateY(-1px);
+    }
+</style>
+
+<div id="modal-levantar-com"
+     class="levantar-com-modal hidden"
+     data-base-url="{% url 'blog:mod_levantar' 99999 %}">
+    <div class="levantar-com-overlay" onclick="cerrarModalLevantarComentarios()"></div>
+    <div class="levantar-com-content">
+        <div class="levantar-com-icon">
+            <span class="material-icons text-green-600 text-2xl">lock_open</span>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800 text-center mb-1">Levantar sanción</h3>
+        <p class="text-sm text-gray-600 text-center mb-3">
+            ¿Levantar la sanción de <strong id="lcom-usuario" class="text-gray-900"></strong>?
+        </p>
+        <div id="lcom-motivo-box" class="levantar-com-motivo hidden">
+            <span class="font-medium">Motivo:</span>
+            <span id="lcom-motivo-texto"></span>
+        </div>
+        <div class="flex justify-between gap-3">
+            <button type="button" class="levantar-com-btn-cancel" onclick="cerrarModalLevantarComentarios()">
+                <span class="material-icons text-sm">cancel</span>
+                Cancelar
+            </button>
+            <form id="form-levantar-com" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'blog:mod_comentarios' %}">
+                <button type="submit" class="levantar-com-btn-confirm">
+                    <span class="material-icons text-sm">lock_open</span>
+                    Sí, levantar
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function abrirModalLevantarComentarios(btn) {
+    const autorId  = btn.dataset.autorId;
+    const username = btn.dataset.usuario;
+    const sancionId = SANCION_ID_POR_USUARIO[autorId];
+    const motivo    = SANCION_MOTIVO_POR_USUARIO[autorId] || '';
+
+    document.getElementById('lcom-usuario').textContent = username;
+
+    const motivoBox  = document.getElementById('lcom-motivo-box');
+    const motivoText = document.getElementById('lcom-motivo-texto');
+    if (motivo) {
+        motivoText.textContent = motivo;
+        motivoBox.classList.remove('hidden');
+    } else {
+        motivoBox.classList.add('hidden');
+    }
+
+    const base = document.getElementById('modal-levantar-com').dataset.baseUrl;
+    document.getElementById('form-levantar-com').action = base.replace('99999', sancionId);
+
+    document.getElementById('modal-levantar-com').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+function cerrarModalLevantarComentarios() {
+    document.getElementById('modal-levantar-com').classList.add('hidden');
+    document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') cerrarModalLevantarComentarios();
+});
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('modal-levantar-com');
     if (modal && modal.parentElement !== document.body) document.body.appendChild(modal);
 });
 </script>
