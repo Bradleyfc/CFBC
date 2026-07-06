@@ -8,6 +8,7 @@ urlpatterns = [
     path('', views.lista_noticias, name='lista_noticias'),
     path('noticia/<slug:slug>/', views.detalle_noticia, name='detalle_noticia'),
     path('noticia/<slug:slug>/comentar/', views.agregar_comentario, name='agregar_comentario'),
+    path('comentario/<int:pk>/reportar/', views.reportar_comentario, name='reportar_comentario'),
     path('categoria/<slug:slug>/', views.noticias_por_categoria, name='categoria_noticias'),
     
     # URLs para editor

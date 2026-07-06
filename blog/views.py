@@ -167,6 +167,38 @@ def agregar_comentario(request, slug):
     
     return redirect('blog:detalle_noticia', slug=slug)
 
+@login_required
+def reportar_comentario(request, pk):
+    """Crea un ReporteComentario enviado por el usuario autenticado."""
+    comentario = get_object_or_404(Comentario, pk=pk, activo=True)
+    if request.method == 'POST':
+        motivo = request.POST.get('motivo', '').strip()
+        if not motivo:
+            messages.error(request, 'Debes escribir un motivo para el reporte.')
+            return redirect('blog:detalle_noticia', slug=comentario.noticia.slug)
+
+        # Evitar reportes duplicados del mismo usuario sobre el mismo comentario
+        ya_reportado = ReporteComentario.objects.filter(
+            comentario=comentario,
+            reportado_por=request.user,
+            estado='pendiente',
+        ).exists()
+        if ya_reportado:
+            messages.warning(request, 'Ya has reportado este comentario y está pendiente de revisión.')
+            return redirect('blog:detalle_noticia', slug=comentario.noticia.slug)
+
+        ReporteComentario.objects.create(
+            comentario=comentario,
+            reportado_por=request.user,
+            motivo=motivo,
+        )
+        messages.success(request, 'Tu reporte ha sido enviado. El equipo de moderación lo revisará pronto.')
+        return redirect('blog:detalle_noticia', slug=comentario.noticia.slug)
+
+    # GET — redirigir a la noticia
+    return redirect('blog:detalle_noticia', slug=comentario.noticia.slug)
+
+
 def noticias_por_categoria(request, slug):
     """Vista para mostrar noticias de una categoría específica"""
     categoria = get_object_or_404(Categoria, slug=slug)
