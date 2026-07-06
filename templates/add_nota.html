@@ -31,18 +31,6 @@
             <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">Formulario de Calificaciones</h2>
         </div>
 
-        <!-- Mensajes -->
-        {% if messages %}
-        <div class="mb-4">
-            {% for message in messages %}
-            <div class="glass-alert {% if message.tags == 'error' %}glass-alert-danger{% else %}glass-alert-success{% endif %} mb-2">
-                <span class="fa material-icons mr-2">{% if message.tags == 'error' %}error{% else %}check_circle{% endif %}</span>
-                {{ message }}
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-
         <!-- Info del estudiante -->
         <div class="glass-card mb-6">
             <div class="glass-header">

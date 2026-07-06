@@ -24,17 +24,6 @@
             </a>
         </div>
 
-        <!-- Mensajes -->
-        {% if messages %}
-        <div class="mb-4 space-y-2">
-            {% for message in messages %}
-            <div class="{% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-error{% else %}alert-info{% endif %}">
-                {{ message }}
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-
         <!-- Selector de Curso Académico -->
         <div class="bg-white/70 backdrop-blur-md rounded-2xl border border-white/80 shadow-lg p-6 mb-6">
             <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">

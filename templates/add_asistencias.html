@@ -50,17 +50,6 @@
                 </h3>
             </div>
             <div class="glass-content">
-                {% if messages %}
-                <div class="mb-4">
-                    {% for message in messages %}
-                    <div class="glass-alert {% if message.tags == 'error' %}glass-alert-danger{% else %}glass-alert-info{% endif %} mb-2">
-                        <span class="fa material-icons mr-2">{% if message.tags == 'error' %}error{% else %}info{% endif %}</span>
-                        {{ message }}
-                    </div>
-                    {% endfor %}
-                </div>
-                {% endif %}
-
                 {% if modo_modificar %}
                 <div class="glass-alert glass-alert-warning mb-6">
                     <span class="fa material-icons mr-2">warning</span></i>

@@ -40,17 +40,6 @@
       </div>
     </div>
 
-    {% if messages %}
-    <div class="mb-4">
-      {% for message in messages %}
-      <div class="glass-alert {% if message.tags == 'error' %}glass-alert-danger{% else %}glass-alert-success{% endif %} mb-2">
-        <span class="fa material-icons mr-2">{% if message.tags == 'error' %}error_outline{% else %}check_circle{% endif %}</span>
-        {{ message }}
-      </div>
-      {% endfor %}
-    </div>
-    {% endif %}
-
     <!-- Lista de evaluaciones -->
     {% if evaluaciones_info %}
     <div class="space-y-4">

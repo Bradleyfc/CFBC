@@ -24,17 +24,6 @@
     </div>
   </div>
 
-  <!-- Mensajes -->
-  {% if messages %}
-  <div class="mb-4">
-    {% for message in messages %}
-    <div class="{% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %} rounded-lg p-4 mb-2">
-      {{ message }}
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
-
   <form method="post" id="evaluacion-form">
     {% csrf_token %}
 
