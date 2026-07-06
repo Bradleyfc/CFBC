@@ -163,7 +163,19 @@
                         <form method="post" action="{% url 'blog:agregar_comentario' noticia.slug %}">
                             {% csrf_token %}
                             <div class="mb-4">
-                                {{ comentario_form.as_p }}
+                                <div class="flex flex-col">
+                                    <label for="{{ comentario_form.contenido.id_for_label }}" class="text-sm font-medium text-gray-700 mb-1">
+                                        Comentario:
+                                    </label>
+                                    {{ comentario_form.contenido }}
+                                    {% if comentario_form.contenido.errors %}
+                                        <ul class="text-red-600 text-sm mt-1">
+                                            {% for error in comentario_form.contenido.errors %}
+                                                <li>{{ error }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </div>
                             </div>
                             <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors">
                                 <span class="material-icons mr-2 text-sm">send</span>
