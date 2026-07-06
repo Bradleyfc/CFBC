@@ -40,6 +40,7 @@ urlpatterns = [
     path('moderadores/', views.panel_moderadores, name='panel_moderadores'),
     path('moderadores/comentarios/', views.mod_gestionar_comentarios, name='mod_comentarios'),
     path('moderadores/comentarios/<int:pk>/editar/', views.mod_editar_comentario, name='mod_editar_comentario'),
+    path('moderadores/comentarios/<int:pk>/eliminar/', views.mod_eliminar_comentario, name='mod_eliminar_comentario'),
     path('moderadores/comentarios/<int:pk>/mover/', views.mod_mover_comentario, name='mod_mover_comentario'),
     path('moderadores/comentarios/<int:pk>/fijar/', views.mod_fijar_comentario, name='mod_fijar'),
     path('moderadores/comentarios/<int:pk>/desfijar/', views.mod_desfijar_comentario, name='mod_desfijar'),

@@ -945,6 +945,15 @@ def mod_editar_comentario(request, pk):
     return redirect('blog:mod_comentarios')
 
 @permission_required('blog.change_comentario', raise_exception=True)
+def mod_eliminar_comentario(request, pk):
+    """Elimina definitivamente un comentario (acción de moderador)."""
+    comentario = get_object_or_404(Comentario, pk=pk)
+    if request.method == 'POST':
+        comentario.delete()
+        messages.success(request, 'Comentario eliminado definitivamente.')
+    return redirect('blog:mod_comentarios')
+
+@permission_required('blog.change_comentario', raise_exception=True)
 def mod_mover_comentario(request, pk):
     """Mueve un comentario a otra noticia."""
     comentario = get_object_or_404(Comentario, pk=pk)

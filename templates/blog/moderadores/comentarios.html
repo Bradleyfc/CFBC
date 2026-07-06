@@ -125,6 +125,13 @@
                                 <span class="material-icons" style="font-size:1.2rem;">gavel</span>
                             </a>
                         {% endif %}
+                        <!-- Eliminar definitivo -->
+                        <button type="button"
+                                onclick="abrirModalEliminar('{% url 'blog:mod_eliminar_comentario' comentario.pk %}')"
+                                title="Eliminar comentario definitivamente"
+                                class="text-gray-400 hover:text-red-700 transition-colors">
+                            <span class="material-icons" style="font-size:1.2rem;">delete_forever</span>
+                        </button>
                     </div>
                 </td>
             </tr>
@@ -439,6 +446,126 @@ document.addEventListener('keydown', function(e) {
 });
 document.addEventListener('DOMContentLoaded', function() {
     const modal = document.getElementById('modal-levantar-com');
+    if (modal && modal.parentElement !== document.body) document.body.appendChild(modal);
+});
+</script>
+
+<!-- Modal: Eliminar comentario definitivamente -->
+<style>
+    .eliminar-com-modal {
+        position: fixed; inset: 0; z-index: 99999;
+        display: flex; align-items: center; justify-content: center;
+        width: 100vw; height: 100vh; top: 0; left: 0;
+    }
+    .eliminar-com-modal.hidden { display: none; }
+    .eliminar-com-overlay {
+        position: absolute; inset: 0; width: 100%; height: 100%;
+        background: rgba(8,15,40,0.55);
+        backdrop-filter: blur(8px) saturate(120%);
+        -webkit-backdrop-filter: blur(8px) saturate(120%);
+    }
+    .eliminar-com-content {
+        position: relative; z-index: 1;
+        background: rgba(255,255,255,0.72);
+        backdrop-filter: blur(28px) saturate(180%);
+        -webkit-backdrop-filter: blur(28px) saturate(180%);
+        border: 1px solid rgba(255,255,255,0.85);
+        border-bottom-color: rgba(200,210,230,0.4);
+        border-radius: 24px;
+        box-shadow: 0 2px 0 rgba(255,255,255,0.9), 0 8px 24px rgba(0,0,0,0.18),
+                    0 32px 64px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,1);
+        width: 90%; max-width: 420px; padding: 2rem; overflow: hidden;
+        animation: elimComIn 0.22s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    .eliminar-com-content::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 45%;
+        background: linear-gradient(180deg,rgba(255,255,255,0.45) 0%,transparent 100%);
+        border-radius: 24px 24px 0 0; pointer-events: none;
+    }
+    @keyframes elimComIn {
+        from { opacity:0; transform:scale(0.92) translateY(12px); }
+        to   { opacity:1; transform:scale(1) translateY(0); }
+    }
+    .eliminar-com-icon {
+        width:56px; height:56px; border-radius:50%;
+        background:rgba(127,29,29,0.12); backdrop-filter:blur(8px);
+        border:1.5px solid rgba(127,29,29,0.35);
+        box-shadow:0 4px 16px rgba(127,29,29,0.15),inset 0 1px 0 rgba(255,255,255,0.6);
+        display:flex; align-items:center; justify-content:center;
+        margin:0 auto 1rem; position:relative; z-index:1;
+    }
+    .eliminar-com-content h3,
+    .eliminar-com-content p { position:relative; z-index:1; }
+    .eliminar-com-btn-cancel {
+        position:relative; z-index:1;
+        background:rgba(255,255,255,0.65); backdrop-filter:blur(12px);
+        border:1px solid rgba(0,0,0,0.10); color:#374151;
+        padding:0.6rem 1.4rem; border-radius:12px;
+        font-weight:500; font-size:0.875rem; cursor:pointer;
+        display:inline-flex; align-items:center; gap:0.4rem;
+        box-shadow:0 2px 8px rgba(0,0,0,0.08),inset 0 1px 0 rgba(255,255,255,0.9);
+        transition:all 0.25s ease;
+    }
+    .eliminar-com-btn-cancel:hover { background:rgba(107,114,128,0.12); transform:translateY(-1px); }
+    .eliminar-com-btn-confirm {
+        position:relative; z-index:1;
+        background:linear-gradient(135deg,rgba(127,29,29,0.90),rgba(153,27,27,0.95));
+        backdrop-filter:blur(12px); border:1px solid rgba(252,165,165,0.35); color:white;
+        padding:0.6rem 1.4rem; border-radius:12px;
+        font-weight:600; font-size:0.875rem; cursor:pointer;
+        display:inline-flex; align-items:center; gap:0.4rem;
+        box-shadow:0 4px 16px rgba(127,29,29,0.35),inset 0 1px 0 rgba(255,255,255,0.2);
+        transition:all 0.25s ease;
+    }
+    .eliminar-com-btn-confirm:hover {
+        background:linear-gradient(135deg,#991b1b,#7f1d1d);
+        box-shadow:0 8px 28px rgba(127,29,29,0.50),inset 0 1px 0 rgba(255,255,255,0.25);
+        transform:translateY(-1px);
+    }
+</style>
+
+<div id="modal-eliminar-com" class="eliminar-com-modal hidden">
+    <div class="eliminar-com-overlay" onclick="cerrarModalEliminar()"></div>
+    <div class="eliminar-com-content">
+        <div class="eliminar-com-icon">
+            <span class="material-icons text-red-900 text-2xl">delete_forever</span>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800 text-center mb-2">Eliminar comentario</h3>
+        <p class="text-sm text-gray-600 text-center mb-6">
+            ¿Confirmas eliminar este comentario <strong class="text-red-800">definitivamente</strong>?<br>
+            <span class="text-red-500 text-xs">Esta acción no se puede deshacer.</span>
+        </p>
+        <div class="flex justify-between gap-3">
+            <button type="button" class="eliminar-com-btn-cancel" onclick="cerrarModalEliminar()">
+                <span class="material-icons text-sm">cancel</span>
+                Cancelar
+            </button>
+            <form id="form-eliminar-com" method="post">
+                {% csrf_token %}
+                <button type="submit" class="eliminar-com-btn-confirm">
+                    <span class="material-icons text-sm">delete_forever</span>
+                    Sí, eliminar
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function abrirModalEliminar(actionUrl) {
+    document.getElementById('form-eliminar-com').action = actionUrl;
+    document.getElementById('modal-eliminar-com').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+function cerrarModalEliminar() {
+    document.getElementById('modal-eliminar-com').classList.add('hidden');
+    document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') cerrarModalEliminar();
+});
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('modal-eliminar-com');
     if (modal && modal.parentElement !== document.body) document.body.appendChild(modal);
 });
 </script>
