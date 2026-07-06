@@ -1,0 +1,301 @@
+{% extends 'blog/moderadores/base_moderadores.html' %}
+
+{% block titulo_pagina %}Gestión de Sanciones{% endblock %}
+
+{% block contenido_moderadores %}
+
+<!-- Filtros -->
+<form method="get" class="glass-card p-4 mb-6 flex flex-wrap gap-3 items-end">
+    <div>
+        <label class="block text-xs text-gray-500 mb-1">Estado</label>
+        <select name="estado" class="border border-gray-200 rounded-lg px-3 py-2 text-sm">
+            <option value="activas"   {% if estado_filtro == 'activas' %}selected{% endif %}>Solo activas</option>
+            <option value="expiradas" {% if estado_filtro == 'expiradas' %}selected{% endif %}>Expiradas / Levantadas</option>
+            <option value="todas"     {% if estado_filtro == 'todas' %}selected{% endif %}>Todas</option>
+        </select>
+    </div>
+    <div>
+        <label class="block text-xs text-gray-500 mb-1">Usuario</label>
+        <input type="text" name="usuario" value="{{ usuario_q }}" placeholder="username…"
+               class="border border-gray-200 rounded-lg px-3 py-2 text-sm">
+    </div>
+    <button type="submit" class="px-4 py-2 rounded-lg text-sm text-white" style="background:#ea580c;">Filtrar</button>
+    <a href="{% url 'blog:mod_sanciones' %}" class="px-4 py-2 rounded-lg text-sm text-gray-600 border border-gray-200">Limpiar</a>
+</form>
+
+<!-- Tabla -->
+{% if page_obj %}
+<div class="overflow-x-auto rounded-xl border border-gray-200">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usuario</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Motivo</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aplicada por</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Inicio</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fin</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-100">
+            {% for sancion in page_obj %}
+            <tr class="hover:bg-gray-50">
+                <!-- Usuario -->
+                <td class="px-4 py-3 font-medium text-gray-900">
+                    {{ sancion.usuario.username }}
+                    {% if sancion.usuario.get_full_name %}
+                    <span class="block text-xs text-gray-400 font-normal">{{ sancion.usuario.get_full_name }}</span>
+                    {% endif %}
+                </td>
+                <!-- Tipo -->
+                <td class="px-4 py-3">
+                    {% if sancion.tipo_sancion == 'silencio' %}
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-800">
+                            🔇 Temporal
+                        </span>
+                    {% else %}
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-800">
+                            🚫 Permanente
+                        </span>
+                    {% endif %}
+                </td>
+                <!-- Motivo — expandible -->
+                <td class="px-4 py-3 text-gray-700 max-w-xs">
+                    <button type="button"
+                            onclick="toggleMotivo({{ sancion.pk }})"
+                            class="text-left hover:text-orange-600 transition-colors">
+                        <span id="motivo-corto-{{ sancion.pk }}" class="line-clamp-2">
+                            {{ sancion.motivo|truncatechars:60 }}
+                        </span>
+                        <span id="motivo-completo-{{ sancion.pk }}" class="hidden text-xs text-gray-600 whitespace-pre-wrap">
+                            {{ sancion.motivo }}
+                        </span>
+                        {% if sancion.motivo|length > 60 %}
+                        <span id="toggle-label-{{ sancion.pk }}" class="text-xs text-orange-500 mt-0.5 block">ver más ▾</span>
+                        {% endif %}
+                    </button>
+                </td>
+                <!-- Aplicada por -->
+                <td class="px-4 py-3 text-gray-600">
+                    {{ sancion.aplicada_por.username|default:"—" }}
+                </td>
+                <!-- Fecha inicio -->
+                <td class="px-4 py-3 text-gray-500 whitespace-nowrap">
+                    {{ sancion.fecha_inicio|date:"d/m/Y H:i" }}
+                </td>
+                <!-- Fecha fin -->
+                <td class="px-4 py-3 text-gray-500 whitespace-nowrap">
+                    {% if sancion.fecha_fin %}
+                        {{ sancion.fecha_fin|date:"d/m/Y H:i" }}
+                    {% else %}
+                        <span class="text-red-400 text-xs">Permanente</span>
+                    {% endif %}
+                </td>
+                <!-- Estado -->
+                <td class="px-4 py-3">
+                    {% if not sancion.activa %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-500">
+                            Levantada
+                        </span>
+                        {% if sancion.levantada_por %}
+                        <span class="block text-xs text-gray-400 mt-0.5">por {{ sancion.levantada_por.username }}</span>
+                        {% endif %}
+                    {% elif sancion.fecha_fin and sancion.fecha_fin <= now %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-700">
+                            Expirada
+                        </span>
+                    {% else %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-700 font-medium">
+                            ● Activa
+                        </span>
+                    {% endif %}
+                </td>
+                <!-- Acciones -->
+                <td class="px-4 py-3">
+                    {% if sancion.activa and not sancion.fecha_fin or sancion.activa and sancion.fecha_fin > now %}
+                    <button type="button"
+                            onclick="abrirModalLevantar({{ sancion.pk }}, '{{ sancion.usuario.username|escapejs }}')"
+                            title="Levantar sanción"
+                            class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs text-white font-medium transition-all hover:-translate-y-0.5"
+                            style="background:linear-gradient(135deg,#16a34a,#15803d);box-shadow:0 2px 8px rgba(22,163,74,0.3);">
+                        <span class="material-icons" style="font-size:0.9rem;">lock_open</span>
+                        Levantar
+                    </button>
+                    {% else %}
+                    <span class="text-xs text-gray-400 italic">Sin acciones</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Paginación -->
+{% if page_obj.has_other_pages %}
+<div class="flex justify-center gap-2 mt-6">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"
+       class="px-3 py-1 rounded border border-gray-200 text-sm hover:bg-gray-50">‹ Anterior</a>
+    {% endif %}
+    <span class="px-3 py-1 text-sm text-gray-600">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"
+       class="px-3 py-1 rounded border border-gray-200 text-sm hover:bg-gray-50">Siguiente ›</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="text-center py-16 text-gray-400">
+    <span class="material-icons text-5xl mb-3">gavel</span>
+    <p class="text-lg font-medium text-gray-600 mb-1">No hay sanciones</p>
+    <p class="text-sm">No se encontraron registros con los filtros aplicados.</p>
+</div>
+{% endif %}
+
+<!-- Modal: Levantar sanción -->
+<style>
+    .levantar-modal {
+        position: fixed; inset: 0; z-index: 99999;
+        display: flex; align-items: center; justify-content: center;
+        width: 100vw; height: 100vh; top: 0; left: 0;
+    }
+    .levantar-modal.hidden { display: none; }
+    .levantar-modal-overlay {
+        position: absolute; inset: 0; width: 100%; height: 100%;
+        background: rgba(8, 15, 40, 0.55);
+        backdrop-filter: blur(8px) saturate(120%);
+        -webkit-backdrop-filter: blur(8px) saturate(120%);
+    }
+    .levantar-modal-content {
+        position: relative; z-index: 1;
+        background: rgba(255,255,255,0.72);
+        backdrop-filter: blur(28px) saturate(180%);
+        -webkit-backdrop-filter: blur(28px) saturate(180%);
+        border: 1px solid rgba(255,255,255,0.85);
+        border-bottom-color: rgba(200,210,230,0.4);
+        border-radius: 24px;
+        box-shadow:
+            0 2px 0 rgba(255,255,255,0.9),
+            0 8px 24px rgba(0,0,0,0.18),
+            0 32px 64px rgba(0,0,0,0.22),
+            inset 0 1px 0 rgba(255,255,255,1),
+            inset 0 -1px 0 rgba(0,0,0,0.04);
+        width: 90%; max-width: 400px; padding: 2rem; overflow: hidden;
+        animation: levantarIn 0.22s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    .levantar-modal-content::before {
+        content: ''; position: absolute;
+        top: 0; left: 0; right: 0; height: 45%;
+        background: linear-gradient(180deg, rgba(255,255,255,0.45) 0%, transparent 100%);
+        border-radius: 24px 24px 0 0; pointer-events: none;
+    }
+    @keyframes levantarIn {
+        from { opacity: 0; transform: scale(0.92) translateY(12px); }
+        to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .levantar-modal-icon {
+        width: 56px; height: 56px; border-radius: 50%;
+        background: rgba(22,163,74,0.12);
+        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        border: 1.5px solid rgba(22,163,74,0.35);
+        box-shadow: 0 4px 16px rgba(22,163,74,0.15), inset 0 1px 0 rgba(255,255,255,0.6);
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 1rem; position: relative; z-index: 1;
+    }
+    .levantar-modal-content h3,
+    .levantar-modal-content p { position: relative; z-index: 1; }
+    .levantar-btn-cancel {
+        position: relative; z-index: 1;
+        background: rgba(255,255,255,0.65);
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(0,0,0,0.10); color: #374151;
+        padding: 0.6rem 1.4rem; border-radius: 12px;
+        font-weight: 500; font-size: 0.875rem; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9);
+        transition: all 0.25s ease;
+    }
+    .levantar-btn-cancel:hover { background: rgba(107,114,128,0.12); transform: translateY(-1px); }
+    .levantar-btn-confirm {
+        position: relative; z-index: 1;
+        background: linear-gradient(135deg, rgba(22,163,74,0.85), rgba(15,118,54,0.92));
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(134,239,172,0.45); color: white;
+        padding: 0.6rem 1.4rem; border-radius: 12px;
+        font-weight: 600; font-size: 0.875rem; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        box-shadow: 0 4px 16px rgba(22,163,74,0.30), inset 0 1px 0 rgba(255,255,255,0.25);
+        transition: all 0.25s ease;
+    }
+    .levantar-btn-confirm:hover {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        box-shadow: 0 8px 28px rgba(22,163,74,0.40), inset 0 1px 0 rgba(255,255,255,0.3);
+        transform: translateY(-1px);
+    }
+</style>
+
+<div id="modal-levantar" class="levantar-modal hidden" data-base-url="{% url 'blog:mod_levantar' 99999 %}">
+    <div class="levantar-modal-overlay" onclick="cerrarModalLevantar()"></div>
+    <div class="levantar-modal-content">
+        <div class="levantar-modal-icon">
+            <span class="material-icons text-green-600 text-2xl">lock_open</span>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800 text-center mb-2">Levantar sanción</h3>
+        <p class="text-sm text-gray-600 text-center mb-6">
+            ¿Confirmas levantar la sanción de <strong id="modal-levantar-usuario" class="text-gray-900"></strong>?<br>
+            <span class="text-green-600 text-xs">El usuario podrá volver a comentar de inmediato.</span>
+        </p>
+        <div class="flex justify-between gap-3">
+            <button type="button" class="levantar-btn-cancel" onclick="cerrarModalLevantar()">
+                <span class="material-icons text-sm">cancel</span>
+                Cancelar
+            </button>
+            <form id="form-levantar" method="post">
+                {% csrf_token %}
+                <button type="submit" class="levantar-btn-confirm">
+                    <span class="material-icons text-sm">lock_open</span>
+                    Sí, levantar
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Expandir/colapsar motivo
+function toggleMotivo(pk) {
+    const corto    = document.getElementById('motivo-corto-' + pk);
+    const completo = document.getElementById('motivo-completo-' + pk);
+    const label    = document.getElementById('toggle-label-' + pk);
+    if (!completo) return;
+    const expandido = completo.classList.contains('hidden');
+    corto.classList.toggle('hidden', expandido);
+    completo.classList.toggle('hidden', !expandido);
+    if (label) label.textContent = expandido ? 'ver menos ▴' : 'ver más ▾';
+}
+
+// Modal levantar sanción
+function abrirModalLevantar(sancionId, username) {
+    document.getElementById('modal-levantar-usuario').textContent = username;
+    const base = document.getElementById('modal-levantar').dataset.baseUrl;
+    document.getElementById('form-levantar').action = base.replace('99999', sancionId);
+    document.getElementById('modal-levantar').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+function cerrarModalLevantar() {
+    document.getElementById('modal-levantar').classList.add('hidden');
+    document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') cerrarModalLevantar();
+});
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('modal-levantar');
+    if (modal && modal.parentElement !== document.body) document.body.appendChild(modal);
+});
+</script>
+{% endblock %}

@@ -44,6 +44,7 @@ urlpatterns = [
     path('moderadores/comentarios/<int:pk>/desfijar/', views.mod_desfijar_comentario, name='mod_desfijar'),
     path('moderadores/reportes/', views.mod_bandeja_reportes, name='mod_reportes'),
     path('moderadores/reportes/<int:pk>/resolver/', views.mod_resolver_reporte, name='mod_resolver_reporte'),
+    path('moderadores/sanciones/', views.mod_lista_sanciones, name='mod_sanciones'),
     path('moderadores/sanciones/crear/<int:user_id>/', views.mod_sancionar_usuario, name='mod_sancionar'),
     path('moderadores/sanciones/levantar/<int:sancion_id>/', views.mod_levantar_sancion, name='mod_levantar'),
     path('moderadores/noticias/<int:pk>/toggle-comentarios/', views.mod_toggle_comentarios, name='mod_toggle_comentarios'),

@@ -91,6 +91,11 @@
                             <span class="material-icons mr-3" style="font-size:1.2rem;">flag</span>
                             Bandeja de Reportes
                         </a>
+                        <a class="glass-nav-item {% if request.resolver_match.url_name == 'mod_sanciones' %}active{% endif %}"
+                           href="{% url 'blog:mod_sanciones' %}">
+                            <span class="material-icons mr-3" style="font-size:1.2rem;">gavel</span>
+                            Sanciones
+                        </a>
                         <a class="glass-nav-item {% if request.resolver_match.url_name == 'mod_metricas' %}active{% endif %}"
                            href="{% url 'blog:mod_metricas' %}">
                             <span class="material-icons mr-3" style="font-size:1.2rem;">bar_chart</span>

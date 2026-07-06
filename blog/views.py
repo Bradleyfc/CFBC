@@ -971,6 +971,40 @@ def mod_sancionar_usuario(request, user_id):
     return render(request, 'blog/moderadores/sancionar.html', {'usuario': usuario})
 
 @permission_required('blog.change_sancionusuario', raise_exception=True)
+def mod_lista_sanciones(request):
+    """Lista todas las sanciones con filtros por estado y usuario."""
+    sanciones = SancionUsuario.objects.select_related(
+        'usuario', 'aplicada_por', 'levantada_por'
+    ).order_by('-fecha_inicio')
+
+    # Filtros
+    estado = request.GET.get('estado', 'activas')
+    usuario_q = request.GET.get('usuario', '').strip()
+
+    if estado == 'activas':
+        sanciones = sanciones.filter(activa=True).filter(
+            Q(fecha_fin__isnull=True) | Q(fecha_fin__gt=timezone.now())
+        )
+    elif estado == 'expiradas':
+        sanciones = sanciones.filter(
+            Q(activa=False) | Q(fecha_fin__lte=timezone.now())
+        )
+    # 'todas' no filtra por estado
+
+    if usuario_q:
+        sanciones = sanciones.filter(usuario__username__icontains=usuario_q)
+
+    paginator = Paginator(sanciones, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    return render(request, 'blog/moderadores/sanciones.html', {
+        'page_obj': page_obj,
+        'estado_filtro': estado,
+        'usuario_q': usuario_q,
+        'now': timezone.now(),
+    })
+
+@permission_required('blog.change_sancionusuario', raise_exception=True)
 def mod_levantar_sancion(request, sancion_id):
     """Levanta una sanción existente."""
     sancion = get_object_or_404(SancionUsuario, pk=sancion_id)
@@ -980,7 +1014,7 @@ def mod_levantar_sancion(request, sancion_id):
         sancion.fecha_levantamiento = timezone.now()
         sancion.save(update_fields=['activa', 'levantada_por', 'fecha_levantamiento'])
         messages.success(request, f'Sanción levantada para {sancion.usuario.username}.')
-    return redirect('blog:panel_moderadores')
+    return redirect('blog:mod_sanciones')
 
 @permission_required('blog.change_noticia', raise_exception=True)
 def mod_toggle_comentarios(request, pk):
