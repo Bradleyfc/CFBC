@@ -1139,8 +1139,27 @@ def mod_desfijar_comentario(request, pk):
 
 @permission_required('blog.view_metricacomunidad', raise_exception=True)
 def mod_metricas(request):
-    """Vista de métricas de comunidad (solo lectura)."""
+    """Vista de métricas de comunidad (solo lectura) con filtro por rango de fechas."""
+    from django.utils.dateparse import parse_date
+
     metricas = MetricaComunidad.objects.all().order_by('-fecha')
+
+    fecha_desde = request.GET.get('fecha_desde', '').strip()
+    fecha_hasta = request.GET.get('fecha_hasta', '').strip()
+
+    fecha_desde_obj = parse_date(fecha_desde) if fecha_desde else None
+    fecha_hasta_obj = parse_date(fecha_hasta) if fecha_hasta else None
+
+    if fecha_desde_obj:
+        metricas = metricas.filter(fecha__gte=fecha_desde_obj)
+    if fecha_hasta_obj:
+        metricas = metricas.filter(fecha__lte=fecha_hasta_obj)
+
     paginator = Paginator(metricas, 30)
     page_obj = paginator.get_page(request.GET.get('page'))
-    return render(request, 'blog/moderadores/metricas.html', {'page_obj': page_obj})
+
+    return render(request, 'blog/moderadores/metricas.html', {
+        'page_obj': page_obj,
+        'fecha_desde': fecha_desde,
+        'fecha_hasta': fecha_hasta,
+    })

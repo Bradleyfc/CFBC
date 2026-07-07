@@ -5,6 +5,40 @@
 {% block contenido_moderadores %}
 <p class="text-sm text-gray-500 mb-6">Vista de solo lectura. Las métricas se generan automáticamente cada día.</p>
 
+{# ── Filtro por fechas ── #}
+<form method="get" class="flex flex-wrap items-end gap-3 mb-6 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
+    <div class="flex flex-col gap-1">
+        <label for="fecha_desde" class="text-xs font-medium text-gray-500 uppercase">Desde</label>
+        <input type="date" id="fecha_desde" name="fecha_desde" value="{{ fecha_desde }}"
+               class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300">
+    </div>
+    <div class="flex flex-col gap-1">
+        <label for="fecha_hasta" class="text-xs font-medium text-gray-500 uppercase">Hasta</label>
+        <input type="date" id="fecha_hasta" name="fecha_hasta" value="{{ fecha_hasta }}"
+               class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300">
+    </div>
+    <div class="flex gap-2 pb-0.5">
+        <button type="submit"
+                class="px-4 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors">
+            Filtrar
+        </button>
+        {% if fecha_desde or fecha_hasta %}
+        <a href="?{% comment %}limpiar filtros{% endcomment %}"
+           class="px-4 py-1.5 bg-white border border-gray-300 text-gray-600 text-sm rounded-lg hover:bg-gray-100 transition-colors">
+            Limpiar
+        </a>
+        {% endif %}
+    </div>
+    {% if fecha_desde or fecha_hasta %}
+    <span class="text-xs text-indigo-600 self-end pb-1">
+        Filtrando:
+        {% if fecha_desde %}desde {{ fecha_desde }}{% endif %}
+        {% if fecha_desde and fecha_hasta %} — {% endif %}
+        {% if fecha_hasta %}hasta {{ fecha_hasta }}{% endif %}
+    </span>
+    {% endif %}
+</form>
+
 {% if page_obj %}
 <div class="overflow-x-auto rounded-xl border border-gray-200">
     <table class="min-w-full divide-y divide-gray-200 text-sm">
@@ -36,9 +70,9 @@
                 <td class="px-4 py-3 text-gray-600">{{ m.usuario_mas_activo.username|default:"—" }}</td>
                 <td class="px-4 py-3 text-center">
                     {% if m.pico_toxicidad is not None %}
-                        {% if m.pico_toxicidad > 0.7 %}
+                        {% if m.pico_toxicidad > 7 %}
                         <span class="inline-flex px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-700">{{ m.pico_toxicidad|floatformat:2 }}</span>
-                        {% elif m.pico_toxicidad > 0.4 %}
+                        {% elif m.pico_toxicidad > 4 %}
                         <span class="inline-flex px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-700">{{ m.pico_toxicidad|floatformat:2 }}</span>
                         {% else %}
                         <span class="inline-flex px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700">{{ m.pico_toxicidad|floatformat:2 }}</span>
@@ -54,11 +88,13 @@
 {% if page_obj.has_other_pages %}
 <div class="flex justify-center gap-2 mt-6">
     {% if page_obj.has_previous %}
-    <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 rounded border border-gray-200 text-sm hover:bg-gray-50">‹ Anterior</a>
+    <a href="?page={{ page_obj.previous_page_number }}{% if fecha_desde %}&fecha_desde={{ fecha_desde }}{% endif %}{% if fecha_hasta %}&fecha_hasta={{ fecha_hasta }}{% endif %}"
+       class="px-3 py-1 rounded border border-gray-200 text-sm hover:bg-gray-50">‹ Anterior</a>
     {% endif %}
     <span class="px-3 py-1 text-sm text-gray-600">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
     {% if page_obj.has_next %}
-    <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 rounded border border-gray-200 text-sm hover:bg-gray-50">Siguiente ›</a>
+    <a href="?page={{ page_obj.next_page_number }}{% if fecha_desde %}&fecha_desde={{ fecha_desde }}{% endif %}{% if fecha_hasta %}&fecha_hasta={{ fecha_hasta }}{% endif %}"
+       class="px-3 py-1 rounded border border-gray-200 text-sm hover:bg-gray-50">Siguiente ›</a>
     {% endif %}
 </div>
 {% endif %}
@@ -66,7 +102,11 @@
 {% else %}
 <div class="text-center py-16 text-gray-400">
     <span class="material-icons text-5xl mb-3">bar_chart</span>
+    {% if fecha_desde or fecha_hasta %}
+    <p>No hay métricas para el rango de fechas seleccionado.</p>
+    {% else %}
     <p>Aún no hay métricas generadas.</p>
+    {% endif %}
 </div>
 {% endif %}
 {% endblock %}
