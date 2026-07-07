@@ -188,6 +188,141 @@
                 position: relative;
                 z-index: 10;
               }
+
+              /* ── Modal Acerca De ── */
+              #modal-acerca-de-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                z-index: 99999;
+                align-items: center;
+                justify-content: center;
+                /* Fondo desenfocado */
+                background: rgba(10, 20, 60, 0.55);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                animation: modalFadeIn 0.25s ease both;
+              }
+              #modal-acerca-de-overlay.activo { display: flex; }
+              @keyframes modalFadeIn {
+                from { opacity: 0; }
+                to   { opacity: 1; }
+              }
+              #modal-acerca-de-box {
+                position: relative;
+                max-width: 520px;
+                width: calc(100% - 2rem);
+                margin: 1rem;
+                /* Glassmorphism */
+                background: rgba(20, 40, 120, 0.45);
+                backdrop-filter: blur(28px) saturate(180%);
+                -webkit-backdrop-filter: blur(28px) saturate(180%);
+                border: 1px solid rgba(147, 197, 253, 0.35);
+                border-radius: 24px;
+                box-shadow: 0 12px 48px rgba(0,0,0,0.45),
+                            inset 0 1px 0 rgba(147,197,253,0.5),
+                            inset 0 -1px 0 rgba(30,64,175,0.3);
+                padding: 2.25rem 2rem 1.75rem;
+                color: #fff;
+                animation: modalSlideUp 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+                overflow: hidden;
+              }
+              #modal-acerca-de-box::before {
+                content: '';
+                position: absolute;
+                top: 0; left: 0; right: 0; height: 1px;
+                background: linear-gradient(90deg, transparent, rgba(147,197,253,0.7), transparent);
+                pointer-events: none;
+              }
+              @keyframes modalSlideUp {
+                from { opacity: 0; transform: translateY(30px) scale(0.97); }
+                to   { opacity: 1; transform: translateY(0)    scale(1);    }
+              }
+              #modal-acerca-de-box .modal-icon-wrap {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 72px; height: 72px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.15);
+                border: 1px solid rgba(147,197,253,0.4);
+                margin: 0 auto 1.25rem;
+                box-shadow: 0 0 20px rgba(59,130,246,0.3);
+                overflow: hidden;
+                padding: 6px;
+              }
+              #modal-acerca-de-box .modal-icon-wrap img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+              }
+              #modal-acerca-de-box h2 {
+                text-align: center;
+                font-size: 1.2rem;
+                font-weight: 700;
+                color: #e0eaff;
+                margin: 0 0 0.35rem;
+                letter-spacing: 0.01em;
+              }
+              #modal-acerca-de-box .modal-subtitle {
+                text-align: center;
+                font-size: 0.85rem;
+                color: rgba(147,197,253,0.85);
+                margin: 0 0 1.25rem;
+                font-style: italic;
+              }
+              #modal-acerca-de-box .modal-divider {
+                height: 1px;
+                background: linear-gradient(90deg, transparent, rgba(147,197,253,0.4), transparent);
+                margin: 0 0 1.25rem;
+              }
+              #modal-acerca-de-box p {
+                font-size: 0.95rem;
+                line-height: 1.7;
+                color: rgba(220, 235, 255, 0.92);
+                text-align: center;
+                margin: 0 0 1.75rem;
+              }
+              #modal-acerca-de-btn-ok {
+                display: block;
+                width: 100%;
+                padding: 0.65rem 1rem;
+                background: linear-gradient(135deg, rgba(59,130,246,0.55), rgba(30,64,175,0.7));
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border: 1px solid rgba(147,197,253,0.5);
+                border-radius: 14px;
+                color: #fff;
+                font-size: 0.95rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                box-shadow: 0 4px 16px rgba(30,64,175,0.35), inset 0 1px 0 rgba(147,197,253,0.4);
+                text-align: center;
+              }
+              #modal-acerca-de-btn-ok:hover {
+                background: linear-gradient(135deg, rgba(59,130,246,0.75), rgba(30,64,175,0.9));
+                transform: translateY(-1px);
+                box-shadow: 0 6px 20px rgba(30,64,175,0.5), inset 0 1px 0 rgba(147,197,253,0.5);
+              }
+              #modal-acerca-de-btn-ok:active { transform: translateY(0); }
+              #modal-acerca-de-close-x {
+                position: absolute;
+                top: 1rem; right: 1rem;
+                background: rgba(59,130,246,0.15);
+                border: 1px solid rgba(147,197,253,0.2);
+                border-radius: 50%;
+                width: 30px; height: 30px;
+                display: flex; align-items: center; justify-content: center;
+                cursor: pointer;
+                color: rgba(147,197,253,0.8);
+                transition: all 0.2s;
+              }
+              #modal-acerca-de-close-x:hover {
+                background: rgba(59,130,246,0.35);
+                color: #fff;
+              }
             </style>
 
             <header class="glass-header-container">
@@ -208,7 +343,7 @@
                   <li><a href="{% url 'principal:cursos' %}" class="glass-nav-link">Nuestros Cursos</a></li>
                 {% endif %}
                 <li><a href="{% url 'blog:lista_noticias' %}" class="glass-nav-link">Noticias</a></li>
-                <li><a href="#" class="glass-nav-link">Acerca de</a></li>
+                <li><a href="#" class="glass-nav-link" onclick="abrirModalAcercaDe(event)">Acerca de</a></li>
               </ul>
 
               {# Auth escritorio #}
@@ -258,7 +393,7 @@
                 <a href="{% url 'blog:lista_noticias' %}">
                   <span class="material-icons" style="font-size:1rem;">newspaper</span>Noticias
                 </a>
-                <a href="#">
+                <a href="#" onclick="abrirModalAcercaDe(event)">
                   <span class="material-icons" style="font-size:1rem;">info</span>Acerca de
                 </a>
                 <div class="glass-mobile-divider"></div>
@@ -294,4 +429,43 @@
                   if (icon) icon.textContent = 'menu';
                 }
               });
+
+              /* ── Modal Acerca De ── */
+              function abrirModalAcercaDe(e) {
+                if (e) e.preventDefault();
+                document.getElementById('modal-acerca-de-overlay').classList.add('activo');
+                // Cierra el menú móvil si estaba abierto
+                var menu = document.getElementById('header-mobile-menu');
+                if (menu) menu.style.display = 'none';
+                var icon = document.getElementById('header-menu-icon');
+                if (icon) icon.textContent = 'menu';
+              }
+              function cerrarModalAcercaDe() {
+                document.getElementById('modal-acerca-de-overlay').classList.remove('activo');
+              }
+              document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') cerrarModalAcercaDe();
+              });
             </script>
+
+            {# Modal Acerca De #}
+            <div id="modal-acerca-de-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-acerca-titulo"
+                 onclick="if(event.target===this) cerrarModalAcercaDe()">
+              <div id="modal-acerca-de-box">
+                <button id="modal-acerca-de-close-x" onclick="cerrarModalAcercaDe()" aria-label="Cerrar">
+                  <span class="material-icons" style="font-size:1rem;">close</span>
+                </button>
+                <div class="modal-icon-wrap">
+                  <img src="/media/default/LOGO.png" alt="Logo Centro Fray Bartolomé de las Casas">
+                </div>
+                <h2 id="modal-acerca-titulo">Centro Fray Bartolomé de las Casas</h2>
+                <p class="modal-subtitle">Centro de Estudios de la Orden de Predicadores (Dominicos)</p>
+                <div class="modal-divider"></div>
+                <p>
+                  Nuestro Centro es un espacio laico de formación, reflexión y estudio.
+                  Mantiene y se fundamenta en una ideología cristiana que reconocemos
+                  generadora de grandes valores cívicos, éticos y humanos.
+                </p>
+                <button id="modal-acerca-de-btn-ok" onclick="cerrarModalAcercaDe()">Entendido</button>
+              </div>
+            </div>
