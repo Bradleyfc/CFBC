@@ -40,7 +40,7 @@
                         <div class="flex-1 min-w-40">
                             <label for="semestre" class="block text-xs font-medium text-gray-600 mb-1">Semestre:</label>
                             <select class="glass-select-compact" id="semestre" name="semestre">
-                                <option value="">Todos (semestre actual)</option>
+                                <option value="" id="semestre-todos-option">Todos (semestre actual)</option>
                                 {% for s in semestres_disponibles %}
                                 <option value="{{ s.id }}"
                                         data-curso-id="{{ s.curso_archivado.id_original }}"
@@ -94,7 +94,7 @@
                                 <span class="fa material-icons mr-2">filter_list</span></i>
                                 Aplicar Filtros
                             </button>
-                            <a href="{% url 'principal:calificaciones' %}" class="glass-button glass-button-secondary">
+                            <a href="{% url 'principal:calificaciones' %}" class="glass-button glass-button-orange">
                                 <span class="fa material-icons mr-2">refresh</span></i>
                                 Limpiar Filtros
                             </a>
@@ -342,6 +342,16 @@
     .glass-button-success {
         background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
         color: #14532d;
+    }
+
+    .glass-button-orange {
+        background: linear-gradient(135deg, rgba(249, 115, 22, 0.3), rgba(234, 88, 12, 0.2));
+        color: #7c2d12;
+    }
+
+    .glass-button-orange:hover {
+        background: linear-gradient(135deg, rgba(249, 115, 22, 0.4), rgba(234, 88, 12, 0.3));
+        box-shadow: 0 8px 25px rgba(249, 115, 22, 0.2);
     }
 
     /* Glass Select */
@@ -630,8 +640,8 @@
 </style>
 
 <script>
-    // Auto-submit al cambiar cualquier filtro (excepto #curso que filtra semestres primero)
-    document.querySelectorAll('#curso_academico, #semestre, #estudiante').forEach(function(select) {
+    // Auto-submit al cambiar cualquier filtro (excepto #curso y #curso_academico que tienen handlers propios)
+    document.querySelectorAll('#semestre, #estudiante').forEach(function(select) {
         select.addEventListener('change', function() {
             this.closest('form').submit();
         });
@@ -642,6 +652,23 @@
             this.closest('form').submit();
         });
     }
+
+    function actualizarTextoTodosSemestre() {
+        var caSelect = document.getElementById('curso_academico');
+        var todosSemestreOpt = document.getElementById('semestre-todos-option');
+        if (!caSelect || !todosSemestreOpt) return;
+        var selectedOption = caSelect.options[caSelect.selectedIndex];
+        var texto = selectedOption ? selectedOption.text : '';
+        var esArchivado = texto.indexOf('(Archivado)') !== -1;
+        todosSemestreOpt.textContent = esArchivado ? 'Todos' : 'Todos (semestre actual)';
+    }
+
+    // Ejecutar al cargar y al cambiar CA
+    actualizarTextoTodosSemestre();
+    document.getElementById('curso_academico').addEventListener('change', function() {
+        actualizarTextoTodosSemestre();
+        this.closest('form').submit();
+    });
 
     function filtrarSemestresPorCurso(cursoId) {
         // No filtrar semestres por curso — los semestres archivados tienen id_original
