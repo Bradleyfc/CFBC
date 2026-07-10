@@ -19,9 +19,18 @@
         <input type="text" name="usuario" value="{{ usuario_q }}" placeholder="username…"
                class="border border-gray-200 rounded-lg px-3 py-2 text-sm">
     </div>
-    <button type="submit" class="px-4 py-2 rounded-lg text-sm text-white" style="background:#ea580c;">Filtrar</button>
-    <a href="{% url 'blog:mod_sanciones' %}" class="px-4 py-2 rounded-lg text-sm text-gray-600 border border-gray-200">Limpiar</a>
+    <button type="submit" class="px-4 py-2 rounded-lg text-sm text-white" style="background:#ea580c;display:none;">Filtrar</button>
+    <a href="{% url 'blog:mod_sanciones' %}" class="btn-orange-shine">Limpiar</a>
 </form>
+
+<script>
+    // Auto-submit al cambiar el select de filtro
+    document.querySelectorAll('select[name="estado"]').forEach(function(select) {
+        select.addEventListener('change', function() {
+            this.closest('form').submit();
+        });
+    });
+</script>
 
 <!-- Tabla -->
 {% if page_obj %}

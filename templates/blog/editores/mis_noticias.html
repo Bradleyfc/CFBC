@@ -223,12 +223,13 @@
             <label class="block text-sm font-medium text-gray-700 mb-2">&nbsp;</label>
             <div class="flex space-x-4">
                 <button type="submit" 
-                        class="glass-button glass-button-primary inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all">
+                        class="glass-button glass-button-primary inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all"
+                        style="display:none;">
                     <span class="material-icons mr-2 text-sm">filter_list</span>
                     Filtrar
                 </button>
                 <a href="{% url 'blog:mis_noticias' %}" 
-                   class="glass-button inline-flex items-center px-4 py-2 text-gray-700 text-sm font-medium rounded-lg transition-all">
+                   class="glass-button glass-button-orange inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all">
                     <span class="material-icons mr-2 text-sm">clear</span>
                     Limpiar
                 </a>
@@ -433,6 +434,13 @@
     // Cerrar con Escape
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') hideDeleteModal();
+    });
+
+    // Auto-submit al cambiar cualquier filtro
+    document.querySelectorAll('select[name="estado"], select[name="categoria"]').forEach(function(select) {
+        select.addEventListener('change', function() {
+            this.closest('form').submit();
+        });
     });
 </script>
 {% endblock %}
