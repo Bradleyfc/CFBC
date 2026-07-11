@@ -770,6 +770,10 @@
       selectTipo.addEventListener('change', function() {
         item.setAttribute('data-tipo', this.value);
         actualizarSeccionOpciones(item, this.value);
+        // Actualizar modo de calificación por defecto según el tipo de pregunta
+        if (item._actualizarModoCalificacion) {
+          item._actualizarModoCalificacion(this.value);
+        }
       });
       actualizarSeccionOpciones(item, selectTipo.value);
       cargarOpcionesExistentes(item);
@@ -819,6 +823,16 @@
       if (hintTodo)    hintTodo.style.display    = esTodo ? '' : 'none';
     }
 
+    // Si el tipo de pregunta es selección única, el default debe ser "Todo o nada"
+    // (solo para preguntas nuevas, sin ID guardado en base de datos)
+    var esNueva = !item.getAttribute('data-pregunta-id');
+    if (esNueva) {
+      var selectTipo = item.querySelector('select[name$="-tipo"]');
+      if (selectTipo && selectTipo.value === 'seleccion_unica') {
+        checkboxTodoONada.checked = true;
+      }
+    }
+
     // Inicializar estado visual
     actualizarBotones();
 
@@ -834,6 +848,15 @@
         actualizarBotones();
       });
     }
+
+    // Exponer actualizarBotones para que el listener de tipo de pregunta pueda llamarla
+    item._actualizarModoCalificacion = function(tipoPregunta) {
+      // Solo cambiar el default en preguntas nuevas (sin ID guardado)
+      if (!item.getAttribute('data-pregunta-id')) {
+        checkboxTodoONada.checked = (tipoPregunta === 'seleccion_unica');
+      }
+      actualizarBotones();
+    };
   }
 
   function renumberPreguntas() {
