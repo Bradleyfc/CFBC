@@ -89,19 +89,13 @@
             </div>
             <!-- Acciones -->
             <div class="flex gap-2 flex-wrap">
-              {% with pend=pendientes_por_eval|default_if_none:0 %}
-              <a href="{% url 'evaluaciones:intentos_lista' pk=ev.id %}" class="glass-button glass-button-warning" style="position:relative;">
+              <a href="{% url 'evaluaciones:intentos_lista' pk=ev.id %}" class="glass-button glass-button-warning">
                 <span class="fa material-icons mr-1">people</span>
                 Respuestas
-                {% if pendientes_por_eval %}
-                  {% for pk, cnt in pendientes_por_eval.items %}
-                    {% if pk == ev.pk and cnt > 0 %}
-                    <span class="btn-pending-dot">{{ cnt }}</span>
-                    {% endif %}
-                  {% endfor %}
+                {% if ev.pendientes %}
+                <span class="btn-pending-dot">{{ ev.pendientes }}</span>
                 {% endif %}
               </a>
-              {% endwith %}
               <a href="{% url 'evaluaciones:editar' pk=ev.id %}" class="glass-button glass-button-primary">
                 <span class="fa material-icons mr-1">edit</span>
                 Editar
@@ -204,29 +198,30 @@
   }
   .glass-alert-info { background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(37,99,235,0.08)); color: #1e3a8a; }
 
-  /* Badge de pendientes en botón */
+  /* Badge de pendientes dentro del botón */
   @keyframes dot-pulse {
     0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.6); transform: scale(1); }
-    50%       { box-shadow: 0 0 0 5px rgba(239,68,68,0); transform: scale(1.1); }
+    50%       { box-shadow: 0 0 0 4px rgba(239,68,68,0); transform: scale(1.12); }
   }
   .btn-pending-dot {
-    position: absolute;
-    top: -7px;
-    right: -7px;
-    min-width: 1.25rem;
-    height: 1.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.2rem;
+    height: 1.2rem;
     padding: 0 0.3rem;
+    margin-left: 0.45rem;
     border-radius: 999px;
     background: #ef4444;
     color: #fff;
-    font-size: 0.68rem;
+    font-size: 0.65rem;
     font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid white;
+    line-height: 1;
+    border: 1.5px solid rgba(255,255,255,0.85);
     animation: dot-pulse 1.6s ease-in-out infinite;
+    flex-shrink: 0;
     pointer-events: none;
+    vertical-align: middle;
   }
 </style>
 {% endblock %}

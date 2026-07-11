@@ -19,6 +19,14 @@ def _get_curso_or_404(curso_id):
     return get_object_or_404(Curso, pk=curso_id)
 
 
+def _get_semestre_activo(curso):
+    """Devuelve el SemestreCurso activo del curso, o None si no existe."""
+    from principal.models import SemestreCurso
+    return SemestreCurso.objects.filter(
+        curso=curso, activo=True
+    ).order_by('-numero_semestre').first()
+
+
 def _build_opciones_json(evaluacion):
     """
     Devuelve un dict {pregunta_pk: [{"id":..,"texto":..,"es_correcta":..,"orden":..}]}
@@ -155,7 +163,19 @@ class EvaluacionListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         return self.request.user == self.curso.teacher
 
     def get_queryset(self):
-        return Evaluacion.objects.filter(curso=self.curso).order_by('-fecha_creacion')
+        # Mostrar solo las evaluaciones del semestre activo del curso
+        from principal.models import SemestreCurso
+        semestre_activo = SemestreCurso.objects.filter(
+            curso=self.curso, activo=True
+        ).order_by('-numero_semestre').first()
+        if semestre_activo:
+            return Evaluacion.objects.filter(
+                curso=self.curso, semestre=semestre_activo
+            ).order_by('-fecha_creacion')
+        # Fallback: si no hay semestre activo, mostrar evaluaciones sin semestre
+        return Evaluacion.objects.filter(
+            curso=self.curso, semestre__isnull=True
+        ).order_by('-fecha_creacion')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -164,9 +184,11 @@ class EvaluacionListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         pendientes_por_eval = {}
         for ev in evaluaciones:
             if ev.tipo == 'libre':
-                pendientes_por_eval[ev.pk] = ev.intentos.filter(estado='enviado').count()
+                cnt = ev.intentos.filter(estado='enviado').count()
             else:
-                pendientes_por_eval[ev.pk] = 0
+                cnt = 0
+            pendientes_por_eval[ev.pk] = cnt
+            ev.pendientes = cnt  # anotado directamente para el template
         context['pendientes_por_eval'] = pendientes_por_eval
         context['total_pendientes'] = sum(pendientes_por_eval.values())
         return context
@@ -207,6 +229,7 @@ def evaluacion_create(request, curso_id):
                 else:
                     evaluacion = form.save(commit=False)
                     evaluacion.curso = curso
+                    evaluacion.semestre = _get_semestre_activo(curso)
                     evaluacion.save()
                     formset.instance = evaluacion
                     formset.save()
@@ -216,6 +239,7 @@ def evaluacion_create(request, curso_id):
             else:
                 evaluacion = form.save(commit=False)
                 evaluacion.curso = curso
+                evaluacion.semestre = _get_semestre_activo(curso)
                 evaluacion.save()
                 formset.instance = evaluacion
                 formset.save()
@@ -472,9 +496,22 @@ class EvaluacionEstudianteListView(LoginRequiredMixin, UserPassesTestMixin, List
         ).exists()
 
     def get_queryset(self):
+        # Mostrar solo evaluaciones publicadas del semestre activo del curso
+        from principal.models import SemestreCurso
+        semestre_activo = SemestreCurso.objects.filter(
+            curso=self.curso, activo=True
+        ).order_by('-numero_semestre').first()
+        if semestre_activo:
+            return Evaluacion.objects.filter(
+                curso=self.curso,
+                estado='publicada',
+                semestre=semestre_activo,
+            ).order_by('-fecha_creacion')
+        # Fallback: si no hay semestre activo, mostrar evaluaciones sin semestre
         return Evaluacion.objects.filter(
             curso=self.curso,
             estado='publicada',
+            semestre__isnull=True,
         ).order_by('-fecha_creacion')
 
     def get_context_data(self, **kwargs):
@@ -727,6 +764,7 @@ def secretaria_evaluacion_create(request):
             else:
                 evaluacion = form.save(commit=False)
                 evaluacion.curso = curso
+                evaluacion.semestre = _get_semestre_activo(curso)
                 evaluacion.save()
                 formset.instance = evaluacion
                 formset.save()
@@ -877,6 +915,7 @@ def secretaria_evaluacion_create(request):
             else:
                 evaluacion = form.save(commit=False)
                 evaluacion.curso = curso
+                evaluacion.semestre = _get_semestre_activo(curso)
                 evaluacion.save()
                 formset.instance = evaluacion
                 formset.save()

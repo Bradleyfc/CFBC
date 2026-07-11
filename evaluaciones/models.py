@@ -16,6 +16,12 @@ class Evaluacion(models.Model):
         'principal.Curso', on_delete=models.CASCADE,
         related_name='evaluaciones', verbose_name='Curso'
     )
+    semestre = models.ForeignKey(
+        'principal.SemestreCurso', on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='evaluaciones', verbose_name='Semestre',
+        help_text='Semestre al que pertenece esta evaluación. Se asigna automáticamente al crearla.',
+    )
     titulo = models.CharField(max_length=200, verbose_name='Título')
     descripcion = models.TextField(blank=True, null=True, verbose_name='Descripción')
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='libre', verbose_name='Tipo')

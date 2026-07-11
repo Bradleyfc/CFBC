@@ -46,9 +46,7 @@
               <th>Fecha de envío</th>
               <th>Estado</th>
               <th>Puntaje</th>
-              {% if evaluacion.tipo == "libre" %}
               <th>Acciones</th>
-              {% endif %}
             </tr>
           </thead>
           <tbody>
@@ -86,15 +84,24 @@
                 <span class="text-gray-400 text-sm">—</span>
                 {% endif %}
               </td>
-              {% if evaluacion.tipo == "libre" %}
               <td>
-                <a href="{% url 'evaluaciones:secretaria_calificar_intento' pk=intento.id %}"
-                   class="glass-button glass-button-purple">
-                  <span class="fa material-icons mr-1">grading</span>
-                  {% if intento.estado == "calificado" %}Ver / Editar{% else %}Calificar{% endif %}
-                </a>
+                <div class="flex gap-2 flex-wrap">
+                  {% if evaluacion.tipo == "libre" %}
+                  <a href="{% url 'evaluaciones:secretaria_calificar_intento' pk=intento.id %}"
+                     class="glass-button glass-button-purple">
+                    <span class="fa material-icons mr-1">grading</span>
+                    {% if intento.estado == "calificado" %}Ver / Editar{% else %}Calificar{% endif %}
+                  </a>
+                  {% endif %}
+                  {% if evaluacion.tipo == "momentanea" %}
+                  <a href="{% url 'evaluaciones:secretaria_reporte' %}?curso_id={{ evaluacion.curso.id }}"
+                     class="glass-button glass-button-teal">
+                    <span class="fa material-icons mr-1">assessment</span>
+                    Ver Reporte
+                  </a>
+                  {% endif %}
+                </div>
               </td>
-              {% endif %}
             </tr>
             {% endfor %}
           </tbody>
@@ -152,6 +159,7 @@
   .glass-button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); text-decoration: none; }
   .glass-button-secondary { background: linear-gradient(135deg, rgba(156,163,175,0.3), rgba(107,114,128,0.2)); color: #374151; }
   .glass-button-purple    { background: linear-gradient(135deg, rgba(139,92,246,0.3), rgba(109,40,217,0.2)); color: #4c1d95; }
+  .glass-button-teal      { background: linear-gradient(135deg, rgba(20,184,166,0.3), rgba(13,148,136,0.2)); color: #134e4a; }
   .glass-badge {
     display: inline-flex; align-items: center;
     padding: 0.25rem 0.65rem; border-radius: 14px;

@@ -2340,11 +2340,26 @@ class ProfileView(DocumentsProfileMixin, BaseContextMixin, TemplateView):
             # Obtener todos los cursos asignados al profesor del curso académico activo
             curso_academico_activo = CursoAcademico.objects.filter(activo=True).first()
             if curso_academico_activo:
-                assigned_courses = Curso.objects.filter(teacher=user, curso_academico=curso_academico_activo)
+                assigned_courses = list(Curso.objects.filter(teacher=user, curso_academico=curso_academico_activo))
             else:
-                assigned_courses = Curso.objects.none()
+                assigned_courses = []
+
+            # Evaluaciones con intentos pendientes de calificar, agrupadas por curso
+            from evaluaciones.models import IntentoEvaluacion as _IntentoEval
+            eval_pendientes_por_curso = {}
+            for intento in _IntentoEval.objects.filter(
+                evaluacion__curso__in=assigned_courses,
+                estado='enviado',
+            ).values('evaluacion__curso_id'):
+                cid = intento['evaluacion__curso_id']
+                eval_pendientes_por_curso[cid] = eval_pendientes_por_curso.get(cid, 0) + 1
+
+            # Anotar cada curso con su conteo de evaluaciones pendientes
+            for course in assigned_courses:
+                course.eval_pendientes = eval_pendientes_por_curso.get(course.id, 0)
+
             context['assigned_courses'] = assigned_courses
-            
+
             # Obtener las solicitudes de inscripción pendientes para los cursos del profesor con paginación
             # Solo mostrar solicitudes de cursos en etapa de inscripción (I o IT)
             pending_solicitudes = SolicitudInscripcion.objects.filter(
@@ -2625,6 +2640,16 @@ class ProfileView(DocumentsProfileMixin, BaseContextMixin, TemplateView):
                 # y conteo de evaluaciones pendientes (sin intento) por curso
                 from evaluaciones.models import Evaluacion as EvaluacionModel, IntentoEvaluacion
                 from django.utils import timezone as tz_now
+                from principal.models import SemestreCurso as SemestreCursoModel
+
+                # Obtener el semestre activo de cada curso del estudiante
+                semestres_activos = {
+                    sc.curso_id: sc
+                    for sc in SemestreCursoModel.objects.filter(
+                        curso__in=[c.id for c in approved_courses],
+                        activo=True,
+                    )
+                }
 
                 evaluaciones_publicadas = EvaluacionModel.objects.filter(
                     curso__in=[c.id for c in approved_courses],
@@ -2643,6 +2668,14 @@ class ProfileView(DocumentsProfileMixin, BaseContextMixin, TemplateView):
                 )
 
                 for ev in evaluaciones_publicadas:
+                    # Solo contar evaluaciones del semestre activo del curso
+                    semestre_activo_curso = semestres_activos.get(ev.curso_id)
+                    if semestre_activo_curso and ev.semestre_id != semestre_activo_curso.pk:
+                        continue
+                    if ev.semestre_id is None and semestre_activo_curso:
+                        # evaluación sin semestre asignado (datos anteriores a esta fix)
+                        # se omite si hay un semestre activo
+                        continue
                     cursos_con_evaluaciones.add(ev.curso_id)
                     cerrada = ev.fecha_limite is not None and ahora > ev.fecha_limite
                     if not cerrada and ev.pk not in intentos_del_estudiante:

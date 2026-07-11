@@ -67,9 +67,13 @@
             </a>
 
             <a href="{% url 'evaluaciones:lista_curso' curso_id=course.id %}"
-              class="glass-action-button glass-action-purple flex-1">
-              <span class="fa material-icons mr-1">quiz</span></i>
+              class="glass-action-button glass-action-purple flex-1{% if course.eval_pendientes > 0 %} eval-btn-pendiente{% endif %}"
+              style="position:relative;overflow:visible;">
+              <span class="fa material-icons mr-1">quiz</span>
               Evaluaciones
+              {% if course.eval_pendientes > 0 %}
+              <span class="eval-pending-badge">{{ course.eval_pendientes }}</span>
+              {% endif %}
             </a>
             {% endif %}
           </div>
@@ -295,6 +299,46 @@
   .glass-solicitud-item:hover {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3));
     transform: translateX(4px);
+  }
+
+  /* ── Badge de evaluaciones pendientes (dentro del botón) ─────────── */
+  @keyframes badge-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.7); transform: scale(1); }
+    50%       { box-shadow: 0 0 0 5px rgba(239,68,68,0); transform: scale(1.15); }
+  }
+  .eval-pending-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.2rem;
+    height: 1.2rem;
+    padding: 0 0.3rem;
+    margin-left: 0.5rem;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 1;
+    border: 1.5px solid rgba(255,255,255,0.8);
+    animation: badge-pulse 1.6s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+
+  /* ── Borde rojo parpadeante en el botón Evaluaciones del perfil ─── */
+  @keyframes border-alert {
+    0%, 100% {
+      border-color: rgba(239,68,68,0.9);
+      box-shadow: 0 0 0 0 rgba(239,68,68,0.5), inset 0 0 0 0 rgba(239,68,68,0.1);
+    }
+    50% {
+      border-color: rgba(239,68,68,0.3);
+      box-shadow: 0 0 8px 2px rgba(239,68,68,0.35), inset 0 0 6px 0 rgba(239,68,68,0.08);
+    }
+  }
+  .eval-btn-pendiente {
+    border-width: 2px !important;
+    animation: border-alert 1.4s ease-in-out infinite;
   }
 
   /* Glass View Button */
