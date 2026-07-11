@@ -291,6 +291,9 @@
                                             Semestre Finalizado
                                         {% endif %}
                                     </span>
+                                    {% if course.curso_tambien_finalizado %}
+                                    <span class="glass-badge-status glass-badge-red">Curso Finalizado</span>
+                                    {% endif %}
                                     {% else %}
                                     <span class="text-sm text-gray-600">Estado del Curso:</span>
                                     <span class="glass-badge-status glass-badge-red">Finalizado</span>
@@ -672,12 +675,13 @@
         height: 1.25rem;
         margin-left: 0.5rem;
         border-radius: 50%;
-        background: linear-gradient(135deg, rgba(139, 92, 246, 0.9), rgba(109, 40, 217, 0.8));
-        color: white;
+        background: #dc2626;
+        color: #ffffff;
         font-size: 0.7rem;
         font-weight: 700;
         animation: pulse 2s infinite;
-        box-shadow: 0 2px 8px rgba(139, 92, 246, 0.5);
+        box-shadow: 0 2px 8px rgba(220, 38, 38, 0.55);
+        border: 2px solid rgba(220, 38, 38, 0.4);
     }
 
     /* Glass Badge New */

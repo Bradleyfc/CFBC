@@ -2497,6 +2497,7 @@ class ProfileView(DocumentsProfileMixin, BaseContextMixin, TemplateView):
                                 # Este proxy es un curso realmente finalizado (status='F')
                                 self.es_semestre_cerrado = False
                                 self.semestre_finalizado_numero = None
+                                self.curso_tambien_finalizado = False
                                 self.matricula_activa = True
                                 self.matricula_estado = 'P'
                                 self.matricula_estado_display = ''
@@ -2663,16 +2664,20 @@ class ProfileView(DocumentsProfileMixin, BaseContextMixin, TemplateView):
                         and ca_id_original == curso_academico_activo.pk
                     )
 
-                    curso_obj = Curso.objects.filter(pk=course_id_original).only('id', 'name').first()
+                    curso_obj = Curso.objects.filter(pk=course_id_original).only('id', 'name', 'status').first()
                     if curso_obj is not None:
                         course_display_id = curso_obj.id
                         course_name = curso_obj.name
+                        curso_status = curso_obj.status
                     else:
                         curso_arch = matriculas_list[0].course
                         course_display_id = curso_arch.id_original
                         course_name = curso_arch.name
+                        curso_status = None
 
                     proxy = _CursoHistorialProxy(course_display_id, course_name, sems_arch)
+                    # Si el curso también está finalizado, marcarlo para mostrarlo en el template
+                    proxy.curso_tambien_finalizado = (curso_status == 'F')
 
                     if es_del_ano_activo:
                         cursos_finalizados_ano_activo.append(proxy)
@@ -2965,21 +2970,10 @@ class CalificacionesListView(BaseContextMixin, ListView):
         if curso_academico_id:
             return Calificaciones.objects.none()
 
-        # Sin filtro explícito: usar el CA activo por defecto
-        ca_activo = CursoAcademico.objects.filter(activo=True).first()
-        queryset = Calificaciones.objects.select_related('student', 'course', 'curso_academico')
-        if ca_activo:
-            queryset = queryset.filter(curso_academico=ca_activo)
-
-        curso_id = self.request.GET.get('curso')
-        if curso_id:
-            queryset = queryset.filter(course__id=curso_id)
-
-        student_id = self.request.GET.get('student') or self.request.GET.get('estudiante')
-        if student_id:
-            queryset = queryset.filter(student__id=student_id)
-
-        return queryset
+        # Sin filtro explícito: delegar toda la lógica a get_context_data
+        # (igual que cuando se selecciona un CA explícitamente) para que se
+        # combinen las calificaciones vivas con las archivadas del CA activo.
+        return Calificaciones.objects.none()
 
     def get_context_data(self, **kwargs):
         from datos_archivados.models import SemestreCursoArchivado, CalificacionArchivada, CursoArchivado, CursoAcademicoArchivado
@@ -2990,6 +2984,11 @@ class CalificacionesListView(BaseContextMixin, ListView):
         context['ca_activo_id'] = ca_activo.id if ca_activo else None
 
         curso_academico_id = self.request.GET.get('curso_academico')
+        # Si no se seleccionó CA explícitamente, usar el CA activo como valor efectivo.
+        # Esto garantiza que la carga inicial muestre las calificaciones del CA activo,
+        # incluyendo las archivadas por "Terminar Semestre" que ya no están en principal.
+        if not curso_academico_id and ca_activo:
+            curso_academico_id = str(ca_activo.id)
 
         # Filtrar cursos para el selector — si el CA está archivado los Curso ya no
         # existen en principal, hay que buscar en CursoArchivado.
@@ -3016,6 +3015,8 @@ class CalificacionesListView(BaseContextMixin, ListView):
         semestres_qs = SemestreCursoArchivado.objects.select_related('curso_archivado').order_by(
             'curso_archivado__curso_academico', 'numero_semestre'
         )
+        # Determinar el CA a usar para filtrar semestres: el seleccionado o el activo por defecto.
+        # curso_academico_id ya está normalizado al CA activo si no se seleccionó uno.
         if curso_academico_id:
             cursos_ids_principal = list(
                 Curso.objects.filter(
@@ -3034,6 +3035,8 @@ class CalificacionesListView(BaseContextMixin, ListView):
                     )
                 else:
                     semestres_qs = SemestreCursoArchivado.objects.none()
+        else:
+            semestres_qs = SemestreCursoArchivado.objects.none()
         context['semestres_disponibles'] = semestres_qs
 
         semestre_id = self.request.GET.get('semestre')
@@ -3405,10 +3408,66 @@ class CalificacionDetalleEstudianteView(BaseContextMixin, TemplateView):
 
         if curso_en_principal:
             course = curso_en_principal
-            calificacion = Calificaciones.objects.filter(
+            from datos_archivados.models import (
+                UsuarioArchivado, CalificacionArchivada, CursoArchivado as CursoArchivadoModel2,
+            )
+            from itertools import chain as _chain
+            from decimal import Decimal as _Decimal
+
+            # ── Notas vivas en principal ──────────────────────────────────────
+            # Después de "Terminar Semestre" las Calificaciones/Notas se eliminan
+            # de principal y se mueven a datos_archivados. Por eso aquí puede no
+            # haber nada aunque el Curso siga existiendo.
+            calificaciones_qs = Calificaciones.objects.filter(
                 student=student, course=course
-            ).prefetch_related('notas').first()
-            notas = calificacion.notas.all().order_by('fecha_creacion') if calificacion else []
+            ).prefetch_related('notas').order_by('semestre__numero_semestre', 'pk')
+
+            notas_vivas = list(_chain.from_iterable(
+                c.notas.all().order_by('fecha_creacion') for c in calificaciones_qs
+            ))
+
+            # ── Notas archivadas (semestres terminados del mismo curso) ───────
+            # Un CursoArchivado se crea por cada semestre terminado con id_original=curso.pk.
+            cursos_archivados = CursoArchivadoModel2.objects.filter(id_original=course_id)
+            ua = UsuarioArchivado.objects.filter(usuario_actual=student).first()
+
+            notas_archivadas = []
+            avg_archivado = None
+            if ua and cursos_archivados.exists():
+                cals_arch = CalificacionArchivada.objects.filter(
+                    student=ua, course__in=cursos_archivados
+                ).prefetch_related('notas_archivadas').order_by(
+                    'semestre_archivado__numero_semestre', 'pk'
+                )
+                notas_archivadas = [
+                    _NotaArchivadaAdapter(n)
+                    for ca in cals_arch
+                    for n in ca.notas_archivadas.all().order_by('fecha_creacion')
+                ]
+                # Promedio de lo archivado (el último semestre archivado)
+                last_arch = cals_arch.last()
+                if last_arch:
+                    avg_archivado = last_arch.average
+
+            # ── Combinar: archivadas primero (cronológico), luego vivas ───────
+            notas = notas_archivadas + notas_vivas
+
+            # Calcular promedio global con todas las notas disponibles
+            class _CalificacionMultiProxy:
+                def __init__(self, avg):
+                    self.average = avg
+
+            if notas:
+                valores = [n.valor for n in notas if n.valor is not None]
+                global_avg = _Decimal(str(sum(valores) / len(valores))) if valores else None
+                calificacion = _CalificacionMultiProxy(global_avg)
+            elif calificaciones_qs.exists():
+                calificacion = calificaciones_qs.last()
+            elif avg_archivado is not None:
+                calificacion = _CalificacionMultiProxy(avg_archivado)
+            else:
+                calificacion = None
+
             matricula = Matriculas.objects.filter(
                 student=student, course=course
             ).select_related('curso_academico').order_by(
@@ -3712,16 +3771,15 @@ class AsistenciasListView(BaseContextMixin, ListView):
         if semestre_id and str(semestre_id).isdigit():
             return Matriculas.objects.none()
 
-        queryset = Matriculas.objects.select_related('student', 'course', 'curso_academico').filter(activo=True)
-
         curso_academico_id = self.request.GET.get('curso_academico')
-        if curso_academico_id:
-            queryset = queryset.filter(curso_academico__id=curso_academico_id)
-        else:
-            # Por defecto filtrar por el CA activo
-            ca_activo = CursoAcademico.objects.filter(activo=True).first()
-            if ca_activo:
-                queryset = queryset.filter(curso_academico=ca_activo)
+
+        # Sin filtro explícito: delegar toda la lógica a get_context_data
+        # igual que con calificaciones, para combinar vivas + archivadas.
+        if not curso_academico_id:
+            return Matriculas.objects.none()
+
+        queryset = Matriculas.objects.select_related('student', 'course', 'curso_academico').filter(activo=True)
+        queryset = queryset.filter(curso_academico__id=curso_academico_id)
 
         curso_id = self.request.GET.get('curso')
         if curso_id:
@@ -3742,9 +3800,13 @@ class AsistenciasListView(BaseContextMixin, ListView):
         context['ca_activo_id'] = ca_activo.id if ca_activo else None
 
         curso_academico_id = self.request.GET.get('curso_academico')
+        # Si no se seleccionó CA explícitamente, usar el CA activo como valor efectivo.
+        # Así la carga inicial muestra las matrículas/asistencias del CA activo,
+        # incluyendo las archivadas por "Terminar Semestre".
+        if not curso_academico_id and ca_activo:
+            curso_academico_id = str(ca_activo.id)
 
-        # Filtrar cursos para el selector — si el CA está archivado los Curso ya no
-        # existen en principal, hay que buscar en CursoArchivado.
+        # Filtrar cursos para el selector
         if curso_academico_id:
             cursos_en_principal = Curso.objects.filter(
                 curso_academico__id=curso_academico_id
@@ -3766,8 +3828,7 @@ class AsistenciasListView(BaseContextMixin, ListView):
         context['selected_curso'] = self.request.GET.get('curso')
         context['selected_estudiante'] = self.request.GET.get('estudiante')
 
-        # Semestres archivados disponibles — cuando el CA está archivado filtrar
-        # vía CursoAcademicoArchivado.
+        # Semestres disponibles filtrados por el CA efectivo (seleccionado o activo)
         semestres_qs = SemestreCursoArchivado.objects.select_related('curso_archivado').order_by(
             'curso_archivado__curso_academico', 'numero_semestre'
         )
@@ -3789,6 +3850,8 @@ class AsistenciasListView(BaseContextMixin, ListView):
                     )
                 else:
                     semestres_qs = SemestreCursoArchivado.objects.none()
+        else:
+            semestres_qs = SemestreCursoArchivado.objects.none()
         context['semestres_disponibles'] = semestres_qs
 
         semestre_id = self.request.GET.get('semestre')
@@ -3824,13 +3887,29 @@ class AsistenciasListView(BaseContextMixin, ListView):
                 pass
 
         elif curso_academico_id:
-            # CA archivado sin semestre específico: cargar todas las matrículas archivadas.
+            # Sin semestre específico: combinar matrículas vivas (CA activo) + archivadas.
             from datos_archivados.models import CursoArchivado, CursoAcademicoArchivado
             cursos_ids_principal = list(
                 Curso.objects.filter(
                     curso_academico__id=curso_academico_id
                 ).values_list('id', flat=True)
             )
+
+            # Matrículas vivas en principal para este CA
+            curso_id = self.request.GET.get('curso')
+            estudiante_id = self.request.GET.get('estudiante')
+
+            matriculas_vivas_qs = Matriculas.objects.filter(
+                curso_academico__id=curso_academico_id, activo=True
+            ).select_related('student', 'course', 'curso_academico').order_by(
+                'student__first_name', 'student__last_name', 'student__username'
+            )
+            if curso_id:
+                matriculas_vivas_qs = matriculas_vivas_qs.filter(course__id=curso_id)
+            if estudiante_id:
+                matriculas_vivas_qs = matriculas_vivas_qs.filter(student__id=estudiante_id)
+
+            # Matrículas archivadas para los cursos de este CA
             if cursos_ids_principal:
                 cursos_archivados = CursoArchivado.objects.filter(id_original__in=cursos_ids_principal)
             else:
@@ -3839,26 +3918,29 @@ class AsistenciasListView(BaseContextMixin, ListView):
                     curso_academico=ca_arch
                 ) if ca_arch else CursoArchivado.objects.none()
 
-            if cursos_archivados.exists():
-                context['es_ca_archivado'] = True
-                matriculas_arch_qs = MatriculaArchivada.objects.filter(
-                    course__in=cursos_archivados
-                ).select_related('student', 'course', 'semestre_archivado').order_by(
-                    'student__first_name', 'student__last_name'
-                )
-                estudiante_id = self.request.GET.get('estudiante')
-                if estudiante_id:
-                    matriculas_arch_qs = matriculas_arch_qs.filter(student__id_original=estudiante_id)
-                curso_id = self.request.GET.get('curso')
-                if curso_id:
-                    matriculas_arch_qs = matriculas_arch_qs.filter(course__id_original=curso_id)
+            matriculas_arch_qs = MatriculaArchivada.objects.filter(
+                course__in=cursos_archivados
+            ).select_related('student', 'course', 'semestre_archivado').order_by(
+                'student__first_name', 'student__last_name'
+            )
+            if estudiante_id:
+                matriculas_arch_qs = matriculas_arch_qs.filter(student__id_original=estudiante_id)
+            if curso_id:
+                matriculas_arch_qs = matriculas_arch_qs.filter(course__id_original=curso_id)
 
-                matriculas_adaptadas = [_MatriculaArchivadaAdapter(m) for m in matriculas_arch_qs]
-                paginator = Paginator(matriculas_adaptadas, self.paginate_by)
-                page_number = self.request.GET.get('page', 1)
-                context['matriculas'] = paginator.get_page(page_number)
-                context['page_obj'] = context['matriculas']
-                context['is_paginated'] = context['matriculas'].has_other_pages()
+            if not cursos_ids_principal:
+                context['es_ca_archivado'] = True
+
+            matriculas_combinadas = (
+                list(matriculas_vivas_qs)
+                + [_MatriculaArchivadaAdapter(m) for m in matriculas_arch_qs]
+            )
+
+            paginator = Paginator(matriculas_combinadas, self.paginate_by)
+            page_number = self.request.GET.get('page', 1)
+            context['matriculas'] = paginator.get_page(page_number)
+            context['page_obj'] = context['matriculas']
+            context['is_paginated'] = context['matriculas'].has_other_pages()
 
         return context
 
@@ -3883,11 +3965,35 @@ class AsistenciaDetalleEstudianteView(BaseContextMixin, TemplateView):
 
         if curso_en_principal:
             course = curso_en_principal
-            asistencias = Asistencia.objects.filter(
-                student=student, course=course
-            ).order_by('date')
-            total = asistencias.count()
-            presentes = asistencias.filter(presente=True).count()
+            from datos_archivados.models import (
+                UsuarioArchivado, AsistenciaArchivada,
+                CursoArchivado as CursoArchivadoModel2,
+            )
+
+            # Asistencias vivas en principal (semestre activo actual)
+            asistencias_vivas = list(
+                Asistencia.objects.filter(
+                    student=student, course=course
+                ).order_by('date')
+            )
+
+            # Asistencias archivadas de semestres anteriores del mismo curso.
+            # terminar_semestre() elimina las Asistencias de principal y las mueve
+            # a datos_archivados, pero el Curso sigue existiendo. Hay que buscarlas.
+            cursos_archivados = CursoArchivadoModel2.objects.filter(id_original=course_id)
+            ua = UsuarioArchivado.objects.filter(usuario_actual=student).first()
+
+            asistencias_archivadas = []
+            if ua and cursos_archivados.exists():
+                arch_qs = AsistenciaArchivada.objects.filter(
+                    student=ua, course__in=cursos_archivados
+                ).order_by('semestre_archivado__numero_semestre', 'date')
+                asistencias_archivadas = [_AsistenciaArchivadaAdapter(a) for a in arch_qs]
+
+            # Combinar: archivadas primero (cronológico), luego vivas
+            asistencias = asistencias_archivadas + asistencias_vivas
+            total = len(asistencias)
+            presentes = sum(1 for a in asistencias if a.presente)
             ausentes = total - presentes
             porcentaje = round((presentes / total) * 100, 2) if total > 0 else 0
             context['student'] = student
