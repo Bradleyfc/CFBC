@@ -253,8 +253,19 @@
                             <div class="md:col-span-2">
                                 <h6 class="text-lg font-bold text-gray-800 mb-2">{{ course.name }}</h6>
                                 <div class="flex items-center gap-2 mb-3">
-                                    <span class="text-sm text-gray-600">Estado del curso:</span>
+                                    {% if course.es_semestre_cerrado %}
+                                    <span class="text-sm text-gray-600">Estado del Semestre:</span>
+                                    <span class="glass-badge-status glass-badge-orange">
+                                        {% if course.semestre_finalizado_numero %}
+                                            Semestre {{ course.semestre_finalizado_numero }} Finalizado
+                                        {% else %}
+                                            Semestre Finalizado
+                                        {% endif %}
+                                    </span>
+                                    {% else %}
+                                    <span class="text-sm text-gray-600">Estado del Curso:</span>
                                     <span class="glass-badge-status glass-badge-red">Finalizado</span>
+                                    {% endif %}
                                 </div>
                                 <div class="flex flex-row flex-wrap gap-2">
                                     <button disabled class="glass-action-button glass-action-disabled cursor-not-allowed">
@@ -420,6 +431,11 @@
     .glass-badge-red {
         background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.2));
         color: #7f1d1d;
+    }
+
+    .glass-badge-orange {
+        background: linear-gradient(135deg, rgba(249, 115, 22, 0.3), rgba(234, 88, 12, 0.2));
+        color: #7c2d12;
     }
 
     .glass-badge-yellow {

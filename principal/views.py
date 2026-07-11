@@ -2462,6 +2462,9 @@ class ProfileView(DocumentsProfileMixin, BaseContextMixin, TemplateView):
                                 self.id = curso.id
                                 self.name = curso.name
                                 self.es_curso_anterior = True
+                                # Este proxy es un curso realmente finalizado (status='F')
+                                self.es_semestre_cerrado = False
+                                self.semestre_finalizado_numero = None
                                 self.matricula_activa = True
                                 self.matricula_estado = 'P'
                                 self.matricula_estado_display = ''
@@ -2577,6 +2580,8 @@ class ProfileView(DocumentsProfileMixin, BaseContextMixin, TemplateView):
                         self.id = curso_id
                         self.name = curso_name
                         self.es_curso_anterior = True
+                        # Este proxy representa un semestre cerrado, NO un curso finalizado
+                        self.es_semestre_cerrado = True
                         self.matricula_activa = True
                         self.matricula_estado = 'P'
                         self.matricula_estado_display = ''
@@ -2591,6 +2596,9 @@ class ProfileView(DocumentsProfileMixin, BaseContextMixin, TemplateView):
                         self.semestre_matricula_display = (
                             f"Semestre {sem0.numero_semestre}" if sem0 else "Semestre 1"
                         )
+                        # Número del semestre más reciente que finalizó
+                        last_sem = sems_arch[-1] if sems_arch else None
+                        self.semestre_finalizado_numero = last_sem.numero_semestre if last_sem else None
 
                 for course_id_original, matriculas_list in arch_por_curso_original.items():
                     if course_id_original in ids_ya_cubiertos:
