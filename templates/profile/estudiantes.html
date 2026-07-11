@@ -105,6 +105,8 @@
                         {% elif course.get_dynamic_status == 'P' or course.get_dynamic_status == 'F' %}
                         <!-- Curso en progreso o finalizado -->
 
+                        <!-- Fila: Documentos + Evaluaciones (mitad/mitad cuando ambos están) -->
+                        <div class="flex gap-2 w-full">
                         {% if course.get_dynamic_status == 'P' and course.matricula_estado != 'A' %}
                         <!-- Documentos: solo si el curso está en progreso Y la matrícula no está aprobada -->
                         <a href="{% url 'course_documents:student_dashboard' curso_id=course.id %}"
@@ -122,6 +124,18 @@
                             Documentos
                         </button>
                         {% endif %}
+
+                        {% if course.id in cursos_con_evaluaciones %}
+                        <a href="{% url 'evaluaciones:mis_evaluaciones' curso_id=course.id %}"
+                            class="glass-action-button glass-action-purple flex-1 {% if course.id in evaluaciones_pendientes_por_curso %}glass-action-purple-alert{% endif %}">
+                            <span class="fa material-icons mr-1">quiz</span>
+                            Evaluaciones
+                            {% if course.id in evaluaciones_pendientes_por_curso %}
+                            <span class="glass-badge-eval-pending">!</span>
+                            {% endif %}
+                        </a>
+                        {% endif %}
+                        </div>
 
                         <!-- Semestre actual (datos en principal) -->
                         <div class="sem-btn-group w-full">
@@ -150,17 +164,6 @@
                         </a>
                         {% endfor %}
                         </div>
-
-                        {% if course.id in cursos_con_evaluaciones %}
-                        <a href="{% url 'evaluaciones:mis_evaluaciones' curso_id=course.id %}"
-                            class="glass-action-button glass-action-purple flex-1 {% if course.id in evaluaciones_pendientes_por_curso %}glass-action-purple-alert{% endif %}">
-                            <span class="fa material-icons mr-1">quiz</span>
-                            Evaluaciones
-                            {% if course.id in evaluaciones_pendientes_por_curso %}
-                            <span class="glass-badge-eval-pending">!</span>
-                            {% endif %}
-                        </a>
-                        {% endif %}
                         {% endif %}
                     </div>
                 </div>
