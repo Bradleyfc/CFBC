@@ -2386,9 +2386,41 @@ class ProfileView(DocumentsProfileMixin, BaseContextMixin, TemplateView):
                     curso_academico=curso_academico_activo
                 )
 
+                # Solicitudes sin matrícula (ej: rechazadas) en cursos aún en inscripción.
+                # Se agregan a pending_courses para que el estudiante vea el resultado.
+                solicitudes_sin_matricula = (
+                    SolicitudInscripcion.objects
+                    .filter(
+                        estudiante=user,
+                        curso_academico=curso_academico_activo,
+                        curso__status__in=['I', 'IT'],
+                    )
+                    .exclude(curso_id__in=matriculas_dict.keys())
+                    .select_related('curso')
+                    .order_by('-fecha_solicitud')
+                )
+
                 # Separar cursos por estado de solicitud
                 approved_courses = []
                 pending_courses = []
+
+                # Pre-poblar pending_courses con solicitudes sin matrícula
+                for sol in solicitudes_sin_matricula:
+                    c = sol.curso
+                    c.matricula_activa = True
+                    c.matricula_estado = 'P'
+                    c.matricula_estado_display = ''
+                    c.semestre_matricula = c.semestre_activo_numero
+                    c.semestre_matricula_display = f"Semestre {c.semestre_activo_numero}"
+                    c.solicitud_estado = sol.estado
+                    c.fecha_revision = sol.fecha_revision
+                    c.revisado_por = sol.revisado_por
+                    c.solicitud_semestre_numero = c.semestre_activo_numero
+                    c.has_new_content_indicator = False
+                    c.es_curso_anterior = False
+                    c.semestre_matricula_obj = None
+                    c.semestres_archivados_estudiante = []
+                    pending_courses.append(c)
 
                 # Estados que implican baja/inactividad del estudiante en el curso
                 ESTADOS_INACTIVOS = {'BA', 'BL', 'BI'}
@@ -2501,9 +2533,17 @@ class ProfileView(DocumentsProfileMixin, BaseContextMixin, TemplateView):
                         course.solicitud_estado = solicitud.estado
                         course.fecha_revision = solicitud.fecha_revision
                         course.revisado_por = solicitud.revisado_por
+                        # Número de semestre al que aplicó (semestre activo del curso)
+                        from principal.models import SemestreCurso as _SemestreCursoSol
+                        semestre_sol = _SemestreCursoSol.objects.filter(
+                            curso=course, activo=True
+                        ).order_by('-numero_semestre').first()
+                        course.solicitud_semestre_numero = semestre_sol.numero_semestre if semestre_sol else course.semestre_activo_numero
 
-                        # Separar por estado solo para cursos en inscripción
-                        if course.status in ['I', 'IT'] and solicitud.estado == 'pendiente':
+                        # Cursos en inscripción con solicitud (cualquier estado) van a
+                        # solicitudes_courses para mostrar el estado de la aplicación.
+                        # Solo cuando el curso ya esté en progreso ('P') se muestran normal.
+                        if course.get_dynamic_status in ['I', 'IT']:
                             pending_courses.append(course)
                         else:
                             approved_courses.append(course)

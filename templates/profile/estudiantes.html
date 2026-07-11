@@ -179,50 +179,79 @@
         </div>
     </div>
 
-    <!-- Cursos Pendientes Card -->
+    <!-- Solicitudes de Inscripción -->
     {% if pending_courses %}
     <div class="glass-card">
         <div class="glass-content">
             <h5 class="text-xl font-bold text-gray-800 mb-2 flex items-center">
-                <span class="fa material-icons mr-2">schedule</span></i>
-                Cursos Pendientes
+                <span class="fa material-icons mr-2">assignment_ind</span>
+                Mis Solicitudes de Inscripción
             </h5>
-            <p class="text-sm text-gray-600 mb-4">Cursos con solicitudes esperando revisión del profesor</p>
+            <p class="text-sm text-gray-600 mb-4">Cursos a los que has aplicado este año académico</p>
             <div class="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent mb-4"></div>
 
             <div class="space-y-4">
                 {% for course in pending_courses %}
                 <div class="glass-course-item">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
                         <!-- Course Info Column -->
                         <div class="md:col-span-2">
-                            <h6 class="text-lg font-bold text-gray-800 mb-2">{{ course.name }} <span class="text-base font-medium text-gray-500 ml-2">({{ course.semestre_matricula_display }})</span></h6>
+                            <h6 class="text-lg font-bold text-gray-800 mb-1">{{ course.name }}</h6>
+                            <p class="text-sm text-gray-500 mb-2">
+                                <span class="fa material-icons mr-1" style="font-size:1rem;vertical-align:middle;">layers</span>
+                                Semestre {{ course.solicitud_semestre_numero|default:"1" }}
+                            </p>
                             <div class="flex items-center gap-2">
                                 <span class="text-sm text-gray-600">Estado del curso:</span>
                                 {% if course.get_dynamic_status == 'I' %}
                                 <span class="glass-badge-status glass-badge-green">
-                                    {{course.get_dynamic_status_display}}
+                                    {{ course.get_dynamic_status_display }}
                                 </span>
                                 {% elif course.get_dynamic_status == 'IT' %}
                                 <span class="glass-badge-status glass-badge-blue">
-                                    {{course.get_dynamic_status_display}}
+                                    {{ course.get_dynamic_status_display }}
                                 </span>
                                 {% endif %}
                             </div>
                         </div>
 
-                        <!-- Pending Status Column -->
+                        <!-- Application Status Column -->
                         <div class="md:col-span-1">
-                            <div class="glass-pending-card">
+                            <div class="glass-enrollment-card">
                                 <div class="text-center">
-                                    <span class="glass-badge-pending">
-                                        <span class="fa material-icons mr-1">schedule</span></i>
-                                        Pendiente de Revisión
-                                    </span>
-                                    <p class="text-xs text-gray-600 mt-2">
-                                        <span class="fa material-icons mr-1">info</span></i>
-                                        Esperando respuesta del profesor
+                                    <p class="text-xs text-gray-600 mb-2">
+                                        <span class="fa material-icons mr-1">assignment</span>
+                                        Estado de la Aplicación
                                     </p>
+                                    {% if course.solicitud_estado == 'pendiente' %}
+                                    <span class="glass-badge-solicitud glass-badge-solicitud-pending">
+                                        <span class="fa material-icons mr-1">schedule</span>
+                                        Pendiente de Aprobación
+                                    </span>
+                                    <p class="text-xs text-gray-500 mt-2">Esperando revisión del profesor</p>
+                                    {% elif course.solicitud_estado == 'aprobada' %}
+                                    <span class="glass-badge-solicitud glass-badge-solicitud-approved">
+                                        <span class="fa material-icons mr-1">check_circle</span>
+                                        Aplicación Aprobada
+                                    </span>
+                                    {% if course.fecha_revision %}
+                                    <p class="text-xs text-gray-500 mt-2">
+                                        <span class="fa material-icons mr-1">event</span>
+                                        {{ course.fecha_revision|date:"d/m/Y" }}
+                                    </p>
+                                    {% endif %}
+                                    {% elif course.solicitud_estado == 'rechazada' %}
+                                    <span class="glass-badge-solicitud glass-badge-solicitud-rejected">
+                                        <span class="fa material-icons mr-1">cancel</span>
+                                        Aplicación Denegada
+                                    </span>
+                                    {% if course.fecha_revision %}
+                                    <p class="text-xs text-gray-500 mt-2">
+                                        <span class="fa material-icons mr-1">event</span>
+                                        {{ course.fecha_revision|date:"d/m/Y" }}
+                                    </p>
+                                    {% endif %}
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -500,6 +529,41 @@
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
         border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Badges de estado de solicitud de inscripción */
+    .glass-badge-solicitud {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.4rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .glass-badge-solicitud .material-icons {
+        font-size: 0.95rem;
+    }
+
+    .glass-badge-solicitud-pending {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(217, 119, 6, 0.2));
+        color: #78350f;
+        border-color: rgba(245, 158, 11, 0.35);
+    }
+
+    .glass-badge-solicitud-approved {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.25), rgba(22, 163, 74, 0.15));
+        color: #14532d;
+        border-color: rgba(34, 197, 94, 0.35);
+    }
+
+    .glass-badge-solicitud-rejected {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(220, 38, 38, 0.15));
+        color: #7f1d1d;
+        border-color: rgba(239, 68, 68, 0.35);
     }
 
     /* Glass Action Button */
