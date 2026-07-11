@@ -2773,31 +2773,9 @@ class MatriculasListView(BaseContextMixin, ListView):
             # Datos archivados — se manejan en get_context_data
             return Matriculas.objects.none()
 
-        queryset = Matriculas.objects.select_related('student', 'course', 'curso_academico')
-
-        curso_academico_id = self.request.GET.get('curso_academico')
-
-        # Por defecto filtrar por el CA activo para no mezclar con archivados
-        if curso_academico_id:
-            queryset = queryset.filter(curso_academico__id=curso_academico_id)
-        else:
-            ca_activo = CursoAcademico.objects.filter(activo=True).first()
-            if ca_activo:
-                queryset = queryset.filter(curso_academico=ca_activo)
-
-        curso_id = self.request.GET.get('curso')
-        if curso_id:
-            queryset = queryset.filter(course__id=curso_id)
-
-        student_id = self.request.GET.get('student')
-        if student_id:
-            queryset = queryset.filter(student__id=student_id)
-
-        estado = self.request.GET.get('estado')
-        if estado:
-            queryset = queryset.filter(estado=estado)
-
-        return queryset
+        # Toda la lógica de carga se delega a get_context_data para poder
+        # combinar matrículas vivas con las archivadas por "Terminar Semestre".
+        return Matriculas.objects.none()
 
     def get_context_data(self, **kwargs):
         from datos_archivados.models import SemestreCursoArchivado, MatriculaArchivada
@@ -2889,42 +2867,65 @@ class MatriculasListView(BaseContextMixin, ListView):
             except SemestreCursoArchivado.DoesNotExist:
                 pass
 
-        elif curso_academico_id:
-            # CA seleccionado explícitamente sin semestre específico.
-            # Si está archivado, cargar matrículas archivadas.
+        elif ca_id_efectivo:
+            # Sin semestre específico: combinar matrículas vivas + archivadas del CA.
+            # Cubre tanto la carga inicial (CA activo con semestres terminados)
+            # como un CA archivado seleccionado explícitamente.
             from datos_archivados.models import CursoArchivado, CursoAcademicoArchivado
+
+            curso_id = self.request.GET.get('curso')
+            student_id = self.request.GET.get('student')
+            estado = self.request.GET.get('estado')
+
             cursos_ids_principal = list(
                 Curso.objects.filter(
-                    curso_academico__id=curso_academico_id
+                    curso_academico__id=ca_id_efectivo
                 ).values_list('id', flat=True)
             )
-            if not cursos_ids_principal:
-                # CA archivado: cargar archivados
-                ca_arch = CursoAcademicoArchivado.objects.filter(id_original=curso_academico_id).first()
+
+            # Matrículas vivas en principal para este CA
+            matriculas_vivas_qs = Matriculas.objects.filter(
+                curso_academico__id=ca_id_efectivo
+            ).select_related('student', 'course', 'curso_academico')
+            if curso_id:
+                matriculas_vivas_qs = matriculas_vivas_qs.filter(course__id=curso_id)
+            if student_id:
+                matriculas_vivas_qs = matriculas_vivas_qs.filter(student__id=student_id)
+            if estado:
+                matriculas_vivas_qs = matriculas_vivas_qs.filter(estado=estado)
+
+            # Matrículas archivadas de semestres terminados del mismo CA
+            if cursos_ids_principal:
+                cursos_archivados = CursoArchivado.objects.filter(id_original__in=cursos_ids_principal)
+            else:
+                ca_arch = CursoAcademicoArchivado.objects.filter(id_original=ca_id_efectivo).first()
                 cursos_archivados = CursoArchivado.objects.filter(
                     curso_academico=ca_arch
                 ) if ca_arch else CursoArchivado.objects.none()
 
-                if cursos_archivados.exists():
-                    context['es_ca_archivado'] = True
-                    matriculas_arch_qs = MatriculaArchivada.objects.filter(
-                        course__in=cursos_archivados
-                    ).select_related('student', 'course', 'semestre_archivado')
+            matriculas_arch_qs = MatriculaArchivada.objects.filter(
+                course__in=cursos_archivados
+            ).select_related('student', 'course', 'semestre_archivado')
+            if student_id:
+                matriculas_arch_qs = matriculas_arch_qs.filter(student__id_original=student_id)
+            if curso_id:
+                matriculas_arch_qs = matriculas_arch_qs.filter(course__id_original=curso_id)
+            if estado:
+                matriculas_arch_qs = matriculas_arch_qs.filter(estado=estado)
 
-                    student_id = self.request.GET.get('student')
-                    if student_id:
-                        matriculas_arch_qs = matriculas_arch_qs.filter(student__id_original=student_id)
-                    curso_id = self.request.GET.get('curso')
-                    if curso_id:
-                        matriculas_arch_qs = matriculas_arch_qs.filter(course__id_original=curso_id)
+            if not cursos_ids_principal:
+                context['es_ca_archivado'] = True
 
-                    matriculas_adaptadas = [_MatriculaArchivadaAdapter(m) for m in matriculas_arch_qs]
-                    paginator = Paginator(matriculas_adaptadas, self.paginate_by)
-                    page_number = self.request.GET.get('page', 1)
-                    context['matriculas'] = paginator.get_page(page_number)
-                    context['page_obj'] = context['matriculas']
-                    context['is_paginated'] = context['matriculas'].has_other_pages()
-            # Si hay cursos en principal, get_queryset ya devolvió las matrículas activas
+            matriculas_combinadas = (
+                list(matriculas_vivas_qs)
+                + [_MatriculaArchivadaAdapter(m) for m in matriculas_arch_qs]
+            )
+
+            paginator = Paginator(matriculas_combinadas, self.paginate_by)
+            page_number = self.request.GET.get('page', 1)
+            context['matriculas'] = paginator.get_page(page_number)
+            context['page_obj'] = context['matriculas']
+            context['is_paginated'] = context['matriculas'].has_other_pages()
 
         return context
 
