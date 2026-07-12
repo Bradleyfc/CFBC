@@ -2868,58 +2868,75 @@ class MatriculasListView(BaseContextMixin, ListView):
                 pass
 
         elif ca_id_efectivo:
-            # Sin semestre específico: combinar matrículas vivas + archivadas del CA.
-            # Cubre tanto la carga inicial (CA activo con semestres terminados)
-            # como un CA archivado seleccionado explícitamente.
-            from datos_archivados.models import CursoArchivado, CursoAcademicoArchivado
+            # Sin semestre específico: verificar si el CA está archivado
+            
+            # Determinar si el CA está archivado
+            ca_archivado = CursoAcademico.objects.filter(
+                id=ca_id_efectivo, archivado=True
+            ).exists()
 
             curso_id = self.request.GET.get('curso')
             student_id = self.request.GET.get('student')
             estado = self.request.GET.get('estado')
 
-            cursos_ids_principal = list(
-                Curso.objects.filter(
-                    curso_academico__id=ca_id_efectivo
-                ).values_list('id', flat=True)
-            )
-
-            # Matrículas vivas en principal para este CA
-            matriculas_vivas_qs = Matriculas.objects.filter(
-                curso_academico__id=ca_id_efectivo
-            ).select_related('student', 'course', 'curso_academico')
-            if curso_id:
-                matriculas_vivas_qs = matriculas_vivas_qs.filter(course__id=curso_id)
-            if student_id:
-                matriculas_vivas_qs = matriculas_vivas_qs.filter(student__id=student_id)
-            if estado:
-                matriculas_vivas_qs = matriculas_vivas_qs.filter(estado=estado)
-
-            # Matrículas archivadas de semestres terminados del mismo CA
-            if cursos_ids_principal:
-                cursos_archivados = CursoArchivado.objects.filter(id_original__in=cursos_ids_principal)
-            else:
+            if ca_archivado:
+                # CA archivado: mostrar todos los datos archivados del CA
+                from datos_archivados.models import CursoArchivado, CursoAcademicoArchivado, MatriculaArchivada
+                
                 ca_arch = CursoAcademicoArchivado.objects.filter(id_original=ca_id_efectivo).first()
-                cursos_archivados = CursoArchivado.objects.filter(
-                    curso_academico=ca_arch
-                ) if ca_arch else CursoArchivado.objects.none()
+                if ca_arch:
+                    cursos_archivados = CursoArchivado.objects.filter(
+                        curso_academico=ca_arch
+                    )
+                    
+                    matriculas_arch_qs = MatriculaArchivada.objects.filter(
+                        course__in=cursos_archivados
+                    ).select_related('student', 'course', 'semestre_archivado')
+                    
+                    if student_id:
+                        matriculas_arch_qs = matriculas_arch_qs.filter(student__id_original=student_id)
+                    if curso_id:
+                        matriculas_arch_qs = matriculas_arch_qs.filter(course__id_original=curso_id)
+                    if estado:
+                        matriculas_arch_qs = matriculas_arch_qs.filter(estado=estado)
+                    
+                    matriculas_combinadas = [
+                        _MatriculaArchivadaAdapter(m) for m in matriculas_arch_qs
+                    ]
+                    
+                    context['es_ca_archivado'] = True
+                else:
+                    matriculas_combinadas = []
+            else:
+                # CA activo: mostrar solo matrículas de cursos con semestre activo
+                # NO mostrar matrículas archivadas cuando no se selecciona un semestre específico
 
-            matriculas_arch_qs = MatriculaArchivada.objects.filter(
-                course__in=cursos_archivados
-            ).select_related('student', 'course', 'semestre_archivado')
-            if student_id:
-                matriculas_arch_qs = matriculas_arch_qs.filter(student__id_original=student_id)
-            if curso_id:
-                matriculas_arch_qs = matriculas_arch_qs.filter(course__id_original=curso_id)
-            if estado:
-                matriculas_arch_qs = matriculas_arch_qs.filter(estado=estado)
+                # Filtrar cursos que tienen al menos un SemestreCurso activo
+                cursos_con_semestre_activo = Curso.objects.filter(
+                    curso_academico__id=ca_id_efectivo,
+                    semestres__activo=True
+                ).distinct()
 
-            if not cursos_ids_principal:
-                context['es_ca_archivado'] = True
+                # Si se seleccionó un curso específico, verificar que tenga semestre activo
+                if curso_id:
+                    curso_tiene_semestre_activo = cursos_con_semestre_activo.filter(id=curso_id).exists()
+                    if not curso_tiene_semestre_activo:
+                        # El curso seleccionado no tiene semestre activo, no mostrar nada
+                        cursos_con_semestre_activo = Curso.objects.none()
 
-            matriculas_combinadas = (
-                list(matriculas_vivas_qs)
-                + [_MatriculaArchivadaAdapter(m) for m in matriculas_arch_qs]
-            )
+                # Matrículas vivas en principal para cursos con semestre activo
+                matriculas_vivas_qs = Matriculas.objects.filter(
+                    curso_academico__id=ca_id_efectivo,
+                    course__in=cursos_con_semestre_activo
+                ).select_related('student', 'course', 'curso_academico')
+                if curso_id:
+                    matriculas_vivas_qs = matriculas_vivas_qs.filter(course__id=curso_id)
+                if student_id:
+                    matriculas_vivas_qs = matriculas_vivas_qs.filter(student__id=student_id)
+                if estado:
+                    matriculas_vivas_qs = matriculas_vivas_qs.filter(estado=estado)
+
+                matriculas_combinadas = list(matriculas_vivas_qs)
 
             paginator = Paginator(matriculas_combinadas, self.paginate_by)
             page_number = self.request.GET.get('page', 1)
@@ -3072,61 +3089,83 @@ class CalificacionesListView(BaseContextMixin, ListView):
                 pass
 
         elif curso_academico_id and not mostrar_sin_cal:
-            # Sin semestre específico pero con CA: combinar principal + archivadas.
-            # Si el CA está archivado, cursos_ids_principal estará vacío y solo
-            # se mostrarán las calificaciones archivadas.
+            # Sin semestre específico pero con CA: verificar si el CA está archivado
             from principal.models import SemestreCurso
-
+            
+            # Determinar si el CA está archivado
+            ca_archivado = CursoAcademico.objects.filter(
+                id=curso_academico_id, archivado=True
+            ).exists()
+            
             curso_id = self.request.GET.get('curso')
             student_id = self.request.GET.get('student') or self.request.GET.get('estudiante')
 
-            # Calificaciones de principal para este CA (vacío si CA archivado)
-            cal_principal_qs = Calificaciones.objects.filter(
-                curso_academico__id=curso_academico_id
-            ).select_related('student', 'course', 'semestre').prefetch_related('notas')
-            if curso_id:
-                cal_principal_qs = cal_principal_qs.filter(course_id=curso_id)
-            if student_id:
-                cal_principal_qs = cal_principal_qs.filter(student_id=student_id)
-
-            # Calificaciones archivadas del mismo CA
-            cursos_ids = list(
-                Curso.objects.filter(curso_academico__id=curso_academico_id).values_list('id', flat=True)
-            )
-            # Si no hay cursos en principal, buscar CursoArchivado directamente
-            if cursos_ids:
-                cursos_archivados = CursoArchivado.objects.filter(id_original__in=cursos_ids)
-            else:
+            if ca_archivado:
+                # CA archivado: mostrar todos los datos archivados del CA
+                from datos_archivados.models import CursoArchivado, CursoAcademicoArchivado, CalificacionArchivada
+                
                 ca_arch = CursoAcademicoArchivado.objects.filter(id_original=curso_academico_id).first()
-                cursos_archivados = CursoArchivado.objects.filter(
-                    curso_academico=ca_arch
-                ) if ca_arch else CursoArchivado.objects.none()
+                if ca_arch:
+                    cursos_archivados = CursoArchivado.objects.filter(
+                        curso_academico=ca_arch
+                    )
+                    
+                    cal_archivadas_qs = CalificacionArchivada.objects.filter(
+                        course__in=cursos_archivados
+                    ).select_related('student', 'course', 'semestre_archivado').prefetch_related('notas_archivadas')
+                    
+                    if curso_id:
+                        cal_archivadas_qs = cal_archivadas_qs.filter(course__id_original=curso_id)
+                    if student_id:
+                        cal_archivadas_qs = cal_archivadas_qs.filter(student__id_original=student_id)
+                    
+                    calificaciones_combinadas = [
+                        _CalificacionArchivadaAdapter(c) for c in cal_archivadas_qs
+                    ]
+                    
+                    context['es_ca_archivado'] = True
+                else:
+                    calificaciones_combinadas = []
+            else:
+                # CA activo: mostrar solo calificaciones de cursos con semestre activo
+                # NO mostrar calificaciones archivadas cuando no se selecciona un semestre específico
 
-            cal_archivadas_qs = CalificacionArchivada.objects.filter(
-                course__in=cursos_archivados
-            ).select_related('student', 'course', 'semestre_archivado').prefetch_related('notas_archivadas')
-            if curso_id:
-                cal_archivadas_qs = cal_archivadas_qs.filter(course__id_original=curso_id)
-            if student_id:
-                cal_archivadas_qs = cal_archivadas_qs.filter(student__id_original=student_id)
+                # Filtrar cursos que tienen al menos un SemestreCurso activo
+                cursos_con_semestre_activo = Curso.objects.filter(
+                    curso_academico__id=curso_academico_id,
+                    semestres__activo=True
+                ).distinct()
 
-            # Mapa semestre para CalificacionPrincipalAdapter
-            semestre_map = {}
-            for sc in SemestreCurso.objects.filter(
-                curso__curso_academico__id=curso_academico_id
-            ).values_list('curso_id', 'numero_semestre'):
-                semestre_map.setdefault(sc[0], []).append(sc[1])
-            for k in semestre_map:
-                semestre_map[k].sort()
+                # Si se seleccionó un curso específico, verificar que tenga semestre activo
+                if curso_id:
+                    curso_tiene_semestre_activo = cursos_con_semestre_activo.filter(id=curso_id).exists()
+                    if not curso_tiene_semestre_activo:
+                        # El curso seleccionado no tiene semestre activo, no mostrar nada
+                        cursos_con_semestre_activo = Curso.objects.none()
 
-            calificaciones_combinadas = (
-                [_CalificacionPrincipalAdapter(c, semestre_map) for c in cal_principal_qs]
-                + [_CalificacionArchivadaAdapter(c) for c in cal_archivadas_qs]
-            )
+                # Calificaciones de principal para cursos con semestre activo
+                cal_principal_qs = Calificaciones.objects.filter(
+                    curso_academico__id=curso_academico_id,
+                    course__in=cursos_con_semestre_activo
+                ).select_related('student', 'course', 'semestre').prefetch_related('notas')
+                if curso_id:
+                    cal_principal_qs = cal_principal_qs.filter(course_id=curso_id)
+                if student_id:
+                    cal_principal_qs = cal_principal_qs.filter(student_id=student_id)
 
-            # Si el CA está archivado (no hay cursos en principal), marcar para el template
-            if not cursos_ids:
-                context['es_ca_archivado'] = True
+                # Mapa semestre para CalificacionPrincipalAdapter
+                semestre_map = {}
+                for sc in SemestreCurso.objects.filter(
+                    curso__curso_academico__id=curso_academico_id,
+                    activo=True
+                ).values_list('curso_id', 'numero_semestre'):
+                    semestre_map.setdefault(sc[0], []).append(sc[1])
+                for k in semestre_map:
+                    semestre_map[k].sort()
+
+                calificaciones_combinadas = [
+                    _CalificacionPrincipalAdapter(c, semestre_map) for c in cal_principal_qs
+                ]
 
             paginator = Paginator(calificaciones_combinadas, self.paginate_by)
             page_number = self.request.GET.get('page', 1)
@@ -3888,54 +3927,75 @@ class AsistenciasListView(BaseContextMixin, ListView):
                 pass
 
         elif curso_academico_id:
-            # Sin semestre específico: combinar matrículas vivas (CA activo) + archivadas.
-            from datos_archivados.models import CursoArchivado, CursoAcademicoArchivado
-            cursos_ids_principal = list(
-                Curso.objects.filter(
-                    curso_academico__id=curso_academico_id
-                ).values_list('id', flat=True)
-            )
-
-            # Matrículas vivas en principal para este CA
+            # Sin semestre específico: verificar si el CA está archivado
+            
+            # Determinar si el CA está archivado
+            ca_archivado = CursoAcademico.objects.filter(
+                id=curso_academico_id, archivado=True
+            ).exists()
+            
             curso_id = self.request.GET.get('curso')
             estudiante_id = self.request.GET.get('estudiante')
 
-            matriculas_vivas_qs = Matriculas.objects.filter(
-                curso_academico__id=curso_academico_id, activo=True
-            ).select_related('student', 'course', 'curso_academico').order_by(
-                'student__first_name', 'student__last_name', 'student__username'
-            )
-            if curso_id:
-                matriculas_vivas_qs = matriculas_vivas_qs.filter(course__id=curso_id)
-            if estudiante_id:
-                matriculas_vivas_qs = matriculas_vivas_qs.filter(student__id=estudiante_id)
-
-            # Matrículas archivadas para los cursos de este CA
-            if cursos_ids_principal:
-                cursos_archivados = CursoArchivado.objects.filter(id_original__in=cursos_ids_principal)
-            else:
+            if ca_archivado:
+                # CA archivado: mostrar todos los datos archivados del CA
+                from datos_archivados.models import CursoArchivado, CursoAcademicoArchivado, MatriculaArchivada
+                
                 ca_arch = CursoAcademicoArchivado.objects.filter(id_original=curso_academico_id).first()
-                cursos_archivados = CursoArchivado.objects.filter(
-                    curso_academico=ca_arch
-                ) if ca_arch else CursoArchivado.objects.none()
+                if ca_arch:
+                    cursos_archivados = CursoArchivado.objects.filter(
+                        curso_academico=ca_arch
+                    )
+                    
+                    matriculas_arch_qs = MatriculaArchivada.objects.filter(
+                        course__in=cursos_archivados
+                    ).select_related('student', 'course', 'semestre_archivado').order_by(
+                        'student__first_name', 'student__last_name'
+                    )
+                    
+                    if estudiante_id:
+                        matriculas_arch_qs = matriculas_arch_qs.filter(student__id_original=estudiante_id)
+                    if curso_id:
+                        matriculas_arch_qs = matriculas_arch_qs.filter(course__id_original=curso_id)
+                    
+                    matriculas_combinadas = [
+                        _MatriculaArchivadaAdapter(m) for m in matriculas_arch_qs
+                    ]
+                    
+                    context['es_ca_archivado'] = True
+                else:
+                    matriculas_combinadas = []
+            else:
+                # CA activo: mostrar solo matrículas de cursos con semestre activo
+                # NO mostrar matrículas archivadas cuando no se selecciona un semestre específico
 
-            matriculas_arch_qs = MatriculaArchivada.objects.filter(
-                course__in=cursos_archivados
-            ).select_related('student', 'course', 'semestre_archivado').order_by(
-                'student__first_name', 'student__last_name'
-            )
-            if estudiante_id:
-                matriculas_arch_qs = matriculas_arch_qs.filter(student__id_original=estudiante_id)
-            if curso_id:
-                matriculas_arch_qs = matriculas_arch_qs.filter(course__id_original=curso_id)
+                # Filtrar cursos que tienen al menos un SemestreCurso activo
+                cursos_con_semestre_activo = Curso.objects.filter(
+                    curso_academico__id=curso_academico_id,
+                    semestres__activo=True
+                ).distinct()
 
-            if not cursos_ids_principal:
-                context['es_ca_archivado'] = True
+                # Si se seleccionó un curso específico, verificar que tenga semestre activo
+                if curso_id:
+                    curso_tiene_semestre_activo = cursos_con_semestre_activo.filter(id=curso_id).exists()
+                    if not curso_tiene_semestre_activo:
+                        # El curso seleccionado no tiene semestre activo, no mostrar nada
+                        cursos_con_semestre_activo = Curso.objects.none()
 
-            matriculas_combinadas = (
-                list(matriculas_vivas_qs)
-                + [_MatriculaArchivadaAdapter(m) for m in matriculas_arch_qs]
-            )
+                # Matrículas vivas en principal para cursos con semestre activo
+                matriculas_vivas_qs = Matriculas.objects.filter(
+                    curso_academico__id=curso_academico_id,
+                    activo=True,
+                    course__in=cursos_con_semestre_activo
+                ).select_related('student', 'course', 'curso_academico').order_by(
+                    'student__first_name', 'student__last_name', 'student__username'
+                )
+                if curso_id:
+                    matriculas_vivas_qs = matriculas_vivas_qs.filter(course__id=curso_id)
+                if estudiante_id:
+                    matriculas_vivas_qs = matriculas_vivas_qs.filter(student__id=estudiante_id)
+
+                matriculas_combinadas = list(matriculas_vivas_qs)
 
             paginator = Paginator(matriculas_combinadas, self.paginate_by)
             page_number = self.request.GET.get('page', 1)

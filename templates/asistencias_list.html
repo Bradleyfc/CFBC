@@ -40,7 +40,7 @@
                         <div class="flex-1 min-w-36">
                             <label for="semestre" class="block text-xs font-medium text-gray-600 mb-1">Semestre:</label>
                             <select class="glass-select-compact" id="semestre" name="semestre">
-                                <option value="" id="semestre-todos-option">Todos (semestre actual)</option>
+                                <option value="" id="semestre-todos-option">Semestre actual</option>
                                 {% for s in semestres_disponibles %}
                                 <option value="{{ s.id }}"
                                         data-curso-id="{{ s.curso_archivado.id_original }}"
@@ -415,7 +415,7 @@
         var selectedOption = caSelect.options[caSelect.selectedIndex];
         var texto = selectedOption ? selectedOption.text : '';
         var esArchivado = texto.indexOf('(Archivado)') !== -1;
-        todosSemestreOpt.textContent = esArchivado ? 'Todos' : 'Todos (semestre actual)';
+        todosSemestreOpt.textContent = esArchivado ? 'Todos' : 'Semestre actual';
     }
 
     // Ejecutar al cargar y al cambiar CA
