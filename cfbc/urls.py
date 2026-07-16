@@ -16,6 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from cfbc.views import health_check, metrics_view, metrics_summary
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -27,7 +28,10 @@ urlpatterns = [
     path('datos-archivados/', include('datos_archivados.urls')),
     path('course-documents/', include('course_documents.urls')),
     path('evaluaciones/', include('evaluaciones.urls')),
-    
+    # Monitoring endpoints
+    path('health/', health_check, name='health_check'),
+    path('metrics/', metrics_view, name='metrics_view'),
+    path('metrics/summary/', metrics_summary, name='metrics_summary'),
 ]
 
 # Agregar configuración para servir archivos multimedia en desarrollo

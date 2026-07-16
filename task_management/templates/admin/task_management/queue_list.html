@@ -1,0 +1,171 @@
+{% extends "admin/change_list.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .queue-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+        margin: 20px 0;
+    }
+    .queue-card {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        transition: box-shadow 0.2s;
+    }
+    .queue-card:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .queue-card h3 {
+        margin: 0 0 12px 0;
+        font-size: 16px;
+        color: #333;
+    }
+    .queue-card .metric {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .queue-card .metric:last-child {
+        border-bottom: none;
+    }
+    .queue-card .metric .label {
+        color: #666;
+        font-size: 13px;
+    }
+    .queue-card .metric .value {
+        font-weight: bold;
+        font-size: 14px;
+    }
+    .status-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    .status-vacía { background: #e8f5e9; color: #2e7d32; }
+    .status-normal { background: #e3f2fd; color: #1565c0; }
+    .status-ocupada { background: #fff3e0; color: #e65100; }
+    .status-congestionada { background: #fce4ec; color: #c62828; }
+    .status-error { background: #f3e5f5; color: #6a1b9a; }
+    .queue-priority-1 { border-left: 4px solid #c62828; }
+    .queue-priority-2 { border-left: 4px solid #e65100; }
+    .queue-priority-3 { border-left: 4px solid #f9a825; }
+    .queue-priority-4 { border-left: 4px solid #43a047; }
+    .queue-priority-5 { border-left: 4px solid #1e88e5; }
+    .queue-priority-6 { border-left: 4px solid #8e24aa; }
+    .queue-description {
+        font-size: 12px;
+        color: #888;
+        margin-top: 8px;
+    }
+    .summary-bar {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+    .summary-item {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 12px 20px;
+        text-align: center;
+        flex: 1;
+        min-width: 120px;
+    }
+    .summary-item .number {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+    }
+    .summary-item .label {
+        font-size: 11px;
+        color: #666;
+        text-transform: uppercase;
+        margin-top: 4px;
+    }
+    .summary-item.total .number { color: #1565c0; }
+    .summary-item.empty .number { color: #2e7d32; }
+    .summary-item.busy .number { color: #e65100; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <div class="module">
+        <div class="summary-bar">
+            <div class="summary-item total">
+                <div class="number">{{ queues|length }}</div>
+                <div class="label">Total Colas</div>
+            </div>
+            <div class="summary-item empty">
+                <div class="number">{{ queues|length }}</div>
+                <div class="label">Colas Configuradas</div>
+            </div>
+            <div class="summary-item busy">
+                <div class="number">{% with max_q=queues|dictsortreversed:"length"|first %}{{ max_q.length }}{% endwith %}</div>
+                <div class="label">Tareas Pendientes</div>
+            </div>
+        </div>
+
+        <h2>Estado de las Colas de Tareas</h2>
+        <p style="color: #666; font-size: 13px; margin: 8px 0 20px 0;">
+            Datos obtenidos de Redis en tiempo real.
+            {% if queues %}
+            Las colas se muestran ordenadas por prioridad.
+            {% endif %}
+        </p>
+
+        <div class="queue-stats">
+            {% for queue in queues %}
+            <div class="queue-card queue-priority-{{ queue.priority }}">
+                <h3>
+                    {{ queue.name }}
+                </h3>
+                <div class="metric">
+                    <span class="label">Tareas pendientes</span>
+                    <span class="value">{{ queue.length }}</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Prioridad</span>
+                    <span class="value">{{ queue.priority }}</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Estado</span>
+                    <span class="status-badge status-{{ queue.status|cut:' '|cut:':' }}">
+                        {{ queue.status }}
+                    </span>
+                </div>
+                <div class="queue-description">
+                    {{ queue.description }}
+                </div>
+            </div>
+            {% empty %}
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #999;">
+                <p>No hay datos de colas disponibles.</p>
+                <p style="font-size: 12px;">Verifica que Redis esté corriendo en redis://127.0.0.1:6379/3</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 16px; margin-top: 20px;">
+            <h3 style="margin: 0 0 8px 0; font-size: 14px; color: #555;">Leyenda de Estados</h3>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px;">
+                <span class="status-badge status-vacía">vacía</span> Sin tareas pendientes
+                <span class="status-badge status-normal">normal</span> Menos de 10 tareas
+                <span class="status-badge status-ocupada">ocupada</span> Entre 10 y 50 tareas
+                <span class="status-badge status-congestionada">congestionada</span> Más de 50 tareas
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

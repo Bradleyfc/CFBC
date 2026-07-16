@@ -1,0 +1,97 @@
+# ═════════════════════════════════════════════════════════════════════════════
+# Pre-commit Configuration for CFBC Project
+#
+# Provides automated security scanning and code quality checks.
+# 
+# Installation:
+#   pip install pre-commit
+#   pre-commit install
+#
+# Manual run on all files:
+#   pre-commit run --all-files
+#
+# Security hooks:
+#   - bandit: Python security linter (finds common security issues)
+#   - detect-secrets: Prevents committing secrets/tokens
+#   - check-added-large-files: Prevents large file commits
+# ═════════════════════════════════════════════════════════════════════════════
+
+repos:
+  # ── Security Scanning ─────────────────────────────────────────────────
+  - repo: https://github.com/PyCQA/bandit
+    rev: '1.8.3'
+    hooks:
+      - id: bandit
+        name: Bandit Security Linter
+        description: "Finds common security issues in Python code"
+        args:
+          - "--skip=B101,B311"  # Skip assert warnings, pseudo-random
+          - "--confidence=high"
+          - "--severity=high"
+        exclude: "^tests/|^venv/|manage.py|setup.py|migrations/"
+
+  # ── Secret Detection ──────────────────────────────────────────────────
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: 'v1.5.0'
+    hooks:
+      - id: detect-secrets
+        name: Detect Secrets
+        description: "Detects sensitive data like passwords, tokens, and keys"
+        args:
+          - "--exclude-files=venv/|node_modules/|.git/|__pycache__/|migrations/"
+        exclude: "^venv/|^node_modules/|^.git/|migrations/"
+
+  # ── General Pre-commit Hooks (from pre-commit-hooks) ─────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 'v5.0.0'
+    hooks:
+      # Security: Prevent committing large files
+      - id: check-added-large-files
+        name: Check Large Files
+        args: ["--maxkb=1024"]  # Max 1MB
+
+      # Security: Detect private keys
+      - id: detect-private-key
+        name: Detect Private Keys
+
+      # Security: Check for merge conflicts
+      - id: check-merge-conflict
+        name: Check Merge Conflicts
+
+      # Quality: Fix trailing whitespace
+      - id: trailing-whitespace
+        name: Trim Trailing Whitespace
+
+      # Quality: Ensure files end with newline
+      - id: end-of-file-fixer
+        name: Fix End of Files
+
+      # Quality: Validate YAML files
+      - id: check-yaml
+        name: Check YAML Syntax
+
+      # Quality: Validate TOML files
+      - id: check-toml
+        name: Check TOML Syntax
+
+      # Security: Check for debug statements
+      - id: debug-statements
+        name: Check Debug Statements
+        exclude: "^cfbc/middleware.py$"  # Our debug logging is intentional
+
+      # Security: Prevent adding .env files
+      - id: check-added-large-files
+        name: Check Added Large Files
+        args: ["--maxkb=500"]
+
+  # ── Python Code Quality ───────────────────────────────────────────────
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: 'v0.9.0'
+    hooks:
+      - id: ruff
+        name: Ruff Python Linter
+        description: "Fast Python linter (catches bugs, style issues)"
+        args:
+          - "--fix"
+          - "--select=E,F,W,I,N,PIE,UP,SIM"
+        exclude: "^venv/|migrations/"

@@ -1,0 +1,1 @@
+# Task management app for Celery monitoring

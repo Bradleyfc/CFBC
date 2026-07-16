@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_tailwind_cli',
+    'django_celery_results',
     'principal',
     'accounts.apps.AccountsConfig',
     'blog.apps.BlogConfig',
@@ -52,11 +53,13 @@ INSTALLED_APPS = [
     'course_documents.apps.CourseDocumentsConfig',
     'historial.apps.HistorialConfig',
     'evaluaciones.apps.EvaluacionesConfig',
-    
-    
+    'task_management.apps.TaskManagementConfig',
+    'django_celery_beat',
+    'cfbc',  # Required for management command discovery (security_audit, analyze_performance, verify_performance_metrics)
 ]
 
 MIDDLEWARE = [
+    # Security & core (must be first)
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -64,7 +67,33 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
+    
+    # === SECURITY MIDDLEWARE ===
+    # Security headers: CSP, HSTS, X-Frame-Options, etc. (must be early)
+    'cfbc.middleware.SecurityHeadersMiddleware',
+    
+    # Rate limiting: IP-based limits for login, API, uploads
+    'cfbc.middleware.RateLimitMiddleware',
+    
+    # Security audit: log security events with sanitized data
+    'cfbc.middleware.SecurityAuditMiddleware',
+    
+    # Performance: Cache-Control headers for browser caching optimization
+    'cfbc.middleware.CacheControlMiddleware',
+    
+    # Distributed tracing (must be before APM middleware)
+    'cfbc.middleware.CorrelationIdMiddleware',
+    
+    # APM request timing & DB metrics
+    'cfbc.middleware.RequestTimingMiddleware',
+    
+    # Structured JSON log context
+    'cfbc.middleware.StructuredLoggingMiddleware',
+    
+    # Query timeout & connection pool monitoring
+    'cfbc.db_monitoring.DatabaseMonitoringMiddleware',
+] 
+
 
 ROOT_URLCONF = 'cfbc.urls'
 
@@ -91,15 +120,130 @@ WSGI_APPLICATION = 'cfbc.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Database Cluster Configuration
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# This configuration supports:
+# - Primary database (default) for all write operations
+# - Read replica (read_replica) for scaling read-heavy workloads
+# - Connection pooling via CONN_MAX_AGE (Django internal) or PgBouncer
+# - Database router for automatic read/write splitting
+#
+# To enable the read replica:
+# 1. Set USE_READ_REPLICA=True in your .env file
+# 2. Configure READ_REPLICA_HOST and READ_REPLICA_PORT
+# 3. Ensure PostgreSQL streaming replication is set up
+#
+# For PgBouncer (recommended for production):
+# 1. Install and configure PgBouncer using pgbouncer.ini
+# 2. Set CONN_MAX_AGE=0 to let PgBouncer manage connections
+# 3. Set PGBOUNCER_HOST and PGBOUNCER_PORT in .env
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgre_db',
-        'USER': 'postgre',
-        'PASSWORD': 'admin',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': os.getenv('DB_NAME', 'postgre_db'),
+        'USER': os.getenv('DB_USER', 'postgre'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'admin'),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'PORT': os.getenv('DB_PORT', '5432'),
+        'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '600')),  # 10 minutes
+        'CONN_HEALTH_CHECKS': True,  # Check connection health before using
+        'OPTIONS': {
+            'connect_timeout': int(os.getenv('DB_CONNECT_TIMEOUT', '5')),
+            'application_name': 'cfbc_app',
+        },
+    },
+}
+
+# Read replica configuration for horizontal scaling
+# Enable by setting USE_READ_REPLICA=True in environment
+if os.getenv('USE_READ_REPLICA', 'False').lower() in ('true', '1', 'yes'):
+    DATABASES['read_replica'] = {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('READ_REPLICA_DB_NAME', os.getenv('DB_NAME', 'postgre_db')),
+        'USER': os.getenv('READ_REPLICA_DB_USER', os.getenv('DB_USER', 'postgre')),
+        'PASSWORD': os.getenv('READ_REPLICA_DB_PASSWORD', os.getenv('DB_PASSWORD', 'admin')),
+        'HOST': os.getenv('READ_REPLICA_HOST', os.getenv('DB_HOST', 'localhost')),
+        'PORT': os.getenv('READ_REPLICA_PORT', '5433'),
+        'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '600')),
+        'CONN_HEALTH_CHECKS': True,
+        'OPTIONS': {
+            'connect_timeout': int(os.getenv('DB_CONNECT_TIMEOUT', '10')),
+            'application_name': 'cfbc_app_read',
+        },
     }
+
+# Database router for read/write splitting
+# Routes read queries to the read replica and writes to the primary
+DATABASE_ROUTERS = ['cfbc.db_router.AdaptiveRouter']
+
+# Connection pooling configuration via PgBouncer
+# When PgBouncer is used, set CONN_MAX_AGE=0 and use PgBouncer's port
+if os.getenv('USE_PGBOUNCER', 'False').lower() in ('true', '1', 'yes'):
+    pgbouncer_host = os.getenv('PGBOUNCER_HOST', '127.0.0.1')
+    pgbouncer_port = os.getenv('PGBOUNCER_PORT', '6432')
+
+    for alias in DATABASES:
+        DATABASES[alias]['HOST'] = pgbouncer_host
+        DATABASES[alias]['PORT'] = pgbouncer_port
+        DATABASES[alias]['CONN_MAX_AGE'] = 0  # PgBouncer manages connections
+        DATABASES[alias]['OPTIONS']['connect_timeout'] = int(
+            os.getenv('PGBOUNCER_CONNECT_TIMEOUT', '5')
+        )
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Performance-Tuned Database Configuration Parameters
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# These settings were tuned based on expected production access patterns:
+# - 1000+ concurrent users (read-heavy workload)
+# - Blog: high-read for published posts, moderate-write for comments
+# - Course Documents: high-read for downloads, moderate-write for uploads
+# - Evaluations: moderate read/write during peak usage
+#
+# Connection pool size monitoring
+# These are tracked by the ConnectionPoolMonitor in cfbc.db_monitoring
+#
+# Pool Sizing Rationale:
+# - Base pool: 10-20 connections per app instance (4 instances = 40-80 total)
+# - Max pool: 80-100 connections across all instances
+# - Each Django worker uses ~1-2 connections during request processing
+# - Formula: (workers_per_instance * instances * 1.5 buffer) ≈ 4*4*1.5 = 24 min
+# - Peak: (workers * instances * 2 buffer) ≈ 4*8*2 = 64 max
+# - Add 20% headroom for admin/celery connections = ~80
+DB_POOL_MIN_SIZE = int(os.getenv('DB_POOL_MIN_SIZE', '20'))  # Increased from 10
+DB_POOL_MAX_SIZE = int(os.getenv('DB_POOL_MAX_SIZE', '80'))  # Reduced from 100 for efficiency
+DB_POOL_TIMEOUT = int(os.getenv('DB_POOL_TIMEOUT', '30'))  # seconds
+
+# Slow query threshold (in milliseconds)
+# Queries exceeding this threshold are logged as slow queries
+# Tuned: 500ms is reasonable for production, 200ms for development
+# For production: queries over 500ms need optimization attention
+DB_SLOW_QUERY_THRESHOLD_MS = int(os.getenv('DB_SLOW_QUERY_THRESHOLD_MS', '500'))
+
+# Database connection lifetime (CONN_MAX_AGE)
+# Tuned: 300s (5 min) for PgBouncer-managed connections
+#         600s (10 min) for direct connections
+# Shorter lifetime helps with even load distribution across replicas
+# and prevents stale connection accumulation
+DB_CONN_MAX_AGE = int(os.getenv('DB_CONN_MAX_AGE', '600'))
+
+# PostgreSQL statement timeout (ms)
+# Tuned: 30s for default queries, 60s for reports
+# Prevents runaway queries from consuming resources
+DB_STATEMENT_TIMEOUT = int(os.getenv('DB_STATEMENT_TIMEOUT', '30000'))
+
+# Per-operation timeouts for different request types
+# These are more granular than the global statement timeout
+DB_OPERATION_TIMEOUTS = {
+    'list': int(os.getenv('DB_TIMEOUT_LIST', '10000')),       # 10s for list views
+    'detail': int(os.getenv('DB_TIMEOUT_DETAIL', '5000')),    # 5s for detail views
+    'search': int(os.getenv('DB_TIMEOUT_SEARCH', '15000')),   # 15s for search
+    'report': int(os.getenv('DB_TIMEOUT_REPORT', '60000')),   # 60s for reports
+    'export': int(os.getenv('DB_TIMEOUT_EXPORT', '120000')),  # 120s for exports
+    'health': int(os.getenv('DB_TIMEOUT_HEALTH', '2000')),    # 2s for health checks
 }
 
 
@@ -211,6 +355,444 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Configuración del remitente por defecto
 DEFAULT_FROM_EMAIL = 'Centro Fray Bartolome de las Casas <noreply@cfbc.edu.ni>'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Redis Cache Configuration (Performance Tuned)
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# TTL Tuning Rationale (based on expected access patterns):
+# - Homepage: 10min — frequent visits, low update frequency
+# - Blog list: 5min — moderate update frequency (new posts)
+# - Blog detail: 10min — rarely changes after publish
+# - Categories: 1hr — very rarely changes
+# - Course dashboard: 5min — moderate document upload frequency
+# - Static pages: 24hr — effectively never changes
+# - User-specific: 5min — needs freshness for accuracy
+#
+# Key optimization: Using Redis database separation:
+# - DB 1: General cache (default, TTL-based)
+# - DB 2: Sessions (user-specific, longer TTL)
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',  # Database 1 for general cache
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'CONNECTION_POOL_CLASS': 'redis.BlockingConnectionPool',
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': int(os.getenv('REDIS_POOL_MAX', '50')),
+            },
+            'MAX_CONNECTIONS': int(os.getenv('REDIS_MAX_CONNECTIONS', '500')),
+            'PICKLE_VERSION': -1,  # Use latest pickle protocol
+            'SOCKET_CONNECT_TIMEOUT': int(os.getenv('REDIS_SOCKET_TIMEOUT', '5')),  # seconds
+            'SOCKET_TIMEOUT': int(os.getenv('REDIS_SOCKET_TIMEOUT', '5')),  # seconds
+            'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+            'IGNORE_EXCEPTIONS': True,  # Don't crash if Redis is down
+        },
+        'KEY_PREFIX': 'cfbc_cache',
+        'TIMEOUT': 300,  # Default cache timeout in seconds (5 minutes)
+    },
+    'session': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/2',  # Database 2 for sessions
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': int(os.getenv('REDIS_SESSION_POOL_MAX', '20')),
+            },
+            'IGNORE_EXCEPTIONS': True,
+        },
+        'KEY_PREFIX': 'cfbc_sessions',
+        'TIMEOUT': 86400,  # 24 hours for session data (matches SESSION_COOKIE_AGE behavior)
+    },
+    'staticfiles': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'staticfiles-cache',
+        'TIMEOUT': 86400 * 30,  # 30 days for static file cache
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+        },
+    }
+}
+
+# Session configuration to use Redis
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'session'
+SESSION_COOKIE_AGE = 1209600  # 2 weeks
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Celery Configuration (Performance Tuned)
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# Tuning Rationale:
+# - email queue: High priority, needs fast processing (2-4 workers)
+# - file_processing: Medium priority, CPU-bound (1-2 workers)
+# - reports: Low priority, long-running (1 worker)
+# - maintenance: Lowest priority, scheduled only (0-1 workers)
+# - backup: Low priority, runs during off-peak (0-1 workers)
+# - default: Mixed workload fallback (1-2 workers)
+
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379/3'  # Database 3 for Celery broker
+CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/4'  # Database 4 for Celery results
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE  # Use Django's timezone
+CELERY_ENABLE_UTC = True
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
+CELERY_TASK_SOFT_TIME_LIMIT = 25 * 60  # 25 minutes
+CELERY_RESULT_EXPIRES = 24 * 60 * 60  # 24 hours
+
+# Task routing and queues with priority levels
+# Priority: email > file_processing > reports > default > backup > maintenance
+CELERY_TASK_ROUTES = {
+    # High priority - email notifications (fast delivery critical)
+    'blog.tasks.*': {
+        'queue': 'email',
+        'priority': 8,  # High priority (0-10)
+    },
+    'course_documents.tasks.send_document_notification': {
+        'queue': 'email',
+        'priority': 8,
+    },
+    # Medium-high priority - file processing
+    'course_documents.tasks.process_uploaded_document': {
+        'queue': 'file_processing',
+        'priority': 6,
+    },
+    # Medium priority - user-facing operations
+    'course_documents.tasks.generate_folder_report': {
+        'queue': 'reports',
+        'priority': 5,
+    },
+    # Low priority - batch/analytics
+    'course_documents.tasks.generate_performance_report': {
+        'queue': 'reports',
+        'priority': 3,
+    },
+    'course_documents.tasks.backup_document_metadata': {
+        'queue': 'backup',
+        'priority': 2,
+    },
+    # Lowest priority - maintenance
+    'course_documents.tasks.cleanup_old_documents': {
+        'queue': 'maintenance',
+        'priority': 1,
+    },
+    # Default fallback
+    '*.default': {
+        'queue': 'default',
+        'priority': 5,
+    },
+}
+
+# Worker concurrency per queue (used in docker-compose.prod.yml)
+# These are documented here for reference; actual config in docker-compose
+CELERY_WORKER_CONCURRENCY = {
+    'email': 4,            # Fast I/O-bound tasks
+    'file_processing': 2,  # CPU-bound, limit concurrency
+    'reports': 1,          # Memory-intensive
+    'default': 2,          # Mixed workload
+    'maintenance': 1,      # Rarely used
+    'backup': 1,           # Rarely used
+}
+
+# Task annotations (rate limits, retry policies) - performance tuned
+CELERY_TASK_ANNOTATIONS = {
+    # Email tasks: rate limit to avoid SMTP throttling
+    'blog.tasks.send_comment_notification': {
+        'rate_limit': '10/m',
+        'time_limit': 30,
+        'soft_time_limit': 25,
+        'max_retries': 3,
+        'default_retry_delay': 30,
+    },
+    'blog.tasks.send_welcome_email': {
+        'rate_limit': '20/m',
+        'time_limit': 30,
+        'soft_time_limit': 25,
+        'max_retries': 3,
+        'default_retry_delay': 30,
+    },
+    # File processing: moderate time limits, retry on failure
+    'course_documents.tasks.process_uploaded_document': {
+        'time_limit': 300,       # 5 min max
+        'soft_time_limit': 240,  # 4 min soft limit
+        'max_retries': 3,
+        'default_retry_delay': 60,
+    },
+    'course_documents.tasks.send_document_notification': {
+        'rate_limit': '30/m',
+        'time_limit': 60,
+        'soft_time_limit': 50,
+        'max_retries': 3,
+        'default_retry_delay': 30,
+    },
+    # Reports: longer time limits, fewer retries
+    'course_documents.tasks.generate_folder_report': {
+        'time_limit': 600,       # 10 min max
+        'soft_time_limit': 540,  # 9 min soft limit
+        'max_retries': 2,
+        'default_retry_delay': 120,
+    },
+    'course_documents.tasks.report_generation.*': {
+        'time_limit': 600,
+        'soft_time_limit': 540,
+        'max_retries': 2,
+        'default_retry_delay': 120,
+    },
+    # Performance reports: longest time limits
+    'course_documents.tasks.generate_performance_report': {
+        'time_limit': 900,       # 15 min max
+        'soft_time_limit': 840,  # 14 min soft limit
+        'max_retries': 2,
+        'default_retry_delay': 180,
+    },
+    'reports.tasks.*': {
+        'time_limit': 900,
+        'soft_time_limit': 840,
+        'max_retries': 2,
+        'default_retry_delay': 180,
+    },
+    # Maintenance: longest timeout, fewest retries
+    'course_documents.tasks.cleanup_old_documents': {
+        'time_limit': 1800,      # 30 min max
+        'soft_time_limit': 1500, # 25 min soft limit
+        'max_retries': 1,
+        'default_retry_delay': 300,
+    },
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Load Balancer Configuration
+# ─────────────────────────────────────────────────────────────────────────────
+# These settings are used by the load balancer and health check system.
+# See deploy/nginx/nginx.conf for the Nginx load balancer configuration.
+
+# Load balancer monitoring
+# When behind a load balancer, Django needs to trust the LB's IP
+# to correctly detect client IPs from X-Forwarded-For headers.
+LOAD_BALANCER_IPS = os.getenv('LOAD_BALANCER_IPS', '').split(',')
+
+# Whether the app is behind a reverse proxy / load balancer
+BEHIND_LOAD_BALANCER = os.getenv('BEHIND_LOAD_BALANCER', 'False').lower() in ('true', '1', 'yes')
+
+# Configure trusted proxies for correct IP resolution
+if BEHIND_LOAD_BALANCER:
+    # Add load balancer IPs to ALLOWED_HOSTS if configured
+    if LOAD_BALANCER_IPS and LOAD_BALANCER_IPS[0]:
+        ALLOWED_HOSTS.extend([ip.strip() for ip in LOAD_BALANCER_IPS if ip.strip()])
+    
+    # Configure SECURE_PROXY_SSL_HEADER for HTTPS behind LB
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    
+    # Use forwarded host header
+    USE_X_FORWARDED_HOST = True
+    USE_X_FORWARDED_PORT = True
+
+# Health check endpoint returns detailed status when behind load balancer
+HEALTH_CHECK_INCLUDE_DETAILS = os.getenv('HEALTH_CHECK_INCLUDE_DETAILS', 'False').lower() in ('true', '1', 'yes')
+
+# Load balancer instance ID (for identifying which app instance handled a request)
+try:
+    hostname = os.uname().nodename
+except (AttributeError, OSError):
+    hostname = os.getenv('HOSTNAME', 'unknown')
+INSTANCE_ID = os.getenv('INSTANCE_ID', hostname)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Auto-Scaling Configuration
+# ─────────────────────────────────────────────────────────────────────────────
+# These settings are used by the auto-scaling system (cfbc/autoscaler.py).
+# See docs/auto_scaling.md for full documentation.
+#
+# To customize, uncomment and modify the values below, or pass them
+# as CLI arguments to `python manage.py autoscale`.
+
+AUTOSCALER_CONFIG = {
+    'min_instances': int(os.getenv('AS_MIN_INSTANCES', '2')),
+    'max_instances': int(os.getenv('AS_MAX_INSTANCES', '8')),
+    'scale_up_threshold_cpu': float(os.getenv('AS_SCALE_UP_CPU', '70.0')),
+    'scale_down_threshold_cpu': float(os.getenv('AS_SCALE_DOWN_CPU', '30.0')),
+    'scale_up_threshold_memory': float(os.getenv('AS_SCALE_UP_MEM', '75.0')),
+    'scale_down_threshold_memory': float(os.getenv('AS_SCALE_DOWN_MEM', '40.0')),
+    'scale_up_threshold_request_rate': float(os.getenv('AS_SCALE_UP_RPS', '50.0')),
+    'scale_down_threshold_request_rate': float(os.getenv('AS_SCALE_DOWN_RPS', '10.0')),
+    'cooldown_period_scale_up': int(os.getenv('AS_COOLDOWN_UP', '120')),
+    'cooldown_period_scale_down': int(os.getenv('AS_COOLDOWN_DOWN', '300')),
+    'deployment_mode': os.getenv('AS_DEPLOYMENT_MODE', 'docker'),
+    'docker_compose_file': os.getenv('AS_DOCKER_COMPOSE', 'deploy/docker-compose.prod.yml'),
+    'log_file': os.getenv('AS_LOG_FILE', 'logs/autoscale.log'),
+}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Monitoring Configuration
+# ─────────────────────────────────────────────────────────────────────────────
+# These settings configure the comprehensive monitoring stack.
+# See docs/monitoring_stack.md for full documentation.
+
+# Alerting system configuration
+ALERTING_CONFIG = {
+    'enabled': True,
+    'alert_log_file': os.getenv('ALERT_LOG_FILE', 'logs/alerts.log'),
+    'alert_history_size': int(os.getenv('ALERT_HISTORY_SIZE', '1000')),
+}
+
+# Structured logging to file (for log aggregation)
+LOG_STRUCTURED_TO_FILE = os.getenv('LOG_STRUCTURED_TO_FILE', 'True').lower() in ('true', '1', 'yes')
+
+# Business metrics recording (Redis-backed)
+BUSINESS_METRICS_ENABLED = os.getenv('BUSINESS_METRICS_ENABLED', 'True').lower() in ('true', '1', 'yes')
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Logging Configuration (Structured JSON)
+# ─────────────────────────────────────────────────────────────────────────────
+# See docs/monitoring_stack.md for log aggregation setup (ELK, Loki, etc.)
+
+if LOG_STRUCTURED_TO_FILE:
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'json': {
+                '()': 'cfbc.middleware.JsonFormatter',
+            },
+            'verbose': {
+                'format': '{levelname} {asctime} {module} {message}',
+                'style': '{',
+            },
+            'simple': {
+                'format': '{levelname} {message}',
+                'style': '{',
+            },
+        },
+        'filters': {},
+        'handlers': {
+            'console': {
+                'level': 'INFO',
+                'class': 'logging.StreamHandler',
+                'formatter': 'verbose',
+            },
+            'console_json': {
+                'level': 'INFO',
+                'class': 'logging.StreamHandler',
+                'formatter': 'json',
+            },
+            'performance_file': {
+                'level': 'WARNING',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': os.getenv('PERFORMANCE_LOG_FILE', 'logs/performance.log'),
+                'maxBytes': 10485760,  # 10MB
+                'backupCount': 5,
+                'formatter': 'json',
+            },
+            'monitoring_file': {
+                'level': 'INFO',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': os.getenv('MONITORING_LOG_FILE', 'logs/monitoring.log'),
+                'maxBytes': 10485760,  # 10MB
+                'backupCount': 5,
+                'formatter': 'json',
+            },
+            'errors_file': {
+                'level': 'ERROR',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': os.getenv('ERROR_LOG_FILE', 'logs/errors.log'),
+                'maxBytes': 10485760,  # 10MB
+                'backupCount': 10,
+                'formatter': 'json',
+            },
+            'alerts_file': {
+                'level': 'WARNING',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': os.getenv('ALERT_LOG_FILE', 'logs/alerts.log'),
+                'maxBytes': 10485760,  # 10MB
+                'backupCount': 10,
+                'formatter': 'json',
+            },
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['console', 'errors_file'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+            'django.request': {
+                'handlers': ['console_json', 'errors_file'],
+                'level': 'WARNING',
+                'propagate': False,
+            },
+            'django.db.backends': {
+                'handlers': ['performance_file'],
+                'level': 'WARNING',
+                'propagate': False,
+            },
+            'django.db.performance': {
+                'handlers': ['performance_file', 'console_json'],
+                'level': 'WARNING',
+                'propagate': False,
+            },
+            'cfbc': {
+                'handlers': ['console_json', 'monitoring_file', 'errors_file'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+            'cfbc.autoscaler': {
+                'handlers': ['monitoring_file', 'alerts_file'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+        },
+    }
+else:
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'verbose': {
+                'format': '{levelname} {asctime} {module} {message}',
+                'style': '{',
+            },
+            'simple': {
+                'format': '{levelname} {message}',
+                'style': '{',
+            },
+        },
+        'handlers': {
+            'console': {
+                'level': 'INFO',
+                'class': 'logging.StreamHandler',
+                'formatter': 'verbose',
+            },
+            'errors_file': {
+                'level': 'ERROR',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': 'logs/errors.log',
+                'maxBytes': 10485760,
+                'backupCount': 10,
+                'formatter': 'verbose',
+            },
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['console', 'errors_file'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+            'cfbc': {
+                'handlers': ['console', 'errors_file'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+        },
+    }
+
 
 # Configuración para manejar grandes cantidades de datos en formularios
 # Aumentar límites para evitar errores al procesar muchos registros

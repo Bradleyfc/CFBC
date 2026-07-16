@@ -1,0 +1,106 @@
+"""
+================================================================================
+  Systemd Service: CFBC Django Application
+  =========================================
+  
+  This is a systemd service template for running Gunicorn with the CFBC
+  Django application. Multiple instances can be started for load balancing.
+  
+  Installation:
+    1. Copy to /etc/systemd/system/cfbc@.service
+       sudo cp deploy/gunicorn/cfbc.service /etc/systemd/system/cfbc@.service
+  
+    2. Edit the file to set correct paths for your deployment
+  
+    3. Enable and start instances:
+       sudo systemctl daemon-reload
+       sudo systemctl enable cfbc@8001
+       sudo systemctl enable cfbc@8002
+       sudo systemctl enable cfbc@8003
+       sudo systemctl enable cfbc@8004
+       sudo systemctl start cfbc@8001
+       sudo systemctl start cfbc@8002
+       sudo systemctl start cfbc@8003
+       sudo systemctl start cfbc@8004
+  
+    4. Verify:
+       sudo systemctl status cfbc@8001
+       curl http://127.0.0.1:8001/health/
+  
+    5. Configure Nginx (in nginx.conf) to point to these instances
+  
+  Scaling:
+    To add more instances:
+      sudo systemctl enable cfbc@8005
+      sudo systemctl start cfbc@8005
+      # Then update Nginx upstream block and reload
+      sudo nginx -s reload
+  
+  Rolling Restart:
+    for port in 8001 8002 8003 8004; do
+      sudo systemctl restart cfbc@$port
+      sleep 5  # Wait for health check
+    done
+================================================================================
+"""
+
+[Unit]
+Description=CFBC Django Application Instance %i
+After=network.target postgresql.target redis.target
+Requires=postgresql.target redis.target
+Wants=nginx.service
+
+[Service]
+# Type
+Type=simple
+Restart=always
+RestartSec=10
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+# User and Group
+User=www-data
+Group=www-data
+
+# Working Directory
+WorkingDirectory=/var/www/cfbc
+
+# Environment
+Environment=DJANGO_SETTINGS_MODULE=cfbc.settings
+Environment=PYTHONPATH=/var/www/cfbc
+Environment=PYTHONUNBUFFERED=1
+
+# Load environment from file
+EnvironmentFile=-/etc/cfbc/env/production
+EnvironmentFile=-/etc/cfbc/env/%i  # Instance-specific env (contains GUNICORN_BIND)
+
+# Gunicorn execution
+ExecStart=/var/www/cfbc/venv/bin/gunicorn \
+    --config /var/www/cfbc/deploy/gunicorn/gunicorn.conf.py \
+    cfbc.wsgi:application \
+    --bind 0.0.0.0:%i
+
+# Graceful shutdown
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=30
+SendSIGKILL=yes
+
+# Resource Limits
+LimitNOFILE=65535
+LimitNPROC=4096
+LimitAS=infinity
+
+# Security
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=full
+ReadWritePaths=/var/www/cfbc/media /var/www/cfbc/staticfiles /var/log/cfbc
+
+# File Creation Mask
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target
