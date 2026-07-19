@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Seguridad - CFBC</title>
+    
+    <!-- Tailwind CSS: mismo método que base.html -->
+    <link id="tailwind-local" href="{% static 'css/tailwind.css' %}" rel="stylesheet"
+          onerror="this.onerror=null; var s=document.createElement('script'); s.src='https://cdn.tailwindcss.com'; document.head.appendChild(s);">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* Glassmorphism Effects */
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .glass-dark {
+            background: rgba(44, 62, 80, 0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .glass:hover {
+            background: rgba(255, 255, 255, 0.85);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+            transition: all 0.3s ease;
+        }
+        
+        /* Shine effect for buttons */
+        .btn-shine {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-shine::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+        
+        .btn-shine:hover::before {
+            left: 100%;
+        }
+        
+        /* Severity badges */
+        .severity-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .severity-critical {
+            background-color: #fee;
+            color: #c00;
+            border: 1px solid #fcc;
+        }
+        
+        .severity-high {
+            background-color: #ffe8e8;
+            color: #e74c3c;
+            border: 1px solid #fdd;
+        }
+        
+        .severity-medium {
+            background-color: #fff3cd;
+            color: #f39c12;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .severity-low {
+            background-color: #d4edda;
+            color: #27ae60;
+            border: 1px solid #c3e6cb;
+        }
+        
+        /* Status indicators */
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        
+        .status-active { background-color: #27ae60; }
+        .status-warning { background-color: #f39c12; }
+        .status-inactive { background-color: #ccc; }
+        
+        /* Chart containers */
+        .chart-container {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        /* Pulse animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .animate-pulse-slow {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <div class="glass-dark text-white py-6 mb-8">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <h1 class="text-3xl font-bold mb-2">
+                        <i class="fas fa-shield-alt mr-3"></i>Dashboard de Seguridad
+                    </h1>
+                    <p class="text-gray-200">Monitoreo en tiempo real y análisis de seguridad</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'principal:profile' %}" 
+                       class="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-lg hover:bg-white/30 transition-all duration-300 btn-shine flex items-center">
+                        <i class="fas fa-arrow-left mr-2"></i> Perfil del Admin
+                    </a>
+                    <div class="px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full flex items-center">
+                        <i class="fas fa-calendar-alt mr-2"></i>
+                        <span>{{ today|date:"d M Y" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4">
+        <!-- Time Filter -->
+        <div class="glass rounded-xl p-4 mb-6">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <span class="font-semibold text-gray-700 mr-3">Rango de tiempo:</span>
+                    <div class="inline-flex space-x-2">
+                        <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full font-medium hover:bg-gray-200 transition-colors btn-shine" data-range="24h">
+                            24h
+                        </button>
+                        <button class="px-4 py-2 bg-blue-100 text-blue-700 rounded-full font-medium hover:bg-blue-200 transition-colors btn-shine active-range" data-range="7d">
+                            7 días
+                        </button>
+                        <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full font-medium hover:bg-gray-200 transition-colors btn-shine" data-range="30d">
+                            30 días
+                        </button>
+                    </div>
+                </div>
+                <button id="refreshDashboard" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors btn-shine animate-pulse-slow">
+                    <i class="fas fa-sync-alt mr-2"></i> Actualizar
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick Metrics -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 pb-2 border-b-2 border-blue-500">Métricas de Seguridad</h2>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem;">
+                <!-- Audit Events -->
+                <div class="glass rounded-xl p-6 border-l-4 border-blue-500">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-clipboard-list text-blue-600 text-xl"></i>
+                        </div>
+                        <button class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+                                title="Eventos registrados en el sistema de auditoría">
+                            <i class="fas fa-info-circle text-gray-600"></i>
+                        </button>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-800 mb-1">{{ audit_metrics.total_events }}</div>
+                    <div class="text-sm text-gray-600 uppercase tracking-wide mb-4">Eventos de Auditoría</div>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-2 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full">
+                            {{ audit_metrics.critical_events }} críticos
+                        </span>
+                        <span class="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-full">
+                            {{ audit_metrics.failed_events }} fallidos
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- WAF Blocks -->
+                <div class="glass rounded-xl p-6 border-l-4 border-red-500">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-shield-alt text-red-600 text-xl"></i>
+                        </div>
+                        <button class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+                                onclick="document.getElementById('wafModal').style.display='flex'">
+                            <i class="fas fa-question-circle text-gray-600"></i>
+                        </button>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-800 mb-1">{{ waf_stats.total_blocks }}</div>
+                    <div class="text-sm text-gray-600 uppercase tracking-wide mb-4">Bloqueos WAF</div>
+                    <div class="text-sm text-gray-600">
+                        {{ waf_stats.active_rules }} reglas activas
+                    </div>
+                </div>
+                
+                <!-- Authentication -->
+                <div class="glass rounded-xl p-6 border-l-4 border-yellow-500">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user-lock text-yellow-600 text-xl"></i>
+                        </div>
+                        <button class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+                                title="Intentos fallidos de autenticación">
+                            <i class="fas fa-info-circle text-gray-600"></i>
+                        </button>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-800 mb-1">{{ auth_metrics.failed_logins }}</div>
+                    <div class="text-sm text-gray-600 uppercase tracking-wide mb-4">Logins Fallidos</div>
+                    <div class="text-sm text-gray-600">
+                        {{ auth_metrics.account_lockouts }} cuentas bloqueadas
+                    </div>
+                </div>
+                
+                <!-- Compliance -->
+                <div class="glass rounded-xl p-6 border-l-4 border-green-500">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                        </div>
+                        <button class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+                                title="OWASP Top 10: Medida de cumplimiento de los 10 riesgos de seguridad más críticos en aplicaciones web">
+                            <i class="fas fa-info-circle text-gray-600"></i>
+                        </button>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-800 mb-1">{{ compliance_status.owasp_score|floatformat:0 }}%</div>
+                    <div class="text-sm text-gray-600 uppercase tracking-wide mb-4">Score OWASP</div>
+                    <div class="text-sm text-gray-600">
+                        {{ compliance_status.passed_checks }}/{{ compliance_status.total_checks }} checks
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 pb-2 border-b-2 border-blue-500">Gráficos y Análisis</h2>
+            
+            <!-- Primera fila: Timeline y WAF Attack Types -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 1.5rem;">
+                <!-- Audit Timeline -->
+                <div class="chart-container" style="height: 420px;">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-chart-line text-blue-600 mr-3"></i>
+                        <h3 class="text-lg font-semibold text-gray-800">Timeline de Eventos de Seguridad</h3>
+                    </div>
+                    <div style="height: 320px;">
+                        <canvas id="auditTimelineChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- WAF Attack Types -->
+                <div class="chart-container" style="height: 420px;">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-bug text-red-600 mr-3"></i>
+                        <h3 class="text-lg font-semibold text-gray-800">Tipos de Ataque WAF</h3>
+                    </div>
+                    <div style="height: 280px;">
+                        <canvas id="wafAttackChart"></canvas>
+                    </div>
+                    <div class="mt-3 text-center text-sm text-gray-600">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        {{ waf_stats.active_rules }} reglas activas protegiendo la aplicación
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Segunda fila: Severity Distribution y Authentication Events -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                <!-- Severity Distribution -->
+                <div class="chart-container" style="height: 420px;">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-exclamation-triangle text-yellow-600 mr-3"></i>
+                        <h3 class="text-lg font-semibold text-gray-800">Distribución de Severidad</h3>
+                    </div>
+                    <div style="height: 320px;">
+                        <canvas id="severityChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Authentication Events -->
+                <div class="chart-container" style="height: 420px;">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-sign-in-alt text-green-600 mr-3"></i>
+                        <h3 class="text-lg font-semibold text-gray-800">Eventos de Autenticación</h3>
+                    </div>
+                    <div style="height: 320px;">
+                        <canvas id="authEventsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Sections -->
+        <div class="mb-8">
+            <!-- Critical Issues -->
+            <div>
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800 pb-2 border-b-2 border-red-500 flex-1">Problemas Críticos</h2>
+                    {% if critical_issues_total > 0 %}
+                    <span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-semibold">
+                        {{ critical_issues_total }} total
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="glass rounded-xl p-6">
+                    {% if critical_issues %}
+                    <div class="space-y-4">
+                        {% for issue in critical_issues %}
+                        <div class="p-4 bg-red-50 border-l-4 {% if issue.origin == 'attack' %}border-red-600{% elif issue.origin == 'test' %}border-blue-600{% else %}border-yellow-600{% endif %} rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                            <!-- Header con título y badge -->
+                            <div class="flex justify-between items-start mb-3">
+                                <h4 class="font-semibold text-gray-800 text-base flex-1">{{ issue.description }}</h4>
+                                <span class="severity-badge severity-critical ml-2">Crítico</span>
+                            </div>
+                            
+                            <!-- Grid de información -->
+                            <div class="grid grid-cols-2 gap-3 mb-3">
+                                <!-- Columna 1: Tipo y Tiempo -->
+                                <div>
+                                    <div class="text-sm text-gray-700 mb-2">
+                                        <i class="fas fa-file-alt text-gray-500 mr-2"></i>
+                                        <strong>Tipo:</strong> {{ issue.scan_type|title }}
+                                    </div>
+                                    <div class="text-xs text-gray-600">
+                                        <i class="fas fa-clock text-gray-500 mr-2"></i>
+                                        {{ issue.generated_at|timesince }} atrás
+                                    </div>
+                                </div>
+                                
+                                <!-- Columna 2: Origen -->
+                                <div>
+                                    <div class="text-sm text-gray-700 mb-2">
+                                        <i class="fas fa-source text-gray-500 mr-2"></i>
+                                        <strong>Origen:</strong>
+                                    </div>
+                                    {% if issue.origin == 'test' %}
+                                        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold inline-flex items-center">
+                                            <i class="fas {{ issue.origin_icon }} mr-2"></i>{{ issue.origin_label }}
+                                        </span>
+                                    {% elif issue.origin == 'attack' %}
+                                        <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold inline-flex items-center">
+                                            <i class="fas {{ issue.origin_icon }} mr-2"></i>{{ issue.origin_label }}
+                                        </span>
+                                    {% else %}
+                                        <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold inline-flex items-center">
+                                            <i class="fas {{ issue.origin_icon }} mr-2"></i>{{ issue.origin_label }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Detalles del ataque/evento -->
+                            {% if issue.reason %}
+                            <div class="mt-3 p-3 bg-white/50 rounded-lg border border-gray-200">
+                                <div class="text-xs text-gray-700">
+                                    <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                                    <strong>Detalles:</strong> {{ issue.reason }}
+                                </div>
+                                {% if issue.attack_details %}
+                                <div class="text-xs text-gray-600 mt-1 ml-5">
+                                    {{ issue.attack_details }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                            
+                            <!-- IP Address si existe -->
+                            {% if issue.ip_address %}
+                            <div class="mt-2 flex items-center text-xs text-gray-600">
+                                <i class="fas fa-network-wired text-gray-500 mr-2"></i>
+                                <span>IP: <code class="px-2 py-1 bg-gray-100 rounded">{{ issue.ip_address }}</code></span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Paginación - Siempre visible -->
+                    <div class="mt-6 border-t border-gray-200 pt-4">
+                        <!-- Contador de resultados -->
+                        <div class="text-sm text-gray-600 mb-3 text-center">
+                            Mostrando 
+                            <strong>{{ critical_issues.start_index }}</strong> - 
+                            <strong>{{ critical_issues.end_index }}</strong> 
+                            de 
+                            <strong>{{ critical_issues_total }}</strong> problema{{ critical_issues_total|pluralize }}
+                        </div>
+                        
+                        <!-- Controles de paginación (solo si hay más de 1 página) -->
+                        {% if critical_issues.has_other_pages %}
+                        <div class="flex items-center justify-center space-x-2">
+                            {% if critical_issues.has_previous %}
+                            <a href="?issues_page=1" 
+                               class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                               title="Primera página">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                            <a href="?issues_page={{ critical_issues.previous_page_number }}" 
+                               class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                                <i class="fas fa-angle-left mr-1"></i> Anterior
+                            </a>
+                            {% else %}
+                            <span class="px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed"
+                                  title="Ya estás en la primera página">
+                                <i class="fas fa-angle-double-left"></i>
+                            </span>
+                            <span class="px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed">
+                                <i class="fas fa-angle-left mr-1"></i> Anterior
+                            </span>
+                            {% endif %}
+                            
+                            <span class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold">
+                                Página {{ critical_issues.number }} de {{ critical_issues.paginator.num_pages }}
+                            </span>
+                            
+                            {% if critical_issues.has_next %}
+                            <a href="?issues_page={{ critical_issues.next_page_number }}" 
+                               class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                                Siguiente <i class="fas fa-angle-right ml-1"></i>
+                            </a>
+                            <a href="?issues_page={{ critical_issues.paginator.num_pages }}" 
+                               class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                               title="Última página">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                            {% else %}
+                            <span class="px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed">
+                                Siguiente <i class="fas fa-angle-right ml-1"></i>
+                            </span>
+                            <span class="px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed"
+                                  title="Ya estás en la última página">
+                                <i class="fas fa-angle-double-right"></i>
+                            </span>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <!-- Mensaje cuando solo hay 1 página -->
+                        <div class="text-center">
+                            <span class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold inline-block">
+                                Página 1 de 1
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% else %}
+                    <div class="text-center py-8">
+                        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-check-circle text-green-600 text-2xl"></i>
+                        </div>
+                        <p class="text-gray-600">No hay problemas críticos recientes</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 pb-2 border-b-2 border-blue-500">Acciones Rápidas</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <a href="{% url 'principal:profile' %}" 
+                   class="glass rounded-xl p-6 text-center hover:bg-blue-50 transition-colors btn-shine">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-arrow-left text-blue-600 text-xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-gray-800">Perfil del Admin</h4>
+                </a>
+                
+                <a href="/admin/security/securityreport/" 
+                   class="glass rounded-xl p-6 text-center hover:bg-gray-50 transition-colors btn-shine">
+                    <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-file-alt text-gray-600 text-xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-gray-800">Ver Reportes</h4>
+                </a>
+                
+                <a href="/admin/security/securityauditlog/" 
+                   class="glass rounded-xl p-6 text-center hover:bg-red-50 transition-colors btn-shine">
+                    <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-clipboard-list text-red-600 text-xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-gray-800">Logs de Auditoría</h4>
+                </a>
+                
+                <a href="/admin/security/wafrule/" 
+                   class="glass rounded-xl p-6 text-center hover:bg-green-50 transition-colors btn-shine">
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-shield-alt text-green-600 text-xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-gray-800">Reglas WAF</h4>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- WAF Info Modal -->
+    <div id="wafModal" class="fixed inset-0 z-50 hidden" style="display: none;">
+        <!-- Overlay con blur -->
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" 
+             onclick="closeWafModal()"></div>
+        
+        <!-- Contenido del Modal -->
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+            <div class="bg-white shadow-2xl w-full pointer-events-auto transform transition-all" 
+                 style="max-width: 42rem; max-height: 80vh; display: flex; flex-direction: column; border-radius: 1rem; overflow: hidden;">
+                
+                <!-- Header (fijo) -->
+                <div class="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50" style="flex-shrink: 0;">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-shield-alt text-blue-600 mr-3"></i>
+                            Información sobre Reglas WAF
+                        </h3>
+                        <button onclick="closeWafModal()" 
+                                class="w-10 h-10 rounded-full bg-red-100 hover:bg-red-200 flex items-center justify-center transition-all duration-300 group hover:scale-110">
+                            <i class="fas fa-times text-red-600 group-hover:text-red-700"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Body (scrollable) -->
+                <div class="p-6" style="overflow-y: auto; flex: 1;">
+                    <h4 class="font-semibold text-gray-800 mb-3 text-lg">¿Qué son las reglas WAF?</h4>
+                    <p class="text-gray-600 mb-5">Web Application Firewall - Protegen tu aplicación de ataques comunes:</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                        <div class="flex items-start p-3 rounded-lg bg-red-50 border border-red-100">
+                            <i class="fas fa-database text-red-500 mr-3 mt-1"></i>
+                            <div>
+                                <strong class="text-gray-800 block">SQL Injection</strong>
+                                <span class="text-sm text-gray-600">Detecta intentos de inyección SQL</span>
+                            </div>
+                        </div>
+                        <div class="flex items-start p-3 rounded-lg bg-yellow-50 border border-yellow-100">
+                            <i class="fas fa-code text-yellow-500 mr-3 mt-1"></i>
+                            <div>
+                                <strong class="text-gray-800 block">XSS</strong>
+                                <span class="text-sm text-gray-600">Previene Cross-Site Scripting</span>
+                            </div>
+                        </div>
+                        <div class="flex items-start p-3 rounded-lg bg-blue-50 border border-blue-100">
+                            <i class="fas fa-folder-open text-blue-500 mr-3 mt-1"></i>
+                            <div>
+                                <strong class="text-gray-800 block">Path Traversal</strong>
+                                <span class="text-sm text-gray-600">Bloquea acceso a archivos sensibles</span>
+                            </div>
+                        </div>
+                        <div class="flex items-start p-3 rounded-lg bg-purple-50 border border-purple-100">
+                            <i class="fas fa-terminal text-purple-500 mr-3 mt-1"></i>
+                            <div>
+                                <strong class="text-gray-800 block">Command Injection</strong>
+                                <span class="text-sm text-gray-600">Detecta ejecución de comandos</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h4 class="font-semibold text-gray-800 mb-3 text-lg">Reglas activas en tu sistema:</h4>
+                    <div class="bg-gray-50 border border-gray-200 p-4 rounded-xl mb-6">
+                        <ul class="space-y-2.5">
+                            <li class="flex items-center">
+                                <div class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                                    <i class="fas fa-check text-green-600 text-xs"></i>
+                                </div>
+                                <span class="text-gray-700">SQL Injection - Basic</span>
+                            </li>
+                            <li class="flex items-center">
+                                <div class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                                    <i class="fas fa-check text-green-600 text-xs"></i>
+                                </div>
+                                <span class="text-gray-700">XSS - Script Tags</span>
+                            </li>
+                            <li class="flex items-center">
+                                <div class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                                    <i class="fas fa-check text-green-600 text-xs"></i>
+                                </div>
+                                <span class="text-gray-700">Path Traversal - Basic</span>
+                            </li>
+                            <li class="flex items-center">
+                                <div class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                                    <i class="fas fa-check text-green-600 text-xs"></i>
+                                </div>
+                                <span class="text-gray-700">Command Injection - Basic</span>
+                            </li>
+                            <li class="flex items-center">
+                                <div class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                                    <i class="fas fa-check text-green-600 text-xs"></i>
+                                </div>
+                                <span class="text-gray-700">Sensitive Data Exposure</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                        <div class="flex items-start">
+                            <i class="fas fa-lightbulb text-blue-600 text-xl mt-0.5 mr-3"></i>
+                            <div>
+                                <strong class="text-blue-900 block mb-1">Configuración:</strong>
+                                <p class="text-blue-700 text-sm leading-relaxed">
+                                    Las reglas están activas cuando <code class="px-2 py-0.5 bg-white rounded text-blue-800 font-mono text-xs">is_active=True</code>. 
+                                    Cada vez que una regla bloquea un ataque, incrementa su contador automáticamente.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Footer (fijo) -->
+                <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end space-x-3" style="flex-shrink: 0;">
+                    <button onclick="closeWafModal()" 
+                            class="btn-shine"
+                            style="padding: 0.5rem 1rem; background-color: #dc2626; color: white; border-radius: 0.5rem; font-weight: 600; transition: all 0.3s; border: none; cursor: pointer; position: relative; overflow: hidden;"
+                            onmouseover="this.style.backgroundColor='#b91c1c'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(220, 38, 38, 0.3)';"
+                            onmouseout="this.style.backgroundColor='#dc2626'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                        Cerrar
+                    </button>
+                    <a href="/admin/security/wafrule/" 
+                       class="btn-shine"
+                       style="padding: 0.5rem 1rem; background-color: #2563eb; color: white; border-radius: 0.5rem; font-weight: 600; transition: all 0.3s; text-decoration: none; display: inline-flex; align-items: center; cursor: pointer; position: relative; overflow: hidden;"
+                       onmouseover="this.style.backgroundColor='#1d4ed8'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(37, 99, 235, 0.3)';"
+                       onmouseout="this.style.backgroundColor='#2563eb'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                        <i class="fas fa-cog" style="margin-right: 0.5rem;"></i> Gestionar Reglas
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Chart variables
+        let currentRange = '7d';  // Cambiado de 24h a 7d para ver más datos
+        let auditTimelineChart, wafAttackChart, severityChart, authEventsChart;
+        
+        // Modal WAF functions
+        function openWafModal() {
+            document.getElementById('wafModal').style.display = 'flex';
+            document.body.style.overflow = 'hidden'; // Bloquear scroll
+        }
+        
+        function closeWafModal() {
+            document.getElementById('wafModal').style.display = 'none';
+            document.body.style.overflow = 'auto'; // Restaurar scroll
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadChartData(currentRange);
+            setupEventListeners();
+        });
+        
+        function setupEventListeners() {
+            // Time range buttons
+            document.querySelectorAll('[data-range]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('[data-range]').forEach(b => {
+                        b.classList.remove('bg-blue-100', 'text-blue-700');
+                        b.classList.add('bg-gray-100', 'text-gray-700');
+                    });
+                    this.classList.remove('bg-gray-100', 'text-gray-700');
+                    this.classList.add('bg-blue-100', 'text-blue-700');
+                    currentRange = this.dataset.range;
+                    loadChartData(currentRange);
+                });
+            });
+            
+            // Refresh button
+            document.getElementById('refreshDashboard').addEventListener('click', function() {
+                loadChartData(currentRange);
+                const originalHtml = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Actualizando...';
+                setTimeout(() => {
+                    this.innerHTML = originalHtml;
+                }, 1000);
+            });
+        }
+        
+        function loadChartData(range) {
+            console.log('Loading chart data for range:', range);
+            fetch(`/seguridad/dashboard/data/?range=${range}`)
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Chart data received:', data);
+                    console.log('Audit timeline:', data.audit_timeline);
+                    console.log('Severity distribution:', data.severity_distribution);
+                    updateCharts(data);
+                })
+                .catch(error => {
+                    console.error('Error loading chart data:', error);
+                });
+        }
+        
+        function updateCharts(data) {
+            updateAuditTimelineChart(data.audit_timeline);
+            updateWafAttackChart(data.waf_attacks);
+            updateSeverityChart(data.severity_distribution);
+            updateAuthEventsChart(data.auth_events);
+        }
+        
+        function updateAuditTimelineChart(data) {
+            const ctx = document.getElementById('auditTimelineChart').getContext('2d');
+            if (auditTimelineChart) auditTimelineChart.destroy();
+            
+            auditTimelineChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.dates,
+                    datasets: [
+                        {
+                            label: 'Total Eventos',
+                            data: data.total_events,
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Eventos Críticos',
+                            data: data.critical_events,
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top' } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+        
+        function updateWafAttackChart(data) {
+            const ctx = document.getElementById('wafAttackChart').getContext('2d');
+            if (wafAttackChart) wafAttackChart.destroy();
+            
+            wafAttackChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.data,
+                        backgroundColor: ['#e74c3c', '#f39c12', '#3498db', '#2ecc71', '#9b59b6', '#1abc9c'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'right' } }
+                }
+            });
+        }
+        
+        function updateSeverityChart(data) {
+            const ctx = document.getElementById('severityChart').getContext('2d');
+            if (severityChart) severityChart.destroy();
+            
+            severityChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Eventos por Severidad',
+                        data: data.data,
+                        backgroundColor: data.colors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+        
+        function updateAuthEventsChart(data) {
+            const ctx = document.getElementById('authEventsChart').getContext('2d');
+            if (authEventsChart) authEventsChart.destroy();
+            
+            authEventsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.dates,
+                    datasets: [
+                        {
+                            label: 'Logins Exitosos',
+                            data: data.logins,
+                            backgroundColor: 'rgba(46, 204, 113, 0.7)',
+                            borderColor: '#2ecc71'
+                        },
+                        {
+                            label: 'Logins Fallidos',
+                            data: data.failed_logins,
+                            backgroundColor: 'rgba(231, 76, 60, 0.7)',
+                            borderColor: '#e74c3c'
+                        },
+                        {
+                            label: 'Logouts',
+                            data: data.logouts,
+                            backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                            borderColor: '#3498db'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top' } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

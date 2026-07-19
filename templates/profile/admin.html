@@ -38,6 +38,13 @@
                 </div>
                 <span class="glass-link-text">Gestión de Documentos</span>
             </a>
+
+            <a href="/seguridad/dashboard/" class="glass-link glass-link-warning">
+                <div class="glass-link-icon glass-icon-warning">
+                    <span class="fa material-icons">security</span>
+                </div>
+                <span class="glass-link-text">Dashboard de Seguridad</span>
+            </a>
         </div>
     </div>
 </div>
@@ -165,5 +172,38 @@
 
     .glass-content .glass-link-outline i.bi-chevron-right {
         color: #1e40af;
+    }
+    
+    /* Efectos especiales para el botón de seguridad */
+    .glass-content .glass-link-warning[href*="seguridad"] {
+        background: linear-gradient(135deg,
+                rgba(255, 215, 0, 0.25) 0%,
+                rgba(255, 165, 0, 0.15) 100%);
+        border-top: 1px solid rgba(255, 215, 0, 0.5);
+        border-left: 1px solid rgba(255, 215, 0, 0.5);
+        animation: pulse-security 3s infinite;
+    }
+    
+    .glass-content .glass-link-warning[href*="seguridad"]:hover {
+        background: linear-gradient(135deg,
+                rgba(255, 215, 0, 0.35) 0%,
+                rgba(255, 165, 0, 0.25) 100%);
+        animation: pulse-security-fast 1.5s infinite;
+    }
+    
+    .glass-content .glass-icon-warning[class*="security"] {
+        background: linear-gradient(135deg, rgba(255, 215, 0, 0.4), rgba(255, 165, 0, 0.3));
+        color: #8B4513;
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    }
+    
+    @keyframes pulse-security {
+        0%, 100% { box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15); }
+        50% { box-shadow: 0 8px 32px 0 rgba(255, 215, 0, 0.25); }
+    }
+    
+    @keyframes pulse-security-fast {
+        0%, 100% { box-shadow: 0 8px 32px 0 rgba(255, 215, 0, 0.2); }
+        50% { box-shadow: 0 8px 32px 0 rgba(255, 215, 0, 0.4); }
     }
 </style>

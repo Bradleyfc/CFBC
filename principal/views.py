@@ -1915,9 +1915,6 @@ class HomeView(DocumentsCourseMixin, BaseContextMixin, TemplateView):
                     curso_academico=curso_academico_activo
                 ).values_list('curso_id', flat=True)
             )
-            
-            print(f"DEBUG: Home - Cursos con solicitudes pendientes: {cursos_con_solicitudes_pendientes}")
-            print(f"DEBUG: Home - Cursos con solicitudes rechazadas: {cursos_con_solicitudes_rechazadas}")
 
         for item in courses:
             if student:
@@ -1932,11 +1929,6 @@ class HomeView(DocumentsCourseMixin, BaseContextMixin, TemplateView):
                 
                 # Verificar si el estudiante tiene una solicitud rechazada para este curso
                 item.tiene_solicitud_rechazada = item.id in cursos_con_solicitudes_rechazadas
-                
-                if item.tiene_solicitud_pendiente:
-                    print(f"DEBUG: Home - Curso {item.name} (ID: {item.id}) tiene solicitud pendiente")
-                if item.tiene_solicitud_rechazada:
-                    print(f"DEBUG: Home - Curso {item.name} (ID: {item.id}) tiene solicitud rechazada")
             else:
                 item.is_enrolled = False
                 item.tiene_solicitud_pendiente = False
