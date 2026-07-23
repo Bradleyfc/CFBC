@@ -45,6 +45,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_tailwind_cli',
+    'security.apps.SecurityConfig',
+    # 'django_otp',  # Comentado temporalmente - no se está usando directamente
+    'axes',
+    'guardian',
+    'oauth2_provider',
+    'corsheaders',
     'principal',
     'accounts.apps.AccountsConfig',
     'blog.apps.BlogConfig',
@@ -52,21 +58,31 @@ INSTALLED_APPS = [
     'course_documents.apps.CourseDocumentsConfig',
     'historial.apps.HistorialConfig',
     'evaluaciones.apps.EvaluacionesConfig',
-    
-    
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'axes.middleware.AxesMiddleware',
+    'security.middleware.WAFMiddleware',
+    'security.middleware.SecurityHeadersMiddleware',
+    # 'django_otp.middleware.OTPMiddleware',  # Comentado temporalmente - puede causar problemas
+    'security.middleware.RateLimitMiddleware',
+    'security.middleware.RowLevelSecurityMiddleware',
+    'security.middleware.DataProtectionMiddleware',
+    'security.middleware.SessionSecurityMiddleware',
 ]
 
 ROOT_URLCONF = 'cfbc.urls'
+
+# Security URL Configuration
+SECURITY_URL_PREFIX = 'seguridad/'
 
 TEMPLATES = [
     {
@@ -191,7 +207,10 @@ TAILWIND_CLI_DIST_CSS = 'static/css/styles.css'
 
 # Backends de autenticación
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',  # Backend por defecto de Django
+    'django.contrib.auth.backends.ModelBackend',
+    'axes.backends.AxesBackend',
+    'guardian.backends.ObjectPermissionBackend',
+    # 'django_otp.backends.OTPBackend',  # Comentado temporalmente - no existe en esta versión
 ]
 
 
@@ -209,6 +228,183 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 # EMAIL_TIMEOUT = 60
 
+# ─── Cache Configuration (Redis) ──────────────────────────────────────
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'SOCKET_CONNECT_TIMEOUT': 5,
+            'SOCKET_TIMEOUT': 5,
+            'RETRY_ON_TIMEOUT': True,
+            'MAX_CONNECTIONS': 100,
+        },
+        'KEY_PREFIX': 'cfbc_sec',
+        'TIMEOUT': 300,  # 5 minutos
+    },
+    'session': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': os.getenv('REDIS_SESSION_URL', 'redis://127.0.0.1:6379/2'),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+        'KEY_PREFIX': 'cfbc_session',
+        'TIMEOUT': 900,  # 15 minutos
+    },
+}
+
+# Session engine (Redis)
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'session'
+
+# ─── Advanced Security Configuration ──────────────────────────────────
+
+# Django OTP (2FA)
+OTP_TOTP_ISSUER = 'CFBC'
+
+# Django Axes (Account Lockout)
+AXES_ENABLED = True
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = 0.25  # 15 minutos
+AXES_RESET_ON_SUCCESS = True
+AXES_LOCKOUT_TEMPLATE = None
+# AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP = True  # Deprecated en axes 8+
+
+# Django Guardian (Object Permissions)
+GUARDIAN_RAISE_403 = True
+GUARDIAN_GET_INIT_GROUPS_WITH_PERMISSIONS = True
+
+# CORS Configuration
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+CORS_ALLOW_CREDENTIALS = True
+
+# Django Ratelimit
+RATELIMIT_ENABLE = True
+RATELIMIT_USE_CACHE = 'default'
+RATELIMIT_FAIL_OPEN = False
+
+# OAuth2 Toolkit
+OAUTH2_PROVIDER = {
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 3600,
+    'REFRESH_TOKEN_EXPIRE_SECONDS': 604800,
+    'ROTATE_REFRESH_TOKENS': True,
+    'SCOPES': {
+        'read': 'Read scope',
+        'write': 'Write scope',
+        'user': 'User profile access',
+    },
+}
+
+# SimpleJWT
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+}
+
+# Security Contact
+SECURITY_CONTACT_EMAIL = 'security@cfbc.edu.ni'
+
+# Session Security
+SESSION_COOKIE_AGE = 900  # 15 minutos de inactividad
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_SAVE_EVERY_REQUEST = True
+
+# ─── Production Security Settings (comentados para desarrollo) ─────────────
+# Activar estos settings cuando se despliegue a producción:
+#
+# SECURE_HSTS_SECONDS = 31536000  # 1 año
+# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+# SECURE_HSTS_PRELOAD = True
+# SECURE_SSL_REDIRECT = True
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# SESSION_COOKIE_SECURE = True
+# CSRF_COOKIE_SECURE = True
+# CSRF_COOKIE_HTTPONLY = True
+# SECURE_CONTENT_TYPE_NOSNIFF = True
+# SECURE_BROWSER_XSS_FILTER = True
+# SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+# X_FRAME_OPTIONS = 'DENY'
+
+# ─── Security Logging Configuration ─────────────────────────────────────
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'security': {
+            'format': '[SECURITY] {levelname} {asctime} {message}',
+            'style': '{',
+        },
+    },
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'security_file': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': BASE_DIR / 'logs' / 'security.log',
+            'maxBytes': 10485760,  # 10MB
+            'backupCount': 10,
+            'formatter': 'security',
+        },
+        'security_console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'security',
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'filters': ['require_debug_false'],
+            'class': 'django.utils.log.AdminEmailHandler',
+            'formatter': 'security',
+        },
+    },
+    'loggers': {
+        'django.security': {
+            'handlers': ['console', 'security_file', 'mail_admins'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'security': {
+            'handlers': ['console', 'security_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'axes': {
+            'handlers': ['console', 'security_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django_otp': {
+            'handlers': ['console', 'security_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
 # Configuración del remitente por defecto
 DEFAULT_FROM_EMAIL = 'Centro Fray Bartolome de las Casas <noreply@cfbc.edu.ni>'
 
@@ -217,3 +413,6 @@ DEFAULT_FROM_EMAIL = 'Centro Fray Bartolome de las Casas <noreply@cfbc.edu.ni>'
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000  # Por defecto es 1000
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB (por defecto es 2.5MB)
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB (por defecto es 2.5MB)
+# WAF Configuration
+WAF_ENABLED = os.getenv('WAF_ENABLED', 'True').lower() == 'true'
+WAF_MODE = os.getenv('WAF_MODE', 'selective')  # 'blocking', 'logging', 'selective', 'disabled'

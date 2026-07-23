@@ -27,7 +27,11 @@ urlpatterns = [
     path('datos-archivados/', include('datos_archivados.urls')),
     path('course-documents/', include('course_documents.urls')),
     path('evaluaciones/', include('evaluaciones.urls')),
-    
+    # Security URLs
+    path('seguridad/', include('security.urls')),
+    path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
+    # Security test URLs
+    path('security/', include('security.hardening.urls')),
 ]
 
 # Agregar configuración para servir archivos multimedia en desarrollo

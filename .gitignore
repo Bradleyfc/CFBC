@@ -1,78 +1,65 @@
-# Entornos virtuales
-venv/
-env/
-.venv/
 
-# Base de datos
-*.sqlite3
-*.db
-
-# Archivos de Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-
-# Variables de entorno/secretos
-.env
-.env.local
-.env.production
-secrets.py
-
-# Archivos de IDE y editores
-.vscode/
-.idea/
-*.swp
-*.swo
-*.swn
-.DS_Store
-Thumbs.db
-
-# Archivos estáticos y medios (generados automáticamente)
-staticfiles/
-
-# Ignorar media/ pero permitir la carpeta default con imágenes del proyecto
-media/*
+!.django_tailwind_cli/source.css
 !media/default/
-media/default/*
-!media/default/plantilla.jpg
 !media/default/LOGO.png
 !media/default/fondo.jpg
 !media/default/logoreglamento.jpg
-
-# Logs
-*.log
-logs/
-
-# Tailwind CSS - excluir todos los binarios y archivos temporales
-.django_tailwind_cli/
-!.django_tailwind_cli/source.css
-
-# Incluir CSS compilado para que funcione inmediatamente
-# static/css/tailwind.css está incluido intencionalmente
-
-# Testing
-.coverage
-.pytest_cache/
-.hypothesis/
-htmlcov/
-tests/
-
-# Kiro IDE
-.kiro/
-
-# Archivos temporales del sistema
-*.tmp
-*.temp
-.cache/
-
-# Archivos de configuración local
-local_settings.py
-
+!media/default/plantilla.jpg
+# Archivos de IDE y editores
+# Archivos de Python
 # Archivos de backup
-*.bak
-*.backup
-
+# Archivos de configuración local
 # Archivos de workspace específicos
+# Archivos estáticos y medios (generados automáticamente)
+# Archivos temporales del sistema
+# Base de datos
+# Entornos virtuales
+# Ignorar media/ pero permitir la carpeta default con imágenes del proyecto
+# Incluir CSS compilado para que funcione inmediatamente
+# Kiro IDE
+# Logs
+# Tailwind CSS - excluir todos los binarios y archivos temporales
+# Testing
+# Variables de entorno/secretos
+# static/css/tailwind.css está incluido intencionalmente
+*.backup
+*.bak
 *.code-workspace
+*.db
+*.log
+*.pyc
+*.pyd
+*.pyo
+*.sqlite3
+*.swn
+*.swo
+*.swp
+*.temp
+*.tmp
+.DS_Store
+.Python
+.cache/
+.coverage
+.django_tailwind_cli/
+.env
+.env.local
+.env.production
+.hypothesis/
+.idea/
+.kiro/
+.pytest_cache/
+.venv/
+.vscode/
+Thumbs.db
+__pycache__/
+env/
+htmlcov/
+local_settings.py
+logs/
+logs/*.log
+media/*
+media/default/*
+secrets.py
+staticfiles/
+tests/
+venv/
