@@ -29,25 +29,17 @@ from cfbc.cache_utils import (
 
 def es_moderador(user):
     """Check if user is a moderator."""
-    return user.is_authenticated and user.groups.filter(name='Moderador').exists()
+    return user.is_authenticated and user.groups.filter(name='Blog Moderador').exists()
 
 
 def es_autor(user):
     """Check if user is an author."""
-    return user.is_authenticated and (
-        user.groups.filter(name='Blog Autor').exists() or
-        user.is_staff or
-        user.is_superuser
-    )
+    return user.is_authenticated and user.groups.filter(name='Blog Autor').exists()
 
 
 def es_editor(user):
     """Check if user is an editor."""
-    return user.is_authenticated and (
-        user.groups.filter(name='Editor').exists() or 
-        user.is_staff or 
-        user.is_superuser
-    )
+    return user.is_authenticated and user.groups.filter(name='Editor').exists()
 
 
 @cached_with_metrics(timeout=300, key_prefix='blog:lista_noticias_filtered')

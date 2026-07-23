@@ -59,7 +59,7 @@ def lista_noticias(request):
         )
     ).order_by('nombre')[:10]
     
-    is_editor = request.user.is_authenticated and request.user.groups.filter(name='Editor').exists()
+    is_editor = request.user.is_authenticated and es_editor(request.user)
     is_moderador = request.user.is_authenticated and es_moderador(request.user)
     is_autor = request.user.is_authenticated and es_autor(request.user)
     context = {
@@ -116,7 +116,7 @@ def detalle_noticia(request, slug):
         noticias_relacionadas_qs = noticias_relacionadas_qs.exclude(visibilidad='solo_registrados')
     noticias_relacionadas = noticias_relacionadas_qs[:4]
     
-    is_editor = request.user.is_authenticated and request.user.groups.filter(name='Editor').exists()
+    is_editor = request.user.is_authenticated and es_editor(request.user)
     is_moderador = request.user.is_authenticated and es_moderador(request.user)
     is_autor = request.user.is_authenticated and es_autor(request.user)
     context = {
@@ -234,7 +234,7 @@ def noticias_por_categoria(request, slug):
         )
     ).order_by('nombre')[:10]
 
-    is_editor = request.user.is_authenticated and request.user.groups.filter(name='Editor').exists()
+    is_editor = request.user.is_authenticated and es_editor(request.user)
     is_moderador = request.user.is_authenticated and es_moderador(request.user)
     is_autor = request.user.is_authenticated and es_autor(request.user)
     context = {
@@ -253,11 +253,8 @@ def noticias_por_categoria(request, slug):
 # ── PANEL AUTOR ────────────────────────────────────────────────────────────
 
 def es_autor(user):
-    return user.is_authenticated and (
-        user.groups.filter(name='Blog Autor').exists() or
-        user.is_staff or
-        user.is_superuser
-    )
+    """Verifica si el usuario es un autor (solo grupo Blog Autor)"""
+    return user.is_authenticated and user.groups.filter(name='Blog Autor').exists()
 
 
 @user_passes_test(es_autor)
@@ -461,11 +458,8 @@ def borradores_autor(request):
 
 # Función para verificar si el usuario es editor
 def es_editor(user):
-    return user.is_authenticated and (
-        user.groups.filter(name='Editor').exists() or 
-        user.is_staff or 
-        user.is_superuser
-    )
+    """Verifica si el usuario es un editor (solo grupo Editor)"""
+    return user.is_authenticated and user.groups.filter(name='Editor').exists()
 
 # Vista para el panel de editor
 @user_passes_test(es_editor)
@@ -858,10 +852,8 @@ def revisar_noticia(request, pk):
 # ── MODERACIÓN ─────────────────────────────────────────────────────────────
 
 def es_moderador(user):
-    return user.is_authenticated and (
-        user.groups.filter(name='Blog Moderador').exists() or
-        user.is_staff or user.is_superuser
-    )
+    """Verifica si el usuario es un moderador (solo grupo Blog Moderador)"""
+    return user.is_authenticated and user.groups.filter(name='Blog Moderador').exists()
 
 @user_passes_test(es_moderador)
 def panel_moderadores(request):
