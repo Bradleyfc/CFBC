@@ -1,0 +1,285 @@
+"""
+================================================================================
+  Production Docker Compose: CFBC Application
+  =============================================
+  
+  This compose file sets up a production-ready deployment with:
+    - Nginx as load balancer (with health checks, sticky sessions, SSL)
+    - 4 Gunicorn/Django application instances
+    - Redis for caching, sessions, and Celery broker
+    - PostgreSQL database
+    - Celery workers for background tasks
+  
+  Usage:
+      # Deploy full stack
+      docker compose -f deploy/docker-compose.prod.yml up -d
+  
+      # Scale application instances
+      docker compose -f deploy/docker-compose.prod.yml up -d --scale app=6
+  
+      # View logs
+      docker compose -f deploy/docker-compose.prod.yml logs -f
+  
+      # Rolling restart
+      docker compose -f deploy/docker-compose.prod.yml restart app
+      docker compose -f deploy/docker-compose.prod.yml restart nginx
+  
+      # Stop all
+      docker compose -f deploy/docker-compose.prod.yml down
+  
+  Architecture:
+      Client → Nginx (:443/:80)
+                ├── Gunicorn App 1 (:8001)
+                ├── Gunicorn App 2 (:8002)
+                ├── Gunicorn App 3 (:8003)
+                └── Gunicorn App 4 (:8004)
+      Shared: Redis, PostgreSQL, Celery Workers
+================================================================================
+"""
+
+version: '3.8'
+
+networks:
+  cfbc-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  cfbc_media:
+    driver: local
+  cfbc_static:
+    driver: local
+  nginx_logs:
+    driver: local
+
+services:
+  # ───────────────────────────────────────────────────────────────────────────
+  # PostgreSQL Database
+  # ───────────────────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: cfbc-postgres
+    restart: unless-stopped
+    networks:
+      - cfbc-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgre}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-admin}
+      POSTGRES_DB: ${DB_NAME:-cfbc_db}
+    ports:
+      - "127.0.0.1:5432:5432"  # Only accessible from host
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgre}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Redis (Cache, Sessions, Celery Broker)
+  # ───────────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: cfbc-redis
+    restart: unless-stopped
+    networks:
+      - cfbc-network
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Nginx Load Balancer
+  # ───────────────────────────────────────────────────────────────────────────
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: cfbc-nginx
+    restart: unless-stopped
+    networks:
+      - cfbc-network
+    ports:
+      - "80:80"       # HTTP
+      - "443:443"     # HTTPS
+      - "8080:8080"   # Health check / monitoring port
+    volumes:
+      - ./deploy/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/nginx/ssl.conf:/etc/nginx/ssl.conf:ro
+      - cfbc_static:/var/www/cfbc/staticfiles:ro
+      - cfbc_media:/var/www/cfbc/media:ro
+      - nginx_logs:/var/log/nginx
+      - /etc/letsencrypt:/etc/letsencrypt:ro  # SSL certificates
+      - /etc/ssl/cfbc:/etc/ssl/cfbc:ro        # SSL certificates (fallback)
+    depends_on:
+      app:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Django Application (Gunicorn) - Base Service
+  # ───────────────────────────────────────────────────────────────────────────
+  app: &app_base
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cfbc-app:latest
+    restart: unless-stopped
+    networks:
+      - cfbc-network
+    volumes:
+      - cfbc_static:/var/www/cfbc/staticfiles
+      - cfbc_media:/var/www/cfbc/media
+    environment:
+      DJANGO_SETTINGS_MODULE: cfbc.settings
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME:-cfbc_db}
+      DB_USER: ${DB_USER:-postgre}
+      DB_PASSWORD: ${DB_PASSWORD:-admin}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      CELERY_BROKER_URL: redis://redis:6379/3
+      CELERY_RESULT_BACKEND: redis://redis:6379/4
+      SECRET_KEY: ${SECRET_KEY}
+      DEBUG: "False"
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-cfbc.edu.ni,localhost}
+      PYTHONUNBUFFERED: "1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Django Application Instance 1
+  # ───────────────────────────────────────────────────────────────────────────
+  app-1:
+    <<: *app_base
+    container_name: cfbc-app-1
+    environment:
+      <<: *app_base.environment
+      GUNICORN_BIND: 0.0.0.0:8000
+      GUNICORN_WORKERS: "4"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Django Application Instance 2
+  # ───────────────────────────────────────────────────────────────────────────
+  app-2:
+    <<: *app_base
+    container_name: cfbc-app-2
+    environment:
+      <<: *app_base.environment
+      GUNICORN_BIND: 0.0.0.0:8000
+      GUNICORN_WORKERS: "4"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Django Application Instance 3
+  # ───────────────────────────────────────────────────────────────────────────
+  app-3:
+    <<: *app_base
+    container_name: cfbc-app-3
+    environment:
+      <<: *app_base.environment
+      GUNICORN_BIND: 0.0.0.0:8000
+      GUNICORN_WORKERS: "4"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Django Application Instance 4
+  # ───────────────────────────────────────────────────────────────────────────
+  app-4:
+    <<: *app_base
+    container_name: cfbc-app-4
+    environment:
+      <<: *app_base.environment
+      GUNICORN_BIND: 0.0.0.0:8000
+      GUNICORN_WORKERS: "4"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Celery Worker (General)
+  # ───────────────────────────────────────────────────────────────────────────
+  celery-worker:
+    <<: *app_base
+    container_name: cfbc-celery-worker
+    command: celery -A cfbc worker -l info -Q default,email,reports,maintenance --concurrency=4
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A cfbc inspect ping || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Celery Beat (Scheduler)
+  # ───────────────────────────────────────────────────────────────────────────
+  celery-beat:
+    <<: *app_base
+    container_name: cfbc-celery-beat
+    command: celery -A cfbc beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A cfbc inspect scheduled || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # File Processing Worker
+  # ───────────────────────────────────────────────────────────────────────────
+  celery-file-worker:
+    <<: *app_base
+    container_name: cfbc-celery-file
+    command: celery -A cfbc worker -l info -Q file_processing --concurrency=2
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A cfbc inspect ping || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s

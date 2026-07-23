@@ -1,0 +1,278 @@
+{% extends "admin/change_list.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .worker-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+        gap: 16px;
+        margin: 20px 0;
+    }
+    .worker-card {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        transition: box-shadow 0.2s;
+    }
+    .worker-card:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .worker-card h3 {
+        margin: 0 0 12px 0;
+        font-size: 15px;
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .worker-card .metric-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    .worker-card .metric {
+        display: flex;
+        flex-direction: column;
+        padding: 8px 10px;
+        background: #f8f9fa;
+        border-radius: 4px;
+    }
+    .worker-card .metric .value {
+        font-weight: bold;
+        font-size: 16px;
+        color: #333;
+    }
+    .worker-card .metric .label {
+        font-size: 11px;
+        color: #666;
+        text-transform: uppercase;
+        margin-top: 2px;
+    }
+    .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    .status-online {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+    .status-offline {
+        background: #fce4ec;
+        color: #c62828;
+    }
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .status-dot.online { background: #4caf50; }
+    .status-dot.offline { background: #f44336; }
+    .worker-detail {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #f0f0f0;
+    }
+    .worker-detail .detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 3px 0;
+        font-size: 13px;
+    }
+    .worker-detail .detail-row .label {
+        color: #666;
+    }
+    .worker-detail .detail-row .value {
+        color: #333;
+        font-weight: 500;
+    }
+    .worker-queues {
+        margin-top: 8px;
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    .worker-queues .queue-tag {
+        background: #e3f2fd;
+        color: #1565c0;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+    }
+    .active-task-list {
+        margin-top: 8px;
+        padding: 8px;
+        background: #fff8e1;
+        border-radius: 4px;
+        font-size: 12px;
+        color: #e65100;
+    }
+    .no-workers {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 40px;
+        color: #999;
+    }
+    .summary-bar {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+    .summary-item {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 12px 20px;
+        text-align: center;
+        flex: 1;
+        min-width: 120px;
+    }
+    .summary-item .number {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+    }
+    .summary-item .label {
+        font-size: 11px;
+        color: #666;
+        text-transform: uppercase;
+        margin-top: 4px;
+    }
+    .summary-item.online .number { color: #2e7d32; }
+    .summary-item.tasks .number { color: #1565c0; }
+    .summary-item.processed .number { color: #6a1b9a; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <div class="module">
+        <div class="summary-bar">
+            <div class="summary-item online">
+                <div class="number">{{ total_workers }}</div>
+                <div class="label">Total Workers</div>
+            </div>
+            <div class="summary-item tasks">
+                <div class="number">{{ total_active }}</div>
+                <div class="label">Tareas Activas</div>
+            </div>
+            <div class="summary-item processed">
+                <div class="number">{{ total_processed }}</div>
+                <div class="label">Tareas Procesadas</div>
+            </div>
+        </div>
+
+        <h2>Estado de los Workers Celery</h2>
+        <p style="color: #666; font-size: 13px; margin: 8px 0 20px 0;">
+            Datos obtenidos de Celery inspect en tiempo real.
+            Los workers deben estar ejecutándose para mostrar información.
+        </p>
+
+        <div class="worker-grid">
+            {% for worker in workers %}
+            <div class="worker-card">
+                <h3>
+                    <span class="status-indicator status-{{ worker.status|lower }}">
+                        <span class="status-dot {{ worker.status|lower }}"></span>
+                        {{ worker.status }}
+                    </span>
+                    {% if worker.pid != 'N/A' %}
+                        <span style="font-size: 11px; color: #888; font-weight: normal;">
+                            PID: {{ worker.pid }}
+                        </span>
+                    {% endif %}
+                </h3>
+
+                <div style="margin-bottom: 8px; font-size: 14px; font-weight: 500; word-break: break-all;">
+                    {{ worker.name }}
+                </div>
+
+                <div class="metric-row">
+                    <div class="metric">
+                        <span class="value">{{ worker.active_tasks }}</span>
+                        <span class="label">Activas</span>
+                    </div>
+                    <div class="metric">
+                        <span class="value">{{ worker.reserved_tasks }}</span>
+                        <span class="label">Reservadas</span>
+                    </div>
+                    <div class="metric">
+                        <span class="value">{{ worker.scheduled_tasks }}</span>
+                        <span class="label">Programadas</span>
+                    </div>
+                    <div class="metric">
+                        <span class="value">{{ worker.pool_size }}</span>
+                        <span class="label">Pool Size</span>
+                    </div>
+                </div>
+
+                <div class="worker-detail">
+                    <div class="detail-row">
+                        <span class="label">Tareas registradas</span>
+                        <span class="value">{{ worker.registered_tasks }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Total procesadas</span>
+                        <span class="value">{{ worker.total_processed }}</span>
+                    </div>
+                    {% if worker.loadavg %}
+                    <div class="detail-row">
+                        <span class="label">Load Average</span>
+                        <span class="value">{{ worker.loadavg|join:", " }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if worker.queues %}
+                <div class="worker-queues">
+                    {% for q in worker.queues %}
+                    <span class="queue-tag">{{ q }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if worker.active_task_names %}
+                <div class="active-task-list">
+                    <strong>Tareas activas:</strong>
+                    <ul style="margin: 4px 0 0 0; padding-left: 16px;">
+                        {% for task_name in worker.active_task_names %}
+                        <li>{{ task_name }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="no-workers">
+                <h3>No hay workers conectados</h3>
+                <p>Ejecuta <code>celery -A cfbc worker -l info</code> para iniciar un worker.</p>
+                <p style="font-size: 12px; margin-top: 8px;">
+                    Verifica que el archivo de configuración Celery en <code>cfbc/celery.py</code> sea correcto.
+                </p>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if workers %}
+        <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 16px; margin-top: 20px;">
+            <h3 style="margin: 0 0 8px 0; font-size: 14px; color: #555;">Comandos Útiles</h3>
+            <div style="font-size: 12px; color: #666; line-height: 1.8;">
+                <code>celery -A cfbc worker -l info</code> &mdash; Iniciar worker<br>
+                <code>celery -A cfbc purge</code> &mdash; Limpiar todas las colas<br>
+                <code>celery -A cfbc inspect active</code> &mdash; Ver tareas activas<br>
+                <code>celery -A cfbc inspect stats</code> &mdash; Ver estadísticas del worker
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

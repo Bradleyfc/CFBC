@@ -4,6 +4,7 @@ from django.contrib.auth.models import Group
 from django.dispatch import receiver
 from django.db.models.signals import post_save
 from .models import Registro, User
+from cfbc.business_metrics import record_user_registration
 
 # aqui se asigna el usurio registrado a un grupo automaticamente
 @receiver(post_save, sender=Registro)
@@ -23,7 +24,9 @@ def add_user_to_students_group(sender, instance, created, **kwargs):
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
-        Registro.objects.create(user=instance)
+        registro = Registro.objects.create(user=instance)
+        # Record business metric for new user registration
+        record_user_registration(rol=registro.rol if hasattr(registro, 'rol') else 'estudiante')
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):

@@ -1,0 +1,23 @@
+Bienvenido/a al Centro Fray Bartolome de las Casas
+
+Hola {{ user.username }},
+
+¡Bienvenido/a a nuestra plataforma educativa! Estamos muy contentos de tenerte con nosotros.
+
+Con tu cuenta podrás:
+- Acceder a noticias y artículos del blog
+- Participar en discusiones y comentarios
+- Recibir notificaciones sobre contenido nuevo
+- Y mucho más...
+
+Para comenzar a explorar, puedes visitar nuestro blog:
+{{ protocol }}://{{ domain }}/blog/
+
+Si tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos.
+
+Saludos cordiales,
+El equipo del Centro Fray Bartolome de las Casas
+
+---
+Este es un mensaje automático, por favor no respondas a este correo.
+© {% now "Y" %} Centro Fray Bartolome de las Casas. Todos los derechos reservados.

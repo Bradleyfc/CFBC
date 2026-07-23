@@ -33,13 +33,17 @@ class TeacherDashboardView(LoginRequiredMixin, TeacherPermissionMixin, DetailVie
         context = super().get_context_data(**kwargs)
         curso = self.get_object()
         
-        # Obtener todas las carpetas del curso
+        # Obtener todas las carpetas del curso con prefetch_related for documents
+        from django.db.models import Count, Avg, Sum
         folders = DocumentFolder.objects.filter(curso=curso).order_by('name')
-        context['folders'] = folders
         
-        # Obtener estadísticas
-        total_documents = CourseDocument.objects.filter(folder__curso=curso).count()
-        total_folders = folders.count()
+        # Optimized: Get document count and folder count in single query using annotation
+        folder_stats = DocumentFolder.objects.filter(curso=curso).aggregate(
+            total_folders=Count('id'),
+            total_documents=Count('documents'),
+            total_document_size=Sum('documents__file_size')
+        )
+        
         # Contar estudiantes matriculados activos
         total_students = Matriculas.objects.filter(
             course=curso, 
@@ -47,11 +51,12 @@ class TeacherDashboardView(LoginRequiredMixin, TeacherPermissionMixin, DetailVie
         ).count()
         
         # Calcular promedio de documentos por carpeta
-        average_docs_per_folder = total_documents / total_folders if total_folders > 0 else 0
+        average_docs_per_folder = folder_stats['total_documents'] / folder_stats['total_folders'] if folder_stats['total_folders'] > 0 else 0
         
+        context['folders'] = folders
         context['stats'] = {
-            'total_folders': total_folders,
-            'total_documents': total_documents,
+            'total_folders': folder_stats['total_folders'],
+            'total_documents': folder_stats['total_documents'],
             'total_students': total_students,
             'average_docs_per_folder': average_docs_per_folder,
         }
@@ -235,7 +240,7 @@ class FolderDetailView(LoginRequiredMixin, TeacherPermissionMixin, DetailView):
         context = super().get_context_data(**kwargs)
         folder = self.get_object()
         
-        # Obtener documentos de la carpeta
+        # Optimized: Already efficient - single query filtered by folder
         documents = CourseDocument.objects.filter(folder=folder).order_by('-uploaded_at')
         context['documents'] = documents
         context['curso'] = folder.curso
@@ -352,30 +357,33 @@ class StudentDashboardView(LoginRequiredMixin, StudentPermissionMixin, DetailVie
         context = super().get_context_data(**kwargs)
         curso = self.get_object()
         
-        # Obtener todas las carpetas del curso que tienen documentos
+        # Optimized: Use prefetch_related to avoid N+1 queries
+        from django.db.models import Count, Prefetch
+        from django.db.models.functions import Coalesce
+        
+        # Get folders with prefetched documents
         folders = DocumentFolder.objects.filter(
             curso=curso,
             documents__isnull=False
-        ).distinct().order_by('name')
+        ).distinct().order_by('name').prefetch_related(
+            Prefetch('documents', queryset=CourseDocument.objects.order_by('-uploaded_at'))
+        )
         
-        # Agregar información de documentos a cada carpeta
-        for folder in folders:
-            folder.document_list = CourseDocument.objects.filter(
-                folder=folder
-            ).order_by('-uploaded_at')
-        
+        # Now each folder has folder.documents.all() available without N+1 queries
         context['folders'] = folders
         
-        # Obtener estadísticas para el estudiante
-        total_documents = CourseDocument.objects.filter(folder__curso=curso).count()
-        total_folders = folders.count()
+        # Optimized: Get stats in single query
+        stats = DocumentFolder.objects.filter(curso=curso, documents__isnull=False).aggregate(
+            total_folders=Count('id', distinct=True),
+            total_documents=Count('documents', distinct=True)
+        )
         
         # Verificar si hay contenido nuevo usando el servicio
         has_new_content = ContentIndicatorService.has_new_content(curso, self.request.user)
         
         context['stats'] = {
-            'total_folders': total_folders,
-            'total_documents': total_documents,
+            'total_folders': stats['total_folders'],
+            'total_documents': stats['total_documents'],
             'has_new_content': has_new_content,
         }
         

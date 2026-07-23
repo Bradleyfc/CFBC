@@ -21,6 +21,7 @@ class DocumentFolder(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Creado por')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de creación')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Última actualización')
+    students = models.ManyToManyField(User, related_name='document_folders', blank=True, verbose_name='Estudiantes con acceso')
 
     class Meta:
         verbose_name = '📁 Carpeta de Documentos'
@@ -74,6 +75,13 @@ class DocumentFolder(models.Model):
 class CourseDocument(models.Model):
     """Documento subido por el profesor"""
     
+    PROCESSING_STATUS_CHOICES = [
+        ('pending', 'Pendiente'),
+        ('processing', 'Procesando'),
+        ('completed', 'Completado'),
+        ('failed', 'Falló'),
+    ]
+    
     folder = models.ForeignKey(DocumentFolder, on_delete=models.CASCADE, related_name='documents', verbose_name='Carpeta')
     name = models.CharField(max_length=255, verbose_name='Nombre del documento')
     file = models.FileField(
@@ -84,6 +92,15 @@ class CourseDocument(models.Model):
     uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de subida')
     file_size = models.PositiveIntegerField(verbose_name='Tamaño del archivo (bytes)', editable=False)
     description = models.TextField(blank=True, null=True, verbose_name='Descripción')
+    metadata = models.JSONField(default=dict, blank=True, verbose_name='Metadatos del archivo')
+    processed = models.BooleanField(default=False, verbose_name='Procesado')
+    processing_status = models.CharField(
+        max_length=20,
+        choices=PROCESSING_STATUS_CHOICES,
+        default='pending',
+        verbose_name='Estado del procesamiento'
+    )
+    processed_at = models.DateTimeField(null=True, blank=True, verbose_name='Fecha de procesamiento')
 
     class Meta:
         verbose_name = '📄 Documento del Curso'

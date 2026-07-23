@@ -6,6 +6,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from .models import CourseDocument, AuditLog
 from principal.models import Matriculas
+from cfbc.business_metrics import record_document_upload
 
 
 @receiver(post_save, sender=CourseDocument)
@@ -68,6 +69,11 @@ def log_document_upload(sender, instance, created, **kwargs):
             folder=instance.folder,
             document=instance,
             details=f'Documento "{instance.name}" subido a la carpeta "{instance.folder.name}"'
+        )
+        # Record business metric for document upload
+        record_document_upload(
+            curso_id=instance.folder.curso.id if instance.folder.curso else 0,
+            file_size=instance.file_size or 0,
         )
 
 
