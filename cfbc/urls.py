@@ -32,6 +32,11 @@ urlpatterns = [
     path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     # Security test URLs
     path('security/', include('security.hardening.urls')),
+    
+    # ===== REST API v1 =====
+    # Android App REST API endpoints
+    path('api/v1/', include('principal.api_urls')),
+    path('api/v1/blog/', include('blog.api_urls')),
 ]
 
 # Agregar configuración para servir archivos multimedia en desarrollo

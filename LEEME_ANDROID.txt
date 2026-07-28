@@ -1,0 +1,195 @@
+================================================================================
+  📱 APP ANDROID CFBC - GUÍA RÁPIDA
+================================================================================
+
+ESTADO: 🟢 Funcionalmente completo (85%)
+FECHA: 28 de Julio de 2026
+
+================================================================================
+  🎯 LO MÁS IMPORTANTE
+================================================================================
+
+1. El proyecto Android ESTÁ COMPLETO (todas las funcionalidades implementadas)
+2. Solo faltan tests automatizados (no bloquean funcionalidad)
+3. Para usar en TELÉFONO FÍSICO necesitas configurar port forwarding de WSL
+4. Para usar en EMULADOR funciona directamente (más fácil)
+
+================================================================================
+  📚 DOCUMENTACIÓN (empieza por aquí)
+================================================================================
+
+┌─ RESUMEN_APP_ANDROID.md
+│  └─ Resumen ejecutivo de 1 página
+│     Estado, progreso, comandos básicos
+│
+├─ DOCUMENTACION_ANDROID.md
+│  └─ Índice completo de toda la documentación
+│     Listado de todos los documentos con descripciones
+│
+├─ android-app/ESTADO_PROYECTO.md
+│  └─ Estado detallado del proyecto
+│     Métricas, arquitectura, problemas conocidos
+│
+├─ android-app/INICIO_RAPIDO.md
+│  └─ Guía rápida para generar APK
+│     Paso a paso para construir e instalar
+│
+├─ android-app/GUIA_CONSTRUCCION_APK.md
+│  └─ Guía completa de construcción
+│     Todas las opciones, flavors, troubleshooting
+│
+├─ android-app/GUIA_TELEFONO_FISICO.md
+│  └─ Configuración para teléfono físico
+│     Pasos específicos para dispositivo real
+│
+├─ INSTRUCCIONES_WSL_NETWORK.md
+│  └─ Solución de networking WSL
+│     Port forwarding WSL→Windows paso a paso
+│
+└─ .kiro/specs/android-app-blog-and-profiles/tasks.md
+   └─ Plan de implementación completo
+      27 tareas con estado de cada una
+
+================================================================================
+  ⚡ COMANDOS RÁPIDOS
+================================================================================
+
+INICIAR DJANGO:
+  cd ~/CFBC
+  ./runserver_red.sh
+
+GENERAR APK PARA EMULADOR (recomendado para empezar):
+  cd ~/CFBC/android-app
+  ./build-apk.sh emulator debug
+
+GENERAR APK PARA TELÉFONO (requiere port forwarding):
+  cd ~/CFBC/android-app
+  ./build-apk.sh wifi debug
+
+INSTALAR EN DISPOSITIVO:
+  adb install -r app/build/outputs/apk/[flavor]/debug/app-[flavor]-debug.apk
+
+================================================================================
+  🚧 PROBLEMA CONOCIDO: ACCESO DE RED
+================================================================================
+
+SÍNTOMA:
+  - Django corre correctamente en WSL
+  - Pero NO es accesible desde Windows ni desde teléfono
+
+CAUSA:
+  - Django está en WSL2 (red virtualizada)
+  - WSL tiene su propia red interna
+  - No es accesible desde la red WiFi directamente
+
+SOLUCIÓN (solo para teléfono físico):
+  - Configurar port forwarding de WSL a Windows
+  - Ver: INSTRUCCIONES_WSL_NETWORK.md
+  - Script automático: configurar_wsl_portforward.ps1
+
+ALTERNATIVA (más fácil):
+  - Usar el EMULADOR de Android Studio
+  - El emulador mapea automáticamente 10.0.2.2 → 127.0.0.1
+  - No requiere configuración extra
+
+================================================================================
+  📊 ESTADO DE IMPLEMENTACIÓN
+================================================================================
+
+BACKEND (Django REST API):
+  ✅ 15 endpoints funcionando
+  ✅ Autenticación con tokens
+  ✅ Permisos por grupos
+  ✅ Paginación, filtros, búsqueda
+  ⚠️  Tests de integración pendientes
+
+ANDROID APP:
+  ✅ Todas las pantallas implementadas (14 fragments)
+  ✅ Todos los ViewModels (9)
+  ✅ Todos los Repositories (9)
+  ✅ Caching offline con LRU
+  ✅ Seguridad completa
+  ✅ Multi-environment build
+  ⚠️  Tests unitarios pendientes
+
+FUNCIONALIDADES:
+  ✅ Login/Logout
+  ✅ Home dashboard
+  ✅ Blog público (list, detail, search, filter)
+  ✅ Cursos públicos (list, detail, filter)
+  ✅ Dashboard estudiante (profile, enrollments, grades, etc.)
+  ✅ Aplicación a cursos (apply, cancel, list)
+  ✅ Dashboard autor (create/edit posts)
+  ✅ Dashboard moderador (reports, sanctions)
+  ✅ Dashboard editor (review queue)
+
+PROGRESO TOTAL: 85% (23/27 tareas completadas)
+
+================================================================================
+  ⚙️ CONFIGURACIÓN ACTUAL
+================================================================================
+
+IP Windows WiFi:        192.168.1.101
+Django ALLOWED_HOSTS:   127.0.0.1, 192.168.1.101
+Django CORS:            http://192.168.1.101:8000
+Android WiFi flavor:    http://192.168.1.101:8000/
+Android Emulator:       http://10.0.2.2:8000/
+
+================================================================================
+  🎯 PRÓXIMOS PASOS RECOMENDADOS
+================================================================================
+
+INMEDIATO (para probar la app):
+  1. Iniciar Django: ./runserver_red.sh
+  2. Usar EMULADOR (más fácil):
+     - ./build-apk.sh emulator debug
+     - adb install app-emulator-debug.apk
+  3. Probar funcionalidad básica
+
+CORTO PLAZO (testing):
+  1. Implementar property tests
+  2. Implementar integration tests
+  3. Implementar unit tests
+
+MEDIANO PLAZO (producción):
+  1. Configurar servidor de producción real
+  2. Crear keystore para firma
+  3. Build release
+  4. Publicar (opcional)
+
+================================================================================
+  🆘 AYUDA RÁPIDA
+================================================================================
+
+Django no inicia:
+  cd ~/CFBC && source venv/bin/activate
+  python manage.py runserver 0.0.0.0:8000
+
+Build falla:
+  cd ~/CFBC/android-app
+  ./gradlew clean assembleWifiDebug
+
+Teléfono no conecta:
+  1. Verificar port forwarding configurado
+  2. Verificar firewall permite puerto 8000
+  3. Verificar teléfono en misma WiFi
+  4. Ver logs: adb logcat | grep -i cfbc
+
+Ver más documentación:
+  cat DOCUMENTACION_ANDROID.md
+
+================================================================================
+  📞 CONTACTO
+================================================================================
+
+Proyecto:    CFBC - Centro Fray Bartolomé de las Casas
+Mantenedor:  Bradley
+Versión App: 1.0.0
+Fecha:       28 de Julio de 2026
+
+================================================================================
+
+💡 TIP: Empieza con el EMULADOR, es más fácil y no requiere configuración.
+        Una vez funcione ahí, pasa al teléfono físico si lo necesitas.
+
+================================================================================

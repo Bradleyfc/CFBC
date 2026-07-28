@@ -786,3 +786,138 @@ def _asignar_semestre_calificacion(sender, instance, created, **kwargs):
         semestre = _semestre_activo_del_curso(instance.course)
         if semestre:
             Calificaciones.objects.filter(pk=instance.pk).update(semestre=semestre)
+
+
+# ===== Course Application Model =====
+# Added for Android App: Tracks student course applications
+
+class CourseApplication(models.Model):
+    """
+    Model to track student applications to courses.
+    Students can apply to courses before being enrolled.
+    
+    Validates Requirements: 4.2, 10.8
+    """
+    
+    STATUS_CHOICES = [
+        ('pending', 'Pendiente'),
+        ('approved', 'Aprobada'),
+        ('rejected', 'Rechazada'),
+    ]
+    
+    course = models.ForeignKey(
+        Curso,
+        on_delete=models.CASCADE,
+        related_name='applications',
+        verbose_name='Curso'
+    )
+    student = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='course_applications',
+        limit_choices_to={'groups__name': 'Estudiantes'},
+        verbose_name='Estudiante'
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending',
+        verbose_name='Estado'
+    )
+    submission_date = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Fecha de solicitud'
+    )
+    processed_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Fecha de procesamiento'
+    )
+    notes = models.TextField(
+        blank=True,
+        default='',
+        verbose_name='Notas'
+    )
+    
+    class Meta:
+        verbose_name = 'Solicitud de curso'
+        verbose_name_plural = 'Solicitudes de cursos'
+        ordering = ['-submission_date']
+        unique_together = [['course', 'student', 'status']]  # Prevent duplicate pending applications
+        indexes = [
+            models.Index(fields=['student', 'status']),
+            models.Index(fields=['course', 'status']),
+            models.Index(fields=['-submission_date']),
+        ]
+    
+    def __str__(self):
+        return f"{self.student.username} → {self.course.name} ({self.get_status_display()})"
+    
+    def approve(self, processed_by=None):
+        """
+        Approve the application and create enrollment.
+        Returns the created Matriculas object or None if enrollment already exists.
+        """
+        if self.status != 'pending':
+            return None
+        
+        # Check if student is already enrolled
+        if Matriculas.objects.filter(course=self.course, student=self.student).exists():
+            return None
+        
+        # Update application status
+        self.status = 'approved'
+        self.processed_date = timezone.now()
+        self.save(update_fields=['status', 'processed_date'])
+        
+        # Create enrollment
+        enrollment = Matriculas.objects.create(
+            course=self.course,
+            student=self.student,
+            activo=True,
+            curso_academico=self.course.curso_academico,
+            estado='P'  # Active
+        )
+        
+        return enrollment
+    
+    def reject(self, notes=''):
+        """Reject the application."""
+        if self.status != 'pending':
+            return False
+        
+        self.status = 'rejected'
+        self.processed_date = timezone.now()
+        if notes:
+            self.notes = notes
+        self.save(update_fields=['status', 'processed_date', 'notes'])
+        return True
+    
+    def can_be_cancelled(self):
+        """Check if application can be cancelled by student."""
+        return self.status == 'pending'
+
+
+@receiver(pre_save, sender=CourseApplication)
+def validate_course_application(sender, instance, **kwargs):
+    """
+    Validate course application before saving.
+    - Check if student is already enrolled in the course
+    - Check if course is accepting applications
+    """
+    if instance.pk is None:  # New application
+        # Check if student is already enrolled
+        if Matriculas.objects.filter(course=instance.course, student=instance.student).exists():
+            from django.core.exceptions import ValidationError
+            raise ValidationError("El estudiante ya está matriculado en este curso.")
+        
+        # Check if there's already a pending application
+        existing_pending = CourseApplication.objects.filter(
+            course=instance.course,
+            student=instance.student,
+            status='pending'
+        ).exists()
+        
+        if existing_pending:
+            from django.core.exceptions import ValidationError
+            raise ValidationError("Ya existe una solicitud pendiente para este curso.")

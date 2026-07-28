@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App name is configured per build variant in build.gradle.kts -->
+    <string name="app_name">CFBC</string>
+    
+    <!-- Navigation -->
+    <string name="nav_home">Inicio</string>
+    <string name="nav_blog">Blog</string>
+    <string name="nav_courses">Cursos</string>
+    <string name="nav_profile">Perfil</string>
+    <string name="nav_dashboard">Dashboard</string>
+    
+    <!-- Authentication -->
+    <string name="login_title">Iniciar Sesión</string>
+    <string name="username_hint">Usuario</string>
+    <string name="password_hint">Contraseña</string>
+    <string name="login_button">Entrar</string>
+    <string name="logout_button">Cerrar Sesión</string>
+    <string name="login_error">Usuario o contraseña incorrectos</string>
+    
+    <!-- Blog -->
+    <string name="blog_title">Noticias</string>
+    <string name="blog_search_hint">Buscar noticias...</string>
+    <string name="blog_no_posts">No hay noticias disponibles</string>
+    <string name="blog_featured">Destacada</string>
+    <string name="blog_category_all">Todas las categorías</string>
+    
+    <!-- Courses -->
+    <string name="courses_title">Cursos Disponibles</string>
+    <string name="courses_no_courses">No hay cursos disponibles</string>
+    <string name="courses_apply">Solicitar Inscripción</string>
+    <string name="courses_login_required">Inicia sesión para inscribirte</string>
+    
+    <!-- Student Profile -->
+    <string name="student_profile_title">Mi Perfil</string>
+    <string name="student_enrollments">Mis Matriculas</string>
+    <string name="student_applications">Solicitudes Pendientes</string>
+    <string name="student_grades">Calificaciones</string>
+    <string name="student_attendance">Asistencia</string>
+    <string name="student_evaluations">Evaluaciones</string>
+    <string name="student_history">Historial Académico</string>
+    
+    <!-- Author Dashboard -->
+    <string name="author_dashboard_title">Mis Artículos</string>
+    <string name="author_posts_draft">Borradores</string>
+    <string name="author_posts_pending">Pendientes</string>
+    <string name="author_posts_published">Publicados</string>
+    <string name="author_posts_archived">Archivados</string>
+    
+    <!-- Moderator Dashboard -->
+    <string name="moderator_dashboard_title">Moderación</string>
+    <string name="moderator_reports">Reportes Pendientes</string>
+    <string name="moderator_sanctions">Sanciones Activas</string>
+    <string name="moderator_metrics">Métricas de Comunidad</string>
+    
+    <!-- Editor Dashboard -->
+    <string name="editor_dashboard_title">Revisión Editorial</string>
+    <string name="editor_review_queue">Cola de Revisión</string>
+    <string name="editor_recent_published">Recién Publicados</string>
+    <string name="editor_search_by_author">Buscar por Autor</string>
+    
+    <!-- Common -->
+    <string name="loading">Cargando...</string>
+    <string name="error_network">Error de conexión. Intenta nuevamente.</string>
+    <string name="error_generic">Ha ocurrido un error</string>
+    <string name="retry">Reintentar</string>
+    <string name="offline_mode">Modo sin conexión - Mostrando contenido guardado</string>
+    <string name="swipe_to_refresh">Desliza para actualizar</string>
+    <string name="empty_state">No hay información disponible</string>
+</resources>

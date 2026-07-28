@@ -6,7 +6,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('evaluaciones', '0006_add_todo_o_nada_to_pregunta'),
-        ('principal', '0001_initial'),
+        ('principal', '0021_semestrecurso'),
     ]
 
     operations = [

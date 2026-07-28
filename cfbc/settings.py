@@ -30,7 +30,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-c-lkpmdz%270@0-89xsztu0ugd
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['testserver', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['testserver', 'localhost', '127.0.0.1', '192.168.1.101']
 
 
 # Application definition
@@ -51,6 +51,9 @@ INSTALLED_APPS = [
     'guardian',
     'oauth2_provider',
     'corsheaders',
+    'rest_framework',
+    'rest_framework.authtoken',
+    'django_filters',
     'principal',
     'accounts.apps.AccountsConfig',
     'blog.apps.BlogConfig',
@@ -280,6 +283,8 @@ GUARDIAN_GET_INIT_GROUPS_WITH_PERMISSIONS = True
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
+    'http://10.0.2.2:8000',  # Android emulator
+    'http://192.168.1.101:8000',  # Android physical device on WiFi
 ]
 CORS_ALLOW_CREDENTIALS = True
 
@@ -407,6 +412,32 @@ LOGGING = {
 
 # Configuración del remitente por defecto
 DEFAULT_FROM_EMAIL = 'Centro Fray Bartolome de las Casas <noreply@cfbc.edu.ni>'
+
+# ===== REST Framework Configuration =====
+# Added for Android App REST API
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ],
+    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.AcceptHeaderVersioning',
+    'ALLOWED_VERSIONS': ['1.0'],
+}
 
 # Configuración para manejar grandes cantidades de datos en formularios
 # Aumentar límites para evitar errores al procesar muchos registros

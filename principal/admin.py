@@ -876,3 +876,79 @@ admin.site.site_header = 'Centro Fray Bartolomé de las Casas - Administración'
 admin.site.site_title = 'CFBC Admin'
 admin.site.index_title = 'Panel de Administración'
 
+
+
+# ===== CourseApplication Admin =====
+# Added for Android App
+
+from .models import CourseApplication
+
+@admin.register(CourseApplication)
+class CourseApplicationAdmin(admin.ModelAdmin):
+    """
+    Admin interface for CourseApplication model.
+    Allows staff to review and process student course applications.
+    """
+    
+    list_display = ('student', 'course', 'status', 'submission_date', 'processed_date')
+    list_filter = ('status', 'course__area', 'course__tipo', 'submission_date', 'processed_date')
+    search_fields = ('student__username', 'student__first_name', 'student__last_name', 'course__name')
+    date_hierarchy = 'submission_date'
+    readonly_fields = ('submission_date', 'processed_date')
+    actions = ['approve_applications', 'reject_applications']
+    
+    fieldsets = (
+        ('Información de la Solicitud', {
+            'fields': ('student', 'course', 'status')
+        }),
+        ('Procesamiento', {
+            'fields': ('submission_date', 'processed_date', 'notes')
+        }),
+    )
+    
+    def approve_applications(self, request, queryset):
+        """Approve selected course applications and create enrollments."""
+        pending = queryset.filter(status='pending')
+        approved_count = 0
+        already_enrolled_count = 0
+        
+        for application in pending:
+            enrollment = application.approve()
+            if enrollment:
+                approved_count += 1
+            else:
+                already_enrolled_count += 1
+        
+        if approved_count:
+            self.message_user(
+                request,
+                f"{approved_count} solicitudes aprobadas y matrículas creadas.",
+                level=messages.SUCCESS
+            )
+        
+        if already_enrolled_count:
+            self.message_user(
+                request,
+                f"{already_enrolled_count} estudiantes ya estaban matriculados.",
+                level=messages.WARNING
+            )
+    
+    approve_applications.short_description = "Aprobar solicitudes seleccionadas"
+    
+    def reject_applications(self, request, queryset):
+        """Reject selected course applications."""
+        pending = queryset.filter(status='pending')
+        rejected_count = 0
+        
+        for application in pending:
+            if application.reject(notes='Rechazada por el administrador'):
+                rejected_count += 1
+        
+        if rejected_count:
+            self.message_user(
+                request,
+                f"{rejected_count} solicitudes rechazadas.",
+                level=messages.SUCCESS
+            )
+    
+    reject_applications.short_description = "Rechazar solicitudes seleccionadas"

@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/loginFragment">
+
+    <!-- ===== Authentication ===== -->
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.cfbc.android.presentation.login.LoginFragment"
+        android:label="Iniciar Sesión"
+        tools:layout="@layout/fragment_login">
+        <action
+            android:id="@+id/action_login_to_home"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <!-- ===== Home / Dashboard ===== -->
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.cfbc.android.presentation.home.HomeFragment"
+        android:label="Inicio"
+        tools:layout="@layout/fragment_home">
+        <action
+            android:id="@+id/action_home_to_courses_list"
+            app:destination="@id/coursesListFragment" />
+        <action
+            android:id="@+id/action_home_to_course_detail"
+            app:destination="@id/courseDetailFragment" />
+        <action
+            android:id="@+id/action_home_to_blog_list"
+            app:destination="@id/blogListFragment" />
+        <action
+            android:id="@+id/action_home_to_blog_post"
+            app:destination="@id/blogPostFragment" />
+        <action
+            android:id="@+id/action_home_to_profile"
+            app:destination="@id/profileFragment" />
+        <action
+            android:id="@+id/action_home_to_applications"
+            app:destination="@id/applicationsListFragment" />
+        <action
+            android:id="@+id/action_home_to_login"
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_home_to_author_dashboard"
+            app:destination="@id/authorDashboardFragment" />
+        <action
+            android:id="@+id/action_home_to_moderator_dashboard"
+            app:destination="@id/moderatorDashboardFragment" />
+        <action
+            android:id="@+id/action_home_to_editor_dashboard"
+            app:destination="@id/editorDashboardFragment" />
+    </fragment>
+
+    <!-- ===== Courses ===== -->
+    <fragment
+        android:id="@+id/coursesListFragment"
+        android:name="com.cfbc.android.presentation.courses.CoursesListFragment"
+        android:label="Cursos"
+        tools:layout="@layout/fragment_courses_list">
+        <action
+            android:id="@+id/action_courses_list_to_detail"
+            app:destination="@id/courseDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/courseDetailFragment"
+        android:name="com.cfbc.android.presentation.courses.CourseDetailFragment"
+        android:label="Detalle del Curso"
+        tools:layout="@layout/fragment_course_detail">
+        <argument
+            android:name="courseId"
+            app:argType="integer" />
+        <action
+            android:id="@+id/action_course_detail_to_applications"
+            app:destination="@id/applicationsListFragment"
+            app:popUpTo="@id/homeFragment" />
+    </fragment>
+
+    <!-- ===== Blog ===== -->
+    <fragment
+        android:id="@+id/blogListFragment"
+        android:name="com.cfbc.android.presentation.blog.BlogListFragment"
+        android:label="Blog"
+        tools:layout="@layout/fragment_blog_list">
+        <action
+            android:id="@+id/action_blog_list_to_post"
+            app:destination="@id/blogPostFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/blogPostFragment"
+        android:name="com.cfbc.android.presentation.blog.BlogPostFragment"
+        android:label="Artículo"
+        tools:layout="@layout/fragment_blog_post">
+        <argument
+            android:name="slug"
+            app:argType="string" />
+    </fragment>
+
+    <!-- ===== Course Applications ===== -->
+    <fragment
+        android:id="@+id/applicationsListFragment"
+        android:name="com.cfbc.android.presentation.applications.ApplicationListFragment"
+        android:label="Mis Solicitudes"
+        tools:layout="@layout/fragment_applications_list" />
+
+    <!-- ===== Profile ===== -->
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.cfbc.android.presentation.profile.ProfileFragment"
+        android:label="Mi Perfil"
+        tools:layout="@layout/fragment_profile">
+        <action
+            android:id="@+id/action_profile_to_student_sections"
+            app:destination="@id/studentSectionsFragment" />
+    </fragment>
+
+    <!-- ===== Student Sections (WebView) ===== -->
+    <fragment
+        android:id="@+id/studentSectionsFragment"
+        android:name="com.cfbc.android.presentation.student.StudentSectionsFragment"
+        android:label="Sección Académica"
+        tools:layout="@layout/fragment_student_sections">
+        <argument
+            android:name="sectionPath"
+            app:argType="string" />
+        <argument
+            android:name="webBaseUrl"
+            android:defaultValue=""
+            app:argType="string" />
+    </fragment>
+
+    <!-- ===== Blog Post Editor ===== -->
+    <fragment
+        android:id="@+id/blogEditorFragment"
+        android:name="com.cfbc.android.presentation.editor.BlogPostEditorFragment"
+        android:label="Editor de Posts"
+        tools:layout="@layout/fragment_blog_editor">
+        <argument
+            android:name="postId"
+            android:defaultValue="0"
+            app:argType="integer" />
+    </fragment>
+
+    <!-- ===== Author Dashboard ===== -->
+    <fragment
+        android:id="@+id/authorDashboardFragment"
+        android:name="com.cfbc.android.presentation.author.AuthorDashboardFragment"
+        android:label="Mis Posts"
+        tools:layout="@layout/fragment_author_dashboard">
+        <action
+            android:id="@+id/action_author_to_blog_post"
+            app:destination="@id/blogPostFragment" />
+        <action
+            android:id="@+id/action_author_to_editor"
+            app:destination="@id/blogEditorFragment" />
+    </fragment>
+
+    <!-- ===== Moderator Dashboard ===== -->
+    <fragment
+        android:id="@+id/moderatorDashboardFragment"
+        android:name="com.cfbc.android.presentation.moderator.ModeratorDashboardFragment"
+        android:label="Moderación"
+        tools:layout="@layout/fragment_moderator_dashboard" />
+
+    <!-- ===== Editor Dashboard ===== -->
+    <fragment
+        android:id="@+id/editorDashboardFragment"
+        android:name="com.cfbc.android.presentation.editor.EditorDashboardFragment"
+        android:label="Editor"
+        tools:layout="@layout/fragment_editor_dashboard">
+        <action
+            android:id="@+id/action_editor_to_blog_post"
+            app:destination="@id/blogPostFragment" />
+    </fragment>
+
+</navigation>
