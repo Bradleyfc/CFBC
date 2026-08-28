@@ -4,12 +4,12 @@
 {% block title %}Gestión de Documentos - Administración{% endblock %}
 
 {% block content %}
-<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative pb-12 min-h-screen">
+<div class="w-full bg-gradient-to-br from-gray-100 to-gray-200 relative min-h-screen flex flex-col">
     <div class="absolute inset-0 opacity-30"
         style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 20px 20px;">
     </div>
 
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10 flex-grow pb-12">
 
         <!-- Header -->
         <div class="mb-6 flex items-center justify-between flex-wrap gap-3">
@@ -18,9 +18,12 @@
                 <p class="text-gray-600 mt-1">Administra los documentos almacenados por curso académico</p>
             </div>
             <a href="{% url 'principal:profile' %}"
-               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/60 backdrop-blur border border-white/80 text-gray-700 font-medium hover:bg-white/80 transition-all">
-                <span class="material-icons text-base">arrow_back</span>
-                Volver al perfil
+               class="glass-btn glass-btn-back">
+                <span class="glass-btn-content">
+                    <span class="material-icons text-base">arrow_back</span>
+                    Volver al perfil
+                </span>
+                <div class="glass-btn-glow"></div>
             </a>
         </div>
 
@@ -47,9 +50,12 @@
                     </select>
                 </div>
                 <button type="submit"
-                        class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors flex items-center gap-2">
-                    <span class="material-icons text-base">search</span>
-                    Ver documentos
+                        class="glass-btn glass-btn-primary">
+                    <span class="glass-btn-content">
+                        <span class="material-icons text-base">search</span>
+                        Ver documentos
+                    </span>
+                    <div class="glass-btn-glow"></div>
                 </button>
             </form>
         </div>
@@ -250,6 +256,9 @@
         </div>
         {% endif %}
 
+    </div>
+</div>
+
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
 <!-- MODAL DE CONFIRMACIÓN DE ELIMINACIÓN (glassmorphism)                   -->
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
@@ -304,6 +313,41 @@
 </div>
 
 <style>
+/* ── Glassmorphism buttons adicionales ────────────────────────────────────── */
+.glass-btn-primary {
+    background: linear-gradient(135deg, rgba(59,130,246,0.3) 0%, rgba(37,99,235,0.2) 50%, rgba(29,78,216,0.15) 100%);
+    color: #1e3a8a;
+    border-color: rgba(59,130,246,0.4);
+}
+.glass-btn-primary .glass-btn-glow {
+    background: radial-gradient(circle, rgba(59,130,246,0.25) 0%, transparent 70%);
+}
+.glass-btn-primary:hover {
+    background: linear-gradient(135deg, rgba(59,130,246,0.4) 0%, rgba(37,99,235,0.3) 50%, rgba(29,78,216,0.25) 100%);
+    border-color: rgba(59,130,246,0.6);
+    color: #1e40af;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(59,130,246,0.25), 0 4px 12px rgba(0,0,0,0.1),
+                inset 0 1px 0 rgba(255,255,255,0.5);
+}
+
+.glass-btn-back {
+    background: linear-gradient(135deg, rgba(156,163,175,0.25) 0%, rgba(107,114,128,0.15) 50%, rgba(75,85,99,0.1) 100%);
+    color: #374151;
+    border-color: rgba(156,163,175,0.3);
+}
+.glass-btn-back .glass-btn-glow {
+    background: radial-gradient(circle, rgba(156,163,175,0.2) 0%, transparent 70%);
+}
+.glass-btn-back:hover {
+    background: linear-gradient(135deg, rgba(156,163,175,0.35) 0%, rgba(107,114,128,0.25) 50%, rgba(75,85,99,0.15) 100%);
+    border-color: rgba(156,163,175,0.5);
+    color: #1f2937;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(156,163,175,0.2), 0 4px 12px rgba(0,0,0,0.1),
+                inset 0 1px 0 rgba(255,255,255,0.5);
+}
+
 /* ── Glassmorphism modal ─────────────────────────────────────────────────── */
 .glass-modal {
     position: fixed;
