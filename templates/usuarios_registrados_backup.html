@@ -98,7 +98,7 @@
                                 <div class="resize-handle"></div>
                             </th>
                             <th class="resizable-th" data-column="nombre">
-                                Nombre
+                                Nombre/Usuario
                                 <div class="resize-handle"></div>
                             </th>
                             <th class="resizable-th" data-column="apellidos">
@@ -186,7 +186,7 @@
                                     </div>
                                 {% endif %}
                             </td>
-                            <td class="resizable-td" data-column="nombre">{{ registro.user.first_name }}</td>
+                            <td class="resizable-td" data-column="nombre">{% if registro.user.first_name %}{{ registro.user.first_name }}{% else %}{{ registro.user.username }}{% endif %}</td>
                             <td class="resizable-td" data-column="apellidos">{{ registro.user.last_name }}</td>
                             <td class="resizable-td" data-column="email" title="{{ registro.user.email }}">{{ registro.user.email }}</td>
                             <td class="resizable-td" data-column="nacionalidad">{{ registro.nacionalidad }}</td>

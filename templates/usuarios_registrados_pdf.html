@@ -38,7 +38,7 @@
     <table>
         <thead>
             <tr>
-                <th>Nombre</th>
+                <th>Nombre/Usuario</th>
                 <th>Apellidos</th>
                 <th>Email</th>
                 <th>Nacionalidad</th>
@@ -58,7 +58,7 @@
         <tbody>
             {% for registro in registros %}
             <tr>
-                <td>{{ registro.user.first_name }}</td>
+                <td>{% if registro.user.first_name %}{{ registro.user.first_name }}{% else %}{{ registro.user.username }}{% endif %}</td>
                 <td>{{ registro.user.last_name }}</td>
                 <td>{{ registro.user.email }}</td>
                 <td>{{ registro.nacionalidad }}</td>
